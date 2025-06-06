@@ -1,0 +1,20 @@
+﻿
+
+@code {
+    private bool redirected = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !redirected)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (!user.Identity.IsAuthenticated)
+            {
+                redirected = true;
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+        }
+    }
+}

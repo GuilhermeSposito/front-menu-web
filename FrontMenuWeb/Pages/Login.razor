@@ -1,0 +1,109 @@
+﻿@page "/login"
+@rendermode RenderMode.InteractiveWebAssembly
+@using System.ComponentModel.DataAnnotations
+@layout LoginLayout
+
+
+
+<div class="login-background">
+
+    <MudCard Style="width: 100%; max-width: 600px; margin: 80px auto 40px auto; padding: 32px; height:500px; border-radius: 15px"
+             Outlined="true"
+             Elevation="4">
+        <MudCardContent>
+            <div style="display:flex;justify-content:center; align-items:center; border-radius:5px">
+                <div style="display:flex; width: 350px; justify-content:center; align-items:center; background-color:#F88113; border-radius:5px">
+                    <MudText Typo="Typo.h3" Class="mb-2" Style="color:#ffff; font-style:oblique; font-weight:bold">
+                        Sophos Menu
+                    </MudText>
+                </div>
+            </div>
+
+            <div>
+                <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+
+                    <div style="margin-top: 40px">
+                        <DataAnnotationsValidator />
+                        <MudTextField @bind-Value="loginModel.Email" Label="Email" Required="true" />
+                        <ValidationMessage For="@(() => loginModel.Email)" />
+                    </div>
+
+                    <div style="margin-top: 40px">
+                        <MudTextField @bind-Value="loginModel.Senha" Label="Senha" InputType="InputType.Password" Required="true" />
+                        <ValidationMessage For="@(() => loginModel.Senha)" />
+                    </div>
+
+                    <div style="margin-top: 60px">
+                        <MudButton @onclick=HandleLogin style="background-color:#F88113; color:#000000" Variant="Variant.Filled" Class="mt-3" FullWidth="true">
+                            Entrar
+                        </MudButton>
+                    </div>
+
+
+                    @if (!loginSucesso)
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                            @MensagemDeErro
+                        </MudAlert>
+                    }
+                </EditForm>
+
+            </div>
+
+        </MudCardContent>
+    </MudCard>
+
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool loginSucesso = true;
+    private string MensagemDeErro = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("auth/login", loginModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+                await LocalStorage.SetItemAsync("authToken", result.token);
+                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.token);
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                var res = await response.Content.ReadAsStringAsync();
+                loginSucesso = false;
+                MensagemDeErro = res;
+            }
+        }
+        catch (Exception ex)
+        {
+            loginSucesso = false;
+            MensagemDeErro = "Erro ao tentar fazer login. Tente novamente mais tarde.";
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "Email inválido")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "A senha é obrigatória")]
+        public string Senha { get; set; }
+
+        public string IsAdmin { get; set; } = "false"; // Default
+    }
+
+    public class LoginResult
+    {
+        public bool success { get; set; }
+        public string token { get; set; }
+        public int expiresIn { get; set; }
+    }
+}

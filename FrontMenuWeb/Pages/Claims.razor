@@ -1,0 +1,33 @@
+﻿@page "/claims"
+@using System.Security.Claims
+
+<h3>Claims do Usuário</h3>
+
+@if (claims != null)
+{
+    <ul>
+        @foreach (var claim in claims)
+        {
+            <li><strong>@claim.Type</strong>: @claim.Value</li>
+        }
+    </ul>
+}
+else
+{
+    <p>Carregando...</p>
+}
+
+@code {
+    private IEnumerable<Claim> claims;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            claims = user.Claims;
+        }
+    }
+}
