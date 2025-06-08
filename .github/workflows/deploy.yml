@@ -1,0 +1,24 @@
+name: scp files
+on: 
+    push:
+        branches:
+        - main
+jobs:
+  build_deploy:
+     runs-on: ubuntu-latest
+
+     steps:
+      - name: "Build Da aplicação"
+        uses: appleboy/ssh-action@v1
+        with:
+            host: "178.16.143.133"
+            username: "root"
+            key: ${{ secrets.SERVER_SSH_KEY }}
+            script: |
+                cd ..
+                cd /var/www/front-menu-web/front-menu-web/FrontMenuWeb
+                rm -rf publish
+                git pull origin main
+                dotnet restore
+                dotnet build
+                dotnet publish -c Release -o publish
