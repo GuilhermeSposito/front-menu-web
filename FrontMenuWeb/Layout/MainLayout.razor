@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using MudBlazor;
+
+@inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -47,6 +49,8 @@
     private Breakpoint _breakpoint = Breakpoint.Lg;
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
     private string ProgramName = "Sophos Menu";
+
+
 
     private void ToggleDrawer()
     {
@@ -132,6 +136,7 @@
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+
 }
 
 
