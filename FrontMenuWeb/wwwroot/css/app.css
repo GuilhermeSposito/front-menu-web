@@ -10,8 +10,13 @@ nav a {
     text-decoration: none !important;
 }
 
-.login-background {
-    background-color: #0f172a;
+.login-container {
+    background: linear-gradient(135deg, #101628 0%, #0f172a 50%, #241f1e 100%);
+    color: #1e293b;
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-weight: 600;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -30,9 +35,9 @@ html, body {
     font-family: "Montserrat", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
-    font-weight: bold;
+    font-weight: normal;
     background-color: #192436;
-    color: red;
+    color: #ffff;
 }
 
 h1:focus {
@@ -144,4 +149,189 @@ code {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+
+/** --------------------------------- login ----------------------------------------------------*/
+:root {
+    --sophos-orange: #f97316;
+    --sophos-orange-dark: #ea580c;
+    --sophos-orange-light: #fed7aa;
+}
+
+body {
+    /* background: linear-gradient(135deg, #fff7ed 0%, #ffffff 50%, #eff6ff 100%);*/
+
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.logo-container {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--sophos-orange), var(--sophos-orange-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3);
+}
+
+.company-title {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #ffff;
+    margin-bottom: 0.25rem;
+}
+
+.company-subtitle {
+    color: var(--sophos-orange);
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+
+.login-card {
+    background-color: #192436;
+    backdrop-filter: blur(10px);
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 400px;
+    width: 100%;
+}
+
+.card-header {
+    background: transparent;
+    border: none;
+    padding: 2rem 2rem 1rem;
+}
+
+.card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffff;
+    margin-bottom: 0.5rem;
+}
+
+.card-description {
+    color: #64748b;
+    margin-bottom: 0;
+}
+
+.form-label {
+    color: #ffff;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    z-index: 10;
+}
+
+.form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 16px 12px 44px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+    .form-control:focus {
+        border-color: var(--sophos-orange);
+        box-shadow: 0 0 0 0.2rem rgba(249, 115, 22, 0.25);
+    }
+
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    z-index: 10;
+}
+
+    .password-toggle:hover {
+        color: var(--sophos-orange);
+    }
+
+.remember-forgot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--sophos-orange);
+    border-color: var(--sophos-orange);
+}
+
+.form-check-label {
+    color: #ffff;
+    font-size: 14px;
+}
+
+
+
+.btn-login {
+    background: linear-gradient(135deg, var(--sophos-orange), var(--sophos-orange-dark));
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+    color: white;
+    width: 100%;
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+}
+
+    .btn-login:hover {
+        background: linear-gradient(135deg, var(--sophos-orange-dark), #c2410c);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(249, 115, 22, 0.5);
+        color: white;
+    }
+
+    .signup-link:hover {
+        color: var(--sophos-orange-dark);
+    }
+
+
+
+@media (max-width: 576px) {
+    .login-card {
+        margin: 1rem;
+    }
+
+    .company-title {
+        font-size: 1.75rem;
+    }
 }
