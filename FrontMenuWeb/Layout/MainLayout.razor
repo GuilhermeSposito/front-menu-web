@@ -21,6 +21,11 @@
                     <MudDivider Class="my-2" />
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
                     <MudNavLink Href="claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Claims</MudNavLink>
+                    <MudNavGroup Title="Produtos" Icon="@Icons.Material.Filled.Inventory" Expanded="true">
+                        <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/grupos">Grupos</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Inventory"  Href="/produtos">Produtos</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavLink Href="/login" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">Clientes</MudNavLink>
                     <MudNavLink @onclick="Logout" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ExitToApp">Sair</MudNavLink>
                 </MudNavMenu>
             </MudDrawer>

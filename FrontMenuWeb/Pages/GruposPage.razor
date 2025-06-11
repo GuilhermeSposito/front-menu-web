@@ -1,0 +1,53 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/grupos"
+@using FrontMenuWeb.Components.Modais
+
+@inject IHttpClientFactory HttpClientFactory
+
+<div class="mt-5">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <MudText Typo="Typo.h4" Class="mb-3">Grupos</MudText>
+            <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
+        </div>
+        <div>
+            <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" style="background-color: #F88113; color: white">Novo Grupo</MudButton>
+        </div>
+    </div>
+    <MudDataGrid Items="@grupos" class="rounded-3" style="background-color: #101628; color: #ffff">
+        <Columns>
+            <PropertyColumn Property="x => x.Id" Title="Id" />
+            <PropertyColumn Property="x => x.Descricao" Title="Nome" />
+            <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
+            <PropertyColumn Property="x => x.UltilizarCarroChefe" Title="Ultiliza Carro Chefe" />
+        </Columns>
+    </MudDataGrid>
+</div>
+
+
+@code {
+    List<ClsGrupo> grupos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizaGrupos();
+    }
+
+    private async Task AtualizaGrupos(){
+        var client = HttpClientFactory.CreateClient("ApiAutorizada");
+        grupos = await client.GetFromJsonAsync<List<ClsGrupo>>("grupos") ?? new List<ClsGrupo>();
+    }
+
+    private async Task OpenDialogAsync()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Grupos", grupos } // grupos é a lista que você quer passar
+        };
+
+        var resultadoDeAdicionarGrupoo = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters);
+
+        await AtualizaGrupos();
+    }
+}

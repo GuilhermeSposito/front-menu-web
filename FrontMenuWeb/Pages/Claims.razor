@@ -1,4 +1,6 @@
-﻿@page "/claims"
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/claims"
 @using System.Security.Claims
 
 <h3>Claims do Usuário</h3>
