@@ -1,9 +1,12 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/grupos"
-@using FrontMenuWeb.Components.Modais
-
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Services
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
+
 
 <div class="mt-5">
     <div class="d-flex align-items-center justify-content-between">
@@ -12,42 +15,120 @@
             <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
         </div>
         <div>
-            <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" style="background-color: #F88113; color: white">Novo Grupo</MudButton>
+            <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" style="background-color: #F88113; color: white">Novo Grupo</MudButton>
         </div>
     </div>
-    <MudDataGrid Items="@grupos" class="rounded-3" style="background-color: #101628; color: #ffff">
+    <MudDataGrid T="ClsGrupo" Items="@grupos" class="rounded-3" style="background-color: #101628; color: #ffff">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" />
             <PropertyColumn Property="x => x.Descricao" Title="Nome" />
             <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
             <PropertyColumn Property="x => x.UltilizarCarroChefe" Title="Ultiliza Carro Chefe" />
+            <TemplateColumn T="ClsGrupo" Hidden="false">
+                <CellTemplate Context="context">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   OnClick="@(() => EditaGrupo(context.Item))" />
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn T="ClsGrupo">
+                <CellTemplate Context="context">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error"
+                                   OnClick="@(() => RemoveGrupo(context.Item))" />
+                </CellTemplate>
+            </TemplateColumn>
         </Columns>
     </MudDataGrid>
 </div>
 
-
+<MudOverlay @bind-Visible="AvisoDeGrupoAlteradoComSucesso" LockScroll="false" DarkBackground="false" AutoClose="true" OnClosed="OnOverlayClosed" />
 @code {
     List<ClsGrupo> grupos = new();
+    private bool AvisoDeGrupoAlteradoComSucesso = false;
+    private string? MensagemDeAlteracaoDeGrupo = String.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await AtualizaGrupos();
     }
 
-    private async Task AtualizaGrupos(){
-        var client = HttpClientFactory.CreateClient("ApiAutorizada");
-        grupos = await client.GetFromJsonAsync<List<ClsGrupo>>("grupos") ?? new List<ClsGrupo>();
+    private async Task AtualizaGrupos(bool GrupoFoiExcluidoOuAdicionado = false)
+    {
+        grupos = await GrupoService.GetGrupos();
+
+        if (grupos is not null)
+            grupos = grupos.OrderBy(x => x.CodigoInterno).ToList();
     }
 
-    private async Task OpenDialogAsync()
+    private async Task OpenDialogAddGrupoAsync()
     {
         var parameters = new DialogParameters
         {
-            { "Grupos", grupos } // grupos é a lista que você quer passar
+            { "Grupos", grupos }
         };
 
-        var resultadoDeAdicionarGrupoo = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters);
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large };
 
-        await AtualizaGrupos();
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            AvisoDeGrupoAlteradoComSucesso = true;
+            Snackbar.Add($"Grupo adicionado com sucesso!", Severity.Success);
+            StateHasChanged();
+            await AtualizaGrupos();
+        }
+
+    }
+
+    private async Task RemoveGrupo(ClsGrupo grupo)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Você tem certeza que deseja excluir o grupo {grupo.Descricao}? Essa operação não pode ser desfeita. " },
+            { x => x.ButtonText, "sim" },
+            { x => x.Color, Color.Error}
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            AvisoDeGrupoAlteradoComSucesso = true;
+            Snackbar.Add($"Grupo {grupo.Descricao} exclúido com sucesso!", Severity.Success);
+            StateHasChanged();
+            await GrupoService.DeletarGrupo(grupo);
+            await AtualizaGrupos(true);
+        }
+
+
+    }
+
+    private async Task EditaGrupo(ClsGrupo grupo)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Grupo", grupo }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large };
+
+        var dialog = await DialogService.ShowAsync<ModalDeEditarGrupo>("Editar Grupo", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            AvisoDeGrupoAlteradoComSucesso = true;
+            Snackbar.Add($"Grupo {grupo.Descricao} alterado com sucesso!", Severity.Success);
+            StateHasChanged();
+            await AtualizaGrupos(true);
+        }
+    }
+
+
+    public void OnOverlayClosed()
+    {
+
     }
 }

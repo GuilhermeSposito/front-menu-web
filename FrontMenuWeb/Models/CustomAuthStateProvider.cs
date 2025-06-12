@@ -28,10 +28,24 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
-        var user = new ClaimsPrincipal(identity);
+        var ValidarOToken = await _httpClient.GetAsync("merchants/details");
 
-        return new AuthenticationState(user);
+        if (!ValidarOToken.IsSuccessStatusCode)
+        {
+            // Se o token não for válido, remova-o do armazenamento local e retorne um estado de autenticação vazio
+            await _localStorage.RemoveItemAsync("authToken");
+            _httpClient.DefaultRequestHeaders.Authorization = null; // Limpa o cabeçalho de autorização
+            this.NotifyAuthenticationStateChanged();
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+        }
+        else
+        {
+            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+            var user = new ClaimsPrincipal(identity);
+
+            return new AuthenticationState(user);
+        }
+
     }
 
     // ✅ Este é o método que você precisa chamar no logout/login

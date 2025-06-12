@@ -1,0 +1,88 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Services
+@inject GrupoServices GrupoService
+
+<MudDialog class="rounded-3 w-100" style="background-color: #101628; color: #ffff">
+    <DialogContent>
+
+        <MudForm class="" Spacing="5" @onsubmit="Submit">
+            @if (Grupo.CodigoInterno is not null)
+            {
+                <MudTextField T="string"
+                Label="Descrição do Grupo"
+                Value="@Grupo.Descricao"
+                ValueChanged="OnDescricaoChanged"
+                Immediate="true"
+                Required
+                @ref="_descricaoRef"
+                Style="text-transform: uppercase;" />
+                <MudTextField T="string" @bind-Value=Grupo.CodigoInterno Label="Codigo interno" Required />
+            }
+            <div>
+                <MudText>Ultilizar Carro Chefe?</MudText>
+                <div class="d-flex">
+
+                    <MudRadioGroup T="string">
+                        <MudRadio Value="@("Personal")">Sim</MudRadio>
+                        <MudRadio Value="@("Professional")">Não</MudRadio>
+                    </MudRadioGroup>
+                </div>
+                @if (ErroAoModificarGrupo)
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                        Verifique todos os campos e tente novamente.
+                    </MudAlert>
+                }
+            </div>
+        </MudForm>
+
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton style="color: #F88113" OnClick="Submit">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+
+    [Parameter]
+    public ClsGrupo Grupo { get; set; }
+    private bool ErroAoModificarGrupo = false;
+
+
+
+
+
+    private void OnDescricaoChanged(string val)
+    {
+        Grupo.Descricao = val?.ToUpperInvariant();
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            HttpResponseMessage RespostaDaApi = await GrupoService.EditaGrupo(Grupo);
+
+            if (RespostaDaApi.IsSuccessStatusCode)
+                MudDialog.Close(DialogResult.Ok(true));
+            else
+                ErroAoModificarGrupo = true;
+        }
+        catch (Exception ex)
+        {
+            ErroAoModificarGrupo = true;
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}
