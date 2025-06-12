@@ -1,0 +1,112 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/produtos"
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Services
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+
+<div class="mt-3">
+
+    <div>
+        <MudText Typo="Typo.h4" Class="mb-3">Produtos</MudText>
+        <MudText Typo="Typo.body1" Class="mb-3">Lista de produtos cadastrados.</MudText>
+    </div>
+
+    <MudDataGrid T="ClsProduto"  Items="@Produtos" class="rounded-3" style="background-color: #101628; color: #ffff">
+        <ToolBarContent>
+            <div class="d-flex align-items-center justify-content-between w-75">
+                <div>
+                    
+                </div>
+                <div>
+                    <MudButton Class="m-5" Variant="Variant.Filled" style="background-color: #F88113; color: white">Novo Produto</MudButton>
+                </div>
+            </div>
+
+            <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Pesquisar Produto"
+                          @bind-Value="StringDePesquisa" @bind-Value:after="@(() => RecarregarGruposAposPesquisa())"
+                          DebounceInterval="100" Variant="Variant.Outlined" Clearable />
+        </ToolBarContent>
+        <Columns>
+            <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
+            <PropertyColumn Property="x => x.Descricao" Title="Nome" />
+            <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
+            <TemplateColumn T="ClsProduto" Hidden="false" Title="Precos">
+                <CellTemplate Context="context">
+                    @foreach (var preco in context.Item.Precos)
+                    {
+                        <MudText Typo="Typo.body2">@preco.DescricaoDoTamanho: @preco.Valor.ToString("C")</MudText>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <TemplateColumn T="ClsProduto" Hidden="false" Title="Editar">
+                <CellTemplate Context="context">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary" />
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn T="ClsProduto" Title="Deletar">
+                <CellTemplate Context="context">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                   Color="Color.Error" />
+                </CellTemplate>
+            </TemplateColumn>     
+        </Columns>
+        <ChildRowContent>
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">@context.Item.Descricao</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                   
+
+                </MudCardContent>
+            </MudCard>
+        </ChildRowContent>
+
+    </MudDataGrid>
+</div>
+
+
+@code {
+    List<ClsProduto> Produtos = new();
+    private string StringDePesquisa = string.Empty;
+    ClsProduto? ExpandedProduto;
+    private bool _enableHeaderToggle = true;
+
+    void ToggleExpand(ClsProduto item)
+    {
+        if (ExpandedProduto == item)
+            ExpandedProduto = null;
+        else
+            ExpandedProduto = item;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizaProdutos();
+    }
+
+    private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
+    {
+        Produtos = await ProdutoService.GetProdutosAsync();
+    }
+
+    private async Task RecarregarGruposAposPesquisa()
+    {
+        if (!string.IsNullOrEmpty(StringDePesquisa))
+        {
+            Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
+        }
+        else
+        {
+            await AtualizaProdutos();
+        }
+    }
+}

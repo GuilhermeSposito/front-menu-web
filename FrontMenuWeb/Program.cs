@@ -16,6 +16,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<CustomAuthorizationMessageHandler>();
 builder.Services.AddScoped<GrupoServices>();
+builder.Services.AddScoped<ProdutoService>();
 
 builder.Services.AddScoped(sp =>
 {
@@ -29,11 +30,16 @@ builder.Services.AddHttpClient("ApiAutorizada", client =>
     client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
 })
 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
-
-builder.Services.AddHttpClient<GrupoServices>(client =>
+void ConfigureSyslogicaClient(IHttpClientBuilder builder)
 {
-    client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
-}).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+    builder.ConfigureHttpClient(client =>
+    {
+        client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
+    }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+}
+
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 
 
 builder.Services.AddMudServices();

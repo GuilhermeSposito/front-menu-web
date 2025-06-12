@@ -31,6 +31,7 @@
             <TemplateColumn T="ClsGrupo" Hidden="false" Title="Editar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
                                    OnClick="@(() => EditaGrupo(context.Item))" />
                 </CellTemplate>
             </TemplateColumn>
