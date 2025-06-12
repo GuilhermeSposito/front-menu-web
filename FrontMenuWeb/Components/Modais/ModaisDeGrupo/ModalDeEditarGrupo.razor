@@ -26,9 +26,9 @@
                 <MudText>Ultilizar Carro Chefe?</MudText>
                 <div class="d-flex">
 
-                    <MudRadioGroup T="string">
-                        <MudRadio Value="@("Personal")">Sim</MudRadio>
-                        <MudRadio Value="@("Professional")">Não</MudRadio>
+                    <MudRadioGroup @bind-Value="Grupo.UltilizarCarroChefe">
+                        <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                        <MudRadio Value="false" Color="Color.Secondary" Dense="false">Não</MudRadio>
                     </MudRadioGroup>
                 </div>
                 @if (ErroAoModificarGrupo)
