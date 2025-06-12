@@ -24,13 +24,13 @@
             <PropertyColumn Property="x => x.Descricao" Title="Nome" />
             <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
             <PropertyColumn Property="x => x.UltilizarCarroChefe" Title="Ultiliza Carro Chefe" />
-            <TemplateColumn T="ClsGrupo" Hidden="false">
+            <TemplateColumn T="ClsGrupo" Hidden="false" Title="Editar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                    OnClick="@(() => EditaGrupo(context.Item))" />
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn T="ClsGrupo">
+            <TemplateColumn T="ClsGrupo" Title="Deletar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                    Color="Color.Error"
