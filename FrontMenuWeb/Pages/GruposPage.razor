@@ -23,7 +23,11 @@
             <PropertyColumn Property="x => x.Id" Title="Id" />
             <PropertyColumn Property="x => x.Descricao" Title="Nome" />
             <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
-            <PropertyColumn Property="x => x.UltilizarCarroChefe" Title="Ultiliza Carro Chefe" />
+            <TemplateColumn T="ClsGrupo" Hidden="false" Title="Ultiliza Carro Chefe">
+                <CellTemplate Context="context">
+                    @(@context.Item.UltilizarCarroChefe ? "Sim" : "Não")
+                </CellTemplate>
+            </TemplateColumn>
             <TemplateColumn T="ClsGrupo" Hidden="false" Title="Editar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
@@ -41,11 +45,24 @@
     </MudDataGrid>
 </div>
 
+
 <MudOverlay @bind-Visible="AvisoDeGrupoAlteradoComSucesso" LockScroll="false" DarkBackground="false" AutoClose="true" OnClosed="OnOverlayClosed" />
 @code {
     List<ClsGrupo> grupos = new();
     private bool AvisoDeGrupoAlteradoComSucesso = false;
     private string? MensagemDeAlteracaoDeGrupo = String.Empty;
+    Color Color = Color.Success;
+
+    private void OnScroll(ScrollEventArgs e)
+    {
+        Color = (e.FirstChildBoundingClientRect.Top * -1) switch
+        {
+            var x when x < 500 => Color.Primary,
+            var x when x < 1500 => Color.Secondary,
+            var x when x < 2500 => Color.Tertiary,
+            _ => Color.Error
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -67,7 +84,7 @@
             { "Grupos", grupos }
         };
 
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
         var dialog = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters, options);
         var result = await dialog.Result;
@@ -90,8 +107,8 @@
             { x => x.ButtonText, "sim" },
             { x => x.Color, Color.Error}
         };
-
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters);
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
         var result = await dialog.Result;
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
@@ -112,7 +129,7 @@
         {
             { "Grupo", grupo }
         };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
         var dialog = await DialogService.ShowAsync<ModalDeEditarGrupo>("Editar Grupo", parameters, options);
         var result = await dialog.Result;

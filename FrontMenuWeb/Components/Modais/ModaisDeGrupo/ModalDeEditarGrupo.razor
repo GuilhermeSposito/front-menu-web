@@ -7,18 +7,20 @@
 <MudDialog class="rounded-3 w-100" style="background-color: #101628; color: #ffff">
     <DialogContent>
 
-        <MudForm class="" Spacing="5" @onsubmit="Submit">
+        <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
             @if (Grupo.CodigoInterno is not null)
             {
                 <MudTextField T="string"
-                Label="Descrição do Grupo"
-                Value="@Grupo.Descricao"
-                ValueChanged="OnDescricaoChanged"
-                Immediate="true"
-                Required
-                @ref="_descricaoRef"
-                Style="text-transform: uppercase;" />
-                <MudTextField T="string" @bind-Value=Grupo.CodigoInterno Label="Codigo interno" Required />
+                              Label="Descrição do Grupo"
+                              Value="@Grupo.Descricao"
+                              ValueChanged="OnDescricaoChanged"
+                              Immediate="true"
+                              Required="true"
+                              RequiredError="A descrição é obrigatória"
+                              @ref="_descricaoRef"
+                              Style="text-transform: uppercase;" />
+                <MudTextField T="string" @bind-Value=Grupo.CodigoInterno Label="Codigo interno" Required="true"
+                              RequiredError="O código interno é obrigatório" />
             }
             <div>
                 <MudText>Ultilizar Carro Chefe?</MudText>
@@ -81,6 +83,14 @@
         catch (Exception ex)
         {
             ErroAoModificarGrupo = true;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
         }
     }
 
