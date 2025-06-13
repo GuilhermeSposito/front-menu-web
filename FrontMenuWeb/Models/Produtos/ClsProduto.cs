@@ -35,6 +35,7 @@ public class ClsProduto
     [JsonPropertyName("ultiliza_produto_balanca")] public bool UltilizaProdutoNaBalanca { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
+    [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
 
 }
 

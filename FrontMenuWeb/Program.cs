@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Services;
+using System.Globalization;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -43,4 +44,9 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 
 
 builder.Services.AddMudServices();
+
+var culture = new CultureInfo("pt-BR");
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
+
 await builder.Build().RunAsync();

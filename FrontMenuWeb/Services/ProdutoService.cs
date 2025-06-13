@@ -14,7 +14,9 @@ public class ProdutoService
     public async Task<List<ClsProduto>> GetProdutosAsync()
     {
         List<ClsProduto> response = await _http.GetFromJsonAsync<List<ClsProduto>>("produtos") ?? new List<ClsProduto>();
+
         return response;
     }
+
 
 }
