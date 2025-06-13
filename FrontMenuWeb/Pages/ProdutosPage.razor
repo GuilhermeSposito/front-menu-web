@@ -12,17 +12,17 @@
 
 <div class="mt-3">
 
-
     <div class="d-flex align-items-center justify-content-between">
         <div>
-            <MudText Typo="Typo.h4" Class="mb-3">Produtos</MudText>
-            <MudText Typo="Typo.body1" Class="mb-3">Lista de produtos cadastrados.</MudText>
+            <MudText Typo="Typo.h4" >Produtos</MudText>
+            <MudText Class="mb-3" Typo="Typo.body1" >Lista de produtos cadastrados.</MudText>
         </div>
-        <div>
-            <MudButton Class="m-5" Variant="Variant.Filled" style="background-color: #F88113; color: white">Novo Produto</MudButton>
+        <div >
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Novo Produto</MudButton>
         </div>
     </div>
 
+   
     <MudDataGrid T="ClsProduto" Items="@Produtos" class="rounded-3" style="background-color: #101628; color: #ffff">
         <ToolBarContent>
             <div class="d-flex align-items-center justify-content-between w-50">
@@ -51,13 +51,13 @@
             <TemplateColumn T="ClsProduto" Hidden="false" Title="Editar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                    Color="Color.Primary" />
+                                   Color="Color.Primary" />
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn T="ClsProduto" Title="Deletar">
                 <CellTemplate Context="context">
                     <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                    Color="Color.Error" />
+                                   Color="Color.Error" />
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
@@ -67,10 +67,10 @@
                     <CardHeaderContent>
                         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Descricao</MudText> </MudPaper>
                         <MudItem xs="12">
-                            <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full py-8 overflow-hidden" style="word-break: break-word;">
 
 
-                                <MudStepper NonLinear Class="w-100" Ripple="false" ScrollableNavigation="false">
+                                <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
                                     <ChildContent>
                                         <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
                                         <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(2))" Completed="false" Title=" Tributações">Informações de tributação do produto</MudStep>
@@ -82,8 +82,6 @@
                                         *@
                                     </ActionContent>
                                 </MudStepper>
-
-
 
 
                             </MudPaper>
@@ -166,7 +164,7 @@
     ClsProduto? ExpandedProduto;
     private bool _enableHeaderToggle = true;
     private int NumAba = 1;
-    private List<ClsGrupo> Grupos = new();  
+    private List<ClsGrupo> Grupos = new();
 
     void ToggleExpand(ClsProduto item)
     {
@@ -186,7 +184,7 @@
     {
         Produtos = await ProdutoService.GetProdutosAsync();
     }
-    
+
     private async Task AtualizaGrupos(bool ProdutoFoiModificado = false)
     {
         Grupos = await GrupoService.GetGrupos();
