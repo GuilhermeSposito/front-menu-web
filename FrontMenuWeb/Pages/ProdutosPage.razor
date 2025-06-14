@@ -5,158 +5,154 @@
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
 @inject GrupoServices GrupoService
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
 
-<div class="mt-3">
-
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <MudText Typo="Typo.h4" >Produtos</MudText>
-            <MudText Class="mb-3" Typo="Typo.body1" >Lista de produtos cadastrados.</MudText>
-        </div>
-        <div >
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Novo Produto</MudButton>
-        </div>
-    </div>
-
-   
-    <MudDataGrid T="ClsProduto" Items="@Produtos" class="rounded-3" style="background-color: #101628; color: #ffff">
-        <ToolBarContent>
-            <div class="d-flex align-items-center justify-content-between w-50">
-                <div>
-                </div>
-                <div>
-                </div>
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Produtos</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
-            <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Pesquisar Produto"
-                          @bind-Value="StringDePesquisa" @bind-Value:after="@(() => RecarregarProdutosAposPesquisa())"
-                          DebounceInterval="100" Variant="Variant.Outlined" Clearable />
-        </ToolBarContent>
-        <Columns>
-            <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
-            <PropertyColumn Property="x => x.Descricao" Title="Nome" />
-            <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
-            <TemplateColumn T="ClsProduto" Hidden="false" Title="Precos">
-                <CellTemplate Context="context">
-                    @foreach (var preco in context.Item.Precos)
-                    {
-                        <MudText Typo="Typo.body2">@preco.DescricaoDoTamanho: @preco.Valor.ToString("C")</MudText>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-
-            <TemplateColumn T="ClsProduto" Hidden="false" Title="Editar">
-                <CellTemplate Context="context">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Primary" />
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn T="ClsProduto" Title="Deletar">
-                <CellTemplate Context="context">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error" />
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <ChildRowContent>
-            <MudCard Class="w-100" style="background-color: #192436">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Descricao</MudText> </MudPaper>
-                        <MudItem xs="12">
-                            <MudPaper Class="d-flex flex-column align-center justify-center mud-width-full py-8 overflow-hidden" style="word-break: break-word;">
+            <div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Novo Produto</MudButton>
+            </div>
+        </div>
 
 
-                                <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
-                                    <ChildContent>
-                                        <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
-                                        <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(2))" Completed="false" Title=" Tributações">Informações de tributação do produto</MudStep>
-                                        <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(3))" Completed="false" Title=" Ficha Técnica">Ficha técnica do produto</MudStep>
-                                    </ChildContent>
-                                    <ActionContent Context="stepper">
-                                        @*
+        <MudDataGrid T="ClsProduto" Items="@Produtos" class="rounded-3">
+            <ToolBarContent>
+                <div class="d-flex align-items-center justify-content-between w-50">
+                    <div>
+                    </div>
+                    <div>
+                    </div>
+                </div>
+                <MudTextField AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End" Placeholder="Pesquisar Produto"
+                              @bind-Value="StringDePesquisa" @bind-Value:after="@(() => RecarregarProdutosAposPesquisa())"
+                              DebounceInterval="100" Variant="Variant.Outlined" Clearable />
+            </ToolBarContent>
+            <Columns>
+                <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
+                <PropertyColumn Property="x => x.Descricao" Title="Nome" />
+                <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
+                <TemplateColumn T="ClsProduto" Hidden="false" Title="Precos">
+                    <CellTemplate Context="context">
+                        @foreach (var preco in context.Item.Precos)
+                        {
+                            <MudText Typo="Typo.body2">@preco.DescricaoDoTamanho: @preco.Valor.ToString("C")</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsProduto" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <ChildRowContent>
+                <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudPaper Class="d-flex align-center justify-center mud-width-full">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Descricao</MudText> </MudPaper>
+                            <MudItem xs="12">
+                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-fulloverflow-hidden" style="word-break: break-word;">
+
+
+                                    <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
+                                        <ChildContent>
+                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
+                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(2))" Completed="false" Title=" Tributações">Informações de tributação do produto</MudStep>
+                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(3))" Completed="false" Title=" Ficha Técnica">Ficha técnica do produto</MudStep>
+                                        </ChildContent>
+                                        <ActionContent Context="stepper">
+                                            @*
                                             Deixar Vazio para não ter botões de ação
                                         *@
-                                    </ActionContent>
-                                </MudStepper>
+                                        </ActionContent>
+                                    </MudStepper>
 
 
-                            </MudPaper>
-                        </MudItem>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    @if (NumAba == 1)
-                    {
-                        <MudGrid>
-                            <MudItem xs="12">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                    <MudTextField @bind-Value=@context.Item.CodigoInterno Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                    <MudTextField @bind-Value=@context.Item.Descricao Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                 </MudPaper>
                             </MudItem>
-                            <MudItem xs="12" sm="6">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                    <MudSelect @bind-Value="context.Item.Grupo"
-                                               T="ClsGrupo"
-                                               Class="m-3"
-                                               ToStringFunc="g=> g.Descricao"
-                                               Label="Grupo selecionado"
-                                               HelperText="Grupo"
-                                               Placeholder="Escolha seu grupo"
-                                               AdornmentIcon="@Icons.Material.Filled.Fastfood"
-                                               AdornmentColor="Color.Success">
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (NumAba == 1)
+                        {
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudTextField @bind-Value=@context.Item.CodigoInterno Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudTextField @bind-Value=@context.Item.Descricao Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="context.Item.Grupo"
+                                                   T="ClsGrupo"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="Grupo selecionado"
+                                                   HelperText="Grupo"
+                                                   Placeholder="Escolha seu grupo"
+                                                   AdornmentIcon="@Icons.Material.Filled.Fastfood"
+                                                   AdornmentColor="Color.Success">
 
-                                        @foreach (var grupo in Grupos)
-                                        {
-                                            <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
-                                        }
-                                    </MudSelect>
-                                </MudPaper>
-                            </MudItem>
-                            <MudItem xs="12" sm="6">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=12 sm=6</MudPaper>
-                            </MudItem>
-                            <MudItem xs="6" sm="3">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
-                            </MudItem>
-                            <MudItem xs="6" sm="3">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
-                            </MudItem>
-                            <MudItem xs="6" sm="3">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
-                            </MudItem>
-                            <MudItem xs="6" sm="3">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
-                            </MudItem>
-                        </MudGrid>
-                    }
-                    else if (NumAba == 2)
-                    {
-                        <MudGrid>
-                            <MudItem xs="12">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de tributações</MudPaper>
-                            </MudItem>
-                        </MudGrid>
-                    }
-                    else if (NumAba == 3)
-                    {
-                        <MudGrid>
-                            <MudItem xs="12">
-                                <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de ficha técnica</MudPaper>
-                            </MudItem>
-                        </MudGrid>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </ChildRowContent>
+                                            @foreach (var grupo in Grupos)
+                                            {
+                                                <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=12 sm=6</MudPaper>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
+                                </MudItem>
+                                <MudItem xs="6" sm="3">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else if (NumAba == 2)
+                        {
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de tributações</MudPaper>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                        else if (NumAba == 3)
+                        {
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de ficha técnica</MudPaper>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </ChildRowContent>
 
-    </MudDataGrid>
-</div>
-
+        </MudDataGrid>
+    </MudLayout>
+</MudPaper>
 
 @code {
     List<ClsProduto> Produtos = new();
@@ -206,5 +202,4 @@
     {
         NumAba = numAba;
     }
-
 }

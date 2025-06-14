@@ -9,21 +9,21 @@
 <MudLayout>
     <AuthorizeView>
         <Authorized>
-            <MudAppBar style="background-color: #F88113; color: #ffff" Elevation="1">
+            <MudAppBar Color="Color.Primary" Elevation="1">
                 <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
                 <MudText Typo="Typo.h5" Class="ml-3">@ProgramName</MudText>
-                <MudSpacer />
-                @*<MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />*@ 
+                <MudSpacer />      
+                <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
             </MudAppBar>
 
-            <MudDrawer Style="background-color: #101628" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-                <MudNavMenu >
+            <MudDrawer Style="background-color: var(--mud-palette-surface);"  id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                <MudNavMenu>
                     <MudDivider Class="my-2" />
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
                     <MudNavLink Href="claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Claims</MudNavLink>
                     <MudNavGroup Title="Produtos" Icon="@Icons.Material.Filled.Inventory" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/grupos">Grupos</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.Inventory"  Href="/produtos">Produtos</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Inventory" Href="/produtos">Produtos</MudNavLink>
                     </MudNavGroup>
                     <MudNavLink Href="/login" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">Clientes</MudNavLink>
                     <MudNavLink @onclick="Logout" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ExitToApp">Sair</MudNavLink>
@@ -33,7 +33,7 @@
 
     </AuthorizeView>
 
-    <MudMainContent Class="pt-16 pa-4">
+    <MudMainContent Class="pt-16 pa-4 mud-theme-background min-vh-100" Style="background-color: var(--mud-palette-background)">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -99,12 +99,16 @@
 
     private readonly PaletteLight _lightPalette = new()
         {
+            Primary = "#F88113",
             Black = "#110e2d",
+            Background = "#ffffff",
             AppbarText = "#424242",
             AppbarBackground = "rgba(255,255,255,0.8)",
             DrawerBackground = "#ffffff",
             GrayLight = "#e8e8e8",
             GrayLighter = "#f9f9f9",
+            Surface = "#f9f9f9",
+            TextPrimary = "#000000",
         };
 
     private readonly PaletteDark _darkPalette = new()
@@ -119,7 +123,7 @@
             ActionDefault = "#74718e",
             ActionDisabled = "#9999994d",
             ActionDisabledBackground = "#605f6d4d",
-            TextPrimary = "#b2b0bf",
+            TextPrimary = "#ffffff",
             TextSecondary = "#92929f",
             TextDisabled = "#ffffff33",
             DrawerIcon = "#92929f",

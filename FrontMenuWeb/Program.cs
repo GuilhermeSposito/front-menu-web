@@ -7,6 +7,7 @@ using MudBlazor.Services;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Services;
 using System.Globalization;
+using MudBlazor.Extensions;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -44,6 +45,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 
 
 builder.Services.AddMudServices();
+builder.Services.AddMudExtensions();
 
 var culture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = culture;

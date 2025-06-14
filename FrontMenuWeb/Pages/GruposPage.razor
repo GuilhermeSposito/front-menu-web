@@ -7,7 +7,8 @@
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
 
-
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh;">
+    <MudLayout>
 <div class="mt-5">
     <div class="d-flex align-items-center justify-content-between">
         <div>
@@ -15,10 +16,10 @@
             <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
         </div>
         <div>
-            <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary" style="color: white">Novo Grupo</MudButton>
+            <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
         </div>
     </div>
-    <MudDataGrid T="ClsGrupo" Items="@grupos" class="rounded-3" style="background-color: #101628; color: #ffff">
+    <MudDataGrid T="ClsGrupo" Items="@grupos" class="rounded-3">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" />
             <PropertyColumn Property="x => x.Descricao" Title="Nome" />
@@ -45,7 +46,8 @@
         </Columns>
     </MudDataGrid>
 </div>
-
+    </MudLayout>
+</MudPaper>
 
 <MudOverlay @bind-Visible="AvisoDeGrupoAlteradoComSucesso" LockScroll="false" DarkBackground="false" AutoClose="true" OnClosed="OnOverlayClosed" />
 @code {

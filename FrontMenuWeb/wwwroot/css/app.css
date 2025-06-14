@@ -334,4 +334,9 @@ body {
     .company-title {
         font-size: 1.75rem;
     }
+
+    .mud-stepper .mud-stepper-step-title {
+        display: none;
+    }
 }
+
