@@ -8,6 +8,7 @@ using FrontMenuWeb.Models;
 using FrontMenuWeb.Services;
 using System.Globalization;
 using MudBlazor.Extensions;
+using FrontMenuWeb.Models.Produtos;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -47,8 +48,8 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 
-var culture = new CultureInfo("pt-BR");
+/*var culture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = culture;
-CultureInfo.DefaultThreadCurrentUICulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;*/
 
 await builder.Build().RunAsync();

@@ -90,13 +90,14 @@
                             <MudGrid>
                                 <MudItem xs="12">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudTextField @bind-Value=@context.Item.CodigoInterno Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                        <MudTextField @bind-Value=@context.Item.Descricao Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudTextField @bind-Value=@context.Item.CodigoInterno Disabled="true" Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudTextField @bind-Value=@context.Item.Descricao @onfocusout=@(prop=> OnSaveChanges(context.Item)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
                                         <MudSelect @bind-Value="context.Item.Grupo"
+                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
                                                    T="ClsGrupo"
                                                    Class="m-3"
                                                    ToStringFunc="g=> g.Descricao"
@@ -114,10 +115,67 @@
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=12 sm=6</MudPaper>
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="context.Item.Categoria"
+                                                   T="Categoria"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="Categoria selecionada"
+                                                   HelperText="Categoria"
+                                                   Placeholder="Categoria Selecionada"
+                                                   AdornmentIcon="@Icons.Material.Filled.FoodBank"
+                                                   AdornmentColor="Color.Success"
+                                                   Disabled="true">
+                                        </MudSelect>
+                                    </MudPaper>
                                 </MudItem>
-                                <MudItem xs="6" sm="3">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
+                                <MudItem xs="6" sm="6">
+                                    <MudPaper Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
+                                    <MudPaper Class="d-flex justify-between mud-width-full py-8">
+
+
+
+                                        <MudSelect Class="m-2"
+                                                   @bind-Value="@context.Item.ImpressoraComanda1"
+                                                   T="string"
+                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
+                                                   Label="Comanda 1"
+                                                   HelperText="Local de impressão"
+                                                   Placeholder="Local de impressão"
+                                                   AdornmentIcon="@Icons.Material.Filled.ShareLocation"
+                                                   AdornmentColor="Color.Success">
+
+                                            <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                                            <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                                            <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                                            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                                            <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+
+                                        </MudSelect>
+
+                                        <MudSelect Class="m-2"
+                                                   @bind-Value="@context.Item.ImpressoraComanda2"
+                                                   T="string"
+                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
+                                                   Label="Comanda 2"
+                                                   HelperText="Local de impressão"
+                                                   Placeholder="Local de impressão"
+                                                   AdornmentIcon="@Icons.Material.Filled.ShareLocation"
+                                                   AdornmentColor="Color.Success">
+
+                                            <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                                            <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                                            <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                                            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                                            <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+
+                                        </MudSelect>
+
+
+
+
+
+                                    </MudPaper>
                                 </MudItem>
                                 <MudItem xs="6" sm="3">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">xs=6 sm=3</MudPaper>
@@ -154,6 +212,8 @@
     </MudLayout>
 </MudPaper>
 
+
+<MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
 @code {
     List<ClsProduto> Produtos = new();
     private string StringDePesquisa = string.Empty;
@@ -161,19 +221,22 @@
     private bool _enableHeaderToggle = true;
     private int NumAba = 1;
     private List<ClsGrupo> Grupos = new();
+    private bool Aviso = false;
 
-    void ToggleExpand(ClsProduto item)
+    async void ToggleExpand(ClsProduto item)
     {
         if (ExpandedProduto == item)
             ExpandedProduto = null;
         else
             ExpandedProduto = item;
+
     }
 
     protected override async Task OnInitializedAsync()
     {
         await AtualizaGrupos();
         await AtualizaProdutos();
+
     }
 
     private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
@@ -202,4 +265,65 @@
     {
         NumAba = numAba;
     }
+
+    private async Task OnSaveChanges(ClsProduto produtoModificado)
+    {
+        produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
+        produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
+        var response = await ProdutoService.EditaProduto(produtoModificado);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Erro ao alterar produto", Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
+        }
+
+        StateHasChanged();
+    }
+
+    private string TraduzImpressora(string CodImpressora)
+    {
+        switch (CodImpressora)
+        {
+            case "Caixa":
+                return "Cai";
+            case "Cozinha 1":
+                return "Cz1";
+            case "Cozinha 2":
+                return "Cz2";
+            case "Cozinha 3":
+                return "Cz3";
+            case "Bar":
+                return "Bar";
+            case "Não":
+                return "Nao";
+            default:
+                return CodImpressora;
+        }
+
+    }
+
+
+
+    //----------------------------------------------------------------------- TESTE
+
+    private string _value;
+    private Margin _margin;
+    private bool _dense;
+    private bool _disabled;
+    private bool _readonly;
+    private bool _placeholder;
+    private bool _helperText;
+    private bool _helperTextOnFocus;
+    private bool _clearable;
+    private bool _fitContent;
+    private bool _modal = true;
+
+    private readonly string[] _states =
+    {
+        "Cz1","Cz2","Cz3","Bar","Cai","Nao"
+    };
 }

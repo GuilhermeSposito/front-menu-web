@@ -6,7 +6,7 @@ public class ClsProduto
 {
     [JsonPropertyName("id")] public string? Id { get; set; }
     [JsonPropertyName("codigo_interno")] public string? CodigoInterno { get; set; }
-    [JsonPropertyName("categoria_id")] public int CategoriaId { get; set; }
+    [JsonPropertyName("categoria")] public Categoria? Categoria { get; set; }
     [JsonPropertyName("grupo_id")] public int GrupoId { get; set; }
     [JsonPropertyName("descricao")] public string? Descricao { get; set; }
     [JsonPropertyName("ncm")] public string? NCM { get; set; }
@@ -44,4 +44,10 @@ public class  Preco
     [JsonPropertyName("id")] public string? Id { get; set; }
     [JsonPropertyName("DescricaoTamanho")] public string? DescricaoDoTamanho { get; set; }
     [JsonPropertyName("valor")] public float Valor { get; set; }   
+}
+
+public class Categoria
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("descricao")] public string? Descricao { get; set; }
 }

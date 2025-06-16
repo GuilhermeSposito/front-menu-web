@@ -18,5 +18,10 @@ public class ProdutoService
         return response;
     }
 
+    public async Task<HttpResponseMessage> EditaProduto(ClsProduto produto)
+    {
+        var response = await _http.PatchAsJsonAsync($"produtos/{produto.Id}", produto);
+        return response;
 
+    }
 }
