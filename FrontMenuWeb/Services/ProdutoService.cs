@@ -1,5 +1,8 @@
 ﻿using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace FrontMenuWeb.Services;
 
@@ -23,5 +26,11 @@ public class ProdutoService
         var response = await _http.PatchAsJsonAsync($"produtos/{produto.Id}", produto);
         return response;
 
+    }  
+    
+    public async Task<HttpResponseMessage> EditaPrecoDoProduto(Preco preco)
+    {
+        var response = await _http.PatchAsJsonAsync($"produtos/preco/modificar/{preco.Id}", preco);
+        return response;
     }
 }
