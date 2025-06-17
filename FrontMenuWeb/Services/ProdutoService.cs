@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using FrontMenuWeb.DTOS;
 
 namespace FrontMenuWeb.Services;
 
@@ -45,5 +46,28 @@ public class ProdutoService
     {
         var response = await _http.DeleteAsync($"produtos/{produto.Id}");
         return response;
-    }
+    }   
+    public async Task<HttpResponseMessage> DeletaPreco(Preco preco)
+    {
+        var response = await _http.DeleteAsync($"produtos/preco/deletar/{preco.Id}");
+        return response;
+    } 
+    
+    public async Task<HttpResponseMessage> AdicionaValorNoProduto(string idProduto, Preco preco)
+    {
+        AdicionarPrecoDto precoDto = new AdicionarPrecoDto()
+        {
+            DescricaoDoTamanho = preco.DescricaoDoTamanho,
+            CustosDoInsumo = preco.CustosDoInsumo,
+            CustoReal = preco.CustoReal,
+            PrecoSujetido = preco.PrecoSujetido,
+            PorcentagemDeLucro = preco.PorcentagemDeLucro,
+            Valor = preco.Valor
+        };
+
+        var response = await _http.PostAsJsonAsync($"produtos/preco/adicionar/{idProduto}", precoDto);
+        return response;
+    }   
+    
+  
 }

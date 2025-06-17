@@ -19,6 +19,10 @@
             <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
         </div>
     </div>
+            @if (grupos.Count == 0)
+            {
+                <MudProgressLinear Class="mb-3" Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+            }
     <MudDataGrid T="ClsGrupo" Items="@grupos" class="rounded-3">
         <Columns>
             <PropertyColumn Property="x => x.Id" Title="Id" />

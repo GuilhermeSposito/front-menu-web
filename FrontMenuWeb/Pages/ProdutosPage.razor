@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @page "/produtos"
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -19,13 +20,24 @@
                 <MudText Typo="Typo.h4">Produtos</MudText>
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
-            <div>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Novo Produto</MudButton>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ToggleOpen">
+                    @(_openBtnAdicionarProduto ? "Fechar" : "Novo Produto")
+                </MudButton>
+
+                @*<MudButton Variant="Variant.Text" OnClick="@(() => OpenDrawer(Anchor.End))">End</MudButton>*@
+
+                <MudPopover Open="@_openBtnAdicionarProduto" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter">
+                    <div class="d-flex flex-column gap-3 pa-1">
+                        <MudButton OnClick=@(p=> {ReutilizarInfosDoProdutoParaAdicionarNovo = true; _openBtnAdicionarProduto = false;}) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1  w-100" style="color: white">Reultilizar infos</MudButton>
+                        <MudButton Variant="Variant.Filled" OnClick="@(() => {OpenDrawer(Anchor.End); ToggleOpen();})" Color="Color.Primary" Class="rounded-1 " style="color: white">Novo</MudButton>
+                    </div>
+                </MudPopover>
             </div>
         </div>
 
 
-        <MudDataGrid T="ClsProduto" Items="@Produtos" class="rounded-3">
+        <MudDataGrid MultiSelection="false" T="ClsProduto" @bind-SelectedItem="ProdutoSelecionado" Items="@Produtos" class="rounded-3">
             <ToolBarContent>
                 <div class="d-flex align-items-center justify-content-between w-50">
                     <div>
@@ -51,8 +63,16 @@
 
             </ToolBarContent>
             <Columns>
+                @if (Produtos.Count == 0)
+                {
+                    <MudProgressLinear Class="mb-3" Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+                }
                 <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
-                <PropertyColumn Property="x => x.Descricao" Title="Nome" />
+                @if (ReutilizarInfosDoProdutoParaAdicionarNovo)
+                {
+                    <SelectColumn T="ClsProduto" ShowInHeader="false" />
+                }
+                <PropertyColumn Property="x => x.Descricao" Title="Nome">Teste</PropertyColumn>
                 <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
                 <TemplateColumn T="ClsProduto" Hidden="false" Title="Preço">
                     <CellTemplate Context="context">
@@ -403,6 +423,11 @@
 
 
                                                     </MudPaper>
+                                                    <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
+                                                        <MudButton OnClick=@(async p=> {await DeletaPreco(preco);}) Color="Color.Error" Variant="Variant.Filled">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
+                                                        </MudButton>
+                                                    </MudPaper>
                                                 </MudItem>
                                             }
 
@@ -448,7 +473,14 @@
                                         }
                                     </MudGrid>
                                 </MudItem>
-
+                                @if (!context.Item.TamanhoUnico)
+                                {
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8">
+                                            <MudButton OnClick=@(async p=> {await AdicionarNovoValor(context.Item);}) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
+                                        </MudPaper>
+                                    </MudItem>
+                                }
                             </MudGrid>
                         }
                         else if (NumAba == 2)
@@ -491,6 +523,33 @@
             </MudPaper>
         </MudPaper>
     }
+
+
+
+
+
+
+
+    @*---------------------------------------------------------------drawer de Adicionar novo produto------------------------------------------------------*@
+
+
+
+
+    <MudDrawer @bind-Open="@_open" Width="@_width" Height="@_height" Anchor="@_anchorDrawer" Elevation="1" Variant="@DrawerVariant.Temporary">
+        <MudDrawerHeader Class="d-flex justify-content-center align-items-center fw-bold">
+            <MudText Typo="Typo.h6">Adicionar Novo Produto</MudText>
+        </MudDrawerHeader>
+
+        @if (ProdutoSelecionado is not null)
+        {
+            <FrontMenuWeb.Components.Drawers.GridDeAdicionarProduto Produtos="Produtos" Grupos="Grupos" ProdutoSelecionado="ProdutoSelecionado" />
+        }else{
+            <FrontMenuWeb.Components.Drawers.GridDeAdicionarProduto Produtos="Produtos" Grupos="Grupos" ProdutoSelecionado="new ClsProduto()" />
+        }
+
+    </MudDrawer>
+
+
 </MudPaper>
 
 
@@ -508,6 +567,40 @@
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
     public bool PrecoFoiModificado = false;
     public List<Preco> PrecosParaModificar = new List<Preco>();
+    private bool ReutilizarInfosDoProdutoParaAdicionarNovo = false;
+
+    private ClsProduto? _produtoSelecionado = new ClsProduto();
+
+    private ClsProduto? ProdutoSelecionado
+    {
+        get => _produtoSelecionado;
+        set
+        {
+            if (_produtoSelecionado != value)
+            {
+                _produtoSelecionado = value;
+                OnProdutoSelecionado(value);
+            }
+        }
+    }
+
+
+
+
+    public bool _openBtnAdicionarProduto;
+    public void ToggleOpen()
+    {
+        if (_openBtnAdicionarProduto)
+            _openBtnAdicionarProduto = false;
+        else
+            _openBtnAdicionarProduto = true;
+
+        if (ReutilizarInfosDoProdutoParaAdicionarNovo){
+            ReutilizarInfosDoProdutoParaAdicionarNovo = false;
+            ProdutoSelecionado = null;
+        }
+    }
+
 
     async void ToggleExpand(ClsProduto item)
     {
@@ -516,6 +609,15 @@
         else
             ExpandedProduto = item;
 
+    }
+
+    private void OnProdutoSelecionado(ClsProduto produto)
+    {
+        if (produto != null)
+        {
+            OpenDrawer(Anchor.End);
+
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -573,9 +675,64 @@
         StateHasChanged();
     }
 
+    private async Task AdicionarNovoValor(ClsProduto prod)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Produto", prod }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarValor>($"Adicionar valor para o produto {prod.Descricao}", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+
+            Snackbar.Add($"Novo valor adicionado com sucesso!", Severity.Success);
+            await AtualizaProdutos();
+            StateHasChanged();
+        }
+
+    }
+
+
     private async Task OnTamanhoUnicoSelected(bool NovoValor)
     {
 
+    }
+
+    private async Task DeletaPreco(Preco preco)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+          {
+              { x => x.ContentText, $"Você tem certeza que deseja excluir esse preco de {preco.Valor}? Essa operação não pode ser desfeita. " },
+              { x => x.ButtonText, "Sim" },
+              { x => x.Color, Color.Error}
+          };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+
+            var response = await ProdutoService.DeletaPreco(preco);
+            if (!response.IsSuccessStatusCode)
+            {
+                var ResponseAsString = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
+                await AtualizaProdutos();
+            }
+
+        }
+
+        StateHasChanged();
     }
 
     private string TraduzImpressora(string CodImpressora)
@@ -605,7 +762,7 @@
         if (eMudancaRapida)
         {
             var produtoNaMemoria = Produtos.FirstOrDefault(x => x.Precos.Contains(preco))!;
-            ClsProduto produto =  await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);          
+            ClsProduto produto = await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);
             var precoAntigo = produto.Precos.FirstOrDefault(x => x.Id == preco.Id);
 
             if (preco.Valor != precoAntigo!.Valor)
@@ -613,7 +770,7 @@
                 PrecoFoiModificado = true;
                 PrecosParaModificar.Add(preco);
             }
-         
+
         }
         else
         {
@@ -749,4 +906,39 @@
     {
         "Cz1","Cz2","Cz3","Bar","Cai","Nao"
     };
+
+
+    //------------------------------------------------------------------------ Lógica do drawer
+
+
+    private bool _open;
+    private Anchor _anchorDrawer;
+    private string _width, _height;
+
+    private void OpenDrawer(Anchor anchor)
+    {
+        _open = true;
+        _anchorDrawer = anchor;
+
+        switch (anchor)
+        {
+            case Anchor.Start:
+                _width = "300px";
+                _height = "100%";
+                break;
+            case Anchor.End:
+                _width = "75%";
+                _height = "100%";
+                break;
+            case Anchor.Bottom:
+                _width = "100%";
+                _height = "200px";
+                break;
+            case Anchor.Top:
+                _width = "100%";
+                _height = "350px";
+                break;
+        }
+    }
+
 }

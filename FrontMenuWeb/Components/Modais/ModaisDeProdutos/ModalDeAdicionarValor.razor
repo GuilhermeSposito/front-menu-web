@@ -1,0 +1,85 @@
+﻿@using System.Globalization
+@using FrontMenuWeb.Services
+@inject ProdutoService ProdutoService
+
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+
+            <MudForm class="" Spacing="5" @onsubmit="Submit">
+
+
+                <MudTextField @bind-Value="NovoPreco.DescricaoDoTamanho"
+                Disabled="false"
+                Class="w-25 m-2"
+                Label="Descrição do Tamanho"
+                HelperText="Descrição do tamanho"
+                Variant="Variant.Text"
+                Margin="Margin.Dense" />
+
+                <MudNumericField Immediate="false"
+                Label="Valor do tamanho"
+                Format="N2"
+                Culture="_pt"
+                T="double"
+                HideSpinButtons="true"
+                @bind-Value="NovoPreco.Valor" />
+
+
+            </MudForm>
+            @if (ErroAoAdicionarValor)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                    @MensagemDeErro
+                </MudAlert>
+            }
+
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Adicionar</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    private Preco NovoPreco { get; set; } = new Preco();
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+    private bool ErroAoAdicionarValor = false;
+    private string MensagemDeErro = string.Empty;
+    [Parameter] public ClsProduto Produto { get; set; }
+
+    private async Task Submit()
+    {
+        if (NovoPreco.Valor > 0 && !string.IsNullOrEmpty(NovoPreco.DescricaoDoTamanho))
+        {
+            Console.WriteLine($"Adicionando valor: {NovoPreco.Valor} para o produto: {Produto.Id}");
+
+            var response = await ProdutoService.AdicionaValorNoProduto(Produto.Id!, NovoPreco);
+
+            if (response.IsSuccessStatusCode)
+                MudDialog.Close(DialogResult.Ok(true));
+
+            var responseAsString = await response.Content.ReadAsStringAsync();
+            MensagemDeErro = responseAsString;
+            ErroAoAdicionarValor = true;
+
+        }else{
+            MensagemDeErro = "Verifique os campos e tente novamente!";
+            ErroAoAdicionarValor = true;
+        }
+
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+}
+
