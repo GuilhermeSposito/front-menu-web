@@ -20,6 +20,13 @@ public class ProdutoService
 
         return response;
     }
+    
+    public async Task<ClsProduto> GetProdutoAsync(string ProdutoID)
+    {
+        ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/{ProdutoID}") ?? new ClsProduto();
+
+        return response;
+    }
 
     public async Task<HttpResponseMessage> EditaProduto(ClsProduto produto)
     {
@@ -31,6 +38,12 @@ public class ProdutoService
     public async Task<HttpResponseMessage> EditaPrecoDoProduto(Preco preco)
     {
         var response = await _http.PatchAsJsonAsync($"produtos/preco/modificar/{preco.Id}", preco);
+        return response;
+    }    
+    
+    public async Task<HttpResponseMessage> DeletaProduto(ClsProduto produto)
+    {
+        var response = await _http.DeleteAsync($"produtos/{produto.Id}");
         return response;
     }
 }
