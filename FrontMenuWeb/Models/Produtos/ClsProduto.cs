@@ -37,6 +37,8 @@ public class ClsProduto
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
     [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
 
+   
+
 }
 
 public class  Preco
