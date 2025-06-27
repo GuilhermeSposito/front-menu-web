@@ -173,6 +173,16 @@
                                         <MudTextField @bind-Value=@context.Item.Descricao @onfocusout=@(prop => OnSaveChanges(context.Item)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                     </MudPaper>
                                 </MudItem>
+                                <MudItem xs="12">
+                                    @*Codigo de barras*@
+                                    <MudExpansionPanels>
+                                        <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
+                                            <MudTextField @bind-Value=@context.Item.CodBarras @onfocusout=@(async prop => await OnSaveChanges(context.Item)) Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        </MudExpansionPanel>
+                                    </MudExpansionPanels>
+
+
+                                </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
                                         <MudSelect @bind-Value="context.Item.Grupo"
@@ -277,50 +287,52 @@
 
                                         </MudPaper>
 
-                                        <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
+                                        @if (context.Item.CardapioDoDia)
+                                        {
+                                            <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
 
-                                            <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                <MudNumericField T="int"
-                                                                 Value="context.Item.QtdBase"
-                                                                 Immediate="false"
-                                                                 ValueChanged="@(valor => {context.Item.QtdBase = valor; OnSaveChanges(context.Item);})"
-                                                                 Label="Qtd Base"
-                                                                 Variant="Variant.Outlined"
-                                                                 Step="1"
-                                                                 Min="0"
-                                                                 Max="100" />
+                                                <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                    <MudNumericField T="int"
+                                                                     Value="context.Item.QtdBase"
+                                                                     Immediate="false"
+                                                                     ValueChanged="@(valor => {context.Item.QtdBase = valor; OnSaveChanges(context.Item);})"
+                                                                     Label="Qtd Base"
+                                                                     Variant="Variant.Outlined"
+                                                                     Step="1"
+                                                                     Min="0"
+                                                                     Max="100" />
+                                                </MudPaper>
+
+                                                <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                    <MudNumericField T="int"
+                                                                     Value="context.Item.QtdGuarnicao"
+                                                                     Immediate="false"
+                                                                     ValueChanged="@(valor => {context.Item.QtdGuarnicao = valor; OnSaveChanges(context.Item);})"
+                                                                     Label="Qtd Guarnição"
+                                                                     Variant="Variant.Outlined"
+                                                                     Step="1"
+                                                                     Min="0"
+                                                                     Max="100" />
+                                                </MudPaper>
+
+
+                                                <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                    <MudNumericField T="int"
+                                                                     Value="context.Item.QtdCarnes"
+                                                                     Immediate="false"
+                                                                     ValueChanged="@(valor => {context.Item.QtdCarnes = valor; OnSaveChanges(context.Item);})"
+                                                                     Label="Qtd Carnes"
+                                                                     Variant="Variant.Outlined"
+                                                                     Step="1"
+                                                                     Min="0"
+                                                                     Max="100" />
+                                                </MudPaper>
+
+
+
+
                                             </MudPaper>
-
-                                            <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                <MudNumericField T="int"
-                                                                 Value="context.Item.QtdGuarnicao"
-                                                                 Immediate="false"
-                                                                 ValueChanged="@(valor => {context.Item.QtdGuarnicao = valor; OnSaveChanges(context.Item);})"
-                                                                 Label="Qtd Guarnição"
-                                                                 Variant="Variant.Outlined"
-                                                                 Step="1"
-                                                                 Min="0"
-                                                                 Max="100" />
-                                            </MudPaper>
-
-
-                                            <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                <MudNumericField T="int"
-                                                                 Value="context.Item.QtdCarnes"
-                                                                 Immediate="false"
-                                                                 ValueChanged="@(valor => {context.Item.QtdCarnes = valor; OnSaveChanges(context.Item);})"
-                                                                 Label="Qtd Carnes"
-                                                                 Variant="Variant.Outlined"
-                                                                 Step="1"
-                                                                 Min="0"
-                                                                 Max="100" />
-                                            </MudPaper>
-
-
-
-
-                                        </MudPaper>
-
+                                        }
 
 
                                     </MudPaper>
@@ -399,6 +411,96 @@
 
                                     </MudPaper>
                                 </MudItem>
+
+                                @*Item Resgastavel*@
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Resgatavel por pontos ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="context.Item.ItemResgatavel"
+                                                           ValueChanged="@(async valor => { context.Item.ItemResgatavel = valor;await OnSaveChanges(context.Item); })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Vende Pela Internet ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="false"
+                                                           ValueChanged="@(valor => { })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Ultiliza produto na balança ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="context.Item.UltilizaProdutoNaBalanca"
+                                                           ValueChanged="@(async valor => { context.Item.UltilizaProdutoNaBalanca = valor; await OnSaveChanges(context.Item); })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Ocultar item no app ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="context.Item.OcultaTablet"
+                                                           ValueChanged="@(async valor => { context.Item.OcultaTablet = valor; await OnSaveChanges(context.Item); })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudNumericField Immediate="false"
+                                                             Variant="Variant.Outlined"
+                                                             Label="Valor da Embalagem"
+                                                             Format="N2"
+                                                             Culture="_pt"
+                                                             T="float"
+                                                             HideSpinButtons="true"
+                                                             @bind-Value="context.Item.TaxaDeViagem"
+                                                             @onfocusout="@(async () => await OnSaveChanges(context.Item))" />
+                                        </MudPaper>
+
+                                        @if (context.Item.ItemResgatavel)
+                                        {
+                                            <MudPaper Elevation="0" Class="w-25" Square="false">
+                                                <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                    <MudNumericField Class="w-100"
+                                                                     T="int"
+                                                                     Value="context.Item.AcumulaQuanto"
+                                                                     Immediate="false"
+                                                                     ValueChanged="@(async valor => {context.Item.AcumulaQuanto = valor; await OnSaveChanges(context.Item);})"
+                                                                     Label="Qtd que acumula"
+                                                                     Variant="Variant.Outlined"
+                                                                     Step="1"
+                                                                     Min="0"
+                                                                     Max="100" />
+                                                </MudPaper>
+
+                                            </MudPaper>
+                                        }
+
+                                    </MudPaper>
+                                </MudItem>
+
+
+
+
+
 
                                 @*Valores*@
                                 <MudItem xs="12">
@@ -582,20 +684,28 @@
 
     private void AddProduto(ClsProduto? produtoParaReultilizar)
     {
-        if (produtoParaReultilizar is null)
+        try
         {
-            var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
-            Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
+            if (produtoParaReultilizar is null)
+            {
+                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+                Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
+
+            }
+            else
+            {
+                ProdutoSelecionado = produtoParaReultilizar;
+                ReutilizarInfosDoProdutoParaAdicionarNovo = true;
+
+                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+
+                Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
+            }
 
         }
-        else
+        catch (Exception ex)
         {
-            ProdutoSelecionado = produtoParaReultilizar;
-            ReutilizarInfosDoProdutoParaAdicionarNovo = true;
-
-            var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
-
-            Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
+            Snackbar.Add($"Erro ao adicionar produto: {ex.Message}", Severity.Error);
         }
     }
 
@@ -610,14 +720,23 @@
 
     private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
     {
-        carregandoProduto = false;
+        try
+        {
+            carregandoProduto = false;
 
-        Produtos = await ProdutoService.GetProdutosAsync();
+            Produtos = await ProdutoService.GetProdutosAsync();
 
-        if (Produtos is not null)
-            Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
+            if (Produtos is not null)
+                Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
 
-        carregandoProduto = false;
+            carregandoProduto = false;
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao atualizar produto", Severity.Error);
+        }
+
     }
 
     private async Task AtualizaGrupos(bool ProdutoFoiModificado = false)
@@ -627,24 +746,26 @@
 
     private async Task RecarregarProdutosAposPesquisa()
     {
-        if (!string.IsNullOrEmpty(StringDePesquisa))
+        try
         {
-            if (Produtos is not null)
-                Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(StringDePesquisa))
+            {
+                if (Produtos is not null)
+                    Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                await AtualizaProdutos();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            await AtualizaProdutos();
+            Snackbar.Add("Erro ao recarregar produtos.", Severity.Error);
         }
+
     }
 
-    private string GetMultiSelectionText(HashSet<ClsGrupo> grupos)
-    {
-        if (grupos == null || grupos.Count == 0)
-            return "Nenhum grupo selecionado";
 
-        return string.Join(", ", grupos.Select(g => g.Descricao));
-    }
 
     private async Task TrocaAbaDeInfosDoProduto(int numAba = 1)
     {
@@ -653,76 +774,101 @@
 
     private async Task OnSaveChanges(ClsProduto produtoModificado)
     {
-        produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
-        produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
-        var response = await ProdutoService.EditaProduto(produtoModificado);
-        var responseAsString = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            Snackbar.Add($"{responseAsString}", Severity.Error);
+            produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
+            produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
+            var response = await ProdutoService.EditaProduto(produtoModificado);
+            var responseAsString = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add($"{responseAsString}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
+            }
+
+            StateHasChanged();
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
+            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
         }
 
-        StateHasChanged();
     }
 
     private async Task AdicionarNovoValor(ClsProduto prod)
     {
-        var parameters = new DialogParameters
+        try
         {
-            { "Produto", prod }
-        };
+            var parameters = new DialogParameters
+            {
+                { "Produto", prod }
+            };
 
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
-        var dialog = await DialogService.ShowAsync<ModalDeAdicionarValor>($"Adicionar valor para o produto {prod.Descricao}", parameters, options: options);
-        var result = await dialog.Result;
+            var dialog = await DialogService.ShowAsync<ModalDeAdicionarValor>($"Adicionar valor para o produto {prod.Descricao}", parameters, options: options);
+            var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-        {
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
 
-            Snackbar.Add($"Novo valor adicionado com sucesso!", Severity.Success);
-            await AtualizaProdutos();
-            StateHasChanged();
+                Snackbar.Add($"Novo valor adicionado com sucesso!", Severity.Success);
+                await AtualizaProdutos();
+                StateHasChanged();
+            }
+
         }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
+        }
+
 
     }
 
 
     private async Task DeletaPreco(Preco preco)
     {
-        var parameters = new DialogParameters<ModalDeExcluir>
-          {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+             {
               { x => x.ContentText, $"Você tem certeza que deseja excluir esse preco de {preco.Valor}? Essa operação não pode ser desfeita. " },
               { x => x.ButtonText, "Sim" },
               { x => x.Color, Color.Error}
-          };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-        var result = await dialog.Result;
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-        {
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
 
-            var response = await ProdutoService.DeletaPreco(preco);
-            if (!response.IsSuccessStatusCode)
-            {
-                var ResponseAsString = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
+                var response = await ProdutoService.DeletaPreco(preco);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var ResponseAsString = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
+                    await AtualizaProdutos();
+                }
+
             }
-            else
-            {
-                Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
-                await AtualizaProdutos();
-            }
+
+            StateHasChanged();
 
         }
-
-        StateHasChanged();
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir preço: {ex.Message}", Severity.Error);
+        }
     }
 
     private string TraduzImpressora(string CodImpressora)
@@ -749,71 +895,87 @@
 
     private async Task AtualizaValorDoProduto(Preco preco, bool eMudancaRapida = false)
     {
-        if (eMudancaRapida && Produtos is not null)
+        try
         {
-            var produtoNaMemoria = Produtos.FirstOrDefault(x => x.Precos.Contains(preco))!;
-            ClsProduto produto = await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);
-            var precoAntigo = produto.Precos.FirstOrDefault(x => x.Id == preco.Id);
-
-            if (preco.Valor != precoAntigo!.Valor)
+            if (eMudancaRapida && Produtos is not null)
             {
-                PrecoFoiModificado = true;
-                PrecosParaModificar.Add(preco);
-            }
+                var produtoNaMemoria = Produtos.FirstOrDefault(x => x.Precos.Contains(preco))!;
+                ClsProduto produto = await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);
+                var precoAntigo = produto.Precos.FirstOrDefault(x => x.Id == preco.Id);
 
-        }
-        else
-        {
-            var response = await ProdutoService.EditaPrecoDoProduto(preco);
-            var responseAsString = await response.Content.ReadAsStringAsync();
+                if (preco.Valor != precoAntigo!.Valor)
+                {
+                    PrecoFoiModificado = true;
+                    PrecosParaModificar.Add(preco);
+                }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add($"{responseAsString}", Severity.Error);
             }
             else
             {
-                Snackbar.Add($"valor alterado com sucesso!", Severity.Success);
+                var response = await ProdutoService.EditaPrecoDoProduto(preco);
+                var responseAsString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add($"{responseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"valor alterado com sucesso!", Severity.Success);
+                }
+
+                StateHasChanged();
             }
-
-            StateHasChanged();
         }
+        catch (Exception ex)
+        {
 
+            Snackbar.Add($"Erro ao atualizar valor do produto: {ex.Message}", Severity.Error);
+        }
 
 
     }
 
     private async Task DeletaProduto(ClsProduto Prod)
     {
-
-        var parameters = new DialogParameters<ModalDeExcluir>
-          {
-              { x => x.ContentText, $"Você tem certeza que deseja excluir o produto {Prod.Descricao}? Essa operação não pode ser desfeita. " },
-              { x => x.ButtonText, "Sim" },
-              { x => x.Color, Color.Error}
-          };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-        var result = await dialog.Result;
-
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        try
         {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir o produto {Prod.Descricao}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
 
-            var response = await ProdutoService.DeletaProduto(Prod);
-            if (!response.IsSuccessStatusCode)
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                var ResponseAsString = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Erro ao excluir produto: {ResponseAsString}", Severity.Error);
+
+                var response = await ProdutoService.DeletaProduto(Prod);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var ResponseAsString = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Erro ao excluir produto: {ResponseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"Produto {Prod.Descricao} exclúido com sucesso!", Severity.Error);
+                    await AtualizaProdutos();
+                }
+
             }
-            else
-            {
-                Snackbar.Add($"Produto {Prod.Descricao} exclúido com sucesso!", Severity.Error);
-                await AtualizaProdutos();
-            }
+
+            StateHasChanged();
 
         }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir produto: {ex.Message}", Severity.Error);
+        }
 
-        StateHasChanged();
+
     }
 
     public async void DescartarPrecos()
@@ -827,45 +989,61 @@
 
     public async Task SalvarPrecos()
     {
-        if (PrecosParaModificar.Count > 0)
+        try
         {
-            foreach (var preco in PrecosParaModificar)
+            if (PrecosParaModificar.Count > 0)
             {
-                var response = await ProdutoService.EditaPrecoDoProduto(preco);
-                if (!response.IsSuccessStatusCode)
+                foreach (var preco in PrecosParaModificar)
                 {
-                    var ResponseAsString = await response.Content.ReadAsStringAsync();
-                    Snackbar.Add($"Erro ao salvar preço: {ResponseAsString}", Severity.Error);
+                    var response = await ProdutoService.EditaPrecoDoProduto(preco);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var ResponseAsString = await response.Content.ReadAsStringAsync();
+                        Snackbar.Add($"Erro ao salvar preço: {ResponseAsString}", Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Preço {preco.Valor} salvo com sucesso!", Severity.Success);
+                    }
                 }
-                else
-                {
-                    Snackbar.Add($"Preço {preco.Valor} salvo com sucesso!", Severity.Success);
-                }
+                PrecoFoiModificado = false;
+                PrecosParaModificar.Clear();
+                await AtualizaProdutos();
             }
-            PrecoFoiModificado = false;
-            PrecosParaModificar.Clear();
-            await AtualizaProdutos();
+            else
+            {
+                Snackbar.Add("Nenhum preço foi modificado.", Severity.Warning);
+            }
+            StateHasChanged();
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar.Add("Nenhum preço foi modificado.", Severity.Warning);
+            Snackbar.Add($"Erro ao salvar preços: {ex.Message}", Severity.Error);
         }
-        StateHasChanged();
+
     }
 
     private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(value))
+        try
         {
-            return Produtos.Select(x => x.Descricao!).Distinct();
-        }
+            if (string.IsNullOrEmpty(value))
+            {
+                return Produtos.Select(x => x.Descricao!).Distinct();
+            }
 
-        return Produtos
-            .Where(x =>
-                (x.CodigoInterno?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (x.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
-            .Select(x => x.Descricao!)
-            .Distinct();
+            return Produtos
+                .Where(x =>
+                    (x.CodigoInterno?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (x.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
+                .Select(x => x.Descricao!)
+                .Distinct();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar produtos: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<string>();
+        }
     }
 
 
@@ -900,13 +1078,30 @@
 
     private async void FiltroDeGrupoAcionado()
     {
-
-        if (Produtos is not null && _selectedGrupo is not null)
+        try
         {
-            Produtos = Produtos.FindAll(x => x.Grupo.Id == _selectedGrupo.Id);
-            Snackbar.Add($"Filtro de grupo acionado: {_selectedGrupo.Descricao}", Severity.Info);
+            if (Produtos is not null && _selectedGrupo is not null)
+            {
+                Produtos = Produtos.FindAll(x => x.Grupo.Id == _selectedGrupo.Id);
+                Snackbar.Add($"Filtro de grupo acionado: {_selectedGrupo.Descricao}", Severity.Info);
+            }
+
+            await AtualizaProdutos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao aplicar filtro de grupo: {ex.Message}", Severity.Error);
         }
 
-        await AtualizaProdutos();
+    }
+
+
+
+    //Lógica do expand do codigo de barras
+    bool _expanded = true;
+
+    private void OnExpandCollapseClick()
+    {
+        _expanded = !_expanded;
     }
 }

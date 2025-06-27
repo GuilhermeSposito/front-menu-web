@@ -1,5 +1,6 @@
 ﻿@page "/adicionarproduto/{idDeProdutoReaproveitado}"
 @page "/adicionarproduto"
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Services
 @using System.Globalization
 @inject ProdutoService ProdutoService
@@ -36,24 +37,39 @@
                                         </MudFocusTrap>
                                     </MudPaper>
                                 </MudItem>
-                                <MudItem xs="12" sm="6">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="Produto.Grupo"
-                                                   T="ClsGrupo"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="Grupo selecionado"
-                                                   HelperText="Grupo"
-                                                   Placeholder="Escolha seu grupo"
-                                                   AdornmentIcon="@Icons.Material.Filled.Fastfood"
-                                                   AdornmentColor="Color.Success">
+                                <MudItem xs="12">
+                                    @*Codigo de barras*@
+                                    <MudExpansionPanels>
+                                        <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
+                                            <MudTextField @bind-Value=@Produto.CodBarras Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        </MudExpansionPanel>
+                                    </MudExpansionPanels>
 
-                                            @foreach (var grupo in Grupos)
-                                            {
-                                                <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
+
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudPaper Class="d-flex flex-column  align-center justify-center mud-width-full py-8">
+                                        <MudPaper Elevation="0" Square="false" Class="w-100">
+                                            <MudSelect @bind-Value="Produto.Grupo"
+                                                       T="ClsGrupo"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="Grupo selecionado"
+                                                       HelperText="Grupo"
+                                                       Placeholder="Escolha seu grupo"
+                                                       AdornmentIcon="@Icons.Material.Filled.Fastfood"
+                                                       AdornmentColor="Color.Success">
+
+                                                @foreach (var grupo in Grupos)
+                                                {
+                                                    <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+
+
+                                        <MudButton OnClick=OpenDialogAddGrupoAsync StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled">Cadastrar</MudButton>
                                     </MudPaper>
+
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
@@ -260,6 +276,89 @@
                                     </MudPaper>
                                 </MudItem>
 
+
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Resgatavel por pontos ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="Produto.ItemResgatavel"
+                                                           ValueChanged="@(async valor => {Produto.ItemResgatavel = valor;})">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Vende Pela Internet ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="false"
+                                                           ValueChanged="@(valor => { })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Ultiliza produto na balança ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="Produto.UltilizaProdutoNaBalanca"
+                                                           ValueChanged="@(async valor => { Produto.UltilizaProdutoNaBalanca = valor; })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Ocultar item no app ? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                           Value="Produto.OcultaTablet"
+                                                           ValueChanged="@(async valor => { Produto.OcultaTablet = valor; })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudNumericField Immediate="false"
+                                                             Variant="Variant.Outlined"
+                                                             Label="Valor da Embalagem"
+                                                             Format="N2"
+                                                             Culture="_pt"
+                                                             T="float"
+                                                             HideSpinButtons="true"
+                                                             @bind-Value="Produto.TaxaDeViagem" />
+                                        </MudPaper>
+
+                                        @if (Produto.ItemResgatavel)
+                                        {
+                                            <MudPaper Elevation="0" Class="w-25" Square="false">
+                                                <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                    <MudNumericField Class="w-100"
+                                                                     T="int"
+                                                                     Value="Produto.AcumulaQuanto"
+                                                                     Immediate="false"
+                                                                     ValueChanged="@(async valor => {Produto.AcumulaQuanto = valor;})"
+                                                                     Label="Qtd que acumula"
+                                                                     Variant="Variant.Outlined"
+                                                                     Step="1"
+                                                                     Min="0"
+                                                                     Max="100" />
+                                                </MudPaper>
+
+                                            </MudPaper>
+                                        }
+
+                                    </MudPaper>
+                                </MudItem>
 
                             </MudGrid>
 
@@ -485,7 +584,7 @@
             }
 
 
-            Grupos = await GrupoService.GetGrupos() ?? new List<ClsGrupo>();
+            await AtualizaGrupos();
 
 
         }
@@ -499,12 +598,25 @@
         }
     }
 
+    private async  Task AtualizaGrupos()
+    {
+        try
+        {
+            Grupos = await GrupoService.GetGrupos() ?? new List<ClsGrupo>();
+        }
+        catch (Exception ex)
+        {
+            ExibeErro(ex.Message);
+        }
+    }
+
+
     private async Task AdicionarProduto()
     {
         try
         {
             Produto.Id = null;
-            foreach(var preco in Produto.Precos)
+            foreach (var preco in Produto.Precos)
             {
                 preco.Id = null; // Garantindo que os IDs dos preços sejam nulos para criar novos preços
             }
@@ -578,5 +690,26 @@
         {
             _tabs.ActivePanelIndex = proxima;
         }
+    }
+
+    private async Task OpenDialogAddGrupoAsync()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Grupos", Grupos }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add($"Grupo adicionado com sucesso!", Severity.Success);
+            await AtualizaGrupos();
+            StateHasChanged();
+        }
+
     }
 }
