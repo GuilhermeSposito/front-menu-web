@@ -33,21 +33,6 @@
                      SelectOnRowClick="false"
                      Class="rounded-3">
             <ToolBarContent>
-                <div class="d-flex align-items-center justify-content-between w-50">
-                    <div>
-                    </div>
-                    <div>
-                    </div>
-                </div>
-
-                <MudSelect @bind-Value="_selectedGrupo" @bind-Value:after="FiltroDeGrupoAcionado" On Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
-                    <MudSelectItem Value="_selectedGrupo = null!">Sem filtro</MudSelectItem>
-                    @foreach (var grupo in Grupos)
-                    {
-                        <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
-                    }
-                </MudSelect>
-
 
 
                 <MudAutocomplete T="string"
@@ -64,6 +49,24 @@
                                  CoerceText="true"
                                  Dense="true"
                                  Clearable />
+
+                <MudSelect @bind-Value="_selectedGrupo" @bind-Value:after="FiltroDeGrupoAcionado" On Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
+                    <MudSelectItem Value="_selectedGrupo = null!">Sem filtro</MudSelectItem>
+                    @foreach (var grupo in Grupos)
+                    {
+                        <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudSelect @bind-Value="_SelectedCategoria" @bind-Value:after="FiltroDeCategoriaAcionado" On Label="Filtre Por Categoria" Placeholder="Use Filtro por Categoria" Variant="Variant.Outlined" ShrinkLabel>
+                    <MudSelectItem Value="_SelectedCategoria = null!">Sem filtro</MudSelectItem>
+                    @foreach (var categoria in Categorias)
+                    {
+                        <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
+                    }
+                </MudSelect>
+
+
             </ToolBarContent>
             <Columns>
                 @if (carregandoProduto)
@@ -206,6 +209,7 @@
                                 <MudItem xs="12" sm="6">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
                                         <MudSelect @bind-Value="context.Item.Categoria"
+                                                   SelectedValuesChanged=@(async prop=>{context.Item.CategoriaId = context.Item.Categoria!.Id; await OnSaveChanges(context.Item);})
                                                    T="Categoria"
                                                    Class="m-3"
                                                    ToStringFunc="g=> g.Descricao"
@@ -214,7 +218,13 @@
                                                    Placeholder="Categoria Selecionada"
                                                    AdornmentIcon="@Icons.Material.Filled.FoodBank"
                                                    AdornmentColor="Color.Success"
-                                                   Disabled="true">
+                                                   Disabled="false">
+
+
+                                            @foreach (var categoria in Categorias)
+                                            {
+                                                <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
+                                            }
                                         </MudSelect>
                                     </MudPaper>
                                 </MudItem>
@@ -668,6 +678,7 @@
 <MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
 @code {
     List<ClsProduto>? Produtos = new();
+    private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
     private string StringDePesquisa = string.Empty;
     ClsProduto? ExpandedProduto;
     private bool _enableHeaderToggle = true;
@@ -1091,6 +1102,27 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao aplicar filtro de grupo: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private Categoria _SelectedCategoria;
+
+    private async void FiltroDeCategoriaAcionado()
+    {
+        try
+        {
+            if (Produtos is not null && _SelectedCategoria is not null)
+            {
+                Produtos = Produtos.FindAll(x => x.Categoria!.Id == _SelectedCategoria.Id);
+                Snackbar.Add($"Filtro de categoria acionado: {_SelectedCategoria.Descricao}", Severity.Info);
+            }
+
+            await AtualizaProdutos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao aplicar filtro de categoria: {ex.Message}", Severity.Error);
         }
 
     }

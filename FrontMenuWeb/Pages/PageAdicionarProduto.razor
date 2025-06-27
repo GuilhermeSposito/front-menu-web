@@ -82,7 +82,12 @@
                                                    Placeholder="Categoria Selecionada"
                                                    AdornmentIcon="@Icons.Material.Filled.FoodBank"
                                                    AdornmentColor="Color.Success"
-                                                   Disabled="true">
+                                                   Disabled="false">
+
+                                            @foreach (var categoria in Categorias)
+                                            {
+                                                <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
+                                            }
                                         </MudSelect>
                                     </MudPaper>
                                 </MudItem>
@@ -533,7 +538,7 @@
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
     private string NovoCodigoRecomendado = "0000";
     private List<ClsGrupo> Grupos { get; set; } = new List<ClsGrupo>();
-
+    private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
 
     protected override async Task OnInitializedAsync()
     {
@@ -620,6 +625,7 @@
             {
                 preco.Id = null; // Garantindo que os IDs dos preços sejam nulos para criar novos preços
             }
+            Produto.CategoriaId = Produto.Categoria?.Id ?? 1; // Garantindo que a categoria seja definida
 
             var resposta = await ProdutoService.AdicionaProdutoAsync(Produto);
 
