@@ -20,8 +20,8 @@
                 <MudText Typo="Typo.h4">Produtos</MudText>
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
-            <div class="d-flex"
-                        <MudButton OnClick="@(() => {OpenDrawer(Anchor.End);})" Style="background-color:#f88113; color: white;">Novo Produto</MudButton>
+            <div class="d-flex">
+                <MudButton OnClick="@(() => { AddProduto(null); })" Style="background-color:#f88113; color: white;">Novo Produto</MudButton>
             </div>
         </div>
 
@@ -40,6 +40,16 @@
                     </div>
                 </div>
 
+                <MudSelect @bind-Value="_selectedGrupo" @bind-Value:after="FiltroDeGrupoAcionado" On Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
+                    <MudSelectItem Value="_selectedGrupo = null!">Sem filtro</MudSelectItem>
+                    @foreach (var grupo in Grupos)
+                    {
+                        <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                    }
+                </MudSelect>
+
+
+
                 <MudAutocomplete T="string"
                                  SearchFunc="Search"
                                  @bind-Value="StringDePesquisa"
@@ -54,15 +64,14 @@
                                  CoerceText="true"
                                  Dense="true"
                                  Clearable />
-
             </ToolBarContent>
             <Columns>
-                @if (Produtos.Count == 0)
+                @if (carregandoProduto)
                 {
                     <MudProgressLinear Class="mb-3" Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
                 }
                 <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
-                <PropertyColumn Property="x => x.Descricao" Title="Nome">Teste</PropertyColumn>
+                <PropertyColumn Property="x => x.Descricao" Title="Nome"></PropertyColumn>
                 <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
                 <TemplateColumn T="ClsProduto" Hidden="false" Title="Preço">
                     <CellTemplate Context="context">
@@ -99,12 +108,12 @@
                 </TemplateColumn>
                 <TemplateColumn T="ClsProduto" Title="Ativo">
                     <CellTemplate Context="context">
-                        <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => {context.Item.Ativo = valor; await OnSaveChanges(context.Item);})" />
+                        <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn T="ClsProduto" Title="Deletar">
                     <CellTemplate Context="context">
-                        <MudIconButton OnClick=@(async p=> {await DeletaProduto(context.Item);}) Icon="@Icons.Material.Filled.Delete"
+                        <MudIconButton OnClick=@(async p => { await DeletaProduto(context.Item); }) Icon="@Icons.Material.Filled.Delete"
                                        Color="Color.Error" />
                     </CellTemplate>
                 </TemplateColumn>
@@ -116,7 +125,7 @@
                                  Color="Color.Inherit"
                                  Icon="@Icons.Material.TwoTone.MoreVert">
 
-                            <MudMenuItem OnClick=@(async p=> await AddProdutoReutilizandoDados(context.Item))
+                            <MudMenuItem OnClick=@(async p => AddProduto(context.Item))
                                          Icon="@Icons.Material.TwoTone.CopyAll"
                                          IconColor="Color.Primary"
                                          Label="Reutilizar Dados" />
@@ -137,9 +146,9 @@
 
                                     <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
                                         <ChildContent>
-                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
-                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(2))" Completed="false" Title=" Tributações">Informações de tributação do produto</MudStep>
-                                            <MudStep onclick="@(()=> TrocaAbaDeInfosDoProduto(3))" Completed="false" Title=" Ficha Técnica">Ficha técnica do produto</MudStep>
+                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
+                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(2))" Completed="false" Title=" Tributações">Informações de tributação do produto</MudStep>
+                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(3))" Completed="false" Title=" Ficha Técnica">Ficha técnica do produto</MudStep>
                                         </ChildContent>
                                         <ActionContent Context="stepper">
                                             @*
@@ -161,7 +170,7 @@
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
 
                                         <MudTextField @bind-Value=@context.Item.CodigoInterno Disabled="true" Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                        <MudTextField @bind-Value=@context.Item.Descricao @onfocusout=@(prop=> OnSaveChanges(context.Item)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudTextField @bind-Value=@context.Item.Descricao @onfocusout=@(prop => OnSaveChanges(context.Item)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
@@ -431,7 +440,7 @@
 
                                                     </MudPaper>
                                                     <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
-                                                        <MudButton OnClick=@(async p=> {await DeletaPreco(preco);}) Color="Color.Error" Variant="Variant.Filled">
+                                                        <MudButton OnClick=@(async p => { await DeletaPreco(preco); }) Color="Color.Error" Variant="Variant.Filled">
                                                             <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
                                                         </MudButton>
                                                     </MudPaper>
@@ -484,7 +493,7 @@
                                 {
                                     <MudItem xs="12" sm="12">
                                         <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8">
-                                            <MudButton OnClick=@(async p=> {await AdicionarNovoValor(context.Item);}) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
+                                            <MudButton OnClick=@(async p => { await AdicionarNovoValor(context.Item); }) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
                                         </MudPaper>
                                     </MudItem>
                                 }
@@ -525,7 +534,7 @@
             <MudPaper Elevation="0" Square="false">
 
                 <MudButton Color="Color.Default" OnClick="DescartarPrecos">Descartar</MudButton>
-                <MudButton Color="Color.Success" OnClick=@(async p=> {await SalvarPrecos();}) Class="ml-2">Salvar</MudButton>
+                <MudButton Color="Color.Success" OnClick=@(async p => { await SalvarPrecos(); }) Class="ml-2">Salvar</MudButton>
 
             </MudPaper>
         </MudPaper>
@@ -541,14 +550,13 @@
 
 
 
-
-    <MudDrawer @bind-Open="@_open" @bind-Open:after="OnDrawerToggled" Width="@_width" Height="@_height" Anchor="@_anchorDrawer" Elevation="1" Variant="@DrawerVariant.Temporary">
+    @* <MudDrawer @bind-Open="@_open" @bind-Open:after="OnDrawerToggled" Width="@_width" Height="@_height" Anchor="@_anchorDrawer" Elevation="1" Variant="@DrawerVariant.Temporary">
         <MudDrawerHeader Class="d-flex justify-content-center align-items-center fw-bold">
             <MudText Typo="Typo.h6">Adicionar Novo Produto</MudText>
         </MudDrawerHeader>
         <FrontMenuWeb.Components.Drawers.GridDeAdicionarProduto Produtos="Produtos" Grupos="Grupos" ReultilizandoDadosDePreoduto="ReutilizarInfosDoProdutoParaAdicionarNovo" ProdutoSelecionado="ProdutoSelecionado" />
     </MudDrawer>
-
+    *@
 
 </MudPaper>
 
@@ -557,7 +565,7 @@
 
 <MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
 @code {
-    List<ClsProduto> Produtos = new();
+    List<ClsProduto>? Produtos = new();
     private string StringDePesquisa = string.Empty;
     ClsProduto? ExpandedProduto;
     private bool _enableHeaderToggle = true;
@@ -570,15 +578,28 @@
     private bool ReutilizarInfosDoProdutoParaAdicionarNovo = false;
     private bool _editTriggerRowClick; //propriedade que libera o click na coluna
     private ClsProduto? ProdutoSelecionado = new ClsProduto();
+    private bool carregandoProduto = true;
 
-
-
-    private async Task AddProdutoReutilizandoDados(ClsProduto produtoParaReultilizar)
+    private void AddProduto(ClsProduto? produtoParaReultilizar)
     {
-        ProdutoSelecionado = produtoParaReultilizar;
-        ReutilizarInfosDoProdutoParaAdicionarNovo = true;
-        OpenDrawer(Anchor.End);
+        if (produtoParaReultilizar is null)
+        {
+            var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+            Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
+
+        }
+        else
+        {
+            ProdutoSelecionado = produtoParaReultilizar;
+            ReutilizarInfosDoProdutoParaAdicionarNovo = true;
+
+            var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+
+            Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
+        }
     }
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -589,9 +610,14 @@
 
     private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
     {
+        carregandoProduto = false;
+
         Produtos = await ProdutoService.GetProdutosAsync();
 
-        Produtos = Produtos.OrderBy(x => x.CodigoInterno).ToList();
+        if (Produtos is not null)
+            Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
+
+        carregandoProduto = false;
     }
 
     private async Task AtualizaGrupos(bool ProdutoFoiModificado = false)
@@ -603,12 +629,21 @@
     {
         if (!string.IsNullOrEmpty(StringDePesquisa))
         {
-            Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
+            if (Produtos is not null)
+                Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
         }
         else
         {
             await AtualizaProdutos();
         }
+    }
+
+    private string GetMultiSelectionText(HashSet<ClsGrupo> grupos)
+    {
+        if (grupos == null || grupos.Count == 0)
+            return "Nenhum grupo selecionado";
+
+        return string.Join(", ", grupos.Select(g => g.Descricao));
     }
 
     private async Task TrocaAbaDeInfosDoProduto(int numAba = 1)
@@ -714,7 +749,7 @@
 
     private async Task AtualizaValorDoProduto(Preco preco, bool eMudancaRapida = false)
     {
-        if (eMudancaRapida)
+        if (eMudancaRapida && Produtos is not null)
         {
             var produtoNaMemoria = Produtos.FirstOrDefault(x => x.Precos.Contains(preco))!;
             ClsProduto produto = await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);
@@ -848,8 +883,6 @@
     private bool _clearable;
     private bool _fitContent;
     private bool _modal = true;
-    private Origin _anchor = Origin.BottomLeft;
-    private Origin _transform = Origin.TopLeft;
     private bool _fixed = false;
     private OverflowBehavior _overflowBehavior = OverflowBehavior.FlipOnOpen;
     private DropdownWidth _dropdownWidth = DropdownWidth.Relative;
@@ -863,48 +896,17 @@
     };
 
 
-    //------------------------------------------------------------------------ Lógica do drawer
+    private ClsGrupo _selectedGrupo;
 
-
-    private bool _open;
-    private Anchor _anchorDrawer;
-    private string _width, _height;
-
-    private void OpenDrawer(Anchor anchor)
+    private async void FiltroDeGrupoAcionado()
     {
-        _open = true;
-        _anchorDrawer = anchor;
 
-        switch (anchor)
+        if (Produtos is not null && _selectedGrupo is not null)
         {
-            case Anchor.Start:
-                _width = "300px";
-                _height = "100%";
-                break;
-            case Anchor.End:
-                _width = "90%";
-                _height = "100%";
-                break;
-            case Anchor.Bottom:
-                _width = "100%";
-                _height = "200px";
-                break;
-            case Anchor.Top:
-                _width = "100%";
-                _height = "350px";
-                break;
+            Produtos = Produtos.FindAll(x => x.Grupo.Id == _selectedGrupo.Id);
+            Snackbar.Add($"Filtro de grupo acionado: {_selectedGrupo.Descricao}", Severity.Info);
         }
+
+        await AtualizaProdutos();
     }
-
-    private void OnDrawerToggled()
-    {
-        if (!_open)
-        {
-            if (ReutilizarInfosDoProdutoParaAdicionarNovo)
-                ReutilizarInfosDoProdutoParaAdicionarNovo = false;
-
-            ProdutoSelecionado = new ClsProduto();
-        }
-    }
-
 }

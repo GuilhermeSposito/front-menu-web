@@ -10,4 +10,5 @@ public class ClsGrupo
     [JsonPropertyName("CodigoInterno")] public string? CodigoInterno { get; set; }
     [JsonPropertyName("Descricao")] public string? Descricao { get; set; }
     [JsonPropertyName("UltilizarCarroChefe")] public bool UltilizarCarroChefe { get; set; } = false;
+
 }
