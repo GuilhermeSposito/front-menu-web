@@ -20,12 +20,54 @@
                 <MudNavMenu>
                     <MudDivider Class="my-2" />
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
+
+
                     <MudNavLink Href="claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Claims</MudNavLink>
+
+
                     <MudNavGroup Title="Produtos" Icon="@Icons.Material.Filled.Inventory" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/grupos">Grupos</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Inventory" Href="/produtos">Produtos</MudNavLink>
                     </MudNavGroup>
-                    <MudNavLink Href="/login" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">Clientes</MudNavLink>
+
+                    <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
+                        <MudNavLink Icon="@Icons.Material.Filled.People" Href="/pagemconst">Pessoas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Mesas/Comandas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Discount" Href="/pagemconst">Promoções</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Place" Href="/pagemconst">Bairros</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.FoodBank" Href="/pagemconst">Garçons</MudNavLink>
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Financeiro" Icon="@Icons.Material.Filled.CurrencyExchange" Expanded="false">
+                        <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
+
+                        </MudNavGroup>
+                        <MudNavGroup Title="Contas a Pagar" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
+
+                        </MudNavGroup>
+                        <MudNavGroup Title="Controle De Contas" Icon="@Icons.Material.Filled.AttachMoney" Expanded="false">
+
+                        </MudNavGroup>
+                     
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
+                        <MudNavLink Icon="@Icons.Material.Filled.Sell" Href="/pagemconst">Tiket Médio</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Performance dos Garçons</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/pagemconst">Posição Fiscal</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Sell" Href="/pagemconst">Vendas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AddBusiness" Href="/pagemconst">Compras</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.BusinessCenter" Href="/pagemconst">Operações de Caixa</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.NetworkCheck" Href="/pagemconst">Vendas Pela Internet</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.DeliveryDining" Href="/pagemconst">Entregas</MudNavLink>
+                    </MudNavGroup>
+
+                    <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">
+                        <MudNavLink Icon="@Icons.Material.Filled.IntegrationInstructions" Href="/pagemconst">Integrações</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Print" Href="/pagemconst">Impressões</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Settings" Href="/pagemconst">Geral</MudNavLink>
+                    </MudNavGroup>
+
                     <MudNavLink @onclick="Logout" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ExitToApp">Sair</MudNavLink>
                 </MudNavMenu>
             </MudDrawer>
