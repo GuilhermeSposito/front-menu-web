@@ -161,7 +161,6 @@ code {
 
 body {
     /* background: linear-gradient(135deg, #fff7ed 0%, #ffffff 50%, #eff6ff 100%);*/
-
 }
 
 .login-container {
@@ -320,12 +319,21 @@ body {
         color: white;
     }
 
-    .signup-link:hover {
-        color: var(--sophos-orange-dark);
-    }
+.signup-link:hover {
+    color: var(--sophos-orange-dark);
+}
 
 
 
+.barcode {
+    font-family: 'Libre Barcode 39', cursive;
+    font-size: 48px;
+}
+
+
+.custom-striped tbody tr:nth-of-type(odd) {
+    background-color: var(--mud-palette-background) !important; /* azul claro, por exemplo */
+}
 
 @media (max-width: 576px) {
     .login-card {
@@ -340,4 +348,3 @@ body {
         display: none;
     }
 }
-

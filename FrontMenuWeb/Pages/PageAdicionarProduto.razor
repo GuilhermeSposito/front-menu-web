@@ -42,6 +42,7 @@
                                     <MudExpansionPanels>
                                         <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
                                             <MudTextField @bind-Value=@Produto.CodBarras Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                            <div class="barcode">@Produto.CodBarras</div>
                                         </MudExpansionPanel>
                                     </MudExpansionPanels>
 
@@ -487,6 +488,49 @@
                     <div class="d-flex flex-column justify-content-around ">
                         @*Div de informações de tributação*@
                         <div>
+
+                            <MudGrid Class="d-flex align-items-stretch">
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudTextField @bind-Value=@Produto.NCM Disabled="false" Class="w-25 m-2" Label="NCM" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudTextField @bind-Value=@Produto.CEST Class="w-75 m-2" Label="CEST" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                    </MudPaper>
+                                </MudItem>
+
+
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.CSOSNSelected"
+                                                   T="CSOSN"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="CSOSN"
+                                                   Placeholder="Defina o CSOSN">
+
+                                            @foreach (var CSOCN in ListaDeCSOSN)
+                                            {
+                                                <MudSelectItem Value="@CSOCN">@CSOCN.Id - @CSOCN.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.CSTSelected"
+                                                   T="CST"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="CST"
+                                                   Placeholder="Defina o CST">
+
+                                            @foreach (var CST in ListaDeCSTS)
+                                            {
+                                                <MudSelectItem Value="@CST">@CST.Id - @CST.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+
+                                </MudItem>
+                            </MudGrid>
+
                         </div>
 
                         <div>
@@ -539,6 +583,8 @@
     private string NovoCodigoRecomendado = "0000";
     private List<ClsGrupo> Grupos { get; set; } = new List<ClsGrupo>();
     private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
+    public List<CST> ListaDeCSTS = CST.Lista;
+    public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
 
     protected override async Task OnInitializedAsync()
     {
@@ -573,7 +619,7 @@
             if (Produto.Categoria is null)
             {
                 {
-                    Produto.Categoria = new Categoria() { Id = 1, Descricao = "INSUMO" };
+                    Produto.Categoria = new Categoria() { Id = 2, Descricao = "CARDÁPIO" };
                     Produto.CategoriaId = Produto.Categoria.Id;
                 }
             }
@@ -586,6 +632,38 @@
             if (Produto.Grupo is not null)
             {
                 Produto.GrupoId = Produto.Grupo.Id;
+            }
+
+
+            if (Produto.CST is not null)
+            {
+                var valorDoCst = int.TryParse(Produto.CST, out int result) ? result : 0;
+                Produto.CSTSelected = ListaDeCSTS.FirstOrDefault(x => x.Id == valorDoCst) ?? new CST { Id = 0, Descricao = "Não definido" };
+            }
+            else
+            {
+                Produto.CSTSelected = new CST { Id = 0, Descricao = "Não definido" };
+
+            }
+
+            if (Produto.csosn is not null)
+            {
+                var valorDoCsosn = int.TryParse(Produto.csosn, out int result) ? result : 0;
+                Produto.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(x => x.Id == valorDoCsosn) ?? new CSOSN { Id = 0, Descricao = "Não definido" };
+            }
+            else
+            {
+                Produto.CSOSNSelected = new CSOSN { Id = 0, Descricao = "Não definido" };
+
+            }
+
+            if (Produto.ImpressoraComanda1 is null)
+            {
+                Produto.ImpressoraComanda1 = "Não imprime";
+            }
+            if (Produto.ImpressoraComanda2 is null)
+            {
+                Produto.ImpressoraComanda2 = "Não imprime";
             }
 
 
@@ -603,7 +681,7 @@
         }
     }
 
-    private async  Task AtualizaGrupos()
+    private async Task AtualizaGrupos()
     {
         try
         {
@@ -626,6 +704,7 @@
                 preco.Id = null; // Garantindo que os IDs dos preços sejam nulos para criar novos preços
             }
             Produto.CategoriaId = Produto.Categoria?.Id ?? 1; // Garantindo que a categoria seja definida
+            Produto.GrupoId = Produto.Grupo?.Id ?? 1; // Garantindo que o grupo seja definido
 
             var resposta = await ProdutoService.AdicionaProdutoAsync(Produto);
 

@@ -9,47 +9,43 @@
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh;">
     <MudLayout>
-<div class="mt-5">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <MudText Typo="Typo.h4" Class="mb-3">Grupos</MudText>
-            <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
+        <div class="mt-5">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <MudText Typo="Typo.h4" Class="mb-3">Grupos</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
+                </div>
+                <div>
+                    <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
+                </div>
+            </div>
+            <MudDataGrid Loading=IsLoading Striped="true" T="ClsGrupo" Items="@grupos" class="rounded-3">
+                <Columns>
+                    <PropertyColumn Property="x => x.Id" Title="Id" />
+                    <PropertyColumn Property="x => x.Descricao" Title="Nome" />
+                    <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
+                    <TemplateColumn T="ClsGrupo" Hidden="false" Title="Ultiliza Carro Chefe">
+                        <CellTemplate Context="context">
+                            @(@context.Item.UltilizarCarroChefe ? "Sim" : "Não")
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn T="ClsGrupo" Hidden="false" Title="Editar">
+                        <CellTemplate Context="context">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => EditaGrupo(context.Item))" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn T="ClsGrupo" Title="Deletar">
+                        <CellTemplate Context="context">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           OnClick="@(() => RemoveGrupo(context.Item))" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
         </div>
-        <div>
-            <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
-        </div>
-    </div>
-            @if (grupos.Count == 0)
-            {
-                <MudProgressLinear Class="mb-3" Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
-            }
-    <MudDataGrid T="ClsGrupo" Items="@grupos" class="rounded-3">
-        <Columns>
-            <PropertyColumn Property="x => x.Id" Title="Id" />
-            <PropertyColumn Property="x => x.Descricao" Title="Nome" />
-            <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
-            <TemplateColumn T="ClsGrupo" Hidden="false" Title="Ultiliza Carro Chefe">
-                <CellTemplate Context="context">
-                    @(@context.Item.UltilizarCarroChefe ? "Sim" : "Não")
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn T="ClsGrupo" Hidden="false" Title="Editar">
-                <CellTemplate Context="context">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Primary"
-                                   OnClick="@(() => EditaGrupo(context.Item))" />
-                </CellTemplate>
-            </TemplateColumn>
-            <TemplateColumn T="ClsGrupo" Title="Deletar">
-                <CellTemplate Context="context">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                   Color="Color.Error"
-                                   OnClick="@(() => RemoveGrupo(context.Item))" />
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-    </MudDataGrid>
-</div>
     </MudLayout>
 </MudPaper>
 
@@ -59,6 +55,7 @@
     private bool AvisoDeGrupoAlteradoComSucesso = false;
     private string? MensagemDeAlteracaoDeGrupo = String.Empty;
     Color Color = Color.Success;
+    private bool IsLoading = true;
 
     private void OnScroll(ScrollEventArgs e)
     {
@@ -73,7 +70,19 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await AtualizaGrupos();
+        try
+        {
+            await AtualizaGrupos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar grupos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+
     }
 
     private async Task AtualizaGrupos(bool GrupoFoiExcluidoOuAdicionado = false)
