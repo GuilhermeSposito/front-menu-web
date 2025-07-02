@@ -19,7 +19,8 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddScoped<CustomAuthorizationMessageHandler>();
 builder.Services.AddScoped<GrupoServices>();
-builder.Services.AddScoped<ProdutoService>();
+builder.Services.AddScoped<GrupoServices>();
+builder.Services.AddScoped<AlicotaService>();
 
 builder.Services.AddScoped(sp =>
 {
@@ -43,6 +44,7 @@ void ConfigureSyslogicaClient(IHttpClientBuilder builder)
 
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<AlicotaService>());
 
 
 builder.Services.AddMudServices();

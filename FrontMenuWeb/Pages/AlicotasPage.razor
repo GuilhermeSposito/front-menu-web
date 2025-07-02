@@ -1,0 +1,67 @@
+﻿@using FrontMenuWeb.Services
+@inject AlicotaService AlicotaService
+@inject ProdutoService ProdutoService
+
+@page "/alicotas"
+
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Alicotas</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de alicotas cadastradas.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton OnClick="@(() => { })" Style="background-color:#f88113; color: white;">Nova Alicota</MudButton>
+            </div>
+        </div>
+        <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-surface);">
+
+            <MudDataGrid T="ClsAlicota"
+                         Items="@Alicotas"
+                         EditTrigger="DataGridEditTrigger.Manual"
+                         MultiSelection="false"
+                         SelectOnRowClick="false"
+                         Class="rounded-3 custom-striped"
+                         Loading="CarregandoALicotas"
+                         Striped="true">
+                <Columns>
+                    <HierarchyColumn T="ClsAlicota" EnableHeaderToggle="@_enableHeaderToggle" />
+                    <PropertyColumn Property="x => x.Descricao" Title="Descrição da alicota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Valor" Title="Valor da alicota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Icms" Title="Icms da alicota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Pis" Title="Pis da alicota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Confis" Title="Confis da alicota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.CredIcms" Title="Crédito Icms da alicota"></PropertyColumn>
+                </Columns>
+
+            </MudDataGrid>
+        </MudPaper>
+
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private bool CarregandoALicotas = true;
+    private bool _enableHeaderToggle = true;
+    List<ClsAlicota> Alicotas = new List<ClsAlicota>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Alicotas = await AlicotaService.GetAlicotas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar alicotas: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoALicotas = false;
+        }
+    }
+}
