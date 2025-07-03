@@ -12,6 +12,7 @@
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -21,11 +22,11 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton OnClick="@(() => { AddProduto(null); })" Style="background-color:#f88113; color: white;">Novo Produto</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(() => { AddProduto(null); })">Novo Produto</MudButton>
             </div>
         </div>
 
-        <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-surface);"></MudPaper>
+
         <MudDataGrid T="ClsProduto"
                      Items="@Produtos"
                      EditTrigger="DataGridEditTrigger.Manual"
@@ -632,7 +633,7 @@
                                                    FullWidth="true"
                                                    ClearIcon="@Icons.Material.Filled.Close"
                                                    Clearable="true"
-                                                    Class="m-2"
+                                                   Class="m-2"
                                                    FitContent="false">
 
 
@@ -663,6 +664,74 @@
                                             @foreach (var CSOSN in ListaDeCSOSN)
                                             {
                                                 <MudSelectItem Value="@CSOSN">@CSOSN.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="context.Item.Aliquota"
+                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
+                                                   T="ClsAliquota"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="Aliquota selecionado"
+                                                   HelperText="Aliquota"
+                                                   Placeholder="Escolha a alíquota correspondente"
+                                                   AdornmentIcon="@Icons.Material.Filled.Percent"
+                                                   AdornmentColor="Color.Success">
+
+                                            @foreach (var Aliquota in ListaDeAliquotas)
+                                            {
+                                                <MudSelectItem Value="@Aliquota">@Aliquota.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="context.Item.TribPisCofinsSelected"
+                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
+                                                   T="ClsTribPisConfins"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Tibutação Pis/Confins"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE A TRIB. PIS/CONFINS CORRESPONDENTE"
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   Class="m-2"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   FitContent="false">
+
+
+                                            @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
+                                            {
+                                                <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="context.Item.OrigemProdutoSelected"
+                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
+                                                    T="ClsOrigemProduto"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Origem do produto"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE A ORIGEEM DO PRODUTO."
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   Class="m-2"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   FitContent="false">
+
+
+                                            @foreach (var origemProd in ListaDeOrigemDoProdutos)
+                                            {
+                                                    <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
                                             }
                                         </MudSelect>
                                     </MudPaper>
@@ -708,17 +777,6 @@
 
 
 
-    @*---------------------------------------------------------------drawer de Adicionar novo produto------------------------------------------------------*@
-
-
-
-    @* <MudDrawer @bind-Open="@_open" @bind-Open:after="OnDrawerToggled" Width="@_width" Height="@_height" Anchor="@_anchorDrawer" Elevation="1" Variant="@DrawerVariant.Temporary">
-        <MudDrawerHeader Class="d-flex justify-content-center align-items-center fw-bold">
-            <MudText Typo="Typo.h6">Adicionar Novo Produto</MudText>
-        </MudDrawerHeader>
-        <FrontMenuWeb.Components.Drawers.GridDeAdicionarProduto Produtos="Produtos" Grupos="Grupos" ReultilizandoDadosDePreoduto="ReutilizarInfosDoProdutoParaAdicionarNovo" ProdutoSelecionado="ProdutoSelecionado" />
-    </MudDrawer>
-    *@
 
 </MudPaper>
 
@@ -744,6 +802,9 @@
     private bool carregandoProduto = true;
     public List<CST> ListaDeCSTS = CST.Lista;
     public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
+    public List<ClsAliquota> ListaDeAliquotas { get; set; } = new List<ClsAliquota>();
+    public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
+    public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
 
     private void AddProduto(ClsProduto? produtoParaReultilizar)
     {
@@ -776,18 +837,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-
-
         await AtualizaGrupos();
         await AtualizaProdutos();
+        await AtualizaAliquotas();
 
+    }
+
+    private async Task AtualizaAliquotas()
+    {
+        try
+        {
+            ListaDeAliquotas = await AliquotaService.GetAliquotas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar alíquotas: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
     {
         try
         {
-            carregandoProduto = false;
 
             Produtos = await ProdutoService.GetProdutosAsync();
 
@@ -817,6 +888,31 @@
 
                     }
 
+                    if (produto.OrigemProduto is not null)
+                    {
+                        var iDdAoRIGEMdopROPDUTO = int.TryParse(produto.OrigemProduto, out int result) ? result : 0;
+                        produto.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == iDdAoRIGEMdopROPDUTO) ?? new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.OrigemProdutoSelected = new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+
+                    }
+
+                    if (produto.TribPisCofins is not null)
+                    {
+                        var IdTribPisCOnfins = int.TryParse(produto.TribPisCofins, out int result) ? result : 0;
+                        produto.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == IdTribPisCOnfins) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.TribPisCofinsSelected = new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+
+                    }
+
+
+
+
                     if (produto.ImpressoraComanda1 is null)
                     {
                         produto.ImpressoraComanda1 = "Não imprime";
@@ -830,12 +926,16 @@
                 Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
             }
 
-            carregandoProduto = false;
 
         }
         catch (Exception ex)
         {
             Snackbar.Add("Erro ao atualizar produto", Severity.Error);
+        }
+        finally
+        {
+
+            carregandoProduto = false;
         }
 
     }

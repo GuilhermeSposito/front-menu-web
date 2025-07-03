@@ -2,7 +2,7 @@
 
 namespace FrontMenuWeb.Models.Produtos;
 
-public class ClsAlicota
+public class ClsAliquota
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = String.Empty;

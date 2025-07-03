@@ -1,0 +1,109 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Services
+@inject AliquotaService AliquotaService
+
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+
+            <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                    <MudTextField T="string"
+                                  Label="Descrição da Alíquota"
+                                  @bind-Value="@NovaAlicota.Descricao"
+                                  Immediate="true"
+                                  Required="true"
+                                  RequiredError="A descrição é obrigatória"
+                                  @ref="_descricaoRef"
+                                  Style="text-transform: uppercase;" />
+
+                    <MudTextField T="decimal" @bind-Value=NovaAlicota.Valor Label="Valor da Alíquota" />
+
+                    <MudTextField T="decimal" @bind-Value=NovaAlicota.Icms Label="Icms Da Alíquota" Required="true" />
+                    <MudTextField T="decimal" @bind-Value=NovaAlicota.Pis Label="Pis da Alíquota" Required="true" />
+                    <MudTextField T="decimal" @bind-Value=NovaAlicota.Confis Label="Confis da Alíquota" Required="true" />
+                    <MudTextField T="decimal" @bind-Value=NovaAlicota.CredIcms Label="Crédito Icms da Alíquota" Required="true" />
+                                  
+     
+                <div>                
+                    @if (ErroAoAdicionarAliquota)
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                            @MensagemDeErro
+                        </MudAlert>
+                    }
+                </div>
+                </MudFocusTrap>
+            </MudForm>
+
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Adicionar</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+    private string MensagemDeErro = "Erro ao adicionar a alíquota. Verifique os dados e tente novamente.";
+
+    [Parameter]
+    public List<ClsAliquota> AliquotasExistentes { get; set; } = new List<ClsAliquota>();
+
+    ClsAliquota NovaAlicota = new ClsAliquota();
+    private bool ErroAoAdicionarAliquota = false;
+
+
+
+    private async Task Submit()
+    {
+        bool existeAlicota = AliquotasExistentes.Any(x => x.Descricao == NovaAlicota.Descricao || x.Valor == NovaAlicota.Valor);
+
+        Console.WriteLine($"Descrição: {NovaAlicota.Descricao}, Valor: {NovaAlicota.Valor}, Existe Alicota: {existeAlicota}");
+
+        if ((!string.IsNullOrEmpty(NovaAlicota.Descricao) || !(NovaAlicota.Valor == 0)) && !existeAlicota)
+        {
+            NovaAlicota.Descricao = NovaAlicota.Descricao.ToUpperInvariant().Trim();
+            var response = await AliquotaService.AdicionaAliquota(NovaAlicota);
+            if (!response.IsSuccessStatusCode)
+            {
+                ErroAoAdicionarAliquota = true;
+            }
+            else
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+        }
+        else if (!existeAlicota)
+        {
+            ErroAoAdicionarAliquota = true;
+        }
+        else
+        {
+            MensagemDeErro = "Já existe uma alíquota com essa descrição ou valor.";
+            ErroAoAdicionarAliquota = true;
+        }
+
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+}

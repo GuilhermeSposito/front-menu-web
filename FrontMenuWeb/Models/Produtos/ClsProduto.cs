@@ -38,6 +38,10 @@ public class ClsProduto
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
     [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
     [JsonPropertyName("csosn")] public string? csosn { get; set; }
+    [JsonPropertyName("aliquota")] public ClsAliquota Aliquota { get; set; } = new ClsAliquota();
+    [JsonPropertyName("aliquota_id")] public int AliquotaId { get; set; }
+    [JsonPropertyName("origem_produto")] public string? OrigemProduto { get; set; }
+    [JsonPropertyName("trib_pis_confins")] public string? TribPisCofins { get; set; }
 
 
 
@@ -84,6 +88,34 @@ public class ClsProduto
         }
     }
 
+
+
+
+
+    private ClsOrigemProduto? _origemProdutoSelected;
+    [JsonIgnore]
+    public ClsOrigemProduto? OrigemProdutoSelected
+    {
+        get => _origemProdutoSelected;
+        set
+        {
+            _origemProdutoSelected = value;
+            OrigemProduto = value?.Id.ToString();
+        }
+    }
+
+
+    private ClsTribPisConfins? _tribPisCofinsSelected;
+    [JsonIgnore]
+    public ClsTribPisConfins? TribPisCofinsSelected
+    {
+        get => _tribPisCofinsSelected;
+        set
+        {
+            _tribPisCofinsSelected = value;
+            TribPisCofins = value?.Id.ToString();
+        }
+    }
 }
 
 public class Preco
@@ -144,5 +176,40 @@ public class CST
         new CST { Id = 51, Descricao = "Diferimento" },
         new CST { Id = 60, Descricao = "ICMS cobrado anteriormente por Subs. Trib." },
         new CST { Id = 90, Descricao = "Outras" }
+    };
+}
+
+
+public class ClsOrigemProduto
+{
+
+    public int Id { get; set; }
+    public string? Descricao { get; set; }
+
+    // Lista fixa de origens de produto
+    public static List<ClsOrigemProduto> Lista = new()
+    {
+        new ClsOrigemProduto { Id = 0, Descricao = "Nacional" },
+        new ClsOrigemProduto { Id = 1, Descricao = "Est. Imp. Direta" },
+        new ClsOrigemProduto { Id = 2, Descricao = "Est. Adq. Interna" },
+        new ClsOrigemProduto { Id = 3, Descricao = "Nac. Conteúdo>40%" },
+        new ClsOrigemProduto { Id = 4, Descricao = "Nac. proc.prd.bas" },
+        new ClsOrigemProduto { Id = 5, Descricao = "Nac. Conteúdo<40%" },
+        new ClsOrigemProduto { Id = 6, Descricao = "Est. Imp.dir=nac." },
+        new ClsOrigemProduto { Id = 7, Descricao = "Est. sem simular" }
+    };
+}
+
+public class ClsTribPisConfins
+{
+    public int Id { get; set; }
+    public string? Descricao { get; set; }
+
+    // Lista fixa de tributações PIS/COFINS
+    public static List<ClsTribPisConfins> Lista = new()
+    {
+        new ClsTribPisConfins { Id = 49, Descricao = "Tributado" },
+        new ClsTribPisConfins { Id = 4, Descricao = "Monofásico" },
+        new ClsTribPisConfins { Id = 5, Descricao = "Sub. Tributária" }
     };
 }

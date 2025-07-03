@@ -5,6 +5,8 @@
 @using System.Globalization
 @inject ProdutoService ProdutoService
 @inject GrupoServices GrupoService
+@inject AliquotaService AliquotaService
+
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -529,6 +531,72 @@
                                     </MudPaper>
 
                                 </MudItem>
+
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.Aliquota"                                                  
+                                                   T="ClsAliquota"
+                                                   Class="m-3"
+                                                   ToStringFunc="g=> g.Descricao"
+                                                   Label="Aliquota selecionado"
+                                                   HelperText="Aliquota"
+                                                   Placeholder="Escolha a alíquota correspondente"
+                                                   AdornmentIcon="@Icons.Material.Filled.Percent"
+                                                   AdornmentColor="Color.Success">
+
+                                            @foreach (var Aliquota in ListaDeAliquotas)
+                                            {
+                                                <MudSelectItem Value="@Aliquota">@Aliquota.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.TribPisCofinsSelected"
+                                                   T="ClsTribPisConfins"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Tibutação Pis/Confins"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE A TRIB. PIS/CONFINS CORRESPONDENTE"
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   Class="m-2"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   FitContent="false">
+
+
+                                            @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
+                                            {
+                                                <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.OrigemProdutoSelected"
+                                                   T="ClsOrigemProduto"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Origem do produto"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE A ORIGEEM DO PRODUTO."
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   Class="m-2"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   FitContent="false">
+
+
+                                            @foreach (var origemProd in ListaDeOrigemDoProdutos)
+                                            {
+                                                <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
                             </MudGrid>
 
                         </div>
@@ -585,7 +653,10 @@
     private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
     public List<CST> ListaDeCSTS = CST.Lista;
     public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
-
+    public List<ClsAliquota> ListaDeAliquotas { get; set; } = new List<ClsAliquota>();
+    public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
+    public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
+    
     protected override async Task OnInitializedAsync()
     {
         try
@@ -657,6 +728,28 @@
 
             }
 
+            if (Produto.OrigemProduto is not null)
+            {
+                var iDdAoRIGEMdopROPDUTO = int.TryParse(Produto.OrigemProduto, out int result) ? result : 0;
+                Produto.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == iDdAoRIGEMdopROPDUTO) ?? new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+            }
+            else
+            {
+                Produto.OrigemProdutoSelected = new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+
+            }
+
+            if (Produto.TribPisCofins is not null)
+            {
+                var IdTribPisCOnfins = int.TryParse(Produto.TribPisCofins, out int result) ? result : 0;
+                Produto.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == IdTribPisCOnfins) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+            }
+            else
+            {
+                Produto.TribPisCofinsSelected = new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+
+            }
+
             if (Produto.ImpressoraComanda1 is null)
             {
                 Produto.ImpressoraComanda1 = "Não imprime";
@@ -668,6 +761,7 @@
 
 
             await AtualizaGrupos();
+            await AtualizaAliquotas();
 
 
         }
@@ -686,6 +780,18 @@
         try
         {
             Grupos = await GrupoService.GetGrupos() ?? new List<ClsGrupo>();
+        }
+        catch (Exception ex)
+        {
+            ExibeErro(ex.Message);
+        }
+    }
+
+    private async Task AtualizaAliquotas()
+    {
+        try
+        {
+            ListaDeAliquotas = await AliquotaService.GetAliquotas() ?? new List<ClsAliquota>();
         }
         catch (Exception ex)
         {

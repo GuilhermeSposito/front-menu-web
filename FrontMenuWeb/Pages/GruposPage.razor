@@ -16,7 +16,7 @@
                     <MudText Typo="Typo.body1" Class="mb-3">Lista de grupos cadastrados.</MudText>
                 </div>
                 <div>
-                    <MudButton @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
+                    <MudButton Disabled="IsLoading ? true : false" @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
                 </div>
             </div>
             <MudDataGrid Loading=IsLoading Striped="true" T="ClsGrupo" Items="@grupos" class="rounded-3">
