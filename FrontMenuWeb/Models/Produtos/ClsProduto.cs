@@ -17,11 +17,11 @@ public class ClsProduto
     [JsonPropertyName("imagem_produto")] public string? ImgProduto { get; set; }
     [JsonPropertyName("impressora_comanda1")] public string? ImpressoraComanda1 { get; set; }
     [JsonPropertyName("impressora_comanda2")] public string? ImpressoraComanda2 { get; set; }
-    [JsonPropertyName("tam_unico")] public bool TamanhoUnico { get; set; }
+    [JsonPropertyName("tam_unico")] public bool TamanhoUnico { get; set; } = true;
     [JsonPropertyName("fracionado")] public bool Fracionado { get; set; }
-    [JsonPropertyName("tipo_de_venda")] public string? TipoDeVenda { get; set; }
-    [JsonPropertyName("obs_na_venda")] public bool ObsNaVenda { get; set; }
-    [JsonPropertyName("forma_de_venda")] public string? FormaDeVenda { get; set; }
+    [JsonPropertyName("tipo_de_venda")] public string? TipoDeVenda { get; set; } = "Q";
+    [JsonPropertyName("obs_na_venda")] public bool ObsNaVenda { get; set; } = true;
+    [JsonPropertyName("forma_de_venda")] public string? FormaDeVenda { get; set; } = "U";
     [JsonPropertyName("taxa_de_viagem")] public float TaxaDeViagem { get; set; }
     [JsonPropertyName("desconto")] public float Desconto { get; set; }
     [JsonPropertyName("validade")] public int validade { get; set; }
@@ -34,7 +34,7 @@ public class ClsProduto
     [JsonPropertyName("item_resgatavel")] public bool ItemResgatavel { get; set; }
     [JsonPropertyName("oculta_tablet")] public bool OcultaTablet { get; set; }
     [JsonPropertyName("ultiliza_produto_balanca")] public bool UltilizaProdutoNaBalanca { get; set; }
-    [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
     [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
     [JsonPropertyName("csosn")] public string? csosn { get; set; }

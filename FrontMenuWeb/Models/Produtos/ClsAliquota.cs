@@ -11,4 +11,5 @@ public class ClsAliquota
     [JsonPropertyName("icms")] public decimal Icms { get; set; } = 0;
     [JsonPropertyName("pis")] public decimal Pis { get; set; } = 0;
     [JsonPropertyName("credIcms")] public decimal CredIcms { get; set; } = 0;
+    [JsonIgnore]public int QtdDeProdutosRelacionados { get; set; } = 0;
 }

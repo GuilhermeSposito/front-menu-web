@@ -1,0 +1,269 @@
+﻿@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Services
+@inject AliquotaService AliquotaService
+@inject ProdutoService ProdutoService
+
+@page "/aliquotas"
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Alíquota</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de alícotas cadastradas.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton OnClick="@(async () => { await AbreModalDeAdicioarAliquotas(); })" Style="background-color:#f88113; color: white;">Nova Alíquota</MudButton>
+            </div>
+        </div>
+        <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-surface);">
+
+            <MudDataGrid T="ClsAliquota"
+                         Items="@Aliquotas"
+                         EditTrigger="DataGridEditTrigger.Manual"
+                         MultiSelection="false"
+                         SelectOnRowClick="false"
+                         Class="rounded-3 custom-striped"
+                         Loading="CarregandoALiquotas"
+                         Striped="true">
+                <Columns>
+                    <HierarchyColumn T="ClsAliquota" EnableHeaderToggle="@_enableHeaderToggle" />
+                    <PropertyColumn Property="x => x.Descricao" Title="Descrição da alíquota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Valor" Title="Valor da alíquota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Icms" Title="Icms da alíquota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Pis" Title="Pis da alíquota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Confis" Title="Confis da alíquota"></PropertyColumn>
+                    <PropertyColumn Property="x => x.CredIcms" Title="Crédito Icms da alíquota"></PropertyColumn>
+                    <TemplateColumn T="ClsAliquota" Title="Deletar">
+                        <CellTemplate Context="context">
+                            <MudIconButton OnClick=@(async p => { await DeletarAliquota(context.Item); }) Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error" />
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <ChildRowContent>
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-fulloverflow-hidden" style="word-break: break-word;">
+                                        <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Descricao</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
+                            <MudCardContent>
+                                <MudGrid>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.Descricao"
+                                                      Disabled="false"
+                                                      Class="m-2"
+                                                      Label="Descrição da alíquota"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.Valor"
+                                                      Disabled="false"
+                                                      Class="m-2"
+                                                      Label="Valor da porcentagem"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.Icms"
+                                                      Disabled="false"
+                                                      Class=" m-2"
+                                                      Label="Valor do Icms"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.Pis"
+                                                      Disabled="false"
+                                                      Class="m-2"
+                                                      Label="Valor do Pis"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.Confis"
+                                                      Disabled="false"
+                                                      Class="m-2"
+                                                      Label="Valor do Confis"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                    <MudItem xs="12">
+                                        <MudTextField @onfocusout="@(async () => { await MofificaAlicota(context.Item); })"
+                                                      @bind-Value="context.Item.CredIcms"
+                                                      Disabled="false"
+                                                      Class="m-2"
+                                                      Label="Valor do Crédito Icms"
+                                                      Variant="Variant.Text"
+                                                      Margin="Margin.Dense" />
+                                    </MudItem>
+
+                                </MudGrid>
+
+                                <MudItem xs="12">
+                                    <MudPaper Class="d-flex align-items-center justify-content-center flex-column gap-2 mt-4">
+                                        <MudText Style="font-weight:bold" Color="Color.Primary" Typo="Typo.h5">Itens Agregados à Alíquota</MudText>
+                                        <MudText Style="font-weight:bold" Color="Color.Primary">@context.Item.QtdDeProdutosRelacionados @(context.Item.QtdDeProdutosRelacionados > 1 ? "itens" : "item") @(context.Item.QtdDeProdutosRelacionados > 1 ? "agregados" : "agregado")</MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudCard>
+
+                </ChildRowContent>
+            </MudDataGrid>
+        </MudPaper>
+
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private bool CarregandoALiquotas = true;
+    private bool _enableHeaderToggle = true;
+    List<ClsAliquota> Aliquotas = new List<ClsAliquota>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AtualizaAliquotas();
+
+            var produtos = await ProdutoService.GetProdutosAsync();
+            if (produtos != null && produtos.Any())
+            {
+                foreach (ClsAliquota aliquota in Aliquotas)
+                {
+                    aliquota.QtdDeProdutosRelacionados = produtos.Count(p => p.Aliquota?.Id == aliquota.Id);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar alíquotas: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoALiquotas = false;
+        }
+    }
+
+    private async Task AtualizaAliquotas()
+    {
+        try
+        {
+            Aliquotas = await AliquotaService.GetAliquotas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar alíquotas: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task MofificaAlicota(ClsAliquota Aliquota)
+    {
+        try
+        {
+            var ProcuraAliquotaParaModificar = await AliquotaService.GetAliquota(Aliquota);
+            if (ProcuraAliquotaParaModificar == null)
+            {
+                Snackbar.Add("Alíquota não encontrada.", Severity.Error);
+                return;
+            }
+
+            if ((Aliquota.Valor != ProcuraAliquotaParaModificar.Valor) || (Aliquota.Descricao != ProcuraAliquotaParaModificar.Descricao) || (Aliquota.Icms != ProcuraAliquotaParaModificar.Icms) || (Aliquota.Pis != ProcuraAliquotaParaModificar.Pis) || (Aliquota.Confis != ProcuraAliquotaParaModificar.Confis) || (Aliquota.CredIcms != ProcuraAliquotaParaModificar.CredIcms))
+            {
+                var response = await AliquotaService.EditaAliquota(Aliquota);
+
+                if (response.IsSuccessStatusCode)
+                    Snackbar.Add("Alíquota atualizada com sucesso!", Severity.Success);
+                else
+                    Snackbar.Add($"Erro ao atualizar alíquota: {await response.Content.ReadAsStringAsync()}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar alíquota: {ex.Message}", Severity.Error);
+
+        }
+    }
+
+
+    private async Task AbreModalDeAdicioarAliquotas()
+    {
+        var parameters = new DialogParameters
+        {
+            { "AliquotasExistentes", Aliquotas }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarAlicota>("Adicionar alíquota", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add($"Alícota adicionado com sucesso!", Severity.Success);
+            StateHasChanged();
+            await AtualizaAliquotas();
+        }
+    }
+
+    private async Task DeletarAliquota(ClsAliquota Aliquota)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir a Alíquota  {Aliquota.Descricao}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                var response = await AliquotaService.DeletarALiquota(Aliquota);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var ResponseAsString = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Erro ao excluir aliquota: {ResponseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"Alíquota de {Aliquota.Descricao} exclúida com sucesso!", Severity.Error);
+                }
+
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao deletar alíquota: {ex.Message}", Severity.Error);
+        }
+    }
+
+}

@@ -553,7 +553,7 @@
 
                                                 </MudPaper>
                                                 <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
-                                                    <MudButton OnClick=@(async p => { await DeletaPreco(preco); }) Color="Color.Error" Variant="Variant.Filled">
+                                                    <MudButton OnClick=@(async p => { await DeletaPreco(preco, context.Item); }) Color="Color.Error" Variant="Variant.Filled">
                                                         <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
                                                     </MudButton>
                                                 </MudPaper>
@@ -716,7 +716,7 @@
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
                                         <MudSelect @bind-Value="context.Item.OrigemProdutoSelected"
                                                    SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
-                                                    T="ClsOrigemProduto"
+                                                   T="ClsOrigemProduto"
                                                    ToStringFunc="g => g.Descricao"
                                                    Label="Origem do produto"
                                                    HelperText="SELECIONE"
@@ -731,7 +731,7 @@
 
                                             @foreach (var origemProd in ListaDeOrigemDoProdutos)
                                             {
-                                                    <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
+                                                <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
                                             }
                                         </MudSelect>
                                     </MudPaper>
@@ -1032,38 +1032,46 @@
     }
 
 
-    private async Task DeletaPreco(Preco preco)
+    private async Task DeletaPreco(Preco preco, ClsProduto produto)
     {
         try
         {
-            var parameters = new DialogParameters<ModalDeExcluir>
+            if (produto.Precos.Count > 1)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
              {
               { x => x.ContentText, $"Você tem certeza que deseja excluir esse preco de {preco.Valor}? Essa operação não pode ser desfeita. " },
               { x => x.ButtonText, "Sim" },
               { x => x.Color, Color.Error}
              };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-            var result = await dialog.Result;
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+                var result = await dialog.Result;
 
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                {
+
+                    var response = await ProdutoService.DeletaPreco(preco);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var ResponseAsString = await response.Content.ReadAsStringAsync();
+                        Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
+                        await AtualizaProdutos();
+                    }
+
+                }
+
+                StateHasChanged();
+            }
+            else
             {
 
-                var response = await ProdutoService.DeletaPreco(preco);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var ResponseAsString = await response.Content.ReadAsStringAsync();
-                    Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
-                }
-                else
-                {
-                    Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
-                    await AtualizaProdutos();
-                }
-
+                Snackbar.Add("Não é possível remover o último preço.", Severity.Error);
             }
-
-            StateHasChanged();
 
         }
         catch (Exception ex)

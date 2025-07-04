@@ -392,7 +392,7 @@
                                     {
                                         Produto.Precos.Add(new Preco()
                                         {
-                                            DescricaoDoTamanho = "Sem preço definido",
+                                            DescricaoDoTamanho = "Sem preços definido",
                                             Valor = 0.0
                                         });
 
@@ -428,6 +428,12 @@
                                                                  @bind-Value="preco.Valor" />
 
 
+                                                <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
+                                                    <MudButton OnClick=@(async p => { await DeletaPreco(preco); }) Color="Color.Error" Variant="Variant.Filled">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
+                                                    </MudButton>
+                                                </MudPaper>
+
                                             </MudPaper>
                                         </MudItem>
                                     }
@@ -437,7 +443,19 @@
                                 {
                                     var precoMenor = Produto.Precos
                                     .OrderBy(x => x.Valor)
-                                    .FirstOrDefault() ?? new Preco() { DescricaoDoTamanho = "Sem preço definido", Valor = 0.0 };
+                                    .FirstOrDefault();
+
+                                    if (precoMenor is null)
+                                    {
+                                        var NovoPreco = new Preco()
+                                        {
+                                            DescricaoDoTamanho = "Padrão",
+                                            Valor = 0.0
+                                        };
+
+                                        Produto.Precos.Add(NovoPreco);
+                                        precoMenor = NovoPreco;
+                                    }
 
                                     <MudItem xs="12">
                                         <MudPaper Class="d-flex flex-wrap gap-2 align-center justify-center mud-width-full py-8">
@@ -474,7 +492,7 @@
                                 @if (!Produto.TamanhoUnico)
                                 {
                                     <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8 mt-2">
-                                        <MudButton OnClick=@(async p => { }) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
+                                        <MudButton OnClick="AdicionarNovoPreco" Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
                                     </MudPaper>
                                 }
                             </MudGrid>
@@ -534,7 +552,7 @@
 
                                 <MudItem xs="12" sm="12">
                                     <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="Produto.Aliquota"                                                  
+                                        <MudSelect @bind-Value="Produto.Aliquota"
                                                    T="ClsAliquota"
                                                    Class="m-3"
                                                    ToStringFunc="g=> g.Descricao"
@@ -620,8 +638,36 @@
                     </div>
                 </MudTabPanel>
                 <MudTabPanel Text="Finalizar">
-                    <div class="d-flex flex-column justify-content-around ">
-                        @*Div de finalizar*@
+                    <div class="d-flex flex-column justify-content-around">
+                        <div>
+                            <MudText style="font-weight:bold" Class="text-center">Revise as informações do produto antes de adicionar.</MudText>
+                            <MudText style="font-weight:bold" Class="text-center">Certifique-se de que todos os campos obrigatórios estejam preenchidos corretamente.</MudText>
+                            <MudText style="font-weight:bold" Class="text-center">Após adicionar, o produto estará disponível para uso no sistema.</MudText>
+                            <MudText style="font-weight:bold" Class="text-center">Se precisar de ajuda, consulte a documentação ou entre em contato com o suporte.</MudText>
+                            <MudText style="font-weight:bold" Class="text-center">Clique no botão "Adicionar Produto" para concluir o processo.</MudText>
+                            <div class="d-flex flex-column justify-content-center align-items-start mt-3">
+                                <MudText style="font-weight:bold">Infos do produto:</MudText>
+                                <MudText>Descrição: @Produto.Descricao</MudText>
+                                <MudText>Categoria: @Produto.Categoria?.Descricao</MudText>
+                                <MudText>Grupo: @Produto.Grupo?.Descricao</MudText>
+                                <MudText>Código Interno: @Produto.CodigoInterno</MudText>
+                                <MudText>Preço(s): @string.Join(", ", Produto.Precos.Select(p => $"{p.DescricaoDoTamanho}: {p.Valor.ToString("C", _pt)}"))</MudText>
+                                <MudText>CST: @Produto.CSTSelected?.Descricao</MudText>
+                                <MudText>CSOSN: @Produto.CSOSNSelected?.Descricao</MudText>
+                                <MudText>ALíquota: @Produto.Aliquota.Descricao</MudText>
+                                <MudText>Origem do Produto: @Produto.OrigemProdutoSelected?.Descricao</MudText>
+                                <MudText>Tributação Pis/Confins: @Produto.TribPisCofinsSelected?.Descricao</MudText>
+                                <MudText>Impressora Comanda 1: @Produto.ImpressoraComanda1</MudText>
+                                <MudText>Impressora Comanda 2: @Produto.ImpressoraComanda2</MudText>
+                                <MudText>Taxa de Viagem: @Produto.TaxaDeViagem.ToString("C", _pt)</MudText>
+                                <MudText>Tamanho Único: @(Produto.TamanhoUnico ? "Sim" : "Não")</MudText>
+                                <MudText>Fracionado: @(Produto.Fracionado ? "Sim" : "Não")</MudText>
+                                <MudText>Tipo de Venda: @Produto.TipoDeVenda</MudText>
+                                <MudText>Obs na Venda: @(Produto.ObsNaVenda ? "Sim" : "Não")</MudText>
+                                <MudText>Forma de Venda: @Produto.FormaDeVenda</MudText>
+                                <div class="barcode">@Produto.CodBarras</div>
+                            </div>
+                        </div>
                         <div class="d-flex gap-3 align-items-center justify-content-center">
                             <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8 mt-2">
                                 <MudButton OnClick="@(() => BackToPage(false))" Variant="Variant.Outlined" Color="Color.Primary" Class="rounded-1 " style="color: red">Cancelar</MudButton>
@@ -656,7 +702,7 @@
     public List<ClsAliquota> ListaDeAliquotas { get; set; } = new List<ClsAliquota>();
     public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
     public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
-    
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -799,6 +845,27 @@
         }
     }
 
+    private void AdicionarNovoPreco()
+    {
+        Produto.Precos.Add(new Preco
+        {
+            DescricaoDoTamanho = "Novo Tamanho",
+            Valor = 0
+        });
+    }
+
+    private async Task DeletaPreco(Preco preco)
+    {
+        if (Produto.Precos.Count > 1)
+        {
+            Produto.Precos.Remove(preco);
+        }
+        else
+        {
+
+            Snackbar.Add("Não é possível remover o último preço.", Severity.Error);
+        }
+    }
 
     private async Task AdicionarProduto()
     {
