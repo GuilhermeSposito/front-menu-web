@@ -91,6 +91,10 @@
 
         if (grupos is not null)
             grupos = grupos.OrderBy(x => x.CodigoInterno).ToList();
+        else
+        {
+            grupos = new List<ClsGrupo>();
+        }
     }
 
     private async Task OpenDialogAddGrupoAsync()

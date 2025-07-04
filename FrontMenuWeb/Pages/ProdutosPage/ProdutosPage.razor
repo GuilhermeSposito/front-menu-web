@@ -812,7 +812,7 @@
         {
             if (produtoParaReultilizar is null)
             {
-                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault() ?? new ClsProduto() { CodigoInterno = "0000" };
                 Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
 
             }

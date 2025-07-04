@@ -22,6 +22,21 @@
                                   @ref="_descricaoRef"
                                   Style="text-transform: uppercase;" />
                     <MudTextField T="string" @bind-Value=NovoGrupo.CodigoInterno Label="Codigo interno" Required="true"
+                    RequiredError="O código interno é obrigatório" />
+                }
+                else
+                {
+
+                    <MudTextField T="string"
+                                  Label="Descrição do Grupo"
+                                  Value="@NovoGrupo.Descricao"
+                                  ValueChanged="OnDescricaoChanged"
+                                  Immediate="true"
+                                  Required="true"
+                                  RequiredError="A descrição é obrigatória"
+                                  @ref="_descricaoRef"
+                                  Style="text-transform: uppercase;" />
+                    <MudTextField T="string" @bind-Value=NovoGrupo.CodigoInterno Label="Codigo interno" Required="true"
                                   RequiredError="O código interno é obrigatório" />
                 }
                 <div>
@@ -55,7 +70,7 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
-    private MudTextField<string> _descricaoRef;
+    private MudTextField<string> _descricaoRef = new MudTextField<string>();
 
     [Parameter]
     public List<ClsGrupo> Grupos { get; set; }
@@ -82,7 +97,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (NovoGrupo?.CodigoInterno is not null)
+        if (NovoGrupo.CodigoInterno is not null)
         {
             await _descricaoRef.FocusAsync();
         }
