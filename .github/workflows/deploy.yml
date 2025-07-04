@@ -16,7 +16,7 @@ jobs:
             key: ${{ secrets.SERVER_SSH_KEY }}
             script: |
                 cd ..
-                cd /var/www/front-menu-web/front-menu-web/FrontMenuWeb
+                cd /var/www/front-menu-web/FrontMenuWeb
                 rm -rf publish
                 git pull origin main
                 dotnet restore
