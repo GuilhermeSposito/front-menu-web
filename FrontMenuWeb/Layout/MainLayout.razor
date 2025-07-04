@@ -1,4 +1,5 @@
-﻿@using MudBlazor;
+﻿@using FrontMenuWeb.Models.Merchant
+@using MudBlazor;
 
 @inherits LayoutComponentBase
 
@@ -12,6 +13,11 @@
             <MudAppBar Color="Color.Primary" Elevation="1">
                 <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
                 <MudText Typo="Typo.h5" Class="ml-3">@ProgramName</MudText>
+                <MudSpacer />
+                @if (AppState.MerchantLogado is not null)
+                {
+                    <MudText Typo="Typo.subtitle1" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
+                }
                 <MudSpacer />
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
             </MudAppBar>
@@ -49,7 +55,7 @@
                         <MudNavGroup Title="Controle De Contas" Icon="@Icons.Material.Filled.AttachMoney" Expanded="false">
 
                         </MudNavGroup>
-                     
+
                     </MudNavGroup>
 
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
@@ -99,15 +105,14 @@
     private string ProgramName = "Sophos Menu";
 
 
-
     private void ToggleDrawer()
     {
         _open = !_open;
 
     }
-    protected override void OnInitialized()
+
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
 
         _theme = new()
         {
@@ -115,6 +120,15 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            AppState.MerchantLogado = await MerchantServices.GetMerchantAsync();
+        }
     }
 
     public async Task Logout()

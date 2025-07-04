@@ -20,6 +20,7 @@
 @using MudBlazor.Services
 @using FrontMenuWeb.Models.Produtos
 @using FrontMenuWeb.Components.Modais.ModaisGenericos
+@using FrontMenuWeb.Services
 
 @inject IDialogService DialogService
 @inject IHttpClientFactory HttpClientFactory
@@ -28,3 +29,5 @@
 @inject ILocalStorageService LocalStorage
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
+@inject MerchantServices MerchantServices
+@inject AppState AppState
