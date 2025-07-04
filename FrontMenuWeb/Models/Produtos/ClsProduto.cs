@@ -21,7 +21,7 @@ public class ClsProduto
     [JsonPropertyName("fracionado")] public bool Fracionado { get; set; }
     [JsonPropertyName("tipo_de_venda")] public string? TipoDeVenda { get; set; } = "Q";
     [JsonPropertyName("obs_na_venda")] public bool ObsNaVenda { get; set; } = true;
-    [JsonPropertyName("forma_de_venda")] public string? FormaDeVenda { get; set; } = "U";
+    [JsonPropertyName("forma_de_venda")] public string? FormaDeVenda { get; set; } = "unidade";
     [JsonPropertyName("taxa_de_viagem")] public float TaxaDeViagem { get; set; }
     [JsonPropertyName("desconto")] public float Desconto { get; set; }
     [JsonPropertyName("validade")] public int validade { get; set; }

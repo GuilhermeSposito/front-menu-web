@@ -229,7 +229,7 @@
                                         </MudSelect>
                                     </MudPaper>
                                 </MudItem>
-                                <MudItem xs="6" sm="6" Class="h-100">
+                                <MudItem xs="12" sm="12" Class="h-100">
                                     <MudPaper Class="h-100">
                                         <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
                                         <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
@@ -277,76 +277,77 @@
 
 
                                         </MudPaper>
+
+                                        @*Cardapio do dia*@
+                                        <MudPaper Class="h-100">
+                                            <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
+
+
+                                            <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
+
+                                                <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
+                                                    <MudRadioGroup T="bool"
+                                                                   Value="context.Item.CardapioDoDia"
+                                                                   ValueChanged="@(valor => { context.Item.CardapioDoDia = valor; OnSaveChanges(context.Item); })">
+                                                        <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                        <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                    </MudRadioGroup>
+                                                </MudPaper>
+
+                                            </MudPaper>
+
+                                            @if (context.Item.CardapioDoDia)
+                                            {
+                                                <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
+
+                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                        <MudNumericField T="int"
+                                                                         Value="context.Item.QtdBase"
+                                                                         Immediate="false"
+                                                                         ValueChanged="@(valor => {context.Item.QtdBase = valor; OnSaveChanges(context.Item);})"
+                                                                         Label="Qtd Base"
+                                                                         Variant="Variant.Outlined"
+                                                                         Step="1"
+                                                                         Min="0"
+                                                                         Max="100" />
+                                                    </MudPaper>
+
+                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                        <MudNumericField T="int"
+                                                                         Value="context.Item.QtdGuarnicao"
+                                                                         Immediate="false"
+                                                                         ValueChanged="@(valor => {context.Item.QtdGuarnicao = valor; OnSaveChanges(context.Item);})"
+                                                                         Label="Qtd Guarnição"
+                                                                         Variant="Variant.Outlined"
+                                                                         Step="1"
+                                                                         Min="0"
+                                                                         Max="100" />
+                                                    </MudPaper>
+
+
+                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                        <MudNumericField T="int"
+                                                                         Value="context.Item.QtdCarnes"
+                                                                         Immediate="false"
+                                                                         ValueChanged="@(valor => {context.Item.QtdCarnes = valor; OnSaveChanges(context.Item);})"
+                                                                         Label="Qtd Carnes"
+                                                                         Variant="Variant.Outlined"
+                                                                         Step="1"
+                                                                         Min="0"
+                                                                         Max="100" />
+                                                    </MudPaper>
+
+
+
+
+                                                </MudPaper>
+                                            }
+
+
+                                        </MudPaper>
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="6" sm="6" Class="h-100">
-                                    @*Cardapio do dia*@
-                                    <MudPaper Class="h-100">
-                                        <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
-
-
-                                        <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
-
-                                            <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
-                                                <MudRadioGroup T="bool"
-                                                               Value="context.Item.CardapioDoDia"
-                                                               ValueChanged="@(valor => { context.Item.CardapioDoDia = valor; OnSaveChanges(context.Item); })">
-                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                                </MudRadioGroup>
-                                            </MudPaper>
-
-                                        </MudPaper>
-
-                                        @if (context.Item.CardapioDoDia)
-                                        {
-                                            <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
-
-                                                <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                    <MudNumericField T="int"
-                                                                     Value="context.Item.QtdBase"
-                                                                     Immediate="false"
-                                                                     ValueChanged="@(valor => {context.Item.QtdBase = valor; OnSaveChanges(context.Item);})"
-                                                                     Label="Qtd Base"
-                                                                     Variant="Variant.Outlined"
-                                                                     Step="1"
-                                                                     Min="0"
-                                                                     Max="100" />
-                                                </MudPaper>
-
-                                                <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                    <MudNumericField T="int"
-                                                                     Value="context.Item.QtdGuarnicao"
-                                                                     Immediate="false"
-                                                                     ValueChanged="@(valor => {context.Item.QtdGuarnicao = valor; OnSaveChanges(context.Item);})"
-                                                                     Label="Qtd Guarnição"
-                                                                     Variant="Variant.Outlined"
-                                                                     Step="1"
-                                                                     Min="0"
-                                                                     Max="100" />
-                                                </MudPaper>
-
-
-                                                <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                    <MudNumericField T="int"
-                                                                     Value="context.Item.QtdCarnes"
-                                                                     Immediate="false"
-                                                                     ValueChanged="@(valor => {context.Item.QtdCarnes = valor; OnSaveChanges(context.Item);})"
-                                                                     Label="Qtd Carnes"
-                                                                     Variant="Variant.Outlined"
-                                                                     Step="1"
-                                                                     Min="0"
-                                                                     Max="100" />
-                                                </MudPaper>
-
-
-
-
-                                            </MudPaper>
-                                        }
-
-
-                                    </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12" sm="12">
                                     <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
