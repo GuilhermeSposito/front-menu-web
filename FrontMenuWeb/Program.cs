@@ -53,5 +53,6 @@ builder.Services.AddMudExtensions();
 var culture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
+builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 await builder.Build().RunAsync();
