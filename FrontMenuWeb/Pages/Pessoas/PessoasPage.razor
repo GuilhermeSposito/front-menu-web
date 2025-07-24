@@ -1,0 +1,93 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/pessoas"
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject IHttpClientFactory HttpClientFactory
+@inject PessoasService PessoasService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+
+        <MudDataGrid Loading=IsLoading Striped="true" T="ClsPessoas" Items="@Pessoas" class="rounded-3">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="Id" />
+                <PropertyColumn Property="x => x.Nome" Title="Nome" />
+                <TemplateColumn T="ClsPessoas" Title="Telefone">
+                    <CellTemplate Context="context">
+                        @FormatarTelefone(context.Item.Telefone!)
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsPessoas" Hidden="false" Title="Editar">
+                    <CellTemplate Context="context">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       OnClick="@(()=>{})" />
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsPessoas" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       OnClick="@(() => {})" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private IEnumerable<ClsPessoas> Pessoas = new List<ClsPessoas>();
+    private bool IsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AtualizaPessoas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao buscar pessoas: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task AtualizaPessoas()
+    {
+        try
+        {
+            Pessoas = await PessoasService.GetPessoas();
+            Pessoas = Pessoas.OrderBy(p => p.Nome);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao buscar pessoas: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    string FormatarTelefone(string telefone)
+    {
+        if (string.IsNullOrWhiteSpace(telefone))
+            return "";
+
+        telefone = new string(telefone.Where(char.IsDigit).ToArray());
+
+        if (telefone.Length == 11)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 00000-0000");
+        else if (telefone.Length == 10)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 0000-0000");
+        else
+            return telefone; // ou trate como inválido
+    }
+}

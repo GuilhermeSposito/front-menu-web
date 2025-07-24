@@ -22,6 +22,7 @@ builder.Services.AddScoped<GrupoServices>();
 builder.Services.AddScoped<GrupoServices>();
 builder.Services.AddScoped<AliquotaService>();
 builder.Services.AddScoped<MerchantServices>();
+builder.Services.AddScoped<PessoasService>();
 builder.Services.AddScoped<AppState>();
 
 builder.Services.AddScoped(sp =>
@@ -48,6 +49,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<AliquotaService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MerchantServices>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<PessoasService>());
 
 
 builder.Services.AddMudServices();
