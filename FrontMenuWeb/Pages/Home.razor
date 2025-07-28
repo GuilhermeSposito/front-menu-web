@@ -3,11 +3,11 @@
 
 @page "/"
 
-<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-surface); min-height: 100vh; margin-top:0px">
     <MudLayout>
 
-        <MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-between align-items-center flex-wrap p-3">
-            <MudPaper Elevation="2" Square="true" Class="rounded-2">
+        @*<MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-between align-items-center flex-wrap p-3">
+           @* <MudPaper Elevation="2" Square="true" Class="rounded-2">
                 <MudChart ChartType="ChartType.Pie"
                           Width="150px"
                           Height="150px"
@@ -17,46 +17,13 @@
                           LegendPosition="@Position.Left">
 
                 </MudChart>
-            </MudPaper>
+            </MudPaper>*@
 
 
-            <MudPaper Elevation="2" Square="true" Class="rounded-2">
-                <MudChart ChartType="ChartType.Donut"
-                          Width="150px"
-                          Height="150px"
-                          InputData="@DadosDoGraficoDePedidos"
-                          InputLabels="@DescDoGraficoDePedidos"
-                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
-                          LegendPosition="@Position.Left">
-                    <CustomGraphics>
-                        <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="20">Total</text>
-                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@DadosDoGraficoDePedidos.Sum().ToString()</text>
-                    </CustomGraphics>
-                </MudChart>
-            </MudPaper>
+        <MudPaper  Elevation="0" Square="true" Class="rounded-2">
+            <MudPaper Elevation="0" Class="d-flex align-items-center justify-content-center"> <MudText Class="m-5" Typo="Typo.h5">Volumes de Pedidos Por dia da Semana</MudText></MudPaper>
 
-
-            <MudPaper Elevation="2" Square="true" Class="rounded-2">
-                <MudChart ChartType="ChartType.Donut"
-                          Width="150px"
-                          Height="150px"
-                          InputData="@DadosDoGraficoDePedidos"
-                          InputLabels="@DescDoGraficoDePedidos"
-                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
-                          LegendPosition="@Position.Left">
-                    <CustomGraphics>
-                        <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="20">Total</text>
-                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@DadosDoGraficoDePedidos.Sum().ToString()</text>
-                    </CustomGraphics>
-                </MudChart>
-            </MudPaper>
-
-        </MudPaper>
-
-        <MudPaper  Elevation="0" Square="true" Class="rounded-2 mt-2">
-            <MudPaper Elevation="0"> <MudText Typo="Typo.h5">Volumes de Pedidos Por dia da Semana</MudText></MudPaper>
-
-            <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
+            <MudChart Class="w-100" ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
         </MudPaper>
     </MudLayout>
 </MudPaper>

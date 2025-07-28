@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/pessoas"
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
@@ -18,7 +19,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de pessoas Cadastradas</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="IsLoading ? true : false" OnClick="@(() => { })">Nova Pessoa</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="IsLoading ? true : false" OnClick="@(async () => { await AbreModalDAdicionarPessoa(); })">Nova Pessoa</MudButton>
             </div>
         </div>
 
@@ -48,7 +49,7 @@
             </ToolBarContent>
             <Columns>
                 <HierarchyColumn T="ClsPessoas" EnableHeaderToggle="@_enableHeaderToggle" />
-                <PropertyColumn Property="x => x.Id" Title="Id" />
+                <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Nome" Title="Nome" />
                 <TemplateColumn T="ClsPessoas" Title="Telefone">
                     <CellTemplate Context="context">
@@ -232,5 +233,26 @@
         return new string(input?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
     }
 
+
+    private async Task AbreModalDAdicionarPessoa()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Pessoas", Pessoas }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add($"Pessoa Cadastrada com sucesso!", Severity.Success);
+            StateHasChanged();
+            await AtualizaPessoas();
+        }
+
+    }
 
 }

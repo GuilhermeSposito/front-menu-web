@@ -1,0 +1,304 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.ServicosDeTerceiros
+@inject CEPService CEPService
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+
+        <DialogContent>
+
+            <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                <MudRadioGroup @bind-Value="NovaPessoa.TipoPessoaId">
+                    <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
+                    <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
+                    <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
+                </MudRadioGroup>
+
+                @if (NovaPessoa.TipoPessoaId == 1)
+                {
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                            <MudTextField Label="Nome Completo"
+                                          Value="NovaPessoa.Nome"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
+                                          Variant="Variant.Text"
+                                          Clearable />
+
+                            <MudGrid Class="justify-space-between" Style="max-width: 400px;">
+                                <MudItem xs="12" sm="12">
+                                    <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
+                                                  Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
+                                                  Variant="@Variant.Text" Clearable />
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+
+                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                            <MudText Typo="Typo.h6" Class="d-flex justify-content-center align-items-center ">
+                                Endereço do Cliente
+                            </MudText>
+                            <MudGrid>
+                                <MudItem xs="12" sm="8">
+                                    <MudTextField Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="4">
+                                    <MudTextField Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="3">
+                                    <MudTextField Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="5">
+                                    <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
+                                                  Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
+                                </MudItem>
+
+
+                                <MudItem xs="12">
+                                    <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
+                                </MudItem>
+
+                                                   
+                            </MudGrid>
+                        </MudPaper>
+
+                    </MudFocusTrap>
+
+                }
+                else if (NovaPessoa.TipoPessoaId == 2)
+                {
+                    <MudText>aqui o os campos para fornecedor</MudText>
+
+                }
+                else
+                {
+                    <MudText>aquio os campos para fornecedor/cliente</MudText>
+
+                }
+
+
+            </MudForm>
+
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Confirmar</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+    private string maskedPhone;
+    private MudTextField<string> TextFieldDeNumeroDoCliente = new MudTextField<string>();
+
+
+    public PatternMask phoneMask = new PatternMask("(##) #####-####")
+    {
+        MaskChars = new[] { new MaskChar('#', @"[0-9]") }
+    };
+
+
+    [Parameter]
+    public IEnumerable<ClsPessoas> Pessoas { get; set; }
+
+    private ClsPessoas NovaPessoa { get; set; } = new ClsPessoas()
+    {
+        TipoPessoaId = 1, // Cliente por padrão
+    };
+
+    private EnderecoPessoa NovoEndereco { get; set; } = new EnderecoPessoa()
+    {
+        TipoEndereco = "Casa"
+    };
+
+    private bool ErroAoModificarPessoa = false;
+
+
+    private async Task OnPhoneChanged(string value)
+    {
+        maskedPhone = value;
+        NovaPessoa.Telefone = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    private async Task ArrumaNomePrimeiraLetraMAiuscula(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            NovaPessoa.Nome = string.Empty;
+
+        var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < words.Length; i++)
+        {
+            var w = words[i];
+            if (w.Length == 1)
+                words[i] = char.ToUpper(w[0]).ToString();
+            else
+                words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
+        }
+        NovaPessoa.Nome = string.Join(' ', words);
+    }
+
+    private async Task ProcuraCep()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(NovoEndereco.Cep))
+            {
+                var endereco = await CEPService.ConsultarCepAsync(NovoEndereco.Cep);
+                if (endereco != null)
+                {
+                    NovoEndereco.Rua = endereco.Logradouro!;
+                    NovoEndereco.Bairro = endereco.Bairro!;
+                    NovoEndereco.Cidade = endereco.Cidade!;
+                    NovoEndereco.Estado = endereco.Uf!;
+
+                    if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
+                        await TextFieldDeNumeroDoCliente.FocusAsync();
+                }
+                else
+                {
+                    // Tratar caso o CEP não seja encontrado
+                    NovoEndereco.Rua = string.Empty;
+                    NovoEndereco.Bairro = string.Empty;
+                    NovoEndereco.Cidade = string.Empty;
+                    NovoEndereco.Estado = string.Empty;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErroAoModificarPessoa = true;
+        }
+    }
+
+    private async Task ProcuraCepPorRua()
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(NovoEndereco.Rua))
+            {
+                var enderecos = await CEPService.ConsultarCepPorRuaAsync(NovoEndereco.Rua);
+                if (enderecos != null && enderecos.Count > 0)
+                {
+                    var endereco = enderecos.FirstOrDefault();
+                    if (enderecos.Count > 1)
+                    {
+                        if (!string.IsNullOrEmpty(NovoEndereco.Rua))
+                            await OpenDialogAsync(enderecos);
+                    }
+
+                    if (_enderecoSelecionado is not null)
+                    {
+                        endereco = _enderecoSelecionado;
+                    }
+
+                    NovoEndereco.Cep = endereco.Cep!;
+                    NovoEndereco.Rua = endereco.Logradouro!;
+                    NovoEndereco.Bairro = endereco.Bairro!;
+                    NovoEndereco.Cidade = endereco.Cidade!;
+                    NovoEndereco.Estado = endereco.Uf!;
+
+                    if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
+                        await TextFieldDeNumeroDoCliente.FocusAsync();
+                }
+                else
+                {
+                    // Tratar caso o CEP não seja encontrado
+                    NovoEndereco.Bairro = string.Empty;
+                    NovoEndereco.Cidade = string.Empty;
+                    NovoEndereco.Estado = string.Empty;
+
+                    Snackbar.Add("Rua não encontrada. Por favor, verifique o nome da rua.", Severity.Warning);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Tratar erro ao buscar CEP
+            ErroAoModificarPessoa = true;
+        }
+    }
+
+    private EnderecoViaCep? _enderecoSelecionado;
+    private async Task OpenDialogAsync(List<EnderecoViaCep> enderecos)
+    {
+        _enderecoSelecionado = null;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters
+        {
+            { "Enderecos", enderecos }
+        };
+
+        var dialogReference = await DialogService.ShowAsync<ModalDeVariosLogradouros>("Varios endereços encontrado com essa chave de pesquisa.", parameters, options);
+
+
+        StateHasChanged();
+
+        var dialogResult = await dialogReference.Result;
+        if (dialogResult.Canceled)
+        {
+            _enderecoSelecionado = null;
+            StateHasChanged();
+        }
+        else
+        {
+            _enderecoSelecionado = dialogResult.Data as EnderecoViaCep;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            ErroAoModificarPessoa = true;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

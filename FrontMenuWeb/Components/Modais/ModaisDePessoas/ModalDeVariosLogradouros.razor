@@ -1,0 +1,58 @@
+﻿@using FrontMenuWeb.Services.ServicosDeTerceiros
+
+<MudDialog OnKeyDown="OnKeyDownAsync">
+    <DialogContent>
+        <MudText>Selecione o endereço desejado!</MudText>
+
+        <MudSelect T="EnderecoViaCep" Label="Selecione um CEP" @bind-Value="_selectedEndereco">
+            @foreach (var item in Enderecos)
+            {
+                <MudSelectItem Value="@item">@($"{item.Logradouro} - {item.Bairro}")</MudSelectItem>
+            }
+        </MudSelect>
+
+        @if (_selectedEndereco is not null)
+        {
+            <MudText>Endereço selecionado: <b>@_selectedEndereco.Logradouro</b>, @_selectedEndereco.Bairro - @_selectedEndereco.Cidade / @_selectedEndereco.Uf</MudText>
+        }
+
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private EnderecoViaCep? _selectedEndereco;
+
+    [Parameter]
+    public List<EnderecoViaCep> Enderecos { get; set; } = new List<EnderecoViaCep>();
+
+    private string _returnValue;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(_selectedEndereco));
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Enter":
+                Submit();
+                break;
+            case "NumpadEnter":
+                Submit();
+                break;
+        }
+    }
+
+}

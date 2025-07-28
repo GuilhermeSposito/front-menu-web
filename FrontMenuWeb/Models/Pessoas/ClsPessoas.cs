@@ -56,6 +56,7 @@ public class EnderecoPessoa
     [JsonPropertyName("estado")] public string Estado { get; set; } = string.Empty;
     [JsonPropertyName("cep")] public string? Cep { get; set; }
     [JsonPropertyName("referencia")] public string? Referencia { get; set; }
+    [JsonPropertyName("complemento")] public string? Complemento { get; set; }
     [JsonPropertyName("obs_endereco")] public string? ObsEndereco { get; set; }
     [JsonPropertyName("tipo_endereco")] public string? TipoEndereco { get; set; }
 

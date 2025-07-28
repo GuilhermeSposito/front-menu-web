@@ -1,14 +1,15 @@
-using FrontMenuWeb;
 using Blazored.LocalStorage;
+using FrontMenuWeb;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Produtos;
+using FrontMenuWeb.Services;
+using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using MudBlazor.Services;
-using FrontMenuWeb.Models;
-using FrontMenuWeb.Services;
-using System.Globalization;
 using MudBlazor.Extensions;
-using FrontMenuWeb.Models.Produtos;
+using MudBlazor.Services;
+using System.Globalization;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -44,6 +45,13 @@ void ConfigureSyslogicaClient(IHttpClientBuilder builder)
         client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
     }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 }
+
+builder.Services.AddHttpClient<CEPService>(client =>
+{
+    client.BaseAddress = new Uri("https://viacep.com.br/ws/");
+});
+
+
 
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
