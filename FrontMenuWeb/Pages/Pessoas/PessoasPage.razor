@@ -12,9 +12,42 @@
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Pessoas</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de pessoas Cadastradas</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="IsLoading ? true : false" OnClick="@(() => { })">Nova Pessoa</MudButton>
+            </div>
+        </div>
 
-        <MudDataGrid Loading=IsLoading Striped="true" T="ClsPessoas" Items="@Pessoas" class="rounded-3">
+
+        <MudDataGrid Loading=IsLoading Striped="true" T="ClsPessoas" EditTrigger="DataGridEditTrigger.Manual" Items="@Pessoas" class="rounded-3">
+            <ToolBarContent>
+
+                <div class="gap-2 w-100 d-flex ">
+                    <MudAutocomplete T="string" Label="Telefone" @bind-Value="ValorDePesquisaTelefone"
+                                     @bind-Value:after="@(() => RecarregarPessoasAposPesquisaDeTelefone())"
+                                     MaxItems="10"
+                                     SearchFunc="@SearchTelefone"
+                                     ResetValueOnEmptyText="@resetValueOnEmptyText"
+                                     CoerceText="@coerceText" CoerceValue="@coerceValue" SelectValueOnTab="@selectedOnTab"
+                                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" Variant="Variant.Outlined" ShowProgressIndicator="true" Clearable="true" />
+
+                    <MudAutocomplete T="string" Label="Nome" @bind-Value="ValorDePesquisaNome" SearchFunc="@SearchNome"
+                                     @bind-Value:after="@(() => RecarregarPessoasAposPesquisaDeNome())"
+                                     ResetValueOnEmptyText="@resetValueOnEmptyText"
+                                     MaxItems="10"
+                                     CoerceText="@coerceText" CoerceValue="@coerceValue" SelectValueOnTab="@selectedOnTab"
+                                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" Variant="Variant.Outlined" ShowProgressIndicator="true" Clearable="true" />
+                </div>
+
+
+
+            </ToolBarContent>
             <Columns>
+                <HierarchyColumn T="ClsPessoas" EnableHeaderToggle="@_enableHeaderToggle" />
                 <PropertyColumn Property="x => x.Id" Title="Id" />
                 <PropertyColumn Property="x => x.Nome" Title="Nome" />
                 <TemplateColumn T="ClsPessoas" Title="Telefone">
@@ -37,6 +70,22 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
+            <ChildRowContent>
+
+                <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudPaper Elevation="0" Square="false" Class="d-flex align-center justify-center mud-width-full">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Nome</MudText> </MudPaper>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+
+                        Histórico de compra do cliente
+
+                    </MudCardContent>
+                </MudCard>
+
+            </ChildRowContent>
         </MudDataGrid>
 
     </MudLayout>
@@ -45,6 +94,13 @@
 @code {
     private IEnumerable<ClsPessoas> Pessoas = new List<ClsPessoas>();
     private bool IsLoading = true;
+    private bool _enableHeaderToggle = true;
+    private string ValorDePesquisaTelefone = string.Empty;
+    private string ValorDePesquisaNome = string.Empty;
+    private bool resetValueOnEmptyText = true;
+    private bool coerceText = false;
+    private bool coerceValue = false;
+    private bool selectedOnTab = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -66,6 +122,10 @@
     {
         try
         {
+            IsLoading = true;
+
+            Pessoas = new List<ClsPessoas>();
+
             Pessoas = await PessoasService.GetPessoas();
             Pessoas = Pessoas.OrderBy(p => p.Nome);
         }
@@ -73,10 +133,14 @@
         {
             Snackbar.Add($"Erro ao buscar pessoas: {ex.Message}", Severity.Error);
         }
+        finally
+        {
+            IsLoading = false;
+        }
 
     }
 
-    string FormatarTelefone(string telefone)
+    private string FormatarTelefone(string telefone)
     {
         if (string.IsNullOrWhiteSpace(telefone))
             return "";
@@ -90,4 +154,83 @@
         else
             return telefone; // ou trate como inválido
     }
+
+
+
+    private async Task<IEnumerable<string>> SearchTelefone(string value, CancellationToken token)
+    {
+        try
+        {
+            var valorNumerico = SomenteNumeros(value);
+
+            return Pessoas
+                .Where(p => !string.IsNullOrWhiteSpace(p.Telefone) &&
+                            SomenteNumeros(p.Telefone).Contains(valorNumerico))
+                .Select(p => FormatarTelefone(p.Telefone!)) // <-- retorna com máscara
+                .Distinct();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar Pessoa: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<string>();
+        }
+    }
+    private async Task<IEnumerable<string>> SearchNome(string value, CancellationToken token)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return Pessoas.Select(x => x.Nome!).Distinct();
+            }
+
+            return Pessoas
+                .Where(x =>
+                    (x.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (x.Telefone?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
+                .Select(x => x.Nome!)
+                .Distinct();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar Pessoa: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<string>();
+        }
+    }
+
+
+    private async Task RecarregarPessoasAposPesquisaDeTelefone()
+    {
+        if (!string.IsNullOrEmpty(ValorDePesquisaTelefone))
+        {
+            var valorNumerico = SomenteNumeros(ValorDePesquisaTelefone);
+
+            Pessoas = Pessoas
+                .Where(p => !string.IsNullOrWhiteSpace(p.Telefone) &&
+                            SomenteNumeros(p.Telefone).Contains(valorNumerico));
+        }
+        else
+        {
+            await AtualizaPessoas();
+        }
+    }
+
+    private async Task RecarregarPessoasAposPesquisaDeNome()
+    {
+        if (!string.IsNullOrEmpty(ValorDePesquisaNome))
+        {
+            Pessoas = Pessoas.Where(p => p.Nome?.Contains(ValorDePesquisaNome, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+        else
+        {
+            await AtualizaPessoas();
+        }
+    }
+
+    private string SomenteNumeros(string input)
+    {
+        return new string(input?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+    }
+
+
 }

@@ -5,9 +5,71 @@
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
-        <MudText style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">
-            O <strong>SOPHOS Menu</strong> está sendo desenvolvido! Em breve, você contará com um sistema ERP moderno e completo para bares, restaurantes, mercados e muito mais.<br>
-            Agradecemos pela sua paciência e confiança!
-        </MudText>
+
+        <MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-center align-items-center flex-wrap p-3">
+            <MudPaper Elevation="2" Square="true" Class="rounded-2">
+                <MudChart ChartType="ChartType.Pie"
+                          Width="150px"
+                          Height="150px"
+                          InputData="@DadosDoGraficoDePedidos"
+                          InputLabels="@DescDoGraficoDePedidos"
+                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
+                          LegendPosition="@Position.Left">
+                  
+                </MudChart>
+            </MudPaper>
+
+
+            <MudPaper Elevation="2" Square="true" Class="rounded-2">
+                <MudChart ChartType="ChartType.Donut"
+                          Width="150px"
+                          Height="150px"
+                          InputData="@DadosDoGraficoDePedidos"
+                          InputLabels="@DescDoGraficoDePedidos"
+                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
+                          LegendPosition="@Position.Left">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="20">Total</text>
+                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@DadosDoGraficoDePedidos.Sum().ToString()</text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudPaper>
+
+
+            <MudPaper Elevation="2" Square="true" Class="rounded-2">
+                <MudChart ChartType="ChartType.Donut"
+                          Width="150px"
+                          Height="150px"
+                          InputData="@DadosDoGraficoDePedidos"
+                          InputLabels="@DescDoGraficoDePedidos"
+                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
+                          LegendPosition="@Position.Left">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="20">Total</text>
+                        <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@DadosDoGraficoDePedidos.Sum().ToString()</text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudPaper>
+
+        </MudPaper>
+
     </MudLayout>
 </MudPaper>
+
+
+
+@code {
+    public double[] DadosDoGraficoDePedidos = { 25, 140, 28, 5 };
+    public string[] DescDoGraficoDePedidos = { "Delivery", "IFOOD", "Balcão", "Mesas" };
+    public ChartOptions OpcoesDoGraficoDeTiposDePedido = new ChartOptions
+    {
+        ChartPalette = ["#210CFF", "#FF0101", "#01FF5C", "#FFFA00"]
+    };
+
+
+    protected override void OnInitialized()
+    {
+        // You can initialize or fetch data here if needed
+        base.OnInitialized();
+    }
+}

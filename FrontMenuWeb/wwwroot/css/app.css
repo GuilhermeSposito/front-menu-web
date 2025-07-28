@@ -332,7 +332,7 @@ body {
 
 
 .custom-striped tbody tr:nth-of-type(odd) {
-    background-color: var(--mud-palette-background) !important; /* azul claro, por exemplo */
+    /*background-color: var(--mud-palette-primary) !important; /* azul claro, por exemplo */
 }
 
 @media (max-width: 576px) {
