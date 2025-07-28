@@ -16,7 +16,7 @@
                 <MudSpacer />
                 @if (AppState.MerchantLogado is not null)
                 {
-                    <MudText Typo="Typo.subtitle1" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
+                    <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
                 }
                 <MudSpacer />
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
@@ -96,7 +96,7 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = false;
+    private bool _isDarkMode = true;
     private MudTheme? _theme = null;
     private bool _open = false;
     private bool _dense = false;

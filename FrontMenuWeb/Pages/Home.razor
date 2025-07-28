@@ -6,7 +6,7 @@
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
 
-        <MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-center align-items-center flex-wrap p-3">
+        <MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-between align-items-center flex-wrap p-3">
             <MudPaper Elevation="2" Square="true" Class="rounded-2">
                 <MudChart ChartType="ChartType.Pie"
                           Width="150px"
@@ -15,7 +15,7 @@
                           InputLabels="@DescDoGraficoDePedidos"
                           ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
                           LegendPosition="@Position.Left">
-                  
+
                 </MudChart>
             </MudPaper>
 
@@ -53,6 +53,11 @@
 
         </MudPaper>
 
+        <MudPaper  Elevation="0" Square="true" Class="rounded-2 mt-2">
+            <MudPaper Elevation="0"> <MudText Typo="Typo.h5">Volumes de Pedidos Por dia da Semana</MudText></MudPaper>
+
+            <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
+        </MudPaper>
     </MudLayout>
 </MudPaper>
 
@@ -66,6 +71,18 @@
         ChartPalette = ["#210CFF", "#FF0101", "#01FF5C", "#FFFA00"]
     };
 
+
+    private ChartOptions options = new ChartOptions()
+    {
+        ChartPalette = new string[] { "#FF5733", "#33FF57", "#3357FF" },
+    };
+    public List<ChartSeries> Series = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "IFOOD", Data = new double[] { 5, 10, 200, 30, 40, 35, 400 } },
+        new ChartSeries() { Name = "Cardapios Digitais", Data = new double[] { 448, 38, 90, 66, 78, 140, 300} },
+        new ChartSeries() { Name = "SOPHOS MENU", Data = new double[] { 35, 41, 35, 51, 49, 62, 69 } },
+    };
+    public string[] XAxisLabels = { "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado", "Domingo" };
 
     protected override void OnInitialized()
     {

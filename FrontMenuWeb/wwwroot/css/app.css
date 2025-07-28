@@ -347,4 +347,11 @@ body {
     .mud-stepper .mud-stepper-step-title {
         display: none;
     }
+
+    #merchantName {
+        visibility:collapse;
+    }
+    #ProgramName {
+        width: 100%;
+    }
 }
