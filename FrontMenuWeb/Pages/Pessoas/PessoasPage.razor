@@ -67,7 +67,7 @@
                     <CellTemplate Context="context">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                        Color="Color.Error"
-                                       OnClick="@(() => {})" />
+                                       OnClick="@(async () => {await DeletarPessoa(context.Item);})" />
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
@@ -102,6 +102,7 @@
     private bool coerceText = false;
     private bool coerceValue = false;
     private bool selectedOnTab = false;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -248,11 +249,61 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            Snackbar.Add($"Pessoa Cadastrada com sucesso!", Severity.Success);
             StateHasChanged();
             await AtualizaPessoas();
         }
 
+    }
+
+    private async Task DeletarPessoa(ClsPessoas pessoa)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir a pessoa {pessoa.NomeFantasia ?? pessoa.Nome}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                IsLoading = true;
+                var response = await PessoasService.DeletePessoa(pessoa);
+
+                if (response is null)
+                {
+                    Snackbar.Add($"Erro ao deletar pessoa", Severity.Error);
+                }
+
+                if (response is not null && response.Status != "success")
+                {
+                    Snackbar.Add($"{response.message}", Severity.Error);
+
+                }
+
+                if (response is not null && response.Status == "success")
+                {
+                    Snackbar.Add($"{response.Data.Message}", Severity.Error);
+
+                    await AtualizaPessoas();
+                    StateHasChanged();
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao deletar pessoa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
 }

@@ -39,19 +39,21 @@ public class PessoasService
         return response.Data.Pessoa; 
     }
 
-    public async Task<string> CadastraPessoa(ClsPessoas pessoaASerCadastrada)
+    public async Task<RetornoApiPessoas> CadastraPessoa(ClsPessoas pessoaASerCadastrada)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PostAsJsonAsync("pessoas/create", pessoaASerCadastrada);
 
         RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
 
-        if (response is null)
+        return response!;
+
+       /* if (response is null)
             return "Erro ao cadastrar pessoa;";
 
         if (response.Status != "success")
              return response.message ?? "Erro ao cadastrar pessoa;";
 
-        return response.Data.Message ?? "Pessoa cadastrada com sucesso!";
+        return response.Data.Message ?? "Pessoa cadastrada com sucesso!";*/
 
     }
 
@@ -71,20 +73,14 @@ public class PessoasService
 
     }
 
-    public async Task<string> DeletePessoa(ClsPessoas pessoaASerCadastrada)
+    public async Task<RetornoApiPessoas> DeletePessoa(ClsPessoas pessoaASerCadastrada)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.DeleteAsync($"pessoas/delete/{pessoaASerCadastrada.Id}");
 
         RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
 
-        if (response is null)
-            return "Erro ao deletar pessoa;";
-
-        if (response.Status != "success")
-            return response.message ?? "Erro ao deletar pessoa;";
-
-        return response.Data.Message ?? "Pessoa deletada com sucesso!";
-
+        return response!;
+  
     }
 
 

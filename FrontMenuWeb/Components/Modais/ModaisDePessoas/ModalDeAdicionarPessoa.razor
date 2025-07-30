@@ -5,8 +5,16 @@
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject CEPService CEPService
+@inject PessoasService PessoasService
 
-<MudPaper Square="false" Elevation="0">
+<MudPaper Square="false" Elevation="0" Class="full-height-container">
+
+    <MudOverlay @bind-Visible="CarregandoRespostaDaApiDeCep"
+                DarkBackground
+                Class="overlay-fullscreen">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </MudOverlay>
+
     <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
 
         <DialogContent>
@@ -26,13 +34,16 @@
                                           Value="NovaPessoa.Nome"
                                           ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
                                           Variant="Variant.Text"
-                                          Clearable />
+                                          Clearable
+                                          Required
+                                          RequiredError="O Nome é obrigatório" />
 
                             <MudGrid Class="justify-space-between" Style="max-width: 400px;">
                                 <MudItem xs="12" sm="12">
                                     <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
-                                                  Variant="@Variant.Text" Clearable />
+                                                  Variant="@Variant.Text" Clearable
+                                                  RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                             </MudGrid>
                         </MudPaper>
@@ -43,23 +54,23 @@
                             </MudText>
                             <MudGrid>
                                 <MudItem xs="12" sm="8">
-                                    <MudTextField Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                                    <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="4">
-                                    <MudTextField Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                                    <MudTextField Required RequiredError="O Número da casa é obrigatório"  Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                                    <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                                    <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="3">
-                                    <MudTextField Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                                    <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="5">
@@ -84,7 +95,7 @@
                                     <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
                                 </MudItem>
 
-                                                   
+
                             </MudGrid>
                         </MudPaper>
 
@@ -102,6 +113,12 @@
 
                 }
 
+                @if (ErroAoModificarPessoa)
+                {
+                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                        Verifique todos os campos e tente novamente.
+                    </MudAlert>
+                }
 
             </MudForm>
 
@@ -122,7 +139,8 @@
     private MudTextField<string> _descricaoRef;
     private string maskedPhone;
     private MudTextField<string> TextFieldDeNumeroDoCliente = new MudTextField<string>();
-
+    private bool ErroAoModificarPessoa = false;
+    private bool CarregandoRespostaDaApiDeCep = false;
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
     {
@@ -143,7 +161,6 @@
         TipoEndereco = "Casa"
     };
 
-    private bool ErroAoModificarPessoa = false;
 
 
     private async Task OnPhoneChanged(string value)
@@ -174,9 +191,12 @@
     {
         try
         {
+
             if (!string.IsNullOrWhiteSpace(NovoEndereco.Cep))
             {
+                CarregandoRespostaDaApiDeCep = true;
                 var endereco = await CEPService.ConsultarCepAsync(NovoEndereco.Cep);
+                CarregandoRespostaDaApiDeCep = false;
                 if (endereco != null)
                 {
                     NovoEndereco.Rua = endereco.Logradouro!;
@@ -207,9 +227,13 @@
     {
         try
         {
+
+
             if (!string.IsNullOrWhiteSpace(NovoEndereco.Rua))
             {
+                CarregandoRespostaDaApiDeCep = true;
                 var enderecos = await CEPService.ConsultarCepPorRuaAsync(NovoEndereco.Rua);
+                CarregandoRespostaDaApiDeCep = false;
                 if (enderecos != null && enderecos.Count > 0)
                 {
                     var endereco = enderecos.FirstOrDefault();
@@ -284,7 +308,37 @@
     {
         try
         {
+            if (!string.IsNullOrEmpty(NovoEndereco.Rua) && !string.IsNullOrEmpty(NovoEndereco.Bairro) && !string.IsNullOrEmpty(NovoEndereco.Numero) && !string.IsNullOrEmpty(NovoEndereco.Cidade) && !string.IsNullOrEmpty(NovoEndereco.Estado))
+            {
+                NovaPessoa.Endereco = NovoEndereco;
+                var response = await PessoasService.CadastraPessoa(NovaPessoa);
 
+                if (response is not null)
+                {
+                    if (response is null)
+                    {
+                        Snackbar.Add("Erro ao cadastrar pessoa.", severity: Severity.Error);
+                        ErroAoModificarPessoa = true;
+                    }
+
+                    if (response is not null && response.Status != "success")
+                    {
+                        Snackbar.Add(response.message ?? "Erro ao cadastrar pessoa.", severity: Severity.Error);
+                        ErroAoModificarPessoa = true;
+                    }
+
+                    if (response is not null && response.Status == "success")
+                    {
+                        Snackbar.Add(response.Data.Message ?? "Pessoa Cadastrada com sucesso!", severity: Severity.Success);
+                        MudDialog.Close(DialogResult.Ok(true));
+                    }
+                }
+            }
+            else
+            {
+                ErroAoModificarPessoa = true;
+
+            }
         }
         catch (Exception ex)
         {

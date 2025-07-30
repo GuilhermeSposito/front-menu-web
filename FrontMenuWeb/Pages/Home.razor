@@ -3,28 +3,118 @@
 
 @page "/"
 
-<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-surface); min-height: 100vh; margin-top:0px">
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); margin-top:30px">
     <MudLayout>
 
-        @*<MudPaper Elevation="0" Square=false Class="d-flex gap-5 justify-content-between align-items-center flex-wrap p-3">
-           @* <MudPaper Elevation="2" Square="true" Class="rounded-2">
-                <MudChart ChartType="ChartType.Pie"
-                          Width="150px"
-                          Height="150px"
-                          InputData="@DadosDoGraficoDePedidos"
-                          InputLabels="@DescDoGraficoDePedidos"
-                          ChartOptions="@OpcoesDoGraficoDeTiposDePedido"
-                          LegendPosition="@Position.Left">
+        <MudPaper Class="p-6" Elevation="0" Style="background-color: var(--mud-palette-background);">
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h4" Color="Color.Primary"><b>Dashboard do @AppState.MerchantLogado.NomeFantasia </b></MudText>
+                <MudText Typo="Typo.subtitle2">Visão geral das operações em tempo real</MudText>
+            </MudStack>
 
-                </MudChart>
-            </MudPaper>*@
+            <MudGrid GutterSize="3" Class="mt-4">
 
+                <!-- Card Métricas -->
+                @foreach (var card in metricCards)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="dashboard-card hover-elevate pa-4" Style="background-color: var(--mud-palette-surface);">
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.subtitle2">@card.Title</MudText>
+                                <MudText Typo="Typo.h5" Class="font-weight-bold">@card.Value</MudText>
+                                <MudText Color="Color.Success" Typo="Typo.caption">@card.Growth</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
 
-        <MudPaper  Elevation="0" Square="true" Class="rounded-2">
-            <MudPaper Elevation="0" Class="d-flex align-items-center justify-content-center"> <MudText Class="m-5" Typo="Typo.h5">Volumes de Pedidos Por dia da Semana</MudText></MudPaper>
+                <!-- Card Status -->
+                @foreach (var status in statusCards)
+                {
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="dashboard-card hover-elevate pa-4" Style="background-color: var(--mud-palette-surface);">
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.subtitle2">
+                                    <MudIcon Icon="@status.Icon" Class="mr-1" /> @status.Title
+                                    <MudBadge Class="ml-2">
+                                        @status.Percent%
+                                    </MudBadge>
+                                </MudText>
+                                <MudText Typo="Typo.body2">@status.Description</MudText>
+                                <MudProgressLinear Value="@status.Percent" Color="Color.Warning" Class="mt-2" />
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
 
-            <MudChart Class="w-100" ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350" ChartOptions="options"></MudChart>
+            </MudGrid>
         </MudPaper>
+
+        <MudPaper Class="p-4 mt-3 rounded-2">
+
+            <MudText Typo="Typo.h6" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Class="me-1" /> Pedidos Recentes
+            </MudText>
+
+            <MudList T="Pedido" Dense="true">
+
+                @foreach (var pedido in PedidosRecentes)
+                {
+                    <MudListItem Class="mb-2 px-2 py-2" Style="border: 1px solid #E0E0E0; border-radius: 8px;">
+                        <MudGrid>
+                            <MudItem xs="1" Class="d-flex align-items-center">
+                                <MudIcon Icon="@pedido.IconeTipo" />
+                            </MudItem>
+
+                            <MudItem xs="11">
+                                <MudGrid>
+                                    <MudItem xs="10" sm="11">
+                                        <MudText Typo="Typo.subtitle1" Class="fw-bold">
+                                            #@pedido.IdPedido <span class="ms-1">@pedido.Status</span>
+                                        </MudText>
+                                        <MudText Typo="Typo.caption">@pedido.Tipo</MudText>
+                                        <MudText Typo="Typo.caption" Class="fw-bold">R$ @pedido.Valor.ToString("N2")</MudText>
+                                        <MudText Typo="Typo.caption">@pedido.Tempo</MudText>
+                                    </MudItem>
+                                    <MudItem xs="2" sm="1" Class="d-flex justify-end align-items-start">
+                                        <MudAvatar Size="Size.Small" Color="@pedido.CorStatus" Class="mt-1" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudItem>
+                        </MudGrid>
+                    </MudListItem>
+                }
+            </MudList>
+        </MudPaper>
+
+
+        <MudPaper Class="p-4 mt-4">
+            <MudText Typo="Typo.h6" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.ShowChart" Class="me-1" />
+                Pedidos por Dia da Semana
+            </MudText>
+
+
+            <MudPaper Elevation="0" Square=false Class="p-4 mb-4">
+
+                <MudChart ChartType="ChartType.Line"
+                          XAxisLabels="@Labels"
+                          ChartSeries="@Series"
+                          ChartOptions="@options"
+                          Class="w-100"/>
+            </MudPaper>
+
+            <MudPaper Class="p-4">
+                <MudText Typo="Typo.h6">Pedidos por Hora</MudText>
+
+                <MudChart ChartType="ChartType.Line"
+                          XAxisLabels="@chartLabels"
+                          ChartSeries="@Series"
+                          Class="w-100" />
+            </MudPaper>
+
+        </MudPaper>
+
     </MudLayout>
 </MudPaper>
 
@@ -49,11 +139,62 @@
         new ChartSeries() { Name = "Cardapios Digitais", Data = new double[] { 448, 38, 90, 66, 78, 140, 300} },
         new ChartSeries() { Name = "SOPHOS MENU", Data = new double[] { 35, 41, 35, 51, 49, 62, 69 } },
     };
-    public string[] XAxisLabels = { "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado", "Domingo" };
+    public string[] Labels = { "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado", "Domingo" };
+    private ChartSeries[] chartData = new[]
+{
+    new ChartSeries
+    {
+        Name = "Pedidos",
+        Data = new double[] {14, 18, 24, 31, 45, 38, 30, 22, 18, 25, 33, 44, 40, 32, 26}
+    }
+};
 
     protected override void OnInitialized()
     {
         // You can initialize or fetch data here if needed
         base.OnInitialized();
     }
+
+    private List<(string Title, string Value, string Growth)> metricCards = new()
+                {
+                ("Vendas Hoje", "R$ 15.248,50", "↑ +12.5% vs ontem"),
+                ("Total de Pedidos", "127", "↑ +8.2% vs ontem"),
+                ("Ticket Médio", "R$ 45,30", "↑ +4.1% vs ontem"),
+                };
+
+    private List<(string Title, string Icon, int Percent, string Description)> statusCards = new()
+                {
+                ("Delivery", Icons.Material.Filled.LocalShipping, 80, "Entregas Ativas: 28/35"),
+                ("Balcão", Icons.Material.Filled.Store, 92, "Atendendo--> Fila: 12 / 8"),
+                ("Mesas", Icons.Material.Filled.Restaurant, 72, "Ocupadas: 18/25"),
+                };
+
+    // Gráfico de Pedidos por Hora
+    private string[] chartLabels = new[]
+    {
+        "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00",
+        "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
+    };
+
+ 
+
+
+    class Pedido
+    {
+        public int IdPedido { get; set; }
+        public string Status { get; set; } // Preparando, Servido, Pronto, Saiu
+        public string Tipo { get; set; }   // Delivery, Mesa 12, Balcão
+        public decimal Valor { get; set; }
+        public string Tempo { get; set; }  // Ex: "15 min"
+        public Color CorStatus { get; set; } // Color.Primary, Color.Success, Color.Error, etc.
+        public string IconeTipo { get; set; } // ex: Icons.Material.Filled.LocalShipping
+    }
+
+    List<Pedido> PedidosRecentes = new()
+    {
+        new Pedido { IdPedido = 1245, Status = "Preparando", Tipo = "Delivery", Valor = 67.50m, Tempo = "15 min", CorStatus = Color.Warning, IconeTipo = Icons.Material.Filled.LocalShipping },
+        new Pedido { IdPedido = 1246, Status = "Servido", Tipo = "Mesa 12", Valor = 89.90m, Tempo = "2 min", CorStatus = Color.Success, IconeTipo = Icons.Material.Filled.Restaurant },
+        new Pedido { IdPedido = 1247, Status = "Pronto", Tipo = "Balcão", Valor = 23.40m, Tempo = "5 min", CorStatus = Color.Success, IconeTipo = Icons.Material.Filled.Storefront },
+        new Pedido { IdPedido = 1248, Status = "Saiu", Tipo = "Delivery", Valor = 145.20m, Tempo = "25 min", CorStatus = Color.Error, IconeTipo = Icons.Material.Filled.LocalShipping },
+    };
 }

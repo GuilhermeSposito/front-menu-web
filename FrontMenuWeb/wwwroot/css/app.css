@@ -10,6 +10,25 @@ nav a {
     text-decoration: none !important;
 }
 
+.overlay-fullscreen {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999; /* certifique-se de estar acima de outros elementos */
+}
+.full-height-container {
+    position: relative;
+    height: 100vh; /* ou 100% se o pai já controla a altura */
+}
+
+.dashboard-card {
+    background-color: var(--mud-palette-surface);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
 .login-container {
     background: linear-gradient(135deg, #101628 0%, #0f172a 50%, #241f1e 100%);
     color: #1e293b;
