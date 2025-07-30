@@ -94,26 +94,20 @@
                 Pedidos por Dia da Semana
             </MudText>
 
-
-            <MudPaper Elevation="0" Square=false Class="p-4 mb-4">
-
-                <MudChart ChartType="ChartType.Line"
-                          XAxisLabels="@Labels"
-                          ChartSeries="@Series"
-                          ChartOptions="@options"
-                          Class="w-100"/>
+            <MudPaper Class="doc-section-component-container d-flex justify-content-center align-items-center w-100">
+                <MudChart ChartType="ChartType.Line" ChartSeries="@_series" @bind-SelectedIndex="_index"
+                          XAxisLabels="@_xAxisLabels" Class="w-100"
+                          AxisChartOptions="_axisChartOptions">
+                </MudChart>
             </MudPaper>
 
-            <MudPaper Class="p-4">
-                <MudText Typo="Typo.h6">Pedidos por Hora</MudText>
-
-                <MudChart ChartType="ChartType.Line"
-                          XAxisLabels="@chartLabels"
-                          ChartSeries="@Series"
-                          Class="w-100" />
-            </MudPaper>
 
         </MudPaper>
+
+
+      
+
+       
 
     </MudLayout>
 </MudPaper>
@@ -197,4 +191,24 @@
         new Pedido { IdPedido = 1247, Status = "Pronto", Tipo = "Balcão", Valor = 23.40m, Tempo = "5 min", CorStatus = Color.Success, IconeTipo = Icons.Material.Filled.Storefront },
         new Pedido { IdPedido = 1248, Status = "Saiu", Tipo = "Delivery", Valor = 145.20m, Tempo = "25 min", CorStatus = Color.Error, IconeTipo = Icons.Material.Filled.LocalShipping },
     };
+
+
+
+
+
+
+
+    private int _index = -1;
+    private string _width = "650px";
+    private string _height = "350px";
+    private AxisChartOptions _axisChartOptions = new AxisChartOptions();
+
+    private List<ChartSeries> _series = new List<ChartSeries>()
+    {
+        new ChartSeries() { Name = "Pedidos Confirmados", Data = new double[] { 100, 60, 80, 90, 300, 508, 30 } },
+        new ChartSeries() { Name = "Pedidos Pendentes", Data = new double[] { 3, 4, 2, 6, 3, 5, 2 } },
+        new ChartSeries() { Name = "Pedidos Cancelados", Data = new double[] { 42, 45, 885, 114, 31, 54, 21 } },
+    };
+
+    private string[] _xAxisLabels = { "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom" };
 }
