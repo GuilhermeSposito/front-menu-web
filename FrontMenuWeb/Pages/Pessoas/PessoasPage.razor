@@ -70,13 +70,6 @@
                         @FormatarTelefone(context.Item.Telefone!)
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn T="ClsPessoas" Hidden="false" Title="Editar">
-                    <CellTemplate Context="context">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Color="Color.Primary"
-                                       OnClick="@(()=>{})" />
-                    </CellTemplate>
-                </TemplateColumn>
                 <TemplateColumn T="ClsPessoas" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
@@ -130,9 +123,9 @@
                         <MudPaper Elevation="0" Class="d-flex flex-column justify-content-center align-items-center w-100">
                             @if (CarregandoPessoaParaEdicao)
                             {
-                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
-                                <MudSkeleton Class="w-50" />
-                                <MudSkeleton Class="w-50" />
+                                <MudSkeleton  SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+                                <MudSkeleton  Class="w-50" />
+                                <MudSkeleton  Class="w-50" />
                             }
                             else
                             {
@@ -151,47 +144,44 @@
 
                     </MudCardHeader>
                     <MudCardContent>
-                        <div class="d-flex flex-column align-center gap-3">
-                            <MudTabs>
-                                @*Aqui vai a informações do perfil de usuario*@
-                                <MudTabPanel>
-                                    <ChildContent>
-                                        <MudPaper Class="d-flex flex-wrap justify-content-center align-items-center w-100">
-                                            @if (CarregandoPessoaParaEdicao)
-                                            {
-                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
-                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
-                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
-                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
-                                            }
-                                            else
-                                            {
-                                                <MudPaper Class="w-50">
-                                                    Pedidos Feitos
-                                                </MudPaper>
-                                                <MudPaper Class="w-50">
-                                                    Tiket Médio
-                                                </MudPaper>
-                                                <MudPaper Class="w-50">
-                                                    Último pedido
-                                                </MudPaper>
-                                                <MudPaper Class="w-50">
-                                                    média de pedidos
-                                                </MudPaper>
-                                            }
-                                        </MudPaper>
-                                    </ChildContent>
-                                    <TabContent>
-                                        Perfil
-                                    </TabContent>
-                                </MudTabPanel>
-                                @*----------------------------------------------*@
-                                <MudTabPanel Text="Pedidos" />
-                                <MudTabPanel Text="Avaliações" />
-                            </MudTabs>
-
-
-                        </div>
+                        <MudTabs Centered=true SliderAnimation=true>
+                            @*Aqui vai a informações do perfil de usuario*@
+                            <MudTabPanel>
+                                <ChildContent>
+                                    <MudPaper MinHeight="100%" Class="d-flex flex-wrap justify-content-center align-items-center w-100">
+                                        @if (CarregandoPessoaParaEdicao)
+                                        {
+                                            <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
+                                            <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
+                                            <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
+                                            <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
+                                     
+                                        }
+                                        else
+                                        {
+                                            <MudPaper Class="w-50">
+                                                Pedidos Feitos
+                                            </MudPaper>
+                                            <MudPaper Class="w-50">
+                                                Tiket Médio
+                                            </MudPaper>
+                                            <MudPaper Class="w-50">
+                                                Último pedido
+                                            </MudPaper>
+                                            <MudPaper Class="w-50">
+                                                média de pedidos
+                                            </MudPaper>
+                                        }
+                                    </MudPaper>
+                                </ChildContent>
+                                <TabContent>
+                                    Perfil
+                                </TabContent>
+                            </MudTabPanel>
+                            @*----------------------------------------------*@
+                            <MudTabPanel Text="Pedidos" />
+                            <MudTabPanel Text="Avaliações" />
+                        </MudTabs>
                     </MudCardContent>
                 </MudCard>
             </MudDrawerContainer>
