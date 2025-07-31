@@ -123,9 +123,9 @@
                         <MudPaper Elevation="0" Class="d-flex flex-column justify-content-center align-items-center w-100">
                             @if (CarregandoPessoaParaEdicao)
                             {
-                                <MudSkeleton  SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
-                                <MudSkeleton  Class="w-50" />
-                                <MudSkeleton  Class="w-50" />
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+                                <MudSkeleton Class="w-50" />
+                                <MudSkeleton Class="w-50" />
                             }
                             else
                             {
@@ -155,11 +155,10 @@
                                             <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
                                             <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
                                             <MudSkeleton Width="50%" Height="50%" Class="ml-3" />
-                                     
                                         }
                                         else
                                         {
-                                            <MudPaper Class="w-50">
+                                            @*<MudPaper Class="w-50">
                                                 Pedidos Feitos
                                             </MudPaper>
                                             <MudPaper Class="w-50">
@@ -170,9 +169,44 @@
                                             </MudPaper>
                                             <MudPaper Class="w-50">
                                                 média de pedidos
-                                            </MudPaper>
+                                            </MudPaper>*@
                                         }
                                     </MudPaper>
+
+                                    @*Endereços*@
+                                    <MudPaper Elevation="0" Class="mt-5">
+                                        <div>
+                                            <MudText Style="font-weight:600">Endereços</MudText>
+                                        </div>
+                                        <MudList T="EnderecoPessoa" >
+                                            @if (CarregandoPessoaParaEdicao)
+                                            {
+                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
+                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
+                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
+                                            }
+                                            else
+                                            {
+                                                @foreach (var endereco in PessoaSelecionadaParaEdicao.Enderecos)
+                                                {
+                                                    <MudPaper Style="background-color: var(--mud-palette-background);" Class="d-flex flex-row gap-2 justify-content-around align-items-center mt-2" Elevation="2" Outlined=true>
+                                                        <MudPaper Elevation="0">
+                                                            <MudAvatar Size="Size.Medium">
+                                                                <MudIcon Color="Color.Surface" Icon="@Icons.Material.Filled.Place" />
+                                                            </MudAvatar>
+                                                        </MudPaper>
+                                                        <MudPaper Style="font-weight:600" Elevation="0">
+                                                            <MudText>
+                                                                @endereco.Rua, @endereco.Rua
+                                                            </MudText>
+
+                                                        </MudPaper>
+                                                    </MudPaper>
+                                                }
+                                            }
+                                        </MudList>
+                                    </MudPaper>
+
                                 </ChildContent>
                                 <TabContent>
                                     Perfil
