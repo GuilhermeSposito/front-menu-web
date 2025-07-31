@@ -7,9 +7,13 @@
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
 @using MudBlazor.Extensions
+@using MudBlazor.Services
 @using MudBlazor.Extensions.Components
 @inject IHttpClientFactory HttpClientFactory
 @inject PessoasService PessoasService
+@using MudBlazor.Extensions.Services
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -24,7 +28,17 @@
         </div>
 
 
-        <MudDataGrid Loading=IsLoading Striped="true" T="ClsPessoas" EditTrigger="DataGridEditTrigger.Manual" Items="@Pessoas" class="rounded-3">
+        <MudDataGrid RowClick="@AbrirDrawer"
+                     SelectOnRowClick=true
+                     MultiSelection="false"
+                     Loading=IsLoading
+                     Hover
+                     Striped="true"
+                     T="ClsPessoas"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     Items="@Pessoas"
+                     class="rounded-3">
+
             <ToolBarContent>
 
                 <div class="gap-2 w-100 d-flex ">
@@ -87,7 +101,103 @@
                 </MudCard>
 
             </ChildRowContent>
+
         </MudDataGrid>
+
+
+        @**************************************************DRAWER NOP FRONTEND********************************************************************************@
+        <MudDrawer Style="background-color: var(--mud-palette-background);" @bind-Open="@_open" Width="@_drawerWidth" Height="@_height" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary">
+            <MudDrawerHeader>
+                @*Aqui vai mostrar o nomeFantasia caso seja fornecedor*@
+                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 1)
+                {
+                    <MudText Typo="Typo.h6">Cliente</MudText>
+                }
+                else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2)
+                {
+                    <MudText Typo="Typo.h6">Fornecedor</MudText>
+                }
+                else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                {
+                    <MudText Typo="Typo.h6">Cliente/Fornecedor</MudText>
+                }
+
+            </MudDrawerHeader>
+            <MudDrawerContainer>
+                <MudCard>
+                    <MudCardHeader>
+                        @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
+                        <MudPaper Elevation="0" Class="d-flex flex-column justify-content-center align-items-center w-100">
+                            @if (CarregandoPessoaParaEdicao)
+                            {
+                                <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+                                <MudSkeleton Class="w-50" />
+                                <MudSkeleton Class="w-50" />
+                            }
+                            else
+                            {
+                                <MudAvatar Size="Size.Large">
+                                    @(PessoaSelecionadaParaEdicao.Nome.Length > 1 ? PessoaSelecionadaParaEdicao.Nome.Substring(0, 1) : "")
+                                </MudAvatar>
+                                <MudText Color="Color.Primary">
+                                    @PessoaSelecionadaParaEdicao.Nome
+                                </MudText>
+                                <MudText style="font-weight:30; font-size: 10px">
+                                    Cliente desde 18 de mai de 2015
+                                </MudText>
+                            }
+                        </MudPaper>
+                        @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
+
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex flex-column align-center gap-3">
+                            <MudTabs>
+                                @*Aqui vai a informações do perfil de usuario*@
+                                <MudTabPanel>
+                                    <ChildContent>
+                                        <MudPaper Class="d-flex flex-wrap justify-content-center align-items-center w-100">
+                                            @if (CarregandoPessoaParaEdicao)
+                                            {
+                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
+                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
+                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
+                                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="100px" />
+                                            }
+                                            else
+                                            {
+                                                <MudPaper Class="w-50">
+                                                    Pedidos Feitos
+                                                </MudPaper>
+                                                <MudPaper Class="w-50">
+                                                    Tiket Médio
+                                                </MudPaper>
+                                                <MudPaper Class="w-50">
+                                                    Último pedido
+                                                </MudPaper>
+                                                <MudPaper Class="w-50">
+                                                    média de pedidos
+                                                </MudPaper>
+                                            }
+                                        </MudPaper>
+                                    </ChildContent>
+                                    <TabContent>
+                                        Perfil
+                                    </TabContent>
+                                </MudTabPanel>
+                                @*----------------------------------------------*@
+                                <MudTabPanel Text="Pedidos" />
+                                <MudTabPanel Text="Avaliações" />
+                            </MudTabs>
+
+
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudDrawerContainer>
+        </MudDrawer>
+        @**************************************************DRAWER NOP FRONTEND********************************************************************************@
+
 
     </MudLayout>
 </MudPaper>
@@ -102,6 +212,7 @@
     private bool coerceText = false;
     private bool coerceValue = false;
     private bool selectedOnTab = false;
+    private bool _editTriggerRowClick = true;
 
 
     protected override async Task OnInitializedAsync()
@@ -117,6 +228,8 @@
         finally
         {
             IsLoading = false;
+
+
         }
     }
 
@@ -305,5 +418,76 @@
             IsLoading = false;
         }
     }
+
+
+    /***************************LOGICA DO DRAWER PARA EDITAR PESSOA*************************************************************/
+
+    //*********************** PROPS PARA A LOGICA DE ABRIR O DRAWER DE INFOS E EDITAR CLIENTE OU FORNECEDOR******************************************************/
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private ClsPessoas PessoaSelecionadaParaEdicao = new ClsPessoas();
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "40%";
+    private bool CarregandoPessoaParaEdicao = false;
+    //*****************************************************************************/
+
+    private void OpenDrawer(Anchor anchor)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "80%" : "45%";
+
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AbrirDrawer(DataGridRowClickEventArgs<ClsPessoas> args)
+    {
+        try
+        {
+            CarregandoPessoaParaEdicao = true;
+
+            OpenDrawer(Anchor.End);
+            PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(args.Item.Id);
+
+            CarregandoPessoaParaEdicao = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+
+
+    }
+    /***************************FIM DA LOGICA DO DRAWER PARA EDITAR PESSOA*************************************************************/
 
 }
