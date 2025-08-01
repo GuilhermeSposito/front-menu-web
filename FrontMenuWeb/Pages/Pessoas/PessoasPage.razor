@@ -62,7 +62,6 @@
 
             </ToolBarContent>
             <Columns>
-                <HierarchyColumn T="ClsPessoas" EnableHeaderToggle="@_enableHeaderToggle" />
                 <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Nome" Title="Nome" />
                 <TemplateColumn T="ClsPessoas" Title="Telefone">
@@ -72,29 +71,14 @@
                 </TemplateColumn>
                 <TemplateColumn T="ClsPessoas" Title="Deletar">
                     <CellTemplate Context="context">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error"
-                                       OnClick="@(async () => {await DeletarPessoa(context.Item);})" />
+                        <MudTooltip Text="Clique para excluir pessoa" Color="Color.Error">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error"
+                                           OnClick="@(async () => {await DeletarPessoa(context.Item);})" />
+                        </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
-            <ChildRowContent>
-
-                <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudPaper Elevation="0" Square="false" Class="d-flex align-center justify-center mud-width-full">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Nome</MudText> </MudPaper>
-                        </CardHeaderContent>
-                    </MudCardHeader>
-                    <MudCardContent>
-
-                        Histórico de compra do cliente
-
-                    </MudCardContent>
-                </MudCard>
-
-            </ChildRowContent>
-
         </MudDataGrid>
 
 
@@ -158,54 +142,181 @@
                                         }
                                         else
                                         {
-                                            @*<MudPaper Class="w-50">
-                                                Pedidos Feitos
-                                            </MudPaper>
-                                            <MudPaper Class="w-50">
-                                                Tiket Médio
-                                            </MudPaper>
-                                            <MudPaper Class="w-50">
-                                                Último pedido
-                                            </MudPaper>
-                                            <MudPaper Class="w-50">
-                                                média de pedidos
-                                            </MudPaper>*@
+                                            @*Aqui vai as infos de cliente, como quantidade de vendas e tiket medio*@
                                         }
                                     </MudPaper>
 
-                                    @*Endereços*@
-                                    <MudPaper Elevation="0" Class="mt-5">
-                                        <div>
-                                            <MudText Style="font-weight:600">Endereços</MudText>
-                                        </div>
-                                        <MudList T="EnderecoPessoa" >
-                                            @if (CarregandoPessoaParaEdicao)
-                                            {
-                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
-                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
-                                                <MudSkeleton Width="100%" Height="150px" Class="ml-3" />
-                                            }
-                                            else
-                                            {
-                                                @foreach (var endereco in PessoaSelecionadaParaEdicao.Enderecos)
-                                                {
-                                                    <MudPaper Style="background-color: var(--mud-palette-background);" Class="d-flex flex-row gap-2 justify-content-around align-items-center mt-2" Elevation="2" Outlined=true>
-                                                        <MudPaper Elevation="0">
-                                                            <MudAvatar Size="Size.Medium">
-                                                                <MudIcon Color="Color.Surface" Icon="@Icons.Material.Filled.Place" />
-                                                            </MudAvatar>
-                                                        </MudPaper>
-                                                        <MudPaper Style="font-weight:600" Elevation="0">
-                                                            <MudText>
-                                                                @endereco.Rua, @endereco.Rua
-                                                            </MudText>
 
-                                                        </MudPaper>
-                                                    </MudPaper>
+                                    <MudPaper Class="pa-4 mt-2" Style="border: 1px solid #e0e0e0; border-radius: 10px;">
+                                        <MudStack Row=true Justify="Justify.SpaceBetween">
+                                            <MudText Typo="Typo.h6" Class="mb-2">Informações pessoais</MudText>
+                                            <MudTooltip Color="Color.Primary" Text="Editar Cliente">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                               Color="Color.Primary"
+                                                               OnClick="@(() => _PessoaNaoEditavel = !_PessoaNaoEditavel)" />
+                                            </MudTooltip>
+
+                                        </MudStack>
+                                        @if (CarregandoPessoaParaEdicao)
+                                        {
+                                            <MudGrid>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+
+                                                </MudItem>
+
+                                                <MudItem xs="6">
+                                                    <MudSkeleton Width="100%" Height="40px" Class="ml-3" />
+                                                </MudItem>
+                                            </MudGrid>
+
+                                        }
+                                        else
+                                        {
+
+                                            <MudGrid>
+                                                @*NOME DO CLIENTE*@
+                                                <MudItem xs="6">
+                                                    <MudTextField @bind-Value=@PessoaSelecionadaParaEdicao.Nome @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) Label="Nome" Disabled=_PessoaNaoEditavel />
+                                                </MudItem>
+
+                                                @*NOME FANTASIA*@
+                                                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                                                {
+                                                    <MudItem xs="6">
+                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.NomeFantasia Label="Nome Fantasia" Disabled=_PessoaNaoEditavel />
+                                                    </MudItem>
                                                 }
-                                            }
-                                        </MudList>
+
+                                                @*CPF*@
+                                                <MudItem xs="6">
+                                                    <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cpf Label="CPF" Disabled=_PessoaNaoEditavel />
+                                                </MudItem>
+
+                                                @*CNPJ*@
+                                                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                                                {
+                                                    <MudItem xs="6">
+                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cnpj Label="CNPJ" Disabled=_PessoaNaoEditavel />
+                                                    </MudItem>
+                                                }
+
+                                                @*TELEFONE*@
+                                                <MudItem xs="6" sm="6">
+                                                    <MudStack Row=true>
+                                                        <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
+                                                                      Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
+                                                                      Variant="@Variant.Text" Clearable
+                                                                      RequiredError="O Telefone é obrigatório"
+                                                                      Disabled=_PessoaNaoEditavel
+                                                                      @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) />
+                                                        <MudTooltip Text="Clique para conversar com o cliente" Color="Color.Primary">
+                                                            <MudIconButton Icon="fab fa-whatsapp"
+                                                                           Color="Color.Success"
+                                                                           Size="Size.Medium"
+                                                                           OnClick="AbrirWhatsApp"
+                                                                           Style="font-size: 18px;" />
+
+                                                        </MudTooltip>
+                                                    </MudStack>
+
+                                                </MudItem>
+
+                                                @*EMAIL*@
+                                                <MudItem xs="6">
+                                                    <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Email Label="EMAIL" Disabled=_PessoaNaoEditavel />
+                                                </MudItem>
+
+                                                @*SITE*@
+                                                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                                                {
+                                                    <MudItem xs="6">
+                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Site Label="Site" Disabled=_PessoaNaoEditavel />
+                                                    </MudItem>
+                                                }
+                                            </MudGrid>
+                                        }
                                     </MudPaper>
+
+
+                                    @*Endereços*@
+                                    <MudPaper Class="mt-2 p-3" Style="border: 1px solid #e0e0e0; border-radius: 10px;">
+
+                                        <MudStack Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+                                            <MudText Typo="Typo.h6">Endereços</MudText>
+                                            <MudTooltip Text="Adicionar endereço" Color="Color.Primary">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="async () => { await AbreModalDeAdicionarEndereco(PessoaSelecionadaParaEdicao); }" />
+                                            </MudTooltip>
+                                        </MudStack>
+
+                                        @if (!CarregandoPessoaParaEdicao && !CarregandoApenasEnderecos)
+                                        {
+                                            @foreach (var endereco in PessoaSelecionadaParaEdicao.Enderecos)
+                                            {
+                                                <MudPaper Class="pa-3 mb-2" Elevation="0" Style="border: 1px solid #e0e0e0; border-radius: 10px;">
+                                                    <MudStack Spacing=5 Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="2">
+                                                            <MudIcon Icon="@Icons.Material.Filled.LocationOn" Color="Color.Primary" />
+                                                            <MudStack Justify="Justify.Center" Class="m-2">
+                                                                <MudText Typo="Typo.body2">@endereco.Rua, @endereco.Numero</MudText>
+                                                                <MudText Typo="Typo.caption">@endereco.Bairro</MudText>
+                                                                @if (!string.IsNullOrWhiteSpace(endereco.Complemento))
+                                                                {
+                                                                    <MudText Typo="Typo.caption">Complemento: @endereco.Complemento</MudText>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(endereco.Referencia))
+                                                                {
+                                                                    <MudText Typo="Typo.caption"> Referencia: @endereco.Referencia</MudText>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(endereco.ObsEndereco))
+                                                                {
+                                                                    <MudText Typo="Typo.caption">Obs: @endereco.ObsEndereco</MudText>
+                                                                }
+                                                                @if (!string.IsNullOrWhiteSpace(endereco.TipoEndereco))
+                                                                {
+                                                                    <MudText Typo="Typo.caption">@endereco.TipoEndereco</MudText>
+                                                                }
+                                                            </MudStack>
+                                                        </MudStack>
+                                                        <MudTooltip Text="Excluir endereço" Color="Color.Error">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Default" OnClick="async () => { await DeletarEndereco(PessoaSelecionadaParaEdicao, endereco); }" />
+                                                        </MudTooltip>
+                                                    </MudStack>
+                                                </MudPaper>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <MudSkeleton Width="100%" Height="75px" Class="ml-3" />
+                                            <MudSkeleton Width="50%" Height="75px" Class="ml-3" />
+                                        }
+                                    </MudPaper>
+
 
                                 </ChildContent>
                                 <TabContent>
@@ -237,6 +348,9 @@
     private bool coerceValue = false;
     private bool selectedOnTab = false;
     private bool _editTriggerRowClick = true;
+    private bool _PessoaNaoEditavel = true;
+    private bool CarregandoApenasEnderecos = false;
+
 
 
     protected override async Task OnInitializedAsync()
@@ -392,6 +506,28 @@
 
     }
 
+    private async Task AbreModalDeAdicionarEndereco(ClsPessoas pessoaSelecionadaParaEdicao)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Pessoa", pessoaSelecionadaParaEdicao }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEnderecoParaPessoa>("Cadastrar endereço", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            CarregandoApenasEnderecos = true;
+            StateHasChanged();
+            PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(pessoaSelecionadaParaEdicao.Id);
+            CarregandoApenasEnderecos = false;
+        }
+
+    }
+
     private async Task DeletarPessoa(ClsPessoas pessoa)
     {
         try
@@ -497,10 +633,18 @@
     {
         try
         {
+            _PessoaNaoEditavel = true; // Reseta o estado de edição para não editável ao abrir o drawer
             CarregandoPessoaParaEdicao = true;
 
             OpenDrawer(Anchor.End);
             PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(args.Item.Id);
+            if (PessoaSelecionadaParaEdicao is not null)//aqui só vai o formatar o telefone se a pessoa selecionada não for nula
+            {
+                if (PessoaSelecionadaParaEdicao.Telefone is not null) //Aqui só tem a posibilidade de ser nulo se a pessoa não tiver telefone cadastrado
+                {
+                    maskedPhone = FormatarTelefone(PessoaSelecionadaParaEdicao.Telefone);
+                }
+            }
 
             CarregandoPessoaParaEdicao = false;
         }
@@ -511,6 +655,83 @@
 
 
 
+    }
+
+    private async Task EditaPessoa(ClsPessoas pessoa)
+    {
+        try
+        {
+            _PessoaNaoEditavel = !_PessoaNaoEditavel; // Alterna o estado de edição
+
+            var response = await PessoasService.UpdatePessoa(pessoa);
+
+            Snackbar.Add(response, Severity.Success);
+
+            if (response == "Pessoa modificada com sucesso")
+            {
+                await AtualizaPessoas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao editar pessoa: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string maskedPhone;
+    public PatternMask phoneMask = new PatternMask("(##) #####-####")
+    {
+        MaskChars = new[] { new MaskChar('#', @"[0-9]") }
+    };
+    private async Task OnPhoneChanged(string value)
+    {
+        maskedPhone = value;
+        PessoaSelecionadaParaEdicao.Telefone = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    [Inject] private IJSRuntime JS { get; set; }
+    private void AbrirWhatsApp()
+    {
+        var telefone = $"55{PessoaSelecionadaParaEdicao.Telefone}";
+        var url = $"https://wa.me/{telefone}";
+        JS.InvokeVoidAsync("open", url, "_blank");
+    }
+
+
+    private async Task DeletarEndereco(ClsPessoas pessoa, EnderecoPessoa endereco)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir o endereço {endereco.Rua ?? pessoa.Nome}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var response = await PessoasService.DeleteEndereco(endereco, pessoa.Id);
+
+                Snackbar.Add(response, Severity.Success);
+
+                if (response == "Endereço removido com sucesso!")
+                {
+                    // Atualiza a lista de endereços da pessoa selecionada
+                    CarregandoApenasEnderecos = true;
+                    PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(pessoa.Id);
+                    CarregandoApenasEnderecos = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao deletar endereço: {ex.Message}", Severity.Error);
+        }
     }
     /***************************FIM DA LOGICA DO DRAWER PARA EDITAR PESSOA*************************************************************/
 

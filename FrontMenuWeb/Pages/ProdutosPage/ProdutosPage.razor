@@ -34,7 +34,8 @@
                      SelectOnRowClick="false"
                      Class="rounded-3 custom-striped"
                      Loading="carregandoProduto"
-                     Striped="true">
+                     Striped="true"
+                     Hover>
             <ToolBarContent>
 
 
@@ -110,30 +111,37 @@
                 </TemplateColumn>
                 <TemplateColumn T="ClsProduto" Title="Ativo">
                     <CellTemplate Context="context">
-                        <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
+                        <MudTooltip Text="Clique para ativar/desativar o produto" Color="Color.Primary">
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
+                        </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn T="ClsProduto" Title="Deletar">
                     <CellTemplate Context="context">
-                        <MudIconButton OnClick=@(async p => { await DeletaProduto(context.Item); }) Icon="@Icons.Material.Filled.Delete"
-                                       Color="Color.Error" />
+                        <MudTooltip Text="Clique para deletar o produto" Color="Color.Error">
+                            <MudIconButton OnClick=@(async p => { await DeletaProduto(context.Item); }) Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error" />
+                        </MudTooltip>
+
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn T="ClsProduto">
                     <CellTemplate Context="context">
-                        <MudMenu Dense
-                                 Variant="Variant.Text"
-                                 Size="Size.Medium"
-                                 Color="Color.Inherit"
-                                 Icon="@Icons.Material.TwoTone.MoreVert">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
 
-                            <MudMenuItem OnClick=@(async p => AddProduto(context.Item))
-                                         Icon="@Icons.Material.TwoTone.CopyAll"
-                                         IconColor="Color.Primary"
-                                         Label="Reutilizar Dados" />
+                                <MudMenuItem OnClick=@(async p => AddProduto(context.Item))
+                                             Icon="@Icons.Material.TwoTone.CopyAll"
+                                             IconColor="Color.Primary"
+                                             Label="Reutilizar Dados" />
 
 
-                        </MudMenu>
+                            </MudMenu>
+                        </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
