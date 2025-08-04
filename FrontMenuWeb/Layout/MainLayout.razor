@@ -47,16 +47,20 @@
                         <MudNavLink Icon="@Icons.Material.Filled.FoodBank" Href="/pagemconst">Garçons</MudNavLink>
                     </MudNavGroup>
 
+                    @*Financeiro*@
                     <MudNavGroup Title="Financeiro" Icon="@Icons.Material.Filled.CurrencyExchange" Expanded="false">
+
                         <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
+                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/pagemconst">Forma de Recebimento</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" Href="/pagemconst">Método de Pagamentos</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/pagemconst">Categorias</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.AccountBalance" Href="/pagemconst">Contas</MudNavLink>
 
                         </MudNavGroup>
-                        <MudNavGroup Title="Contas a Pagar" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
+                        
+                        <MudNavLink Icon="@Icons.Material.Filled.Wallet" Href="/pagemconst">Lançamento financeiro</MudNavLink>
 
-                        </MudNavGroup>
-                        <MudNavGroup Title="Controle De Contas" Icon="@Icons.Material.Filled.AttachMoney" Expanded="false">
 
-                        </MudNavGroup>
 
                     </MudNavGroup>
 
@@ -188,7 +192,7 @@
         DrawerIcon = "#92929f",
         DrawerText = "#92929f",
         GrayLight = "#2a2833",
-        GrayLighter = "#404553", //"#1e1e2d",
+        GrayLighter = "#1e1e2d80", //"#1e1e2d",
         Info = "#4a86ff",
         Success = "#3dcb6c",
         Warning = "#ffb545",
@@ -198,6 +202,8 @@
         Divider = "#292838",
         OverlayLight = "#1e1e2d80", //#404553
     };
+
+    //#404553
 
     public string DarkLightModeButtonIcon => _isDarkMode switch
     {

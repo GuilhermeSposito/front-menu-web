@@ -20,7 +20,7 @@
         <DialogContent>
 
             <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
-                <MudRadioGroup @bind-Value="NovaPessoa.TipoPessoaId">
+                <MudRadioGroup @bind-Value="NovaPessoa.TipoPessoaId" @bind-Value:after="@(()=> {if(NovaPessoa.TipoPessoaId == 2){ NovoEndereco.TipoEndereco = "Principal"; }else{NovoEndereco.TipoEndereco = "Casa";}})">
                     <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
                     <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
                     <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
@@ -46,61 +46,11 @@
                                                   RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                             </MudGrid>
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable
+                                          Required RequiredError="O CPF é obrigatório" />
                         </MudPaper>
-
-                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
-                            <MudText Typo="Typo.h6" Class="d-flex justify-content-center align-items-center ">
-                                Endereço do Cliente
-                            </MudText>
-                            <MudGrid>
-                                <MudItem xs="12" sm="8">
-                                    <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12" sm="4">
-                                    <MudTextField Required RequiredError="O Número da casa é obrigatório"  Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12" sm="6">
-                                    <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12" sm="6">
-                                    <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12" sm="3">
-                                    <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
-                                </MudItem>
-
-                                <MudItem xs="12" sm="5">
-                                    <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
-                                                  Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
-                                </MudItem>
-
-                                <MudItem xs="12">
-                                    <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12">
-                                    <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
-                                </MudItem>
-
-                                <MudItem xs="12">
-                                    <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
-                                </MudItem>
-
-
-                                <MudItem xs="12">
-                                    <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
-                                </MudItem>
-
-
-                            </MudGrid>
-                        </MudPaper>
-
                     </MudFocusTrap>
-
                 }
                 else if (NovaPessoa.TipoPessoaId == 2)
                 {
@@ -112,6 +62,60 @@
                     <MudText>aquio os campos para fornecedor/cliente</MudText>
 
                 }
+
+                <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                    <MudText Typo="Typo.h6" Class="d-flex justify-content-center align-items-center ">
+                        Endereço
+                    </MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="8">
+                            <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField Required RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="3">
+                            <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="5">
+                            <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
+                                          Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
+                        </MudItem>
+
+
+                        <MudItem xs="12">
+                            <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
+                        </MudItem>
+
+
+                    </MudGrid>
+                </MudPaper>
+
+
+
 
                 @if (ErroAoModificarPessoa)
                 {
