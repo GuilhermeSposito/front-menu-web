@@ -51,7 +51,10 @@ builder.Services.AddHttpClient<CEPService>(client =>
     client.BaseAddress = new Uri("https://viacep.com.br/ws/");
 });
 
-
+builder.Services.AddHttpClient<CnpjPesquisaService>(client =>
+{
+    client.BaseAddress = new Uri("https://brasilapi.com.br/api/cnpj/v1/");
+});
 
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());

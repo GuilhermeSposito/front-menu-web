@@ -26,17 +26,16 @@
             </div>
         </div>
 
-
         <MudDataGrid T="ClsProduto"
-                     Items="@Produtos"
+                     @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
                      MultiSelection="false"
                      SelectOnRowClick="false"
                      Class="rounded-3 custom-striped"
                      Loading="carregandoProduto"
-                     Hover>
+                     Hover
+                     ServerData="LoadServerData">
             <ToolBarContent>
-
 
                 <MudAutocomplete T="string"
                                  SearchFunc="Search"
@@ -53,8 +52,8 @@
                                  Dense="true"
                                  Clearable />
 
-                <MudSelect @bind-Value="_selectedGrupo" @bind-Value:after="FiltroDeGrupoAcionado" On Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
-                    <MudSelectItem Value="_selectedGrupo = null!">Sem filtro</MudSelectItem>
+
+                <MudSelect @bind-Value="_selectedGrupo" Clearable="true" @bind-Value:after="FiltroDeGrupoAcionado" Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
                     @foreach (var grupo in Grupos)
                     {
                         <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
@@ -72,7 +71,6 @@
 
             </ToolBarContent>
             <Columns>
-                <HierarchyColumn T="ClsProduto" EnableHeaderToggle="@_enableHeaderToggle" />
                 <PropertyColumn Property="x => x.Descricao" Title="Nome"></PropertyColumn>
                 <PropertyColumn Property="x => x.CodigoInterno" Title="Codigo" />
                 <TemplateColumn T="ClsProduto" Hidden="false" Title="Preço">
@@ -90,7 +88,7 @@
                                                  T="double"
                                                  HideSpinButtons="true"
                                                  @bind-Value="precoMenor.Valor"
-                                                 @onfocusout="@(() => AtualizaValorDoProduto(precoMenor, true))" />
+                                                 @onfocusout="@(() => AtualizaValorDoProduto(precoMenor, true, context.Item.Id))" />
                             </MudPaper>
                         }
                         else
@@ -138,13 +136,659 @@
                                              IconColor="Color.Primary"
                                              Label="Reutilizar Dados" />
 
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar Produto" />
+                                </MudTooltip>
 
                             </MudMenu>
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
-            <ChildRowContent>
+            <PagerContent>
+
+                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 5, 10, 20 }) />
+
+            </PagerContent>
+        </MudDataGrid>
+
+
+
+    </MudLayout>
+
+    @if (PrecoFoiModificado)
+    {
+        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
+                  Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
+            <MudText>Você alterou @PrecosParaModificar.Count preço. Deseja salvar as alterações?</MudText>
+
+            <MudPaper Elevation="0" Square="false">
+
+                <MudButton Color="Color.Default" OnClick="DescartarPrecos">Descartar</MudButton>
+                <MudButton Color="Color.Success" OnClick=@(async p => { await SalvarPrecos(); }) Class="ml-2">Salvar</MudButton>
+
+            </MudPaper>
+        </MudPaper>
+    }
+
+
+
+
+
+
+
+
+</MudPaper>
+
+
+
+
+<MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
+@code {
+    List<ClsProduto>? Produtos = new();
+    private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
+    private MudDataGrid<ClsProduto>? dataGridRef;
+    private string StringDePesquisa = string.Empty;
+    ClsProduto? ExpandedProduto;
+    private bool _enableHeaderToggle = true;
+    private int NumAba = 1;
+    private List<ClsGrupo> Grupos = new();
+    private bool Aviso = false;
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    public bool PrecoFoiModificado = false;
+    public List<Preco> PrecosParaModificar = new List<Preco>();
+    private bool ReutilizarInfosDoProdutoParaAdicionarNovo = false;
+    private bool _editTriggerRowClick; //propriedade que libera o click na coluna
+    private ClsProduto? ProdutoSelecionado = new ClsProduto();
+    private bool carregandoProduto = true;
+    public List<CST> ListaDeCSTS = CST.Lista;
+    public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
+    public List<ClsAliquota> ListaDeAliquotas { get; set; } = new List<ClsAliquota>();
+    public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
+    public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
+    private ClsGrupo _selectedGrupo = null!;
+
+    private void AddProduto(ClsProduto? produtoParaReultilizar)
+    {
+        try
+        {
+            if (produtoParaReultilizar is null)
+            {
+                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault() ?? new ClsProduto() { CodigoInterno = "0000" };
+                Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
+
+            }
+            else
+            {
+                ProdutoSelecionado = produtoParaReultilizar;
+                ReutilizarInfosDoProdutoParaAdicionarNovo = true;
+
+                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
+
+                Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar produto: {ex.Message}", Severity.Error);
+        }
+    }
+
+
+    private async Task<GridData<ClsProduto>> LoadServerData(GridState<ClsProduto> state)
+    {
+        try
+        {
+            carregandoProduto = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await ProdutoService.GetProdutosPorPaginaAsync(page, pageSize, StringDePesquisa, _selectedGrupo?.Id);
+
+            return new GridData<ClsProduto>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar produtos: {ex.Message}", Severity.Error);
+            return new GridData<ClsProduto>
+            {
+
+            };
+
+        }
+        finally
+        {
+            carregandoProduto = false;
+        }
+
+    }
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AtualizaGrupos();
+            await AtualizaAliquotas();
+            AtualizaProdutos(); //não aguardar
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao inicializar a página de produtos: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AtualizaAliquotas()
+    {
+        try
+        {
+            ListaDeAliquotas = await AliquotaService.GetAliquotas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar alíquotas: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
+    {
+        try
+        {
+
+            Produtos = await ProdutoService.GetProdutosAsync();
+
+            if (Produtos is not null)
+            {
+                foreach (var produto in Produtos)
+                {
+                    if (produto.CST is not null)
+                    {
+                        var valorDoCst = int.TryParse(produto.CST, out int result) ? result : 0;
+                        produto.CSTSelected = ListaDeCSTS.FirstOrDefault(x => x.Id == valorDoCst) ?? new CST { Id = 0, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.CSTSelected = new CST { Id = 0, Descricao = "Não definido" };
+
+                    }
+
+                    if (produto.csosn is not null)
+                    {
+                        var valorDoCsosn = int.TryParse(produto.csosn, out int result) ? result : 0;
+                        produto.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(x => x.Id == valorDoCsosn) ?? new CSOSN { Id = 0, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.CSOSNSelected = new CSOSN { Id = 0, Descricao = "Não definido" };
+
+                    }
+
+                    if (produto.OrigemProduto is not null)
+                    {
+                        var iDdAoRIGEMdopROPDUTO = int.TryParse(produto.OrigemProduto, out int result) ? result : 0;
+                        produto.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == iDdAoRIGEMdopROPDUTO) ?? new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.OrigemProdutoSelected = new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
+
+                    }
+
+                    if (produto.TribPisCofins is not null)
+                    {
+                        var IdTribPisCOnfins = int.TryParse(produto.TribPisCofins, out int result) ? result : 0;
+                        produto.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == IdTribPisCOnfins) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+                    }
+                    else
+                    {
+                        produto.TribPisCofinsSelected = new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+
+                    }
+
+
+
+
+                    if (produto.ImpressoraComanda1 is null)
+                    {
+                        produto.ImpressoraComanda1 = "Não imprime";
+                    }
+                    if (produto.ImpressoraComanda2 is null)
+                    {
+                        produto.ImpressoraComanda2 = "Não imprime";
+                    }
+                }
+
+                Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao atualizar produto", Severity.Error);
+        }
+        finally
+        {
+
+            carregandoProduto = false;
+        }
+
+    }
+
+    private async Task AtualizaGrupos(bool ProdutoFoiModificado = false)
+    {
+        Grupos = await GrupoService.GetGrupos();
+    }
+
+
+    private async void FiltroDeGrupoAcionado()
+    {
+        try
+        {
+            if (dataGridRef != null)
+            {
+                await dataGridRef.ReloadServerData();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao aplicar filtro de grupo: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            carregandoProduto = false;
+        }
+
+    }
+
+    private async Task RecarregarProdutosAposPesquisa()
+    {
+        try
+        {
+            if (dataGridRef != null)
+            {
+                await dataGridRef.ReloadServerData();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao recarregar produtos.", Severity.Error);
+        }
+
+    }
+
+
+
+    private async Task TrocaAbaDeInfosDoProduto(int numAba = 1)
+    {
+        NumAba = numAba;
+    }
+
+    private async Task OnSaveChanges(ClsProduto produtoModificado)
+    {
+        try
+        {
+            Console.WriteLine(produtoModificado.CodigoInterno);
+
+            produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
+            produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
+            var response = await ProdutoService.EditaProduto(produtoModificado);
+            var responseAsString = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add($"{responseAsString}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task AdicionarNovoValor(ClsProduto prod)
+    {
+        try
+        {
+            var parameters = new DialogParameters
+            {
+                { "Produto", prod }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeAdicionarValor>($"Adicionar valor para o produto {prod.Descricao}", parameters, options: options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                Snackbar.Add($"Novo valor adicionado com sucesso!", Severity.Success);
+                await AtualizaProdutos();
+                StateHasChanged();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
+        }
+
+
+    }
+
+
+    private async Task DeletaPreco(Preco preco, ClsProduto produto)
+    {
+        try
+        {
+            if (produto.Precos.Count > 1)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+             {
+              { x => x.ContentText, $"Você tem certeza que deseja excluir esse preco de {preco.Valor}? Essa operação não pode ser desfeita. " },
+              { x => x.ButtonText, "Sim" },
+              { x => x.Color, Color.Error}
+             };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+                var result = await dialog.Result;
+
+                if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                {
+
+                    var response = await ProdutoService.DeletaPreco(preco);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var ResponseAsString = await response.Content.ReadAsStringAsync();
+                        Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
+                        await AtualizaProdutos();
+                    }
+
+                }
+
+                StateHasChanged();
+            }
+            else
+            {
+
+                Snackbar.Add("Não é possível remover o último preço.", Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir preço: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string TraduzImpressora(string CodImpressora)
+    {
+        switch (CodImpressora)
+        {
+            case "Caixa":
+                return "Cai";
+            case "Cozinha 1":
+                return "Cz1";
+            case "Cozinha 2":
+                return "Cz2";
+            case "Cozinha 3":
+                return "Cz3";
+            case "Bar":
+                return "Bar";
+            case "Não":
+                return "Nao";
+            default:
+                return CodImpressora;
+        }
+
+    }
+
+    private async Task AtualizaValorDoProduto(Preco preco, bool eMudancaRapida = false, string? idProduto = null)
+    {
+        try
+        {
+            if (eMudancaRapida && Produtos is not null)
+            {
+                if (idProduto is not null)
+                {
+                    ClsProduto produto = await ProdutoService.GetProdutoAsync(idProduto);
+                    var precoAntigo = produto.Precos.FirstOrDefault(x => x.Id == preco.Id);
+
+                    if (preco.Valor != precoAntigo!.Valor)
+                    {
+                        PrecoFoiModificado = true;
+                        PrecosParaModificar.Add(preco);
+                    }
+                }
+
+            }
+            else
+            {
+                var response = await ProdutoService.EditaPrecoDoProduto(preco);
+                var responseAsString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add($"{responseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"valor alterado com sucesso!", Severity.Success);
+                }
+
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Snackbar.Add($"Erro ao atualizar valor do produto: {ex.Message}", Severity.Error);
+        }
+
+
+    }
+
+    private async Task DeletaProduto(ClsProduto Prod)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir o produto {Prod.Descricao}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                var response = await ProdutoService.DeletaProduto(Prod);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var ResponseAsString = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Erro ao excluir produto: {ResponseAsString}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"Produto {Prod.Descricao} exclúido com sucesso!", Severity.Error);
+                    await AtualizaProdutos();
+                }
+
+            }
+
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir produto: {ex.Message}", Severity.Error);
+        }
+
+
+    }
+
+    public async void DescartarPrecos()
+    {
+        PrecoFoiModificado = false;
+        PrecosParaModificar.Clear();
+        await AtualizaProdutos();
+        Snackbar.Add("Alterações descartadas.", Severity.Warning);
+        StateHasChanged();
+    }
+
+    public async Task SalvarPrecos()
+    {
+        try
+        {
+            if (PrecosParaModificar.Count > 0)
+            {
+                foreach (var preco in PrecosParaModificar)
+                {
+                    var response = await ProdutoService.EditaPrecoDoProduto(preco);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var ResponseAsString = await response.Content.ReadAsStringAsync();
+                        Snackbar.Add($"Erro ao salvar preço: {ResponseAsString}", Severity.Error);
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Preço {preco.Valor} salvo com sucesso!", Severity.Success);
+                    }
+                }
+                PrecoFoiModificado = false;
+                PrecosParaModificar.Clear();
+                await AtualizaProdutos();
+            }
+            else
+            {
+                Snackbar.Add("Nenhum preço foi modificado.", Severity.Warning);
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar preços: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return Produtos.Select(x => x.Descricao!).Distinct();
+            }
+
+            return Produtos
+                .Where(x =>
+                    (x.CodigoInterno?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (x.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
+                .Select(x => x.Descricao!)
+                .Distinct();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar produtos: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<string>();
+        }
+    }
+
+
+
+    //----------------------------------------------------------------------- Definir impressoras
+
+    private string _value;
+    private Margin _margin;
+    private bool _dense;
+    private bool _disabled;
+    private bool _readonly;
+    private bool _placeholder;
+    private bool _helperText;
+    private bool _helperTextOnFocus;
+    private bool _clearable;
+    private bool _fitContent;
+    private bool _modal = true;
+    private bool _fixed = false;
+    private OverflowBehavior _overflowBehavior = OverflowBehavior.FlipOnOpen;
+    private DropdownWidth _dropdownWidth = DropdownWidth.Relative;
+    private Snackbar _ProdutoModificadoSnackBar;
+    private DropdownSettings _dropdownSettings => new DropdownSettings() { Fixed = _fixed, OverflowBehavior = _overflowBehavior, };
+
+
+    private readonly string[] _states =
+    {
+        "Cz1","Cz2","Cz3","Bar","Cai","Nao"
+    };
+
+
+
+
+    private Categoria _SelectedCategoria;
+
+    private async void FiltroDeCategoriaAcionado()
+    {
+        try
+        {
+            if (Produtos is not null && _SelectedCategoria is not null)
+            {
+                Produtos = Produtos.FindAll(x => x.Categoria!.Id == _SelectedCategoria.Id);
+                Snackbar.Add($"Filtro de categoria acionado: {_SelectedCategoria.Descricao}", Severity.Info);
+            }
+
+            await AtualizaProdutos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao aplicar filtro de categoria: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+
+
+    //Lógica do expand do codigo de barras
+    bool _expanded = true;
+
+    private void OnExpandCollapseClick()
+    {
+        _expanded = !_expanded;
+    }
+}
+
+
+@*
+                    // Parte de edição do produto para depois separar 
+                     <ChildRowContent>
                 <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
                     <MudCardHeader>
                         <CardHeaderContent>
@@ -160,9 +804,7 @@
                                             <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(4))" Completed="false" Title="Ficha Técnica">Ficha técnica do produto</MudStep>
                                         </ChildContent>
                                         <ActionContent Context="stepper">
-                                            @*
-                                            Deixar Vazio para não ter botões de ação
-                                           *@
+                                           
                                         </ActionContent>
                                     </MudStepper>
 
@@ -184,7 +826,6 @@
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12">
-                                    @*Codigo de barras*@
                                     <MudExpansionPanels>
                                         <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
                                             <MudTextField @bind-Value=@context.Item.CodBarras @onfocusout=@(async prop => await OnSaveChanges(context.Item)) Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
@@ -285,7 +926,7 @@
 
                                         </MudPaper>
 
-                                        @*Cardapio do dia*@
+                
                                         <MudPaper Class="h-100">
                                             <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
 
@@ -431,7 +1072,7 @@
                                     </MudPaper>
                                 </MudItem>
 
-                                @*Item Resgastavel*@
+                         
                                 <MudItem xs="12" sm="12">
                                     <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
                                         <MudPaper Elevation="0" Square="false">
@@ -522,7 +1163,7 @@
                         {
 
 
-                            @*Valores*@
+                
                             <MudItem xs="12">
                                 <MudGrid>
 
@@ -758,588 +1399,6 @@
                 </MudCard>
             </ChildRowContent>
 
-        </MudDataGrid>
 
-
-
-    </MudLayout>
-
-    @if (PrecoFoiModificado)
-    {
-        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
-                  Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
-            <MudText>Você alterou @PrecosParaModificar.Count preço. Deseja salvar as alterações?</MudText>
-
-            <MudPaper Elevation="0" Square="false">
-
-                <MudButton Color="Color.Default" OnClick="DescartarPrecos">Descartar</MudButton>
-                <MudButton Color="Color.Success" OnClick=@(async p => { await SalvarPrecos(); }) Class="ml-2">Salvar</MudButton>
-
-            </MudPaper>
-        </MudPaper>
-    }
-
-
-
-
-
-
-
-
-</MudPaper>
-
-
-
-
-<MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
-@code {
-    List<ClsProduto>? Produtos = new();
-    private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
-    private string StringDePesquisa = string.Empty;
-    ClsProduto? ExpandedProduto;
-    private bool _enableHeaderToggle = true;
-    private int NumAba = 1;
-    private List<ClsGrupo> Grupos = new();
-    private bool Aviso = false;
-    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
-    public bool PrecoFoiModificado = false;
-    public List<Preco> PrecosParaModificar = new List<Preco>();
-    private bool ReutilizarInfosDoProdutoParaAdicionarNovo = false;
-    private bool _editTriggerRowClick; //propriedade que libera o click na coluna
-    private ClsProduto? ProdutoSelecionado = new ClsProduto();
-    private bool carregandoProduto = true;
-    public List<CST> ListaDeCSTS = CST.Lista;
-    public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
-    public List<ClsAliquota> ListaDeAliquotas { get; set; } = new List<ClsAliquota>();
-    public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
-    public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
-
-    private void AddProduto(ClsProduto? produtoParaReultilizar)
-    {
-        try
-        {
-            if (produtoParaReultilizar is null)
-            {
-                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault() ?? new ClsProduto() { CodigoInterno = "0000" };
-                Navigation.NavigateTo($"/adicionarproduto?cilp={ultimoproduto!.CodigoInterno}");
-
-            }
-            else
-            {
-                ProdutoSelecionado = produtoParaReultilizar;
-                ReutilizarInfosDoProdutoParaAdicionarNovo = true;
-
-                var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
-
-                Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao adicionar produto: {ex.Message}", Severity.Error);
-        }
-    }
-
-
-
-    protected override async Task OnInitializedAsync()
-    {
-        await AtualizaGrupos();
-        await AtualizaProdutos();
-        await AtualizaAliquotas();
-
-    }
-
-    private async Task AtualizaAliquotas()
-    {
-        try
-        {
-            ListaDeAliquotas = await AliquotaService.GetAliquotas();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao carregar alíquotas: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private async Task AtualizaProdutos(bool ProdutoFoiModificado = false)
-    {
-        try
-        {
-
-            Produtos = await ProdutoService.GetProdutosAsync();
-
-            if (Produtos is not null)
-            {
-                foreach (var produto in Produtos)
-                {
-                    if (produto.CST is not null)
-                    {
-                        var valorDoCst = int.TryParse(produto.CST, out int result) ? result : 0;
-                        produto.CSTSelected = ListaDeCSTS.FirstOrDefault(x => x.Id == valorDoCst) ?? new CST { Id = 0, Descricao = "Não definido" };
-                    }
-                    else
-                    {
-                        produto.CSTSelected = new CST { Id = 0, Descricao = "Não definido" };
-
-                    }
-
-                    if (produto.csosn is not null)
-                    {
-                        var valorDoCsosn = int.TryParse(produto.csosn, out int result) ? result : 0;
-                        produto.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(x => x.Id == valorDoCsosn) ?? new CSOSN { Id = 0, Descricao = "Não definido" };
-                    }
-                    else
-                    {
-                        produto.CSOSNSelected = new CSOSN { Id = 0, Descricao = "Não definido" };
-
-                    }
-
-                    if (produto.OrigemProduto is not null)
-                    {
-                        var iDdAoRIGEMdopROPDUTO = int.TryParse(produto.OrigemProduto, out int result) ? result : 0;
-                        produto.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == iDdAoRIGEMdopROPDUTO) ?? new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
-                    }
-                    else
-                    {
-                        produto.OrigemProdutoSelected = new ClsOrigemProduto { Id = 12, Descricao = "Não definido" };
-
-                    }
-
-                    if (produto.TribPisCofins is not null)
-                    {
-                        var IdTribPisCOnfins = int.TryParse(produto.TribPisCofins, out int result) ? result : 0;
-                        produto.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == IdTribPisCOnfins) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
-                    }
-                    else
-                    {
-                        produto.TribPisCofinsSelected = new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
-
-                    }
-
-
-
-
-                    if (produto.ImpressoraComanda1 is null)
-                    {
-                        produto.ImpressoraComanda1 = "Não imprime";
-                    }
-                    if (produto.ImpressoraComanda2 is null)
-                    {
-                        produto.ImpressoraComanda2 = "Não imprime";
-                    }
-                }
-
-                Produtos = Produtos?.OrderBy(x => x.CodigoInterno).ToList();
-            }
-
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao atualizar produto", Severity.Error);
-        }
-        finally
-        {
-
-            carregandoProduto = false;
-        }
-
-    }
-
-    private async Task AtualizaGrupos(bool ProdutoFoiModificado = false)
-    {
-        Grupos = await GrupoService.GetGrupos();
-    }
-
-    private async Task RecarregarProdutosAposPesquisa()
-    {
-        try
-        {
-            if (!string.IsNullOrEmpty(StringDePesquisa))
-            {
-                if (Produtos is not null)
-                    Produtos = Produtos.FindAll(x => x.CodigoInterno!.Contains(StringDePesquisa) || x.Descricao!.Contains(StringDePesquisa, StringComparison.OrdinalIgnoreCase));
-            }
-            else
-            {
-                await AtualizaProdutos();
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao recarregar produtos.", Severity.Error);
-        }
-
-    }
-
-
-
-    private async Task TrocaAbaDeInfosDoProduto(int numAba = 1)
-    {
-        NumAba = numAba;
-    }
-
-    private async Task OnSaveChanges(ClsProduto produtoModificado)
-    {
-        try
-        {
-            produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
-            produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
-            var response = await ProdutoService.EditaProduto(produtoModificado);
-            var responseAsString = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add($"{responseAsString}", Severity.Error);
-            }
-            else
-            {
-                Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
-            }
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
-        }
-
-    }
-
-    private async Task AdicionarNovoValor(ClsProduto prod)
-    {
-        try
-        {
-            var parameters = new DialogParameters
-            {
-                { "Produto", prod }
-            };
-
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-
-            var dialog = await DialogService.ShowAsync<ModalDeAdicionarValor>($"Adicionar valor para o produto {prod.Descricao}", parameters, options: options);
-            var result = await dialog.Result;
-
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-            {
-
-                Snackbar.Add($"Novo valor adicionado com sucesso!", Severity.Success);
-                await AtualizaProdutos();
-                StateHasChanged();
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
-        }
-
-
-    }
-
-
-    private async Task DeletaPreco(Preco preco, ClsProduto produto)
-    {
-        try
-        {
-            if (produto.Precos.Count > 1)
-            {
-                var parameters = new DialogParameters<ModalDeExcluir>
-             {
-              { x => x.ContentText, $"Você tem certeza que deseja excluir esse preco de {preco.Valor}? Essa operação não pode ser desfeita. " },
-              { x => x.ButtonText, "Sim" },
-              { x => x.Color, Color.Error}
-             };
-                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-                var result = await dialog.Result;
-
-                if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-                {
-
-                    var response = await ProdutoService.DeletaPreco(preco);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        var ResponseAsString = await response.Content.ReadAsStringAsync();
-                        Snackbar.Add($"Erro ao excluir preço: {ResponseAsString}", Severity.Error);
-                    }
-                    else
-                    {
-                        Snackbar.Add($"preço de {preco.Valor} exclúido com sucesso!", Severity.Error);
-                        await AtualizaProdutos();
-                    }
-
-                }
-
-                StateHasChanged();
-            }
-            else
-            {
-
-                Snackbar.Add("Não é possível remover o último preço.", Severity.Error);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao excluir preço: {ex.Message}", Severity.Error);
-        }
-    }
-
-    private string TraduzImpressora(string CodImpressora)
-    {
-        switch (CodImpressora)
-        {
-            case "Caixa":
-                return "Cai";
-            case "Cozinha 1":
-                return "Cz1";
-            case "Cozinha 2":
-                return "Cz2";
-            case "Cozinha 3":
-                return "Cz3";
-            case "Bar":
-                return "Bar";
-            case "Não":
-                return "Nao";
-            default:
-                return CodImpressora;
-        }
-
-    }
-
-    private async Task AtualizaValorDoProduto(Preco preco, bool eMudancaRapida = false)
-    {
-        try
-        {
-            if (eMudancaRapida && Produtos is not null)
-            {
-                var produtoNaMemoria = Produtos.FirstOrDefault(x => x.Precos.Contains(preco))!;
-                ClsProduto produto = await ProdutoService.GetProdutoAsync(produtoNaMemoria!.Id);
-                var precoAntigo = produto.Precos.FirstOrDefault(x => x.Id == preco.Id);
-
-                if (preco.Valor != precoAntigo!.Valor)
-                {
-                    PrecoFoiModificado = true;
-                    PrecosParaModificar.Add(preco);
-                }
-
-            }
-            else
-            {
-                var response = await ProdutoService.EditaPrecoDoProduto(preco);
-                var responseAsString = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Snackbar.Add($"{responseAsString}", Severity.Error);
-                }
-                else
-                {
-                    Snackbar.Add($"valor alterado com sucesso!", Severity.Success);
-                }
-
-                StateHasChanged();
-            }
-        }
-        catch (Exception ex)
-        {
-
-            Snackbar.Add($"Erro ao atualizar valor do produto: {ex.Message}", Severity.Error);
-        }
-
-
-    }
-
-    private async Task DeletaProduto(ClsProduto Prod)
-    {
-        try
-        {
-            var parameters = new DialogParameters<ModalDeExcluir>
-            {
-                  { x => x.ContentText, $"Você tem certeza que deseja excluir o produto {Prod.Descricao}? Essa operação não pode ser desfeita. " },
-                  { x => x.ButtonText, "Sim" },
-                  { x => x.Color, Color.Error}
-             };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-            var result = await dialog.Result;
-
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-            {
-
-                var response = await ProdutoService.DeletaProduto(Prod);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var ResponseAsString = await response.Content.ReadAsStringAsync();
-                    Snackbar.Add($"Erro ao excluir produto: {ResponseAsString}", Severity.Error);
-                }
-                else
-                {
-                    Snackbar.Add($"Produto {Prod.Descricao} exclúido com sucesso!", Severity.Error);
-                    await AtualizaProdutos();
-                }
-
-            }
-
-            StateHasChanged();
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao excluir produto: {ex.Message}", Severity.Error);
-        }
-
-
-    }
-
-    public async void DescartarPrecos()
-    {
-        PrecoFoiModificado = false;
-        PrecosParaModificar.Clear();
-        await AtualizaProdutos();
-        Snackbar.Add("Alterações descartadas.", Severity.Warning);
-        StateHasChanged();
-    }
-
-    public async Task SalvarPrecos()
-    {
-        try
-        {
-            if (PrecosParaModificar.Count > 0)
-            {
-                foreach (var preco in PrecosParaModificar)
-                {
-                    var response = await ProdutoService.EditaPrecoDoProduto(preco);
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        var ResponseAsString = await response.Content.ReadAsStringAsync();
-                        Snackbar.Add($"Erro ao salvar preço: {ResponseAsString}", Severity.Error);
-                    }
-                    else
-                    {
-                        Snackbar.Add($"Preço {preco.Valor} salvo com sucesso!", Severity.Success);
-                    }
-                }
-                PrecoFoiModificado = false;
-                PrecosParaModificar.Clear();
-                await AtualizaProdutos();
-            }
-            else
-            {
-                Snackbar.Add("Nenhum preço foi modificado.", Severity.Warning);
-            }
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao salvar preços: {ex.Message}", Severity.Error);
-        }
-
-    }
-
-    private async Task<IEnumerable<string>> Search(string value, CancellationToken token)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return Produtos.Select(x => x.Descricao!).Distinct();
-            }
-
-            return Produtos
-                .Where(x =>
-                    (x.CodigoInterno?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (x.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false))
-                .Select(x => x.Descricao!)
-                .Distinct();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao pesquisar produtos: {ex.Message}", Severity.Error);
-            return Enumerable.Empty<string>();
-        }
-    }
-
-
-
-    //----------------------------------------------------------------------- Definir impressoras
-
-    private string _value;
-    private Margin _margin;
-    private bool _dense;
-    private bool _disabled;
-    private bool _readonly;
-    private bool _placeholder;
-    private bool _helperText;
-    private bool _helperTextOnFocus;
-    private bool _clearable;
-    private bool _fitContent;
-    private bool _modal = true;
-    private bool _fixed = false;
-    private OverflowBehavior _overflowBehavior = OverflowBehavior.FlipOnOpen;
-    private DropdownWidth _dropdownWidth = DropdownWidth.Relative;
-    private Snackbar _ProdutoModificadoSnackBar;
-    private DropdownSettings _dropdownSettings => new DropdownSettings() { Fixed = _fixed, OverflowBehavior = _overflowBehavior, };
-
-
-    private readonly string[] _states =
-    {
-        "Cz1","Cz2","Cz3","Bar","Cai","Nao"
-    };
-
-
-    private ClsGrupo _selectedGrupo;
-
-    private async void FiltroDeGrupoAcionado()
-    {
-        try
-        {
-            if (Produtos is not null && _selectedGrupo is not null)
-            {
-                Produtos = Produtos.FindAll(x => x.Grupo.Id == _selectedGrupo.Id);
-                Snackbar.Add($"Filtro de grupo acionado: {_selectedGrupo.Descricao}", Severity.Info);
-            }
-
-            await AtualizaProdutos();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao aplicar filtro de grupo: {ex.Message}", Severity.Error);
-        }
-
-    }
-
-    private Categoria _SelectedCategoria;
-
-    private async void FiltroDeCategoriaAcionado()
-    {
-        try
-        {
-            if (Produtos is not null && _SelectedCategoria is not null)
-            {
-                Produtos = Produtos.FindAll(x => x.Categoria!.Id == _SelectedCategoria.Id);
-                Snackbar.Add($"Filtro de categoria acionado: {_SelectedCategoria.Descricao}", Severity.Info);
-            }
-
-            await AtualizaProdutos();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao aplicar filtro de categoria: {ex.Message}", Severity.Error);
-        }
-
-    }
-
-
-
-    //Lógica do expand do codigo de barras
-    bool _expanded = true;
-
-    private void OnExpandCollapseClick()
-    {
-        _expanded = !_expanded;
-    }
-}
+           
+                *@

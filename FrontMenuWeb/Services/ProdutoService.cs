@@ -29,6 +29,14 @@ public class ProdutoService
         return response;
     }
 
+    public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaAsync(int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
+    {
+        var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsProduto>>(
+           $"produtos/pagination?page={page}&limit={pageSize}&descricao={pesquisaNome}&grupo={pesquisaDeGrupo}");
+
+        return response!;
+    }
+
     public async Task<HttpResponseMessage> AdicionaProdutoAsync(ClsProduto produto)
     {
         var response = await _http.PostAsJsonAsync<ClsProduto>($"produtos/create", produto);

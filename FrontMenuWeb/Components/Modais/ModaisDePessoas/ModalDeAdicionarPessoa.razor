@@ -6,10 +6,11 @@
 @using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject CEPService CEPService
 @inject PessoasService PessoasService
+@inject CnpjPesquisaService CnpjPesquisaService
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
 
-    <MudOverlay @bind-Visible="CarregandoRespostaDaApiDeCep"
+    <MudOverlay @bind-Visible="CarregandoRespostaDaApi"
                 DarkBackground
                 Class="overlay-fullscreen">
         <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
@@ -47,19 +48,118 @@
                                 </MudItem>
                             </MudGrid>
                             <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable
-                                          Required RequiredError="O CPF é obrigatório" />
+                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Text" Clearable />
                         </MudPaper>
                     </MudFocusTrap>
                 }
                 else if (NovaPessoa.TipoPessoaId == 2)
                 {
-                    <MudText>aqui o os campos para fornecedor</MudText>
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+
+                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                            <MudTextField Mask="@cnpjMask"
+                                          Value="NovaPessoa.Cnpj"
+                                          Label="CNPJ"
+                                          Variant="Variant.Filled"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          HelperTextOnFocus="true" HelperText="Clique no icone de pesquisa para procurar o CNPJ digitado."
+                                          OnAdornmentClick="@(async () => { await PesquisaCnpj(); })"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, OnCnpjChange)" />
+
+
+                            <MudTextField Label="Razão Social"
+                                          Value="NovaPessoa.RazaoSocial"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiusculaRazaoSocial)"
+                                          Variant="Variant.Text"
+                                          Clearable
+                                          Required
+                                          RequiredError="A Razão Social é obrigatória" />
+
+                            <MudGrid Class="justify-space-between" Style="max-width:100%">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
+                                                  Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
+                                                  Variant="@Variant.Text" Clearable
+                                                  RequiredError="O Telefone é obrigatório" />
+                                </MudItem>
+                                <MudItem xs="6" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
+                                                  Value="@maskedPhone2" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged2)"
+                                                  Variant="@Variant.Text" Clearable />
+                                </MudItem>
+                                <MudItem xs="6" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
+                                                  Value="@NovaPessoa.Telefone2"
+                                                  Variant="@Variant.Text" Clearable />
+                                </MudItem>
+                            </MudGrid>
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Text" Clearable />
+                        </MudPaper>
+                    </MudFocusTrap>
 
                 }
-                else
-                {
-                    <MudText>aquio os campos para fornecedor/cliente</MudText>
+                else{
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+
+                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                            <MudTextField Mask="@cnpjMask"
+                                          Value="NovaPessoa.Cnpj"
+                                          Label="CNPJ"
+                                          Variant="Variant.Filled"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                          HelperTextOnFocus="true" HelperText="Clique no icone de pesquisa para procurar o CNPJ digitado."
+                                          OnAdornmentClick="@(async () => { await PesquisaCnpj(); })"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, OnCnpjChange)" />
+
+                            <MudTextField Label="Nome Completo"
+                                          Value="NovaPessoa.Nome"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
+                                          Variant="Variant.Text"
+                                          Clearable
+                                          Required
+                                          RequiredError="O Nome é obrigatório" />
+                     
+                           
+                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Text" Clearable />
+
+                            <MudTextField Label="Razão Social"
+                                          Value="NovaPessoa.RazaoSocial"
+                                          ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiusculaRazaoSocial)"
+                                          Variant="Variant.Text"
+                                          Clearable
+                                          Required
+                                          RequiredError="A Razão Social é obrigatória" />
+
+                            <MudGrid Class="justify-space-between" Style="max-width:100%">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
+                                                  Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
+                                                  Variant="@Variant.Text" Clearable
+                                                  RequiredError="O Telefone é obrigatório" />
+                                </MudItem>
+                                <MudItem xs="6" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
+                                                  Value="@maskedPhone2" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged2)"
+                                                  Variant="@Variant.Text" Clearable />
+                                </MudItem>
+                                <MudItem xs="6" sm="6">
+                                    <MudTextField Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
+                                                  Value="@NovaPessoa.Telefone2"
+                                                  Variant="@Variant.Text" Clearable />
+                                </MudItem>
+                            </MudGrid>
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Text" Clearable />
+                        </MudPaper>
+                    </MudFocusTrap>
+                
 
                 }
 
@@ -120,7 +220,7 @@
                 @if (ErroAoModificarPessoa)
                 {
                     <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
-                        Verifique todos os campos e tente novamente.
+                        @MensagemErro
                     </MudAlert>
                 }
 
@@ -142,14 +242,23 @@
     private IMudDialogInstance MudDialog { get; set; }
     private MudTextField<string> _descricaoRef;
     private string maskedPhone;
+    private string maskedPhone2;
+    private string CnpjSemMascara;
     private MudTextField<string> TextFieldDeNumeroDoCliente = new MudTextField<string>();
     private bool ErroAoModificarPessoa = false;
-    private bool CarregandoRespostaDaApiDeCep = false;
+    private string MensagemErro = string.Empty;
+    private bool CarregandoRespostaDaApi = false;
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
     {
         MaskChars = new[] { new MaskChar('#', @"[0-9]") }
     };
+
+    public PatternMask cnpjMask = new PatternMask("##.###.###/####-##")
+    {
+        MaskChars = new[] { new MaskChar('#', @"[0-9]") }
+    };
+
 
 
     [Parameter]
@@ -166,11 +275,27 @@
     };
 
 
-
-    private async Task OnPhoneChanged(string value)
+    private async Task OnPhoneChanged(string value) //remove a mascara e deixa só os números
     {
         maskedPhone = value;
         NovaPessoa.Telefone = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    private async Task OnCnpjChange(string value) //remove a mascara do cnpj
+    {
+        //NovaPessoa.Cnpj
+        NovaPessoa.Cnpj = value;
+
+        CnpjSemMascara = value;
+        CnpjSemMascara = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    private async Task OnPhoneChanged2(string value)
+    {
+        maskedPhone2 = value;
+        NovaPessoa.Telefone1 = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
         await Task.CompletedTask; // para manter a assinatura async
     }
 
@@ -191,6 +316,24 @@
         NovaPessoa.Nome = string.Join(' ', words);
     }
 
+    private async Task ArrumaNomePrimeiraLetraMAiusculaRazaoSocial(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            NovaPessoa.RazaoSocial = string.Empty;
+
+        var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < words.Length; i++)
+        {
+            var w = words[i];
+            if (w.Length == 1)
+                words[i] = char.ToUpper(w[0]).ToString();
+            else
+                words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
+        }
+        NovaPessoa.RazaoSocial = string.Join(' ', words);
+        NovaPessoa.Nome = NovaPessoa.RazaoSocial; // Atualiza o nome com a razão social
+    }
+
     private async Task ProcuraCep()
     {
         try
@@ -198,9 +341,9 @@
 
             if (!string.IsNullOrWhiteSpace(NovoEndereco.Cep))
             {
-                CarregandoRespostaDaApiDeCep = true;
+                CarregandoRespostaDaApi = true;
                 var endereco = await CEPService.ConsultarCepAsync(NovoEndereco.Cep);
-                CarregandoRespostaDaApiDeCep = false;
+                CarregandoRespostaDaApi = false;
                 if (endereco != null)
                 {
                     NovoEndereco.Rua = endereco.Logradouro!;
@@ -235,9 +378,9 @@
 
             if (!string.IsNullOrWhiteSpace(NovoEndereco.Rua))
             {
-                CarregandoRespostaDaApiDeCep = true;
+                CarregandoRespostaDaApi = true;
                 var enderecos = await CEPService.ConsultarCepPorRuaAsync(NovoEndereco.Rua);
-                CarregandoRespostaDaApiDeCep = false;
+                CarregandoRespostaDaApi = false;
                 if (enderecos != null && enderecos.Count > 0)
                 {
                     var endereco = enderecos.FirstOrDefault();
@@ -278,6 +421,37 @@
             ErroAoModificarPessoa = true;
         }
     }
+
+    private async Task PesquisaCnpj()
+    {
+        try
+        {
+            CarregandoRespostaDaApi = true;
+            ClsCnpjInfoPesquisa? CnpjInfos = await CnpjPesquisaService.ConsultarCNPJAsync(CnpjSemMascara ?? " ");
+            CarregandoRespostaDaApi = false;
+
+            if (CnpjInfos is null)
+                throw new Exception("CNPJ não encontrado ou inválido.");
+
+            NovaPessoa.RazaoSocial = CnpjInfos.RazaoSocial ?? string.Empty;
+            NovaPessoa.Nome = CnpjInfos.RazaoSocial ?? string.Empty;
+            NovaPessoa.Telefone2 = CnpjInfos.DddTelefone1 ?? string.Empty;
+
+            NovoEndereco.Cep = CnpjInfos.Cep ?? string.Empty;
+            NovoEndereco.Rua = CnpjInfos.Logradouro ?? string.Empty;
+            NovoEndereco.Bairro = CnpjInfos.Bairro ?? string.Empty;
+            NovoEndereco.Cidade = CnpjInfos.Municipio ?? string.Empty;
+            NovoEndereco.Estado = CnpjInfos.Uf ?? string.Empty;
+            NovoEndereco.Complemento = CnpjInfos.Complemento ?? string.Empty;
+            NovoEndereco.Numero = CnpjInfos.Numero ?? string.Empty;
+            NovoEndereco.TipoEndereco = "Principal"; // Definindo o tipo de endereço como Principal para CNPJ
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao pesquisar CNPJ: " + ex.Message, Severity.Error);
+        }
+    }
+
 
     private EnderecoViaCep? _enderecoSelecionado;
     private async Task OpenDialogAsync(List<EnderecoViaCep> enderecos)
@@ -341,12 +515,14 @@
             else
             {
                 ErroAoModificarPessoa = true;
+                MensagemErro = "Por favor, preencha todos os campos obrigatórios do endereço.";
 
             }
         }
         catch (Exception ex)
         {
             ErroAoModificarPessoa = true;
+            MensagemErro = ex.ToString();
         }
     }
 

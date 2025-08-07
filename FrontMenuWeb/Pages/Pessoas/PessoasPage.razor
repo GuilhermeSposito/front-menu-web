@@ -37,8 +37,7 @@
                      EditTrigger="DataGridEditTrigger.Manual"
                      Items="@Pessoas"
                      class="rounded-3"
-                    
-        >
+                     Filterable="true">
 
             <ToolBarContent>
 
@@ -80,6 +79,11 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
+            <PagerContent>
+
+                <MudDataGridPager T="ClsPessoas" RowsPerPageString="Pessoas por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 5, 10, 20 }) />
+
+            </PagerContent>
         </MudDataGrid>
 
 

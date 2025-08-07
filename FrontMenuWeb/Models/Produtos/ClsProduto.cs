@@ -213,3 +213,12 @@ public class ClsTribPisConfins
         new ClsTribPisConfins { Id = 5, Descricao = "Sub. Tributária" }
     };
 }
+
+
+public class PaginatedResponse<T>
+{
+    public List<T> Data { get; set; } = new();
+    public int Total { get; set; }
+    public int Page { get; set; }
+    public int LastPage { get; set; }
+}
