@@ -77,6 +77,29 @@
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
+
+                <TemplateColumn T="ClsPessoas">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { await AbrirDrawerAPartirDoBotaoDeEdicao(context.Item); })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar Pessoa" />
+                                </MudTooltip>
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
             </Columns>
             <PagerContent>
 
@@ -661,6 +684,32 @@
 
             OpenDrawer(Anchor.End);
             PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(args.Item.Id);
+            if (PessoaSelecionadaParaEdicao is not null)//aqui só vai o formatar o telefone se a pessoa selecionada não for nula
+            {
+                if (PessoaSelecionadaParaEdicao.Telefone is not null) //Aqui só tem a posibilidade de ser nulo se a pessoa não tiver telefone cadastrado
+                {
+                    maskedPhone = FormatarTelefone(PessoaSelecionadaParaEdicao.Telefone);
+                }
+            }
+
+            CarregandoPessoaParaEdicao = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+    private async Task AbrirDrawerAPartirDoBotaoDeEdicao(ClsPessoas args)
+    {
+        try
+        {
+            _PessoaNaoEditavel = true; // Reseta o estado de edição para não editável ao abrir o drawer
+            CarregandoPessoaParaEdicao = true;
+
+            OpenDrawer(Anchor.End);
+            PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(args.Id);
             if (PessoaSelecionadaParaEdicao is not null)//aqui só vai o formatar o telefone se a pessoa selecionada não for nula
             {
                 if (PessoaSelecionadaParaEdicao.Telefone is not null) //Aqui só tem a posibilidade de ser nulo se a pessoa não tiver telefone cadastrado
