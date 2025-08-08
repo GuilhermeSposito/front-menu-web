@@ -9,6 +9,8 @@ public class ClsPessoas
     [JsonPropertyName("nome")] public string Nome { get; set; } = string.Empty;
     [JsonPropertyName("nome_fantasia")] public string? NomeFantasia { get; set; }
     [JsonPropertyName("razao_social")] public string? RazaoSocial { get; set; }
+    [JsonPropertyName("inscricao_municipal")] public string? InscricaoMunicipal { get; set; }
+    [JsonPropertyName("inscricao_estadual")] public string? InscricaoEstadual { get; set; }
     [JsonPropertyName("cpf")] public string? Cpf { get; set; }
     [JsonPropertyName("cnpj")] public string? Cnpj { get; set; }
     [JsonPropertyName("telefone")] public string? Telefone { get; set; }

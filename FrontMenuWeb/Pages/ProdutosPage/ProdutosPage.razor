@@ -13,6 +13,8 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
 @inject AliquotaService AliquotaService
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -30,7 +32,7 @@
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
                      MultiSelection="false"
-                     SelectOnRowClick="false"
+                     SelectOnRowClick=true
                      Class="rounded-3 custom-striped"
                      Loading="carregandoProduto"
                      Hover
@@ -53,21 +55,21 @@
                                  Clearable />
 
 
-                <MudSelect @bind-Value="_selectedGrupo" Clearable="true" @bind-Value:after="FiltroDeGrupoAcionado" Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined" ShrinkLabel>
+                <MudSelect @bind-Value="_selectedGrupo" Clearable="true" @bind-Value:after="FiltroDeGrupoAcionado" Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined">
                     @foreach (var grupo in Grupos)
                     {
                         <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
                     }
                 </MudSelect>
 
-                <MudSelect @bind-Value="_SelectedCategoria" @bind-Value:after="FiltroDeCategoriaAcionado" On Label="Filtre Por Categoria" Placeholder="Use Filtro por Categoria" Variant="Variant.Outlined" ShrinkLabel>
+                @* <MudSelect @bind-Value="_SelectedCategoria" @bind-Value:after="FiltroDeCategoriaAcionado" On Label="Filtre Por Categoria" Placeholder="Use Filtro por Categoria" Variant="Variant.Outlined" ShrinkLabel>
                     <MudSelectItem Value="_SelectedCategoria = null!">Sem filtro</MudSelectItem>
                     @foreach (var categoria in Categorias)
                     {
                         <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
                     }
                 </MudSelect>
-
+                *@
 
             </ToolBarContent>
             <Columns>
@@ -137,7 +139,7 @@
                                              Label="Reutilizar Dados" />
 
                                 <MudTooltip Text="Clique para editar" Color="Color.Primary">
-                                    <MudMenuItem OnClick=@(async p => { })
+                                    <MudMenuItem OnClick=@(async p => { await AbrirDrawerAPartirDoBotaoDeEdicao(context.Item); })
                                                  Icon="@Icons.Material.TwoTone.Edit"
                                                  IconColor="Color.Primary"
                                                  Label="Editar Produto" />
@@ -236,6 +238,10 @@
         {
             Snackbar.Add($"Erro ao adicionar produto: {ex.Message}", Severity.Error);
         }
+        finally
+        {
+            carregandoProduto = false;
+        }
     }
 
 
@@ -249,6 +255,8 @@
             int pageSize = state.PageSize;
 
             var result = await ProdutoService.GetProdutosPorPaginaAsync(page, pageSize, StringDePesquisa, _selectedGrupo?.Id);
+
+
 
             return new GridData<ClsProduto>
             {
@@ -405,10 +413,6 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao aplicar filtro de grupo: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            carregandoProduto = false;
         }
 
     }
@@ -783,400 +787,597 @@
     {
         _expanded = !_expanded;
     }
+
+    //Lógica do Drawer de edição de produto
+    private bool carregandoProdutoParaEdicao = true;
+    private ClsProduto? ProdutoSelecionadoParaEdicao = null!;
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "65%";
+    private string TitleDoMudStepperPrincipal = "Principal";
+    private string TitleDoMudStepperPrecos = "Preços";
+    private string TitleDoMudStepperTributacoes = "Tributações";
+    private string TitleDoMudStepperFicha = "Ficha Técnica";
+    //--------------------------------------------------------------------------------------
+
+    private async Task AbrirDrawer(DataGridRowClickEventArgs<ClsProduto> args)
+    {
+        try
+        {
+            // Reseta o estado de edição para não editável ao abrir o drawer
+            carregandoProdutoParaEdicao = true;
+
+            OpenDrawer(Anchor.End);
+
+            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(args.Item.Id ?? "");
+
+
+            carregandoProdutoParaEdicao = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+    }
+
+    private async Task AbrirDrawerAPartirDoBotaoDeEdicao(ClsProduto produto)
+    {
+        try
+        {
+            carregandoProdutoParaEdicao = true;
+
+            OpenDrawer(Anchor.End);
+
+            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(produto.Id ?? "");
+
+
+            carregandoProdutoParaEdicao = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void OpenDrawer(Anchor anchor)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "95%" : "65%";
+
+        if (_width < 768)
+        {
+            TitleDoMudStepperPrincipal = "";
+            TitleDoMudStepperPrecos = "";
+            TitleDoMudStepperTributacoes = "";
+            TitleDoMudStepperFicha = "";
+        }
+        else
+        {
+            TitleDoMudStepperPrincipal = "Principal";
+            TitleDoMudStepperPrecos = "Preços";
+            TitleDoMudStepperTributacoes = "Tributações";
+            TitleDoMudStepperFicha = "Ficha Técnica";
+        }
+
+        return InvokeAsync(StateHasChanged);
+    }
+
 }
 
 
-@*
-                    // Parte de edição do produto para depois separar 
-                     <ChildRowContent>
-                <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
-                    <MudCardHeader>
-                        <CardHeaderContent>
-                            <MudItem xs="12">
-                                <MudPaper Class="d-flex flex-column align-center justify-center mud-width-fulloverflow-hidden" style="word-break: break-word;">
-                                    <MudPaper Elevation="0" Square="false" Class="d-flex align-center justify-center mud-width-full">  <MudText Color="Color.Primary" Typo="Typo.h6">@context.Item.Descricao</MudText> </MudPaper>
-
-                                    <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
-                                        <ChildContent>
-                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="Principal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
-                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(2))" Completed="false" Title="Preços">Informações do valor do produto.</MudStep>
-                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(3))" Completed="false" Title="Tributações">Informações de tributação do produto</MudStep>
-                                            <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(4))" Completed="false" Title="Ficha Técnica">Ficha técnica do produto</MudStep>
-                                        </ChildContent>
-                                        <ActionContent Context="stepper">
-                                           
-                                        </ActionContent>
-                                    </MudStepper>
+<MudDrawer Style="background-color: var(--mud-palette-background);" @bind-Open="@_open" Width="@_drawerWidth" Height="@_height" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        @if (carregandoProdutoParaEdicao)
+        {
+            <MudSkeleton Class="w-50" />
+        }
+        else
+        {
+            <MudStack Class="w-100" Justify="Justify.SpaceBetween" Row=true>
+                <MudText Typo="Typo.h6">@ProdutoSelecionadoParaEdicao!.Descricao</MudText>
 
 
-                                </MudPaper>
-                            </MudItem>
-                        </CardHeaderContent>
-                    </MudCardHeader>
+                <MudTooltip Text="Fechar" Color="Color.Primary">
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _open = false)" Color="Color.Primary" />
+                </MudTooltip>
 
-                    <MudCardContent>
-                        @if (NumAba == 1)
-                        {
-                            <MudGrid Class="d-flex align-items-stretch">
+            </MudStack>
+        }
+
+    </MudDrawerHeader>
+    <MudDrawerContainer>
+        <MudCard>
+            <MudCardHeader>
+                @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
+                <MudPaper Elevation="0" Class="d-flex flex-column justify-content-center align-items-center w-100">
+                    @if (carregandoProdutoParaEdicao)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+                        <MudSkeleton Class="w-50" />
+                        <MudSkeleton Class="w-50" />
+                    }
+                    else
+                    {
+                        <MudAvatar Size="Size.Large">
+                            @(ProdutoSelecionadoParaEdicao!.Descricao!.Length > 1 ? ProdutoSelecionadoParaEdicao.Descricao.Substring(0, 1) : "")
+                        </MudAvatar>
+                        <MudText Color="Color.Primary">
+                            @ProdutoSelecionadoParaEdicao!.Descricao
+                        </MudText>
+                        <MudText style="font-weight:30; font-size: 10px">
+                            Produto Adicionado em 17/01/2000 15:30
+                        </MudText>
+                    }
+                </MudPaper>
+                @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
+
+            </MudCardHeader>
+            <MudCardContent>
+                @if (!carregandoProdutoParaEdicao && ProdutoSelecionadoParaEdicao is not null)
+                {
+                    <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
+                        <MudCardHeader>
+                            <CardHeaderContent>
                                 <MudItem xs="12">
-                                    <MudPaper Class="d-flex align-center justify-center py-8">
+                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-fulloverflow-hidden" style="word-break: break-word;">
 
-                                        <MudTextField @bind-Value=@context.Item.CodigoInterno Disabled="true" Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                        <MudTextField @bind-Value=@context.Item.Descricao @onfocusout=@(prop => OnSaveChanges(context.Item)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudStepper NonLinear Ripple="false" ScrollableNavigation="false" Class=" align-center justify-center mud-width-full" style="overflow-x: auto;">
+                                            <ChildContent>
+                                                <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(1))" Completed="false" Title="@TitleDoMudStepperPrincipal">Informações do produto, como nome, valores, impressão e etc ...</MudStep>
+                                                <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(2))" Completed="false" Title="@TitleDoMudStepperPrecos">Informações do valor do produto.</MudStep>
+                                                <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(3))" Completed="false" Title="@TitleDoMudStepperTributacoes">Informações de tributação do produto</MudStep>
+                                                <MudStep onclick="@(() => TrocaAbaDeInfosDoProduto(4))" Completed="false" Title="@TitleDoMudStepperFicha">Ficha técnica do produto</MudStep>
+                                            </ChildContent>
+                                            <ActionContent Context="stepper">
+
+                                            </ActionContent>
+                                        </MudStepper>
+
+
                                     </MudPaper>
                                 </MudItem>
-                                <MudItem xs="12">
-                                    <MudExpansionPanels>
-                                        <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
-                                            <MudTextField @bind-Value=@context.Item.CodBarras @onfocusout=@(async prop => await OnSaveChanges(context.Item)) Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                            <div class="barcode">@context.Item.CodBarras</div>
-                                        </MudExpansionPanel>
-                                    </MudExpansionPanels>
+                            </CardHeaderContent>
+                        </MudCardHeader>
 
+                        <MudCardContent>
+                            @if (NumAba == 1)
+                            {
+                                <MudGrid Class="d-flex align-items-stretch">
+                                    <MudItem xs="12">
+                                        <MudPaper Class="d-flex align-center justify-center py-8">
 
-                                </MudItem>
-                                <MudItem xs="12" sm="6">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.Grupo"
-                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
-                                                   T="ClsGrupo"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="Grupo selecionado"
-                                                   HelperText="Grupo"
-                                                   Placeholder="Escolha seu grupo"
-                                                   AdornmentIcon="@Icons.Material.Filled.Fastfood"
-                                                   AdornmentColor="Color.Success">
-
-                                            @foreach (var grupo in Grupos)
-                                            {
-                                                <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
-                                </MudItem>
-                                <MudItem xs="12" sm="6">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.Categoria"
-                                                   SelectedValuesChanged=@(async prop=>{context.Item.CategoriaId = context.Item.Categoria!.Id; await OnSaveChanges(context.Item);})
-                                                   T="Categoria"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="Categoria selecionada"
-                                                   HelperText="Categoria"
-                                                   Placeholder="Categoria Selecionada"
-                                                   AdornmentIcon="@Icons.Material.Filled.FoodBank"
-                                                   AdornmentColor="Color.Success"
-                                                   Disabled="false">
-
-
-                                            @foreach (var categoria in Categorias)
-                                            {
-                                                <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
-                                </MudItem>
-                                <MudItem xs="12" sm="12" Class="h-100">
-                                    <MudPaper Class="h-100">
-                                        <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
-                                        <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
-
-
-
-                                            <MudSelect Class="m-2"
-                                                       @bind-Value="@context.Item.ImpressoraComanda1"
-                                                       T="string"
-                                                       SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
-                                                       Label="Comanda 1"
-                                                       HelperText="Local de impressão"
-                                                       Placeholder="Local de impressão"
-                                                       AdornmentIcon="@Icons.Material.Filled.ShareLocation"
-                                                       AdornmentColor="Color.Success">
-
-                                                <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
-                                                <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
-                                                <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
-                                                <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
-                                                <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
-
-                                            </MudSelect>
-
-                                            <MudSelect Class="m-2"
-                                                       @bind-Value="@context.Item.ImpressoraComanda2"
-                                                       T="string"
-                                                       SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
-                                                       Label="Comanda 2"
-                                                       HelperText="Local de impressão"
-                                                       Placeholder="Local de impressão"
-                                                       AdornmentIcon="@Icons.Material.Filled.ShareLocation"
-                                                       AdornmentColor="Color.Success">
-
-                                                <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
-                                                <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
-                                                <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
-                                                <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
-                                                <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
-
-                                            </MudSelect>
-
-
-
-
-
+                                            <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.CodigoInterno Disabled="true" Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                            <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.Descricao @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                         </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudExpansionPanels>
+                                            <MudExpansionPanel Text="Código de Barras" MaxHeight="150" Expanded="false">
+                                                <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.CodBarras @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) Class="m-2" Label="Código de Barras" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                                <div class="barcode">@ProdutoSelecionadoParaEdicao.CodBarras</div>
+                                            </MudExpansionPanel>
+                                        </MudExpansionPanels>
 
-                
+
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.Grupo"
+                                                       SelectedValuesChanged=@(prop=> OnSaveChanges(ProdutoSelecionadoParaEdicao))
+                                                       T="ClsGrupo"
+                                                       Class="m-3"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="Grupo selecionado"
+                                                       HelperText="Grupo"
+                                                       Placeholder="Escolha seu grupo"
+                                                       AdornmentIcon="@Icons.Material.Filled.Fastfood"
+                                                       AdornmentColor="Color.Success">
+
+                                                @foreach (var grupo in Grupos)
+                                                {
+                                                    <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.Categoria"
+                                                       SelectedValuesChanged=@(async prop=>{ProdutoSelecionadoParaEdicao.CategoriaId = ProdutoSelecionadoParaEdicao.Categoria!.Id; await OnSaveChanges(ProdutoSelecionadoParaEdicao);})
+                                                       T="Categoria"
+                                                       Class="m-3"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="Categoria selecionada"
+                                                       HelperText="Categoria"
+                                                       Placeholder="Categoria Selecionada"
+                                                       AdornmentIcon="@Icons.Material.Filled.FoodBank"
+                                                       AdornmentColor="Color.Success"
+                                                       Disabled="false">
+
+
+                                                @foreach (var categoria in Categorias)
+                                                {
+                                                    <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12" Class="h-100">
                                         <MudPaper Class="h-100">
-                                            <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
+                                            <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
+                                            <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
 
 
-                                            <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
 
-                                                <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
-                                                    <MudRadioGroup T="bool"
-                                                                   Value="context.Item.CardapioDoDia"
-                                                                   ValueChanged="@(valor => { context.Item.CardapioDoDia = valor; OnSaveChanges(context.Item); })">
-                                                        <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                        <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                                    </MudRadioGroup>
-                                                </MudPaper>
+                                                <MudSelect Class="m-2"
+                                                           @bind-Value="@ProdutoSelecionadoParaEdicao.ImpressoraComanda1"
+                                                           T="string"
+                                                           SelectedValuesChanged=@(prop=> OnSaveChanges(ProdutoSelecionadoParaEdicao))
+                                                           Label="Comanda 1"
+                                                           HelperText="Local de impressão"
+                                                           Placeholder="Local de impressão"
+                                                           AdornmentIcon="@Icons.Material.Filled.ShareLocation"
+                                                           AdornmentColor="Color.Success">
+
+                                                    <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                                                    <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                                                    <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                                                    <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                                                    <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+
+                                                </MudSelect>
+
+                                                <MudSelect Class="m-2"
+                                                           @bind-Value="@ProdutoSelecionadoParaEdicao.ImpressoraComanda2"
+                                                           T="string"
+                                                           SelectedValuesChanged=@(prop=> OnSaveChanges(ProdutoSelecionadoParaEdicao))
+                                                           Label="Comanda 2"
+                                                           HelperText="Local de impressão"
+                                                           Placeholder="Local de impressão"
+                                                           AdornmentIcon="@Icons.Material.Filled.ShareLocation"
+                                                           AdornmentColor="Color.Success">
+
+                                                    <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                                                    <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                                                    <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                                                    <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                                                    <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+
+                                                </MudSelect>
+
+
+
+
 
                                             </MudPaper>
 
-                                            @if (context.Item.CardapioDoDia)
+
+                                            <MudPaper Class="h-100">
+                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
+
+
+                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
+
+                                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
+                                                        <MudRadioGroup T="bool"
+                                                                       Value="ProdutoSelecionadoParaEdicao.CardapioDoDia"
+                                                                       ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.CardapioDoDia = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                            <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                            <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                        </MudRadioGroup>
+                                                    </MudPaper>
+
+                                                </MudPaper>
+
+                                                @if (ProdutoSelecionadoParaEdicao.CardapioDoDia)
+                                                {
+                                                    <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionado.QtdBase"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdBase = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Base"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionado.QtdGuarnicao"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdGuarnicao = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Guarnição"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionadoParaEdicao.QtdCarnes"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdCarnes = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Carnes"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+
+
+
+                                                    </MudPaper>
+                                                }
+
+
+                                            </MudPaper>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="6" Class="h-100">
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Tamanho unico? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.TamanhoUnico"
+                                                               ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.TamanhoUnico = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Item fracionado ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.Fracionado"
+                                                               ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.Fracionado = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Tipo de venda </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup T="string"
+                                                               Value="ProdutoSelecionadoParaEdicao.TipoDeVenda"
+                                                               ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.TipoDeVenda = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="@("Q")" Color="Color.Success" Dense="true">
+                                                        Qtd
+                                                    </MudRadio>
+                                                    <MudRadio Value="@("V")" Color="Color.Success" Dense="false">
+                                                        Valor
+                                                    </MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Obs na venda? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.ObsNaVenda"
+                                                               ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.ObsNaVenda = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Forma de venda </MudText>
+                                                </MudPaper>
+
+                                                <MudRadioGroup T="string"
+                                                               Value="ProdutoSelecionadoParaEdicao.FormaDeVenda"
+                                                               ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.FormaDeVenda = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="@("unidade")" Color="Color.Success" Dense="true">
+                                                        Unidade
+                                                    </MudRadio>
+                                                    <MudRadio Value="@("peso")" Color="Color.Success" Dense="false">
+                                                        Peso
+                                                    </MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                        </MudPaper>
+                                    </MudItem>
+
+
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Item Resgatavel por pontos ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.ItemResgatavel"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.ItemResgatavel = valor;await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Item Vende Pela Internet ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="false"
+                                                               ValueChanged="@(valor => { })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Ultiliza produto na balança ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.UltilizaProdutoNaBalanca"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.UltilizaProdutoNaBalanca = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Ocultar item no app ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.OcultaTablet"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.OcultaTablet = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudNumericField Immediate="false"
+                                                                 Variant="Variant.Outlined"
+                                                                 Label="Valor da Embalagem"
+                                                                 Format="N2"
+                                                                 Culture="_pt"
+                                                                 T="float"
+                                                                 HideSpinButtons="true"
+                                                                 @bind-Value="ProdutoSelecionadoParaEdicao.TaxaDeViagem"
+                                                                 @onfocusout="@(async () => await OnSaveChanges(ProdutoSelecionadoParaEdicao))" />
+                                            </MudPaper>
+
+                                            @if (ProdutoSelecionadoParaEdicao.ItemResgatavel)
                                             {
-                                                <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
-
+                                                <MudPaper Elevation="0" Class="w-25" Square="false">
                                                     <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="context.Item.QtdBase"
+                                                        <MudNumericField Class="w-100"
+                                                                         T="int"
+                                                                         Value="ProdutoSelecionadoParaEdicao.AcumulaQuanto"
                                                                          Immediate="false"
-                                                                         ValueChanged="@(valor => {context.Item.QtdBase = valor; OnSaveChanges(context.Item);})"
-                                                                         Label="Qtd Base"
+                                                                         ValueChanged="@(async valor => {ProdutoSelecionadoParaEdicao.AcumulaQuanto = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                         Label="Qtd que acumula"
                                                                          Variant="Variant.Outlined"
                                                                          Step="1"
                                                                          Min="0"
                                                                          Max="100" />
                                                     </MudPaper>
-
-                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="context.Item.QtdGuarnicao"
-                                                                         Immediate="false"
-                                                                         ValueChanged="@(valor => {context.Item.QtdGuarnicao = valor; OnSaveChanges(context.Item);})"
-                                                                         Label="Qtd Guarnição"
-                                                                         Variant="Variant.Outlined"
-                                                                         Step="1"
-                                                                         Min="0"
-                                                                         Max="100" />
-                                                    </MudPaper>
-
-
-                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="context.Item.QtdCarnes"
-                                                                         Immediate="false"
-                                                                         ValueChanged="@(valor => {context.Item.QtdCarnes = valor; OnSaveChanges(context.Item);})"
-                                                                         Label="Qtd Carnes"
-                                                                         Variant="Variant.Outlined"
-                                                                         Step="1"
-                                                                         Min="0"
-                                                                         Max="100" />
-                                                    </MudPaper>
-
-
-
 
                                                 </MudPaper>
                                             }
 
-
                                         </MudPaper>
-                                    </MudPaper>
-                                </MudItem>
-                                <MudItem xs="6" sm="6" Class="h-100">
-                                </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Tamanho unico? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup T="bool"
-                                                           Value="context.Item.TamanhoUnico"
-                                                           ValueChanged="@(valor => { context.Item.TamanhoUnico = valor; OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
+                                    </MudItem>
+                                </MudGrid>
 
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Item fracionado ? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup T="bool"
-                                                           Value="context.Item.Fracionado"
-                                                           ValueChanged="@(valor => { context.Item.Fracionado = valor; OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Tipo de venda </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup T="string"
-                                                           Value="context.Item.TipoDeVenda"
-                                                           ValueChanged="@(valor => { context.Item.TipoDeVenda = valor; OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="@("Q")" Color="Color.Success" Dense="true">
-                                                    Qtd
-                                                </MudRadio>
-                                                <MudRadio Value="@("V")" Color="Color.Success" Dense="false">
-                                                    Valor
-                                                </MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Obs na venda? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup T="bool"
-                                                           Value="context.Item.ObsNaVenda"
-                                                           ValueChanged="@(valor => { context.Item.ObsNaVenda = valor; OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
+                            }
+                            else if (NumAba == 2)
+                            {
 
 
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Forma de venda </MudText>
-                                            </MudPaper>
 
-                                            <MudRadioGroup T="string"
-                                                           Value="context.Item.FormaDeVenda"
-                                                           ValueChanged="@(valor => { context.Item.FormaDeVenda = valor; OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="@("unidade")" Color="Color.Success" Dense="true">
-                                                    Unidade
-                                                </MudRadio>
-                                                <MudRadio Value="@("peso")" Color="Color.Success" Dense="false">
-                                                    Peso
-                                                </MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
+                                <MudItem xs="12">
+                                    <MudGrid>
 
-                                    </MudPaper>
-                                </MudItem>
-
-                         
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-around mud-width-full py-8">
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Resgatavel por pontos ? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
-                                                           Value="context.Item.ItemResgatavel"
-                                                           ValueChanged="@(async valor => { context.Item.ItemResgatavel = valor;await OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Item Vende Pela Internet ? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
-                                                           Value="false"
-                                                           ValueChanged="@(valor => { })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Ultiliza produto na balança ? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
-                                                           Value="context.Item.UltilizaProdutoNaBalanca"
-                                                           ValueChanged="@(async valor => { context.Item.UltilizaProdutoNaBalanca = valor; await OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudPaper Elevation="0" Square="false">
-                                                <MudText Class="d-flex align-items-center justify-content-center"> Ocultar item no app ? </MudText>
-                                            </MudPaper>
-                                            <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
-                                                           Value="context.Item.OcultaTablet"
-                                                           ValueChanged="@(async valor => { context.Item.OcultaTablet = valor; await OnSaveChanges(context.Item); })">
-                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                            </MudRadioGroup>
-                                        </MudPaper>
-
-                                        <MudPaper Elevation="0" Square="false">
-                                            <MudNumericField Immediate="false"
-                                                             Variant="Variant.Outlined"
-                                                             Label="Valor da Embalagem"
-                                                             Format="N2"
-                                                             Culture="_pt"
-                                                             T="float"
-                                                             HideSpinButtons="true"
-                                                             @bind-Value="context.Item.TaxaDeViagem"
-                                                             @onfocusout="@(async () => await OnSaveChanges(context.Item))" />
-                                        </MudPaper>
-
-                                        @if (context.Item.ItemResgatavel)
+                                        @if (!ProdutoSelecionadoParaEdicao.TamanhoUnico)
                                         {
-                                            <MudPaper Elevation="0" Class="w-25" Square="false">
-                                                <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                    <MudNumericField Class="w-100"
-                                                                     T="int"
-                                                                     Value="context.Item.AcumulaQuanto"
-                                                                     Immediate="false"
-                                                                     ValueChanged="@(async valor => {context.Item.AcumulaQuanto = valor; await OnSaveChanges(context.Item);})"
-                                                                     Label="Qtd que acumula"
-                                                                     Variant="Variant.Outlined"
-                                                                     Step="1"
-                                                                     Min="0"
-                                                                     Max="100" />
-                                                </MudPaper>
+                                            @foreach (var preco in ProdutoSelecionadoParaEdicao.Precos)
+                                            {
+                                                <MudItem xs="12">
+                                                    <MudPaper Class="d-flex flex-wrap gap-2 align-center justify-center mud-width-full py-8">
 
-                                            </MudPaper>
+
+                                                        <MudTextField @onfocusout="@(() => AtualizaValorDoProduto(preco))"
+                                                                      @bind-Value="preco.DescricaoDoTamanho"
+                                                                      Disabled="false"
+                                                                      Class="w-25 m-2"
+                                                                      Label="Descrição do Tamanho"
+                                                                      HelperText="Descrição do tamanho"
+                                                                      Variant="Variant.Text"
+                                                                      Margin="Margin.Dense" />
+
+                                                        <MudTextField @bind-Value="preco.CustosDoInsumo" Disabled="true" Class="w-25 m-2" Label="Custos Insumo" HelperText="Custos dos insumos" Variant="Variant.Text" Margin="Margin.Dense" />
+
+                                                        <MudTextField @bind-Value="preco.CustoReal" Disabled="true" Class="w-25 m-2" Label="Custos reais" HelperText="Custos reais" Variant="Variant.Text" Margin="Margin.Dense" />
+
+                                                        <MudTextField @bind-Value="preco.PorcentagemDeLucro" Disabled="true" Class="w-25 m-2" Label="% de lucro" HelperText="% de lucro" Variant="Variant.Text" Margin="Margin.Dense" />
+
+                                                        <MudNumericField Immediate="false"
+                                                                         Label="Valor do tamanho"
+                                                                         Format="N2"
+                                                                         Culture="_pt"
+                                                                         T="double"
+                                                                         HideSpinButtons="true"
+                                                                         @bind-Value="preco.Valor"
+                                                                         @onfocusout="@(() => AtualizaValorDoProduto(preco))" />
+
+
+                                                    </MudPaper>
+                                                    <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
+                                                        <MudButton OnClick=@(async p => { await DeletaPreco(preco, ProdutoSelecionadoParaEdicao); }) Color="Color.Error" Variant="Variant.Filled">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
+                                                        </MudButton>
+                                                    </MudPaper>
+                                                </MudItem>
+                                            }
+
                                         }
-
-                                    </MudPaper>
-                                </MudItem>
-                            </MudGrid>
-
-                        }
-                        else if (NumAba == 2)
-                        {
-
-
-                
-                            <MudItem xs="12">
-                                <MudGrid>
-
-                                    @if (!context.Item.TamanhoUnico)
-                                    {
-                                        @foreach (var preco in context.Item.Precos)
+                                        else
                                         {
+                                            var precoMenor = ProdutoSelecionadoParaEdicao.Precos
+                                            .OrderBy(x => x.Valor)
+                                            .FirstOrDefault() ?? new Preco() { DescricaoDoTamanho = "Sem preço definido", Valor = 0.0 };
+
                                             <MudItem xs="12">
                                                 <MudPaper Class="d-flex flex-wrap gap-2 align-center justify-center mud-width-full py-8">
 
 
-                                                    <MudTextField @onfocusout="@(() => AtualizaValorDoProduto(preco))"
-                                                                  @bind-Value="preco.DescricaoDoTamanho"
+                                                    <MudTextField @onfocusout="@(() => AtualizaValorDoProduto(precoMenor))"
+                                                                  @bind-Value="precoMenor.DescricaoDoTamanho"
                                                                   Disabled="false"
                                                                   Class="w-25 m-2"
                                                                   Label="Descrição do Tamanho"
@@ -1184,11 +1385,11 @@
                                                                   Variant="Variant.Text"
                                                                   Margin="Margin.Dense" />
 
-                                                    <MudTextField @bind-Value="preco.CustosDoInsumo" Disabled="true" Class="w-25 m-2" Label="Custos Insumo" HelperText="Custos dos insumos" Variant="Variant.Text" Margin="Margin.Dense" />
+                                                    <MudTextField @bind-Value="precoMenor.CustosDoInsumo" Disabled="true" Class="w-25 m-2" Label="Custos Insumo" HelperText="Custos dos insumos" Variant="Variant.Text" Margin="Margin.Dense" />
 
-                                                    <MudTextField @bind-Value="preco.CustoReal" Disabled="true" Class="w-25 m-2" Label="Custos reais" HelperText="Custos reais" Variant="Variant.Text" Margin="Margin.Dense" />
+                                                    <MudTextField @bind-Value="precoMenor.CustoReal" Disabled="true" Class="w-25 m-2" Label="Custos reais" HelperText="Custos reais" Variant="Variant.Text" Margin="Margin.Dense" />
 
-                                                    <MudTextField @bind-Value="preco.PorcentagemDeLucro" Disabled="true" Class="w-25 m-2" Label="% de lucro" HelperText="% de lucro" Variant="Variant.Text" Margin="Margin.Dense" />
+                                                    <MudTextField @bind-Value="precoMenor.PorcentagemDeLucro" Disabled="true" Class="w-25 m-2" Label="% de lucro" HelperText="% de lucro" Variant="Variant.Text" Margin="Margin.Dense" />
 
                                                     <MudNumericField Immediate="false"
                                                                      Label="Valor do tamanho"
@@ -1196,207 +1397,242 @@
                                                                      Culture="_pt"
                                                                      T="double"
                                                                      HideSpinButtons="true"
-                                                                     @bind-Value="preco.Valor"
-                                                                     @onfocusout="@(() => AtualizaValorDoProduto(preco))" />
+                                                                     @bind-Value="precoMenor.Valor"
+                                                                     @onfocusout="@(() => AtualizaValorDoProduto(precoMenor))" />
 
 
-                                                </MudPaper>
-                                                <MudPaper Elevation="0" Square="false" Class="d-flex w-100 mb-3 justify-content-center align-content-center">
-                                                    <MudButton OnClick=@(async p => { await DeletaPreco(preco, context.Item); }) Color="Color.Error" Variant="Variant.Filled">
-                                                        <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
-                                                    </MudButton>
                                                 </MudPaper>
                                             </MudItem>
+
                                         }
-
-                                    }
-                                    else
-                                    {
-                                        var precoMenor = context.Item.Precos
-                                        .OrderBy(x => x.Valor)
-                                        .FirstOrDefault() ?? new Preco() { DescricaoDoTamanho = "Sem preço definido", Valor = 0.0 };
-
-                                        <MudItem xs="12">
-                                            <MudPaper Class="d-flex flex-wrap gap-2 align-center justify-center mud-width-full py-8">
-
-
-                                                <MudTextField @onfocusout="@(() => AtualizaValorDoProduto(precoMenor))"
-                                                              @bind-Value="precoMenor.DescricaoDoTamanho"
-                                                              Disabled="false"
-                                                              Class="w-25 m-2"
-                                                              Label="Descrição do Tamanho"
-                                                              HelperText="Descrição do tamanho"
-                                                              Variant="Variant.Text"
-                                                              Margin="Margin.Dense" />
-
-                                                <MudTextField @bind-Value="precoMenor.CustosDoInsumo" Disabled="true" Class="w-25 m-2" Label="Custos Insumo" HelperText="Custos dos insumos" Variant="Variant.Text" Margin="Margin.Dense" />
-
-                                                <MudTextField @bind-Value="precoMenor.CustoReal" Disabled="true" Class="w-25 m-2" Label="Custos reais" HelperText="Custos reais" Variant="Variant.Text" Margin="Margin.Dense" />
-
-                                                <MudTextField @bind-Value="precoMenor.PorcentagemDeLucro" Disabled="true" Class="w-25 m-2" Label="% de lucro" HelperText="% de lucro" Variant="Variant.Text" Margin="Margin.Dense" />
-
-                                                <MudNumericField Immediate="false"
-                                                                 Label="Valor do tamanho"
-                                                                 Format="N2"
-                                                                 Culture="_pt"
-                                                                 T="double"
-                                                                 HideSpinButtons="true"
-                                                                 @bind-Value="precoMenor.Valor"
-                                                                 @onfocusout="@(() => AtualizaValorDoProduto(precoMenor))" />
-
-
-                                            </MudPaper>
-                                        </MudItem>
-
-                                    }
-                                </MudGrid>
-                            </MudItem>
-                            @if (!context.Item.TamanhoUnico)
-                            {
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8">
-                                        <MudButton OnClick=@(async p => { await AdicionarNovoValor(context.Item); }) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
-                                    </MudPaper>
+                                    </MudGrid>
                                 </MudItem>
+                                @if (!ProdutoSelecionadoParaEdicao.TamanhoUnico)
+                                {
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center mud-width-full py-8">
+                                            <MudButton OnClick=@(async p => { await AdicionarNovoValor(ProdutoSelecionadoParaEdicao); }) Variant="Variant.Filled" Color="Color.Primary" Class="rounded-1 " style="color: white">Adicionar Preço</MudButton>
+                                        </MudPaper>
+                                    </MudItem>
+                                }
                             }
-                        }
-                        else if (NumAba == 3)
-                        {
-                            <MudGrid>
+                            else if (NumAba == 3)
+                            {
+                                <MudGrid>
+                                    <MudItem xs="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudTextField Class="m-2" Label="NCM" @bind-value=ProdutoSelecionadoParaEdicao.NCM @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) />
+                                            <MudTextField Class="m-2" Label="CEST" @bind-value=ProdutoSelecionadoParaEdicao.CEST @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) />
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.CSTSelected"
+                                                       SelectedValuesChanged="@(prop => OnSaveChanges(ProdutoSelecionadoParaEdicao))"
+                                                       T="CST"
+                                                       ToStringFunc="g => g.Descricao?.Length > 10 ? g.Descricao.Substring(0, 10) : g.Descricao"
+                                                       Label="CST"
+                                                       HelperText="SELECIONE"
+                                                       Placeholder="SELECIONE O CST CORRESPONDENTE"
+                                                       AdornmentColor="Color.Success"
+                                                       FullWidth="true"
+                                                       ClearIcon="@Icons.Material.Filled.Close"
+                                                       Clearable="true"
+                                                       Class="m-2"
+                                                       FitContent="false">
+
+
+                                                @foreach (var CST in ListaDeCSTS)
+                                                {
+                                                    <MudSelectItem Value="@CST">@CST.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.CSOSNSelected"
+                                                       SelectedValuesChanged="@(prop => OnSaveChanges(ProdutoSelecionadoParaEdicao))"
+                                                       T="CSOSN"
+                                                       ToStringFunc="g => g.Descricao?.Length > 10 ? g.Descricao.Substring(0, 10) : g.Descricao"
+                                                       Label="CSOSN"
+                                                       HelperText="SELECIONE"
+                                                       Placeholder="SELECIONE O CSOSN CORRESPONDENTE"
+                                                       AdornmentColor="Color.Success"
+                                                       FullWidth="true"
+                                                       Class="m-2"
+                                                       ClearIcon="@Icons.Material.Filled.Close"
+                                                       Clearable="true"
+                                                       FitContent="false">
+
+
+                                                @foreach (var CSOSN in ListaDeCSOSN)
+                                                {
+                                                    <MudSelectItem Value="@CSOSN">@CSOSN.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.Aliquota"
+                                                       SelectedValuesChanged=@(prop=> OnSaveChanges(ProdutoSelecionadoParaEdicao))
+                                                       T="ClsAliquota"
+                                                       Class="m-3"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="Aliquota selecionado"
+                                                       HelperText="Aliquota"
+                                                       Placeholder="Escolha a alíquota correspondente"
+                                                       AdornmentIcon="@Icons.Material.Filled.Percent"
+                                                       AdornmentColor="Color.Success">
+
+                                                @foreach (var Aliquota in ListaDeAliquotas)
+                                                {
+                                                    <MudSelectItem Value="@Aliquota">@Aliquota.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.TribPisCofinsSelected"
+                                                       SelectedValuesChanged="@(prop => OnSaveChanges(ProdutoSelecionadoParaEdicao))"
+                                                       T="ClsTribPisConfins"
+                                                       ToStringFunc="g => g.Descricao"
+                                                       Label="Tibutação Pis/Confins"
+                                                       HelperText="SELECIONE"
+                                                       Placeholder="SELECIONE A TRIB. PIS/CONFINS CORRESPONDENTE"
+                                                       AdornmentColor="Color.Success"
+                                                       FullWidth="true"
+                                                       Class="m-2"
+                                                       ClearIcon="@Icons.Material.Filled.Close"
+                                                       Clearable="true"
+                                                       FitContent="false">
+
+
+                                                @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
+                                                {
+                                                    <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" sm="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.OrigemProdutoSelected"
+                                                       SelectedValuesChanged="@(prop => OnSaveChanges(ProdutoSelecionadoParaEdicao))"
+                                                       T="ClsOrigemProduto"
+                                                       ToStringFunc="g => g.Descricao"
+                                                       Label="Origem do produto"
+                                                       HelperText="SELECIONE"
+                                                       Placeholder="SELECIONE A ORIGEEM DO PRODUTO."
+                                                       AdornmentColor="Color.Success"
+                                                       FullWidth="true"
+                                                       Class="m-2"
+                                                       ClearIcon="@Icons.Material.Filled.Close"
+                                                       Clearable="true"
+                                                       FitContent="false">
+
+
+                                                @foreach (var origemProd in ListaDeOrigemDoProdutos)
+                                                {
+                                                    <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                            else if (NumAba == 4)
+                            {
+                                <MudGrid>
+                                    <MudItem xs="12">
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de ficha técnica</MudPaper>
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+                else
+                {
+                    //--------------------------------------Faz a movimentação de produto carregando--/////////////////////////////////////////////
+
+                    <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
+                        <MudCardHeader>
+                            <CardHeaderContent>
                                 <MudItem xs="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudTextField Class="m-2" Label="NCM" @bind-value=context.Item.NCM @onfocusout=@(async prop => await OnSaveChanges(context.Item)) />
-                                        <MudTextField Class="m-2" Label="CEST" @bind-value=context.Item.CEST @onfocusout=@(async prop => await OnSaveChanges(context.Item)) />
+                                    <MudPaper Class="d-flex flex-column align-center justify-center mud-width-fulloverflow-hidden" style="word-break: break-word;">
+
+                                        <MudSkeleton Class="w-100" Height="90px" />
+
+
                                     </MudPaper>
                                 </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.CSTSelected"
-                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
-                                                   T="CST"
-                                                   ToStringFunc="g => g.Descricao?.Length > 10 ? g.Descricao.Substring(0, 10) : g.Descricao"
-                                                   Label="CST"
-                                                   HelperText="SELECIONE"
-                                                   Placeholder="SELECIONE O CST CORRESPONDENTE"
-                                                   AdornmentColor="Color.Success"
-                                                   FullWidth="true"
-                                                   ClearIcon="@Icons.Material.Filled.Close"
-                                                   Clearable="true"
-                                                   Class="m-2"
-                                                   FitContent="false">
-
-
-                                            @foreach (var CST in ListaDeCSTS)
-                                            {
-                                                <MudSelectItem Value="@CST">@CST.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid Class="d-flex align-items-stretch">
+                                <MudItem xs="12">
+                                    <MudStack Class="w-100" Row=true>
+                                        <MudSkeleton Class="w-25" Height="70px" />
+                                        <MudSkeleton Class="w-75" Height="70px" />
+                                    </MudStack>
                                 </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.CSOSNSelected"
-                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
-                                                   T="CSOSN"
-                                                   ToStringFunc="g => g.Descricao?.Length > 10 ? g.Descricao.Substring(0, 10) : g.Descricao"
-                                                   Label="CSOSN"
-                                                   HelperText="SELECIONE"
-                                                   Placeholder="SELECIONE O CSOSN CORRESPONDENTE"
-                                                   AdornmentColor="Color.Success"
-                                                   FullWidth="true"
-                                                   Class="m-2"
-                                                   ClearIcon="@Icons.Material.Filled.Close"
-                                                   Clearable="true"
-                                                   FitContent="false">
 
-
-                                            @foreach (var CSOSN in ListaDeCSOSN)
-                                            {
-                                                <MudSelectItem Value="@CSOSN">@CSOSN.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
+                                <MudItem xs="12">
+                                    <MudSkeleton Class="w-100" Height="90px" />
                                 </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.Aliquota"
-                                                   SelectedValuesChanged=@(prop=> OnSaveChanges(context.Item))
-                                                   T="ClsAliquota"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="Aliquota selecionado"
-                                                   HelperText="Aliquota"
-                                                   Placeholder="Escolha a alíquota correspondente"
-                                                   AdornmentIcon="@Icons.Material.Filled.Percent"
-                                                   AdornmentColor="Color.Success">
 
-                                            @foreach (var Aliquota in ListaDeAliquotas)
-                                            {
-                                                <MudSelectItem Value="@Aliquota">@Aliquota.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudSkeleton Class="w-100" Height="250px" />
                                 </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.TribPisCofinsSelected"
-                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
-                                                   T="ClsTribPisConfins"
-                                                   ToStringFunc="g => g.Descricao"
-                                                   Label="Tibutação Pis/Confins"
-                                                   HelperText="SELECIONE"
-                                                   Placeholder="SELECIONE A TRIB. PIS/CONFINS CORRESPONDENTE"
-                                                   AdornmentColor="Color.Success"
-                                                   FullWidth="true"
-                                                   Class="m-2"
-                                                   ClearIcon="@Icons.Material.Filled.Close"
-                                                   Clearable="true"
-                                                   FitContent="false">
 
 
-                                            @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
-                                            {
-                                                <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
+                                <MudItem xs="12" sm="6">
+                                    <MudSkeleton Class="w-100" Height="250px" />
+
                                 </MudItem>
-                                <MudItem xs="12" sm="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="context.Item.OrigemProdutoSelected"
-                                                   SelectedValuesChanged="@(prop => OnSaveChanges(context.Item))"
-                                                   T="ClsOrigemProduto"
-                                                   ToStringFunc="g => g.Descricao"
-                                                   Label="Origem do produto"
-                                                   HelperText="SELECIONE"
-                                                   Placeholder="SELECIONE A ORIGEEM DO PRODUTO."
-                                                   AdornmentColor="Color.Success"
-                                                   FullWidth="true"
-                                                   Class="m-2"
-                                                   ClearIcon="@Icons.Material.Filled.Close"
-                                                   Clearable="true"
-                                                   FitContent="false">
+
+                                <MudItem xs="12" sm="12" Class="h-100">
+                                    <MudPaper Class="h-100">
+                                        <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> <MudSkeleton Class="w-100"></MudSkeleton> </MudPaper>
+                                        <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
+
+                                            <MudSkeleton Height="250px" />
+                                            <MudSkeleton Height="250px" />
 
 
-                                            @foreach (var origemProd in ListaDeOrigemDoProdutos)
-                                            {
-                                                <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
+                                        </MudPaper>
                                     </MudPaper>
                                 </MudItem>
                             </MudGrid>
-                        }
-                        else if (NumAba == 4)
-                        {
-                            <MudGrid>
-                                <MudItem xs="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de ficha técnica</MudPaper>
-                                </MudItem>
-                            </MudGrid>
-                        }
-                    </MudCardContent>
-                </MudCard>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudDrawerContainer>
+</MudDrawer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@*
+                    // Parte de edição do produto para depois separar 
+                     <ChildRowContent>
+               
             </ChildRowContent>
 
 

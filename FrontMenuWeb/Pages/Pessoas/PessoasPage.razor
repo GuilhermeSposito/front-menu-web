@@ -36,8 +36,7 @@
                      T="ClsPessoas"
                      EditTrigger="DataGridEditTrigger.Manual"
                      Items="@Pessoas"
-                     class="rounded-3"
-                     Filterable="true">
+                     class="rounded-3">
 
             <ToolBarContent>
 
@@ -90,19 +89,27 @@
         @**************************************************DRAWER NOP FRONTEND********************************************************************************@
         <MudDrawer Style="background-color: var(--mud-palette-background);" @bind-Open="@_open" Width="@_drawerWidth" Height="@_height" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary">
             <MudDrawerHeader>
-                @*Aqui vai mostrar o nomeFantasia caso seja fornecedor*@
-                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 1)
-                {
-                    <MudText Typo="Typo.h6">Cliente</MudText>
-                }
-                else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2)
-                {
-                    <MudText Typo="Typo.h6">Fornecedor</MudText>
-                }
-                else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
-                {
-                    <MudText Typo="Typo.h6">Cliente/Fornecedor</MudText>
-                }
+                <MudStack Class="w-100" Justify="Justify.SpaceBetween" Row=true>
+                    @*Aqui vai mostrar o nomeFantasia caso seja fornecedor*@
+                    @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 1)
+                    {
+                        <MudText Typo="Typo.h6">Cliente</MudText>
+                    }
+                    else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2)
+                    {
+
+                        <MudText Typo="Typo.h6">Fornecedor</MudText>
+                    }
+                    else if (PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                    {
+                        <MudText Typo="Typo.h6">Cliente/Fornecedor</MudText>
+                    }
+
+                    <MudTooltip Text="Fechar" Color="Color.Primary">
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _open = false)" Color="Color.Primary" />
+                    </MudTooltip>
+
+                </MudStack>
 
             </MudDrawerHeader>
             <MudDrawerContainer>
@@ -231,8 +238,19 @@
                                                     </MudItem>
                                                 }
 
+                                                @*Inscicao Municipal e Estadual*@
+                                                @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
+                                                {
+                                                    <MudItem xs="6">
+                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoMunicipal Label="Inscrição Municipal" Disabled=_PessoaNaoEditavel />
+                                                    </MudItem>
+                                                    <MudItem xs="6">
+                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoEstadual Label="Inscrição Estadual" Disabled=_PessoaNaoEditavel />
+                                                    </MudItem>
+                                                }
+
                                                 @*TELEFONE*@
-                                                <MudItem xs="6" sm="6">
+                                                <MudItem xs="12" sm="6">
                                                     <MudStack Row=true>
                                                         <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
                                                                       Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
@@ -657,8 +675,6 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-
-
 
     }
 
