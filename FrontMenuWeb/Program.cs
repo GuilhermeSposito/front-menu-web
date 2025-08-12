@@ -3,6 +3,7 @@ using FrontMenuWeb;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services;
+using FrontMenuWeb.Services.FinanceroServices;
 using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -61,6 +62,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<AliquotaService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MerchantServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<PessoasService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<ContasService>());
 
 
 builder.Services.AddMudServices();

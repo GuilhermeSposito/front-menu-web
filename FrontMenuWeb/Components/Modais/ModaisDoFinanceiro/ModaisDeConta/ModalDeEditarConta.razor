@@ -1,0 +1,237 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@inject ContasService ContaService
+
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+            @if (!CarregandoConta)
+            {
+                if (ContaParaEdicao is not null)
+                {
+                    <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                            <MudStack Class="w-100" Row=true Justify="Justify.SpaceAround">
+
+                                <MudTextField Immediate="true" T="string" TextChanged="DefineCodigoDoBancoDinamicamente"
+                                              Class="w-75" Label="Nome Do Banco" Variant="Variant.Filled" @bind-Value=@ContaParaEdicao.NomeConta />
+
+                                <MudSelect T="int" Class="w-25" @bind-Value=@ContaParaEdicao.CodIconeDoBanco Label="Banco" Variant="Variant.Filled">
+                                    @*Bradesco*@
+                                    <MudSelectItem Value="1">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="/images/bancos/bradesco-logo-4.png" alt="Bradesco" width="24" height="24" />
+                                            <span>Bradesco</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+
+                                    @*Banco Do Brasil*@
+                                    <MudSelectItem Value="2">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="/images/bancos/banco-do-brasil.png" alt="Banco do Brasil" width="24" height="24" />
+                                            <span>Banco Do Brasil</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+
+                                    @*Sicob*@
+                                    <MudSelectItem Value="3">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="/images/bancos/sicob-logo.png" alt="Sicob" width="24" height="24" />
+                                            <span>Sicob</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+
+                                    @*Itau*@
+                                    <MudSelectItem Value="4">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="/images/bancos/itau.png" alt="Itau" width="24" height="24" />
+                                            <span>Itau</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+
+                                    @*Itau*@
+                                    <MudSelectItem Value="0">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="/images/bancos/default-bank-icon.png" alt="Outros" width="24" height="24" />
+                                            <span>Outros</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+
+
+
+                                </MudSelect>
+                            </MudStack>
+
+                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceAround">
+                                <MudNumericField Class="w-75"
+                                                 Immediate="false"
+                                                 Label="Saldo Inicial"
+                                                 Variant="Variant.Outlined"
+                                                 Format="N2"
+                                                 Culture="_pt"
+                                                 T="float"
+                                                 HideSpinButtons="true"
+                                                 @bind-Value=@ContaParaEdicao.SaldoInicial />
+                                <MudTooltip Text="Clique para ativar/desativar a conta" Color="Color.Primary">
+                                    <MudSwitch Class="w-25" T="bool" Value=@ContaParaEdicao.Ativo Color="Color.Success" ValueChanged="@(async valor => { ContaParaEdicao.Ativo = valor; })" />
+                                </MudTooltip>
+                            </MudStack>
+
+
+                            <div>
+                                @if (ErroAoAdicionarConta)
+                                {
+                                    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                                        @MensagemDeErro
+                                    </MudAlert>
+                                }
+                            </div>
+                        </MudFocusTrap>
+                    </MudForm>
+                }
+            }
+            else
+            {
+                <MudStack Class="w-100" Row=true Justify="Justify.SpaceAround">
+
+                    <MudSkeleton Class="w-75"
+                                 Height="120px" />
+
+                    <MudSkeleton Class="w-25"
+                                 Height="120px" />
+
+                </MudStack>
+
+                <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceAround">
+
+                    <MudSkeleton Class="w-75" Height="120px" />
+                    <MudSkeleton Class="w-25" Height="30px" />
+
+                </MudStack>
+            }
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Atualizar</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+    private bool ErroAoAdicionarConta = false;
+    private string MensagemDeErro = "Erro ao atualizar a conta. Verifique os dados e tente novamente.";
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    public bool CarregandoConta = true;
+
+    [Parameter] public int IdConta { get; set; }
+    private ClsConta? ContaParaEdicao;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CarregarContaParaEdicao();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar conta: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoConta = false;
+        }
+    }
+
+    private async Task CarregarContaParaEdicao()
+    {
+        if (IdConta <= 0)
+        {
+            Snackbar.Add("ID da conta inválido.", Severity.Error);
+            return;
+        }
+
+        ClsConta? conta = await ContaService.GetContaAsync(IdConta);
+
+        if (conta is null)
+        {
+            Snackbar.Add("Conta não encontrada.", Severity.Error);
+            return;
+        }
+
+        ContaParaEdicao = conta;
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            if (ContaParaEdicao is null)
+            {
+                Snackbar.Add("Conta não encontrada.", Severity.Error);
+                return;
+            }
+
+            RetornoApiContas Response = await ContaService.AtualizaContaAsync(ContaParaEdicao);
+
+            if (Response.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                string mensagemDeErro = string.Join(", ", Response.Messages);
+
+                ErroAoAdicionarConta = true;
+                MensagemDeErro = mensagemDeErro;
+                Snackbar.Add(MensagemDeErro, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar conta: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void DefineCodigoDoBancoDinamicamente(string NomeEscrito)
+    {
+        if (ContaParaEdicao is not null)
+        {
+            if (NomeEscrito.Contains("bradesco", StringComparison.OrdinalIgnoreCase))
+                ContaParaEdicao.CodIconeDoBanco = 1;
+            else if (NomeEscrito.Contains("banco do brasil", StringComparison.OrdinalIgnoreCase) || NomeEscrito.Contains("bb", StringComparison.OrdinalIgnoreCase))
+                ContaParaEdicao.CodIconeDoBanco = 2;
+            else if (NomeEscrito.Contains("sicob", StringComparison.OrdinalIgnoreCase))
+                ContaParaEdicao.CodIconeDoBanco = 3;
+            else if (NomeEscrito.Contains("itau", StringComparison.OrdinalIgnoreCase))
+                ContaParaEdicao.CodIconeDoBanco = 4;
+            else
+                ContaParaEdicao.CodIconeDoBanco = 0;
+        }
+    }
+
+}
