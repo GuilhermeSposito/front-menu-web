@@ -16,7 +16,7 @@ public class ClsConta
 public class  RetornoApiContas
 {
     [JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
-    [JsonPropertyName("messages")] public List<string> Messages { get; set; } = new List<string>();
+    [JsonPropertyName("message")] public List<string> Messages { get; set; } = new List<string>();
     [JsonPropertyName("data")] public Data Data { get; set; } = new Data();
 }
 
