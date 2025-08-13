@@ -30,6 +30,7 @@ public class CategoriasService
         return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsCategoria>>() ?? new ReturnApiRefatored<ClsCategoria>();
     }
 
+
     public async Task<ReturnApiRefatored<ClsCategoria>> UpdateCategoriaAsync(ClsCategoria categoria)
     {
         var response = await _HttpClient.PatchAsJsonAsync($"financeiro/categorias/{categoria.Id}", categoria);
@@ -42,5 +43,28 @@ public class CategoriasService
         return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsCategoria>>() ?? new ReturnApiRefatored<ClsCategoria>();
     }
 
+    //------------------------------------------Parte de Sub Categoria--------------------------------------------------//
+    public async Task<ReturnApiRefatored<ClsSubCategoria>> AdicionarSubCategoriaAsync(ClsSubCategoria categoria)
+    {
+        var response = await _HttpClient.PostAsJsonAsync("financeiro/categorias/sub", categoria);
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>() ?? new ReturnApiRefatored<ClsSubCategoria>();
+    }
+
+    public async Task<ClsSubCategoria> GetSubCategoriaAsync(int SubCategoriaId)
+    {
+        var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>($"financeiro/categorias/sub/{SubCategoriaId}");
+        return response?.Data.ObjetoRetornadoSubCategoria ?? new ClsSubCategoria();
+    }
+
+    public async Task<ReturnApiRefatored<ClsSubCategoria>> UpdateSubCategoriaAsync(ClsSubCategoria categoria)
+    {
+        var response = await _HttpClient.PatchAsJsonAsync($"financeiro/categorias/sub/{categoria.Id}", categoria);
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>() ?? new ReturnApiRefatored<ClsSubCategoria>();
+    }
+    public async Task<ReturnApiRefatored<ClsSubCategoria>> DeleteSubCategoriaAsync(ClsSubCategoria subcategoria)
+    {
+        var response = await _HttpClient.DeleteAsync($"financeiro/categorias/sub/{subcategoria.Id}");
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>() ?? new ReturnApiRefatored<ClsSubCategoria>();
+    }
 
 }

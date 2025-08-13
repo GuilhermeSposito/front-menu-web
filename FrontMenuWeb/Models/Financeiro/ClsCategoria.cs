@@ -15,7 +15,7 @@ public class ClsSubCategoria
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
-    [JsonPropertyName("categoriaId")] public int CategoriaId { get; set; }
+    [JsonPropertyName("categoria_id")] public int CategoriaId { get; set; }
     [JsonPropertyName("ValorTotalDespesas")] public float ValorTotalDeDespesas { get; set; }
     [JsonPropertyName("ValorTotalReceitas")] public float ValorTotalReceitas { get; set; }
 }

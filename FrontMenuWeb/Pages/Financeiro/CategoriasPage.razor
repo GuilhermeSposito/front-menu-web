@@ -24,7 +24,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de Categorias Cadastradas</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoCategoria ? true : false" OnClick="@(async () => { await AbreModalDeAdicionarCategoria();})">Nova Categoria</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoCategoria ? true : false" OnClick="@(async () => { await AbreModalDeAdicionarCategoria(); })">Nova Categoria</MudButton>
             </div>
         </div>
 
@@ -46,7 +46,7 @@
                 <TemplateColumn T="ClsCategoria" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para excluir categoria" Color="Color.Error">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => { await ExcluirCategoria(context.Item);})" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => { await ExcluirCategoria(context.Item); })" />
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
@@ -69,7 +69,7 @@
 
                                 </MudTooltip>
                                 <MudTooltip Text="Clique para adicionar SubCategoria" Color="Color.Primary">
-                                    <MudMenuItem OnClick=@(async p => { })
+                                    <MudMenuItem OnClick=@(async p => { AbreModalDeAdicionarSubCategoria(context.Item.Id); })
                                                  Icon="@Icons.Material.TwoTone.Add"
                                                  IconColor="Color.Primary"
                                                  Label="Add Sub" />
@@ -88,13 +88,13 @@
                                 <MudText Typo="Typo.h6">Relação de subcategorias da categoria @context.Item.Descricao</MudText>
 
                                 <MudTooltip Text="Clique para adicionar subcategoria" Color="Color.Primary">
-                                    <MudIconButton Icon="@Icons.Material.TwoTone.Add" Color="Color.Primary" />
+                                    <MudIconButton Icon="@Icons.Material.TwoTone.Add" Color="Color.Primary" OnClick=@(async p => { await AbreModalDeAdicionarSubCategoria(context.Item.Id); }) />
                                 </MudTooltip>
                             </MudStack>
                         </CardHeaderContent>
                     </MudCardHeader>
                     <MudCardContent>
-                        <MudDataGrid T="ClsSubCategoria" Items="@context.Item.SubsCategorias">
+                        <MudDataGrid T="ClsSubCategoria" Items="@context.Item.SubsCategorias" RowClick="@(async (row) => await AbreModalDeEditarSubCategoria(row.Item))">
                             <Columns>
                                 <PropertyColumn Property="x => x.Id" Title="Sub Código" />
                                 <PropertyColumn Property="x => x.Descricao" Title="Sub Descrição" />
@@ -102,7 +102,7 @@
                                 <TemplateColumn T="ClsSubCategoria" Title="Deletar">
                                     <CellTemplate Context="subContext">
                                         <MudTooltip Text="Clique para excluir sub categoria" Color="Color.Error">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@((e) => { /* Implementar exclusão */ })" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => { await ExcluirSubCategoria(subContext.Item); })" />
                                         </MudTooltip>
                                     </CellTemplate>
                                 </TemplateColumn>
@@ -176,6 +176,26 @@
         }
     }
 
+    private async Task AbreModalDeAdicionarSubCategoria(int idDaCategoria)
+    {
+        var parameters = new DialogParameters
+        {
+           { "IdCategoria", idDaCategoria }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarSubCategoria>("Adicionar Subcategoria", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add($"Subcategoria adicionada com sucesso!", Severity.Success);
+            await AtualizaCategorias();
+            StateHasChanged();
+        }
+    }
+
     private async Task ExcluirCategoria(ClsCategoria categoria)
     {
         try
@@ -200,7 +220,7 @@
                 }
                 else
                 {
-                    Snackbar.Add($"Erro ao excluir categoria: {string.Join(", ",respostaApi.Messages)}", Severity.Error);
+                    Snackbar.Add($"Erro ao excluir categoria: {string.Join(", ", respostaApi.Messages)}", Severity.Error);
                 }
             }
         }
@@ -225,7 +245,7 @@
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-            {        
+            {
                 await AtualizaCategorias();
                 StateHasChanged();
             }
@@ -235,4 +255,65 @@
             Snackbar.Add($"Erro ao abrir edição de Categoria: {ex.Message}", Severity.Error);
         }
     }
+
+    private async Task AbreModalDeEditarSubCategoria(ClsSubCategoria categoria)
+    {
+        try
+        {
+            var parameters = new DialogParameters
+                {
+                    { "IdDaSubCategoria", categoria.Id }
+                };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeEditarSubCategoria>("Editar Sub Categoria", parameters, options: options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                await AtualizaCategorias();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao abrir edição de Categoria: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExcluirSubCategoria(ClsSubCategoria subCategoria)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir a sub categoria {subCategoria.Descricao}? Atenção, Todos os lançamentos financeiros que referenciam a categoria perderão sua referencia. " },
+                    { x => x.ButtonText, "sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await CategoriasService.DeleteSubCategoriaAsync(subCategoria);
+                if (respostaApi.Status == "success")
+                {
+                    await AtualizaCategorias();
+                    Snackbar.Add($"Sub Categoria {subCategoria.Descricao} deletada com sucesso!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"Erro ao excluir sub categoria: {string.Join(", ", respostaApi.Messages)}", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir sub categoria: {ex.Message}", Severity.Error);
+        }
+    }
+
 }

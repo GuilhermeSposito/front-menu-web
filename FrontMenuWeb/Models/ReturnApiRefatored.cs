@@ -22,4 +22,7 @@ public class Data<T>
 
     [JsonPropertyName("Categoria")]
     public T? ObjetoRetornadoCategoria { get; set; }
+
+    [JsonPropertyName("SubCategoria")]
+    public T? ObjetoRetornadoSubCategoria { get; set; }
 }

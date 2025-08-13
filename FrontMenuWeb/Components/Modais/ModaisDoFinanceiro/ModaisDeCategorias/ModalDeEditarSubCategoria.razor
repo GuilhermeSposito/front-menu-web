@@ -11,13 +11,12 @@
 <MudPaper Square="false" Elevation="0">
     <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
         <DialogContent>
-            @if (!CarregandoCategoria && CategoriaParaEdicao is not null)
+            @if (!_isLoading)
             {
                 <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
 
-                        <MudTextField @bind-Value=@CategoriaParaEdicao.Descricao Variant="Variant.Filled" Required RequiredError="A descrição é obrigatória" />
-
+                        <MudTextField @bind-Value=@SubCategoria.Descricao Variant="Variant.Filled" Required RequiredError="A descrição é obrigatória" />
 
                         <div>
                             @if (ErroAoAdicionarCategoria)
@@ -29,18 +28,16 @@
                         </div>
                     </MudFocusTrap>
                 </MudForm>
-
             }
             else
             {
-                <MudSkeleton Class="w-100"
-                             Height="120px" />
-
+                <MudSkeleton Class="w-100" Height="120px" />
             }
+
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="Cancelar">Cancelar</MudButton>
-            <MudButton style="color: #F88113" OnClick="Submit">Adicionar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Atualizar</MudButton>
         </DialogActions>
     </MudDialog>
 </MudPaper>
@@ -49,80 +46,70 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
-    private MudTextField<string> _descricaoRef;
 
-    private bool CarregandoCategoria = true;
+    private bool _isLoading = true;
 
     private bool ErroAoAdicionarCategoria = false;
-    private string MensagemDeErro = "Erro ao modificada a categoria. Verifique os dados e tente novamente.";
+    private string MensagemDeErro = "Erro ao Atualizar a SubCategoria. Verifique os dados e tente novamente.";
+    private ClsSubCategoria SubCategoria = new ClsSubCategoria();
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
 
-    [Parameter] public int IdCategoria { get; set; }
-    public ClsCategoria? CategoriaParaEdicao { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-
-            CategoriaParaEdicao = await CategoriasService.GetCategoriaAsync(IdCategoria);
-            if (CategoriaParaEdicao is null)
-            {
-                MensagemDeErro = "Categoria não encontrada.";
-                ErroAoAdicionarCategoria = true;
-                Snackbar.Add(MensagemDeErro, Severity.Error);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            CarregandoCategoria = false;
-            MensagemDeErro = $"Erro ao carregar a categoria: {ex.Message}";
-            ErroAoAdicionarCategoria = true;
-            Snackbar.Add(MensagemDeErro, Severity.Error);
-        }
-        finally
-        {
-            CarregandoCategoria = false;
-        }
-    }
+    [Parameter] public int IdDaSubCategoria { get; set; } = 0;
 
     private async Task Submit()
     {
         try
         {
-            var retornoDaApi = await CategoriasService.UpdateCategoriaAsync(CategoriaParaEdicao);
+
+            var retornoDaApi = await CategoriasService.UpdateSubCategoriaAsync(SubCategoria);
 
             if (retornoDaApi is not null)
             {
                 if (retornoDaApi.Status == "success")
                 {
-                    Snackbar.Add("Categoria modificada com sucesso!", Severity.Success);
+                    Snackbar.Add("SubCategoria Atualizada com sucesso!", Severity.Success);
                     MudDialog.Close(DialogResult.Ok(true));
                 }
                 else
                 {
                     string mensagemDeErroDaAPi = string.Join(", ", retornoDaApi.Messages);
-                    MensagemDeErro = $"Erro ao modificada a categoria: {mensagemDeErroDaAPi}";
+                    MensagemDeErro = $"Erro ao Atualizar a Subcategoria: {mensagemDeErroDaAPi}";
                     ErroAoAdicionarCategoria = true;
                     Snackbar.Add(MensagemDeErro, Severity.Error);
                 }
             }
             else
             {
-                MensagemDeErro = "Erro ao modificada a categoria. Verifique os dados e tente novamente.";
+                MensagemDeErro = "Erro ao Atualizar a categoria. Verifique os dados e tente novamente.";
                 ErroAoAdicionarCategoria = true;
             }
 
         }
         catch (Exception ex)
         {
-            MensagemDeErro = "Erro ao modificada a categoria. Verifique os dados e tente novamente.";
+            MensagemDeErro = "Erro ao Atualizar a categoria. Verifique os dados e tente novamente.";
             ErroAoAdicionarCategoria = true;
-            Snackbar.Add($"Erro ao modificada categoria: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao Atualizar  Subcategoria: {ex.Message}", Severity.Error);
         }
 
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            SubCategoria = await CategoriasService.GetSubCategoriaAsync(IdDaSubCategoria);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar os dados: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
