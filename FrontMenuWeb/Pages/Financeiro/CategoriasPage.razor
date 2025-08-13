@@ -1,0 +1,238 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/financeiro/categorias"
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pessoas
+@using MudBlazor.Extensions.Services
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject CategoriasService CategoriasService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Categorias</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Categorias Cadastradas</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoCategoria ? true : false" OnClick="@(async () => { await AbreModalDeAdicionarCategoria();})">Nova Categoria</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid SelectOnRowClick=true
+                     MultiSelection="false"
+                     Loading=CarregandoCategoria
+                     Hover
+                     T="ClsCategoria"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     Items="@Categorias"
+                     class="rounded-3"
+                     @ref="_grid"
+                     RowClick="@(async (row) => await AbreModalDeEditarCategoria(row.Item))">
+            <Columns>
+                <HierarchyColumn T="ClsCategoria" InitiallyExpandedFunc="@(x => x.SubsCategorias?.Any() == true)" />
+                <PropertyColumn Property="x => x.Id" Title="Código" />
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                <PropertyColumn Property="x => x.ValorTotalDeDespesas" Title="Valor Despesas" />
+                <TemplateColumn T="ClsCategoria" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para excluir categoria" Color="Color.Error">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => { await ExcluirCategoria(context.Item);})" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsCategoria">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeEditarCategoria(context.Item); })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" />
+
+                                </MudTooltip>
+                                <MudTooltip Text="Clique para adicionar SubCategoria" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { })
+                                                 Icon="@Icons.Material.TwoTone.Add"
+                                                 IconColor="Color.Primary"
+                                                 Label="Add Sub" />
+                                </MudTooltip>
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <ChildRowContent>
+                <MudCard Style="background-color: var(--mud-palette-background);">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Justify="Justify.SpaceBetween" Row=true>
+                                <MudText Typo="Typo.h6">Relação de subcategorias da categoria @context.Item.Descricao</MudText>
+
+                                <MudTooltip Text="Clique para adicionar subcategoria" Color="Color.Primary">
+                                    <MudIconButton Icon="@Icons.Material.TwoTone.Add" Color="Color.Primary" />
+                                </MudTooltip>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudDataGrid T="ClsSubCategoria" Items="@context.Item.SubsCategorias">
+                            <Columns>
+                                <PropertyColumn Property="x => x.Id" Title="Sub Código" />
+                                <PropertyColumn Property="x => x.Descricao" Title="Sub Descrição" />
+                                <PropertyColumn Property="x => x.ValorTotalDeDespesas" Title="Valor Despesas" />
+                                <TemplateColumn T="ClsSubCategoria" Title="Deletar">
+                                    <CellTemplate Context="subContext">
+                                        <MudTooltip Text="Clique para excluir sub categoria" Color="Color.Error">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@((e) => { /* Implementar exclusão */ })" />
+                                        </MudTooltip>
+                                    </CellTemplate>
+                                </TemplateColumn>
+                            </Columns>
+                        </MudDataGrid>
+                    </MudCardContent>
+                </MudCard>
+            </ChildRowContent>
+
+        </MudDataGrid>
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private bool CarregandoCategoria { get; set; } = true;
+    private List<ClsCategoria> Categorias { get; set; } = new List<ClsCategoria>();
+    private MudDataGrid<ClsCategoria> _grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizaCategorias();
+
+        await InvokeAsync(StateHasChanged);
+
+        // Dá mais um tick pro grid se montar completamente
+        await Task.Delay(50);
+
+        foreach (var cat in Categorias.Where(c => c.SubsCategorias?.Any() == true))
+            await _grid.ToggleHierarchyVisibilityAsync(cat);
+    }
+
+
+
+    private async Task AtualizaCategorias()
+    {
+        try
+        {
+            CarregandoCategoria = true;
+
+            List<ClsCategoria>? clsCategorias = await CategoriasService.GetCategoriasAsync();
+
+
+            if (clsCategorias is not null)
+                Categorias = clsCategorias;
+            else
+                Snackbar.Add("Nenhuma categoria encontrada.", Severity.Warning);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar categorias", Severity.Error);
+        }
+        finally
+        {
+            CarregandoCategoria = false;
+        }
+    }
+
+    private async Task AbreModalDeAdicionarCategoria()
+    {
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarCategoria>("Adicionar Categoria", options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add($"Categoria adicionada com sucesso!", Severity.Success);
+            await AtualizaCategorias();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExcluirCategoria(ClsCategoria categoria)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir a categoria {categoria.Descricao}? Atenção, Todos os lançamentos financeiros que referenciam a categoria perderão sua referencia. " },
+                    { x => x.ButtonText, "sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await CategoriasService.DeleteCategoriaAsync(categoria);
+                if (respostaApi.Status == "success")
+                {
+                    await AtualizaCategorias();
+                    Snackbar.Add($"Categoria {categoria.Descricao} deletada com sucesso!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"Erro ao excluir categoria: {string.Join(", ",respostaApi.Messages)}", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir categoria: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AbreModalDeEditarCategoria(ClsCategoria categoria)
+    {
+        try
+        {
+            var parameters = new DialogParameters
+                {
+                    { "IdCategoria", categoria.Id }
+                };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeEditarCategoria>("Editar Categoria", parameters, options: options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {        
+                await AtualizaCategorias();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao abrir edição de Categoria: {ex.Message}", Severity.Error);
+        }
+    }
+}

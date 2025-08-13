@@ -23,7 +23,7 @@
                             @*Bradesco*@
                             <MudSelectItem Value="1">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <img src="/images/bancos/bradesco-logo-4.png" alt="Bradesco" width="24" height="24" />
+                                    <img src="@AppState.GetBancoIcon(1)" alt="Bradesco" width="24" height="24" />
                                     <span>Bradesco</span>
                                 </MudStack>
                             </MudSelectItem>
@@ -31,7 +31,7 @@
                             @*Banco Do Brasil*@
                             <MudSelectItem Value="2">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <img src="/images/bancos/banco-do-brasil.png" alt="Banco do Brasil" width="24" height="24" />
+                                    <img src="@AppState.GetBancoIcon(2)" alt="Banco do Brasil" width="24" height="24" />
                                     <span>Banco Do Brasil</span>
                                 </MudStack>
                             </MudSelectItem>
@@ -39,7 +39,7 @@
                             @*Sicob*@
                             <MudSelectItem Value="3">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <img src="/images/bancos/sicob-logo.png" alt="Sicob" width="24" height="24" />
+                                    <img src="@AppState.GetBancoIcon(3)" alt="Sicob" width="24" height="24" />
                                     <span>Sicob</span>
                                 </MudStack>
                             </MudSelectItem>
@@ -47,15 +47,15 @@
                             @*Itau*@
                             <MudSelectItem Value="4">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <img src="/images/bancos/itau.png" alt="Itau" width="24" height="24" />
+                                    <img src="@AppState.GetBancoIcon(4)" alt="Itau" width="24" height="24" />
                                     <span>Itau</span>
                                 </MudStack>
                             </MudSelectItem>
 
-                            @*Itau*@
+                            @*Outros*@
                             <MudSelectItem Value="0">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <img src="/images/bancos/default-bank-icon.png" alt="Outros" width="24" height="24" />
+                                    <img src="@AppState.GetBancoIcon(0)" alt="Outros" width="24" height="24" />
                                     <span>Outros</span>
                                 </MudStack>
                             </MudSelectItem>

@@ -44,7 +44,7 @@
             <Columns>
                 <TemplateColumn Title="Banco">
                     <CellTemplate Context="context">
-                        <img src="@GetBancoIcon(context.Item.CodIconeDoBanco)"
+                        <img src="@AppState.GetBancoIcon(context.Item.CodIconeDoBanco)"
                              alt="Banco"
                              style="width:32px;height:32px;" />
                     </CellTemplate>
@@ -88,8 +88,7 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
-
-
+   
 
         </MudDataGrid>
 
@@ -100,8 +99,6 @@
 @code {
     private List<ClsConta> Contas { get; set; } = new List<ClsConta>();
     private bool CarregandoContas { get; set; } = true;
-
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -215,20 +212,5 @@
 
 
 
-    private string GetBancoIcon(int codBanco)
-    {
-        switch (codBanco)
-        {
-            case 1:
-                return "/images/bancos/bradesco-logo-4.png";
-            case 2:
-                return "/images/bancos/banco-do-brasil.png";
-            case 3:
-                return "/images/bancos/sicob-logo.png";
-            case 4:
-                return "/images/bancos/itau.png";
-            default:
-                return "/images/bancos/default-bank-icon.png"; // Ícone padrão caso não haja correspondência
-        }
-    }
+    
 }

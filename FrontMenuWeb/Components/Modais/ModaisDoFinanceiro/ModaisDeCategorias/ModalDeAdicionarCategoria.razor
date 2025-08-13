@@ -1,0 +1,105 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@inject CategoriasService CategoriasService
+
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+
+            <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+
+                    <MudTextField @bind-Value=@NovaCategoria.Descricao  Variant="Variant.Filled" Required RequiredError="A descrição é obrigatória"/>
+
+
+
+                    <div>
+                        @if (ErroAoAdicionarCategoria)
+                        {
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                                @MensagemDeErro
+                            </MudAlert>
+                        }
+                    </div>
+                </MudFocusTrap>
+            </MudForm>
+
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">Adicionar</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+
+    private bool ErroAoAdicionarCategoria = false;
+    private string MensagemDeErro = "Erro ao adicionar a conta. Verifique os dados e tente novamente.";
+    private ClsCategoria NovaCategoria = new ClsCategoria();
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    private async Task Submit()
+    {
+        try
+        {
+            var retornoDaApi = await CategoriasService.AdicionarCategoriaAsync(NovaCategoria);
+
+            if(retornoDaApi is not null)
+            {
+                if(retornoDaApi.Status == "success")
+                {
+                    Snackbar.Add("Categoria adicionada com sucesso!", Severity.Success);
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    string mensagemDeErroDaAPi = string.Join(", ", retornoDaApi.Messages);
+                    MensagemDeErro = $"Erro ao adicionar a categoria: {mensagemDeErroDaAPi}";
+                    ErroAoAdicionarCategoria = true;
+                    Snackbar.Add(MensagemDeErro, Severity.Error);
+                }
+            }
+            else
+            {
+                MensagemDeErro = "Erro ao adicionar a categoria. Verifique os dados e tente novamente.";
+                ErroAoAdicionarCategoria = true;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            MensagemDeErro = "Erro ao adicionar a categoria. Verifique os dados e tente novamente.";
+            ErroAoAdicionarCategoria = true;
+            Snackbar.Add($"Erro ao adicionar categoria: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+ 
+
+}
