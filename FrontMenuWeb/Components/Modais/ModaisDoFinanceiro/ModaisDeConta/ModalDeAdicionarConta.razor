@@ -52,6 +52,38 @@
                                 </MudStack>
                             </MudSelectItem>
 
+                            @*Caixa Economica*@
+                            <MudSelectItem Value="5">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <img src="@AppState.GetBancoIcon(5)" alt="Caixa Economica" width="24" height="24" />
+                                    <span>Caixa Economica</span>
+                                </MudStack>
+                            </MudSelectItem>
+
+                            @*Santander*@
+                            <MudSelectItem Value="6">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <img src="@AppState.GetBancoIcon(6)" alt="Santander" width="24" height="24" />
+                                    <span>Santander</span>
+                                </MudStack>
+                            </MudSelectItem>
+
+                            @*Stone*@
+                            <MudSelectItem Value="7">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <img src="@AppState.GetBancoIcon(7)" alt="Stone" width="24" height="24" />
+                                    <span>Stone</span>
+                                </MudStack>
+                            </MudSelectItem>
+
+                            @*Pag?Bank*@
+                            <MudSelectItem Value="8">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <img src="@AppState.GetBancoIcon(8)" alt="Pag Bank" width="24" height="24" />
+                                    <span>PagBank</span>
+                                </MudStack>
+                            </MudSelectItem>
+
                             @*Outros*@
                             <MudSelectItem Value="0">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
@@ -153,16 +185,9 @@
     private void DefineCodigoDoBancoDinamicamente(string NomeEscrito)
     {
 
-        if (NomeEscrito.Contains("bradesco", StringComparison.OrdinalIgnoreCase))
-            NovaConta.CodIconeDoBanco = 1;
-        else if (NomeEscrito.Contains("banco do brasil", StringComparison.OrdinalIgnoreCase) || NomeEscrito.Contains("bb", StringComparison.OrdinalIgnoreCase))
-            NovaConta.CodIconeDoBanco = 2;
-        else if (NomeEscrito.Contains("sicob", StringComparison.OrdinalIgnoreCase))
-            NovaConta.CodIconeDoBanco = 3;
-        else if (NomeEscrito.Contains("itau", StringComparison.OrdinalIgnoreCase))
-            NovaConta.CodIconeDoBanco = 4;
-        else
-            NovaConta.CodIconeDoBanco = 0;
+      
+        NovaConta.CodIconeDoBanco = AppState.DefineCodigoDoBancoDinamicamente(NomeEscrito);
+       
     }
 
 }

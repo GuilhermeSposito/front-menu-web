@@ -15,13 +15,13 @@ public class CategoriasService
     public async Task<List<ClsCategoria>?> GetCategoriasAsync()
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsCategoria>>("financeiro/categorias");
-        return response?.Data.ListaDeObjetosRetornadoCategorias ?? new List<ClsCategoria>();
+        return response?.Data.Lista ?? new List<ClsCategoria>();
     }
 
     public async Task<ClsCategoria?> GetCategoriaAsync(int IdDaCategoria)
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsCategoria>>($"financeiro/categorias/{IdDaCategoria}");
-        return response?.Data.ObjetoRetornadoCategoria ?? new ClsCategoria();
+        return response?.Data.Objeto ?? new ClsCategoria();
     }
 
     public async Task<ReturnApiRefatored<ClsCategoria>> AdicionarCategoriaAsync(ClsCategoria categoria)
@@ -53,7 +53,7 @@ public class CategoriasService
     public async Task<ClsSubCategoria> GetSubCategoriaAsync(int SubCategoriaId)
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>($"financeiro/categorias/sub/{SubCategoriaId}");
-        return response?.Data.ObjetoRetornadoSubCategoria ?? new ClsSubCategoria();
+        return response?.Data.Objeto ?? new ClsSubCategoria();
     }
 
     public async Task<ReturnApiRefatored<ClsSubCategoria>> UpdateSubCategoriaAsync(ClsSubCategoria categoria)

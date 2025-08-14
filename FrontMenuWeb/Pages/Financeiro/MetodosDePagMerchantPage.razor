@@ -1,0 +1,207 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/financeiro/metodos"
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeMetodos
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pessoas
+@using MudBlazor.Extensions.Services
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject MetodosDePagMerchantService MetodosService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Métodos</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Métodos Cadastrados</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoMetodos ? true : false" OnClick="@(async () => { await AbreModalDeAdicionarOuEditarMetodo(true);})">Novo Método</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid SelectOnRowClick=true
+                     MultiSelection="false"
+                     Loading=CarregandoMetodos
+                     Hover
+                     T="ClsMetodosDePagMerchant"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     Items="@MetodosDePagMerchants"
+                     class="rounded-3"
+                     RowClick="@(async (row) => {await AbreModalDeAdicionarOuEditarMetodo(false, row.Item);})">
+
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="Código" />
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                <PropertyColumn Property="x => x.ValorTotalEmPags" Title="Valor Total Em Pagamentos" />
+                <TemplateColumn T="ClsMetodosDePagMerchant" Title="Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para ativar/desativar o método" Color="Color.Primary">
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await AtivaEDesativaMetodo(context.Item); })" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsMetodosDePagMerchant" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para deletar o método" Color="Color.Error">
+                            <MudIconButton OnClick=@(async p => { await DeletarMetodo(context.Item); }) Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error" />
+                        </MudTooltip>
+
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsMetodosDePagMerchant">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditarMetodo(false, context.Item); })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" />
+                                </MudTooltip>
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+
+
+    </MudLayout>
+</MudPaper>
+
+
+
+@code {
+    public bool CarregandoMetodos { get; set; } = true;
+    public List<ClsMetodosDePagMerchant> MetodosDePagMerchants { get; set; } = new List<ClsMetodosDePagMerchant>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarMetodos();
+    }
+
+    private async Task CarregarMetodos()
+    {
+        try
+        {
+            CarregandoMetodos = true;
+            List<ClsMetodosDePagMerchant>? Metodos = await MetodosService.GetMetodosAsync();
+
+            if (Metodos is not null)
+                MetodosDePagMerchants = Metodos;
+
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions as needed
+            Console.WriteLine($"Error loading methods: {ex.Message}");
+        }
+        finally
+        {
+            CarregandoMetodos = false;
+        }
+    }
+
+    private async Task AtivaEDesativaMetodo(ClsMetodosDePagMerchant metodo)
+    {
+        try
+        {
+            var responseAPi = await MetodosService.UpdateMetodoAsync(metodo);
+
+            if (responseAPi.Status == "success")
+            {
+                Snackbar.Add("Método atualizado com sucesso", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao atualizar o método: {string.Join(", ", responseAPi.Messages)}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao ativar/desativar o método", Severity.Error);
+        }
+    }
+
+    private async Task DeletarMetodo(ClsMetodosDePagMerchant metodo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza de que deseja excluir o método {metodo.Descricao}? Esta ação é irreversível. Todos os pagamentos vinculados a este método serão permanentemente apagados." },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                ReturnApiRefatored<ClsMetodosDePagMerchant> ResponseAPi = await MetodosService.DeleteMetodoAsync(metodo);
+
+                string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+                Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (ResponseAPi.Status == "success")
+                {
+                    MetodosDePagMerchants.Remove(metodo);
+                }
+
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao deletar o método", Severity.Error);
+        }
+    }
+
+    public async Task AbreModalDeAdicionarOuEditarMetodo(bool criandoMetodo = false, ClsMetodosDePagMerchant? metodoParaEditar = null)
+    {
+        var IdMetodo = 0;
+
+        if(metodoParaEditar is not null)
+        {
+            IdMetodo = metodoParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdMetodo", IdMetodo},
+           { "ECriacao", criandoMetodo}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEEditarMetodo>(criandoMetodo ? "Adicionar Método": "Editar Método", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {    
+            await CarregarMetodos();
+            StateHasChanged();
+        }
+    }
+}

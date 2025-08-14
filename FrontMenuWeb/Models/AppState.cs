@@ -18,8 +18,39 @@ public class AppState
                 return "/images/bancos/sicob-logo.png";
             case 4:
                 return "/images/bancos/itau.png";
+            case 5:
+                return "/images/bancos/caixa-economica-logo.png";
+            case 6:
+                return "/images/bancos/logo-santander.png";
+            case 7:
+                return "/images/bancos/stone.png";
+            case 8:
+                return "/images/bancos/pagbank-logo.png";
             default:
                 return "/images/bancos/default-bank-icon.png"; // Ícone padrão caso não haja correspondência
         }
+    }
+
+    public int DefineCodigoDoBancoDinamicamente(string NomeEscrito)
+    {
+        if (NomeEscrito.Contains("bradesco", StringComparison.OrdinalIgnoreCase))
+            return 1;
+        else if (NomeEscrito.Contains("banco do brasil", StringComparison.OrdinalIgnoreCase) || NomeEscrito.Contains("bb", StringComparison.OrdinalIgnoreCase))
+            return 2;
+        else if (NomeEscrito.Contains("sicoob", StringComparison.OrdinalIgnoreCase))
+            return 3;
+        else if (NomeEscrito.Contains("itau", StringComparison.OrdinalIgnoreCase))
+            return 4;
+        else if (NomeEscrito.Contains("Caixa Economica", StringComparison.OrdinalIgnoreCase))
+            return 5;
+        else if (NomeEscrito.Contains("Santander", StringComparison.OrdinalIgnoreCase))
+            return 6;
+        else if (NomeEscrito.Contains("Stone", StringComparison.OrdinalIgnoreCase))
+            return 7;
+        else if (NomeEscrito.Contains("PagBank", StringComparison.OrdinalIgnoreCase))
+            return 8;
+        else
+            return 0;
+
     }
 }

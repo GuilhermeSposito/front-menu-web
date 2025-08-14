@@ -2,9 +2,103 @@
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
-        <MudText style="text-align: center; font-size: 1.2rem; margin-top: 2rem;">
-            Está pagina ainda está em construção! Em breve, você contará com um sistema ERP moderno e completo para bares, restaurantes, mercados e muito mais.<br>
-        </MudText>
+        <main class="card" role="main" aria-labelledby="title">
+            <header class="header">
+                <div>
+                    <h1 id="title" class="title">🚧 Página em construção</h1>
+                    <p class="subtitle">Estamos trabalhando para colocar tudo no ar. Volte em breve ou entre em contato conosco.</p>
+                </div>
+
+                <div class="content" aria-hidden="false">
+                    <section class="illustration" aria-label="Ilustração de obra com grua, engrenagens e faixa de segurança">
+                        <div class="tape" aria-hidden="true"></div>
+                        <div class="crane" aria-hidden="true">
+                            <!-- Grua + Engrenagens (SVG puro) -->
+                            <svg viewBox="0 0 800 460" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                                <!-- chão -->
+                                <rect x="0" y="420" width="800" height="40" fill="#0b1220" opacity=".6" />
+
+                                <!-- torre -->
+                                <rect x="90" y="120" width="18" height="300" rx="4" fill="#334155" />
+                                <rect x="60" y="120" width="80" height="16" rx="4" fill="#1f2937" />
+
+                                <!-- braço -->
+                                <g class="arm">
+                                    <rect x="130" y="120" width="360" height="12" rx="6" fill="#334155" />
+                                    <rect x="130" y="136" width="60" height="10" rx="4" fill="#1f2937" />
+                                    <rect x="210" y="136" width="60" height="10" rx="4" fill="#1f2937" />
+                                    <rect x="290" y="136" width="60" height="10" rx="4" fill="#1f2937" />
+                                    <rect x="370" y="136" width="60" height="10" rx="4" fill="#1f2937" />
+
+                                    <!-- cabo + gancho -->
+                                    <line x1="470" y1="130" x2="470" y2="240" stroke="#94a3b8" stroke-width="3" />
+                                    <g class="hook">
+                                        <rect x="458" y="240" width="24" height="32" rx="4" fill="#f59e0b" />
+                                        <rect x="452" y="272" width="36" height="10" rx="5" fill="#f59e0b" />
+                                    </g>
+                                </g>
+
+                                <!-- bloco (caixa) -->
+                                <rect x="510" y="300" width="120" height="80" rx="8" fill="#0b1220" stroke="#334155" stroke-width="2" />
+                                <rect x="525" y="315" width="90" height="50" rx="6" fill="#1f2937" />
+
+                                <!-- engrenagens -->
+                                <g transform="translate(240,310)">
+                                    <g class="gear big">
+                                        <circle cx="0" cy="0" r="34" fill="#0b1220" stroke="#334155" stroke-width="6" />
+                                        <g fill="#22d3ee">
+                                            <rect x="-50" y="-6" width="20" height="12" rx="3" />
+                                            <rect x="30" y="-6" width="20" height="12" rx="3" />
+                                            <rect x="-6" y="-50" width="12" height="20" rx="3" />
+                                            <rect x="-6" y="30" width="12" height="20" rx="3" />
+                                        </g>
+                                    </g>
+                                </g>
+                                <g transform="translate(320,340)">
+                                    <g class="gear small">
+                                        <circle cx="0" cy="0" r="22" fill="#0b1220" stroke="#334155" stroke-width="5" />
+                                        <g fill="#22d3ee">
+                                            <rect x="-34" y="-5" width="14" height="10" rx="3" />
+                                            <rect x="20" y="-5" width="14" height="10" rx="3" />
+                                            <rect x="-5" y="-34" width="10" height="14" rx="3" />
+                                            <rect x="-5" y="20" width="10" height="14" rx="3" />
+                                        </g>
+                                    </g>
+                                </g>
+
+                                <!-- cones de sinalização -->
+                                <g>
+                                    <polygon points="650,420 670,370 690,420" fill="#f59e0b" />
+                                    <rect x="664" y="380" width="12" height="22" fill="#fff" opacity=".8" />
+                                    <polygon points="690,420 710,370 730,420" fill="#f59e0b" />
+                                    <rect x="704" y="380" width="12" height="22" fill="#fff" opacity=".8" />
+                                </g>
+                            </svg>
+                        </div>
+                    </section>
+
+                    <section aria-label="Ações e informação">
+                        <p style="margin:0 0 8px; color: var(--muted);">Enquanto isso…</p>
+                        <ul style="margin:0 0 18px 18px; padding:0; line-height:1.8; color: var(--text);">
+                            <li>Inscreva-se para ser avisado quando lançarmos.</li>
+                            <li>Fale com a gente: <a href="#" style="color: var(--accent); text-underline-offset: 3px;">guilherme@syslogica.com.br</a></li>
+                            <li>Acompanhe as novidades nas redes.</li>
+                        </ul>
+                        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                            <button class="btn" onclick="alert('Obrigado! Em breve entraremos em contato.')">Quero ser avisado</button>
+                            <span class="pill" aria-live="polite">🔧 Em manutenção programada</span>
+                        </div>
+                    </section>
+                </div>
+            </header>
+
+            <div class="progress" aria-hidden="true"></div>
+
+            <footer class="footer" role="contentinfo">
+                <span>© <span id="year"></span>Sophos Apps</span>
+                <span>Tempo estimado: <strong>breve</strong> ⏳</span>
+            </footer>
+        </main>
     </MudLayout>
 </MudPaper>
 
