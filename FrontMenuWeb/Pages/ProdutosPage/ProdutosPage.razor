@@ -24,7 +24,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(() => { AddProduto(null); })">Novo Produto</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(() => { AddProduto(produtoParaReultilizar: null); })">Novo Produto</MudButton>
             </div>
         </div>
 
@@ -61,15 +61,6 @@
                         <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
                     }
                 </MudSelect>
-
-                @* <MudSelect @bind-Value="_SelectedCategoria" @bind-Value:after="FiltroDeCategoriaAcionado" On Label="Filtre Por Categoria" Placeholder="Use Filtro por Categoria" Variant="Variant.Outlined" ShrinkLabel>
-                    <MudSelectItem Value="_SelectedCategoria = null!">Sem filtro</MudSelectItem>
-                    @foreach (var categoria in Categorias)
-                    {
-                        <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
-                    }
-                </MudSelect>
-                *@
 
             </ToolBarContent>
             <Columns>
@@ -152,12 +143,10 @@
             </Columns>
             <PagerContent>
 
-                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 5, 10, 20 }) />
+                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20 }) />
 
             </PagerContent>
         </MudDataGrid>
-
-
 
     </MudLayout>
 
@@ -834,8 +823,21 @@
 
             ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(produto.Id ?? "");
 
+            // Verifica se o produto selecionado para edição não é nulo e atribui os valores das listas de seleção
+            if (ProdutoSelecionadoParaEdicao is not null)
+            {
+                ProdutoSelecionadoParaEdicao.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.csosn);
+                ProdutoSelecionadoParaEdicao.CSTSelected = ListaDeCSTS.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.CST);
+                ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
+                ProdutoSelecionadoParaEdicao.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.TribPisCofins);
+                ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
+
+            }
+
 
             carregandoProdutoParaEdicao = false;
+
+
         }
         catch (Exception ex)
         {
@@ -909,7 +911,7 @@
 
 
                 <MudTooltip Text="Fechar" Color="Color.Primary">
-                    <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _open = false)" Color="Color.Primary" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => { _open = false; NumAba = 1; })" Color="Color.Primary" />
                 </MudTooltip>
 
             </MudStack>
@@ -1454,7 +1456,7 @@
                                             <MudSelect @bind-Value="ProdutoSelecionadoParaEdicao.CSOSNSelected"
                                                        SelectedValuesChanged="@(prop => OnSaveChanges(ProdutoSelecionadoParaEdicao))"
                                                        T="CSOSN"
-                                                       ToStringFunc="g => g.Descricao?.Length > 10 ? g.Descricao.Substring(0, 10) : g.Descricao"
+                                                       ToStringFunc="g => g.Descricao"
                                                        Label="CSOSN"
                                                        HelperText="SELECIONE"
                                                        Placeholder="SELECIONE O CSOSN CORRESPONDENTE"
@@ -1466,8 +1468,10 @@
                                                        FitContent="false">
 
 
+
                                                 @foreach (var CSOSN in ListaDeCSOSN)
                                                 {
+
                                                     <MudSelectItem Value="@CSOSN">@CSOSN.Descricao</MudSelectItem>
                                                 }
                                             </MudSelect>
@@ -1556,7 +1560,7 @@
                 }
                 else
                 {
-                    //--------------------------------------Faz a movimentação de produto carregando--/////////////////////////////////////////////
+                    //--------------------------------------Faz a movimentação de produto carregando---------------------------------///////////////
 
                     <MudCard Class="w-100 p-0" style="background-color: var(--mud-palette-background);">
                         <MudCardHeader>
