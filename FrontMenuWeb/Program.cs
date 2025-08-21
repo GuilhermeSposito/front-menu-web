@@ -65,6 +65,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<PessoasService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ContasService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<CategoriasService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MetodosDePagMerchantService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<FormasDeRecebimentoService>());
 
 
 builder.Services.AddMudServices();

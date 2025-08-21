@@ -1,0 +1,150 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/financeiro/formas-de-recebimento"
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeFormas
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pessoas
+@using MudBlazor.Extensions.Services
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Formas de Recebimento</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Formas Cadastradas</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoFormas" OnClick="@(async () => {await AbreModalDeAdicionarOuEditarForma(true); })">Nova Forma</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid SelectOnRowClick=true
+                     MultiSelection="false"
+                     Loading=CarregandoFormas
+                     Hover
+                     T="ClsFormaDeRecebimento"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     Items="@FormasDeRecebimento"
+                     class="rounded-3"
+                     @ref="_grid"
+                     RowClick="@(async (row) => {})">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="Código" />
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                <PropertyColumn Property="x => x.Taxa" Title="Taxa" />
+                <TemplateColumn T="ClsFormaDeRecebimento" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para excluir a forma" Color="Color.Error">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => {  })" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsFormaDeRecebimento">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => {  })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" />
+
+                                </MudTooltip>
+                              
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+        </MudDataGrid>
+
+
+    </MudLayout>
+</MudPaper>
+
+
+
+@code {
+    private bool CarregandoFormas = true;
+    private List<ClsFormaDeRecebimento> FormasDeRecebimento = new List<ClsFormaDeRecebimento>();
+    private MudDataGrid<ClsFormaDeRecebimento> _grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await CarregarFormasDeRecebimento();
+
+    }
+
+    private async Task CarregarFormasDeRecebimento()
+    {
+        try
+        {
+            CarregandoFormas = true;
+            List<ClsFormaDeRecebimento>? FormasDeRecebimentoSup = await FormasDeRecebimentoService.GetFormasDeRecebimentoAsync()!;
+
+            if (FormasDeRecebimentoSup is not null)
+                FormasDeRecebimento = FormasDeRecebimentoSup;
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar formas de recebimento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoFormas = false;
+        }
+    }
+
+    private async Task AbreModalDeAdicionarOuEditarForma(bool CriandoForma = false, ClsFormaDeRecebimento? FormaParaEditar = null)
+    {
+
+        var IdDaForma = 0;
+
+        if (FormaParaEditar is not null)
+        {
+            IdDaForma = FormaParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "idDaForma", IdDaForma},
+           { "ECriacao", CriandoForma}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEEditarFormaDePagamento>(CriandoForma ? "Adicionar Forma" : "Editar Forma", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await CarregarFormasDeRecebimento();
+            StateHasChanged();
+        }
+    
+    }
+}
