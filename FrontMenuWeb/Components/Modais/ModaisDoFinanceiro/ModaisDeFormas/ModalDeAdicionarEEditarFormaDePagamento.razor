@@ -43,6 +43,12 @@
                                                          RequiredError="A taxa é obrigatória"
                                                          @bind-Value="@FormaDeRecebimento.Taxa" />
 
+                                       
+                                    </MudStack>
+
+
+                                    <MudStack Row="true" Class="w-100">
+
                                         <MudStack>
                                             <MudText>Ativo</MudText>
 
@@ -50,10 +56,6 @@
                                                 <MudSwitch T="bool" Value=@FormaDeRecebimento.Ativo Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.Ativo = valor; })" />
                                             </MudTooltip>
                                         </MudStack>
-                                    </MudStack>
-
-
-                                    <MudStack Row="true" Class="w-100">
 
                                         <MudStack>
                                             <MudText>Pagamento Online ? </MudText>
@@ -114,7 +116,7 @@
 
                                                     <div class="d-flex flex-column flex-grow-1">
                                                         <MudListSubheader class="mt-4 pb-2">Contas vinculadas à forma</MudListSubheader>
-                                                        <MudDropZone Style="background-color: var(--mud-palette-surface);" T="ClsConta" Identifier="Vinculadas"
+                                                        <MudDropZone Style="background-color: var(--mud-palette-surface); min-height: 70px" T="ClsConta" Identifier="Vinculadas"
                                                                      DraggingClass="mud-alert-text-normal"
                                                                      Class="d-flex flex-wrap flex-grow-1 pa-2 rounded" />
                                                     </div>
