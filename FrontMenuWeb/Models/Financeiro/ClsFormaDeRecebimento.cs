@@ -1,4 +1,5 @@
 ﻿using FrontMenuWeb.Models.Financeiro;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Models.Financeiro;
@@ -13,6 +14,7 @@ public class ClsFormaDeRecebimento
     [JsonPropertyName("taxa")] public float Taxa { get; set; } = 0.0f;
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("ContasDeFormaDeRecebimento")] public List<ClsDeContasDasFormasDeRecebimento> ListasDeContasDaForma { get; set; } = new List<ClsDeContasDasFormasDeRecebimento>();
+    [JsonPropertyName("chave_pix")] public string? ChavePix { get; set; }
     [JsonPropertyName("contasIds")] public List<int> ContasIds { get; set; } = new List<int>();
 
 }
@@ -23,3 +25,4 @@ public class ClsDeContasDasFormasDeRecebimento
     [JsonPropertyName("conta")] public ClsConta Conta { get; set; }
 
 }
+

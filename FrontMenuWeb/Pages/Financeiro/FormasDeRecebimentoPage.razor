@@ -26,7 +26,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de Formas Cadastradas</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoFormas" OnClick="@(async () => {await AbreModalDeAdicionarOuEditarForma(true); })">Nova Forma</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoFormas" OnClick="@(async () => { await AbreModalDeAdicionarOuEditarForma(true); })">Nova Forma</MudButton>
             </div>
         </div>
 
@@ -39,7 +39,7 @@
                      Items="@FormasDeRecebimento"
                      class="rounded-3"
                      @ref="_grid"
-                     RowClick="@(async (row) => {})">
+                     RowClick="@(async (row) => {await AbreModalDeAdicionarOuEditarForma(false, row.Item); })">
             <Columns>
                 <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
@@ -47,7 +47,7 @@
                 <TemplateColumn T="ClsFormaDeRecebimento" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para excluir a forma" Color="Color.Error">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => {  })" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(async (e) => { await DeletarForma(context.Item); })" />
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
@@ -63,13 +63,13 @@
 
 
                                 <MudTooltip Text="Clique para editar" Color="Color.Primary">
-                                    <MudMenuItem OnClick=@(async p => {  })
+                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditarForma(false, context.Item); })
                                                  Icon="@Icons.Material.TwoTone.Edit"
                                                  IconColor="Color.Primary"
                                                  Label="Editar" />
 
                                 </MudTooltip>
-                              
+
 
                             </MudMenu>
                         </MudTooltip>
@@ -145,6 +145,37 @@
             await CarregarFormasDeRecebimento();
             StateHasChanged();
         }
-    
+
+    }
+
+    private async Task DeletarForma(ClsFormaDeRecebimento forma)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir a forma de recebimento {forma.Descricao}? Atenção, Todos os pagamentos feitos ao seu negócio com essa forma de recebimento perderão a referencia a ela!" },
+                    { x => x.ButtonText, "sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await FormasDeRecebimentoService.DeletarFormaDeRecebimentoAsync(forma.Id);
+
+                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    FormasDeRecebimento.Remove(forma);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir forma: {ex.Message}", Severity.Error);
+        }
     }
 }

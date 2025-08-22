@@ -21,59 +21,33 @@
 
                             <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
                                 <MudStack Class="w-100">
+                                    <MudCard Class="w-100 p-2" style="background-color: var(--mud-palette-background);">
+
+                                        <MudStack Row="true" Class="w-100">
+                                            <MudTextField Class="w-50"
+                                                          Label="Descrição"
+                                                          @bind-Value=@FormaDeRecebimento.Descricao
+                                                          Variant="Variant.Filled"
+                                                          Required
+                                                          RequiredError="A descrição é obrigatória"
+                                                          Immediate="true" />
+
+                                            <MudNumericField Class="w-50"
+                                                             T="float"
+                                                             Label="Taxa"
+                                                             AdornmentIcon="@Icons.Material.Filled.Percent"
+                                                             Adornment="Adornment.Start"
+                                                             Variant="Variant.Filled"
+                                                             Required="true"
+                                                             Min="0"
+                                                             Immediate="true"
+                                                             RequiredError="A taxa é obrigatória"
+                                                             @bind-Value="@FormaDeRecebimento.Taxa" />
 
 
-                                    <MudStack Row="true" Class="w-100">
-                                        <MudTextField Class="w-75"
-                                                      @bind-Value=@FormaDeRecebimento.Descricao
-                                                      Variant="Variant.Filled"
-                                                      Required
-                                                      RequiredError="A descrição é obrigatória"
-                                                      Immediate="true" />
-
-                                        <MudNumericField Class="w-25"
-                                                         T="float"
-                                                         Label="Taxa"
-                                                         AdornmentIcon="@Icons.Material.Filled.Percent"
-                                                         Adornment="Adornment.Start"
-                                                         Variant="Variant.Filled"
-                                                         Required="true"
-                                                         Min="0"
-                                                         Immediate="true"
-                                                         RequiredError="A taxa é obrigatória"
-                                                         @bind-Value="@FormaDeRecebimento.Taxa" />
-
-                                       
-                                    </MudStack>
-
-
-                                    <MudStack Row="true" Class="w-100">
-
-                                        <MudStack>
-                                            <MudText>Ativo</MudText>
-
-                                            <MudTooltip Text="Clique para ativar/desativar a forma" Color="Color.Primary">
-                                                <MudSwitch T="bool" Value=@FormaDeRecebimento.Ativo Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.Ativo = valor; })" />
-                                            </MudTooltip>
                                         </MudStack>
 
-                                        <MudStack>
-                                            <MudText>Pagamento Online ? </MudText>
-
-                                            <MudTooltip Text="Clique para ativar/desativar o pagamento online da forma" Color="Color.Primary">
-                                                <MudSwitch T="bool" Value=@FormaDeRecebimento.PagamentoOnline Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.PagamentoOnline = valor; })" />
-                                            </MudTooltip>
-                                        </MudStack>
-
-                                        <MudStack>
-                                            <MudText>Aceita Convenio com a forma ?</MudText>
-
-                                            <MudTooltip Text="Clique para ativar/desativar o convenio da forma" Color="Color.Primary">
-                                                <MudSwitch T="bool" Value=@FormaDeRecebimento.Convenio Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.Convenio = valor; })" />
-                                            </MudTooltip>
-                                        </MudStack>
-
-                                        <MudNumericField Class="w-25 h-100"
+                                        <MudNumericField Class="w-100 h-100 mt-1"
                                                          T="int"
                                                          Label="Quantidade Para Reembolso"
                                                          AdornmentIcon="@Icons.Material.Filled.CalendarViewDay"
@@ -84,7 +58,47 @@
                                                          Immediate="true"
                                                          RequiredError="Os dias para reembolso é obrigatório"
                                                          @bind-Value="@FormaDeRecebimento.QtdDiasParaReembolso" />
-                                    </MudStack>
+
+                                        <MudStack Row="true" Class="w-100 mt-1" Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
+
+                                            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+                                                <MudText>Ativo</MudText>
+
+                                                <MudTooltip Text="Clique para ativar/desativar a forma" Color="Color.Primary">
+                                                    <MudSwitch T="bool" Value=@FormaDeRecebimento.Ativo Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.Ativo = valor; })" />
+                                                </MudTooltip>
+                                            </MudStack>
+
+                                            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+                                                <MudText>Pagamento Online ?</MudText>
+
+                                                <MudTooltip Text="Clique para ativar/desativar o pagamento online da forma" Color="Color.Primary">
+                                                    <MudSwitch T="bool" Value=@FormaDeRecebimento.PagamentoOnline Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.PagamentoOnline = valor; })" />
+                                                </MudTooltip>
+                                            </MudStack>
+
+                                            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+                                                <MudText>Aceita Convenio com a forma ?</MudText>
+
+                                                <MudTooltip Text="Clique para ativar/desativar o convenio da forma" Color="Color.Primary">
+                                                    <MudSwitch T="bool" Value=@FormaDeRecebimento.Convenio Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.Convenio = valor; })" />
+                                                </MudTooltip>
+                                            </MudStack>
+
+                                           
+                                        </MudStack>
+
+                                        <MudStack>
+                                            @if (FormaDeRecebimento.Descricao.Contains("pix", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <MudTextField Class="w-100"
+                                                              Label="Chave Pix"
+                                                              @bind-Value=@FormaDeRecebimento.ChavePix
+                                                              Variant="Variant.Filled"
+                                                              Immediate="true" />
+                                            }
+                                        </MudStack>
+                                    </MudCard>
 
                                     <MudCard Class="w-100" style="background-color: var(--mud-palette-background);">
                                         <MudCardHeader>
@@ -104,32 +118,50 @@
                                                               Items="Contas"
                                                               ItemsSelector="Selector"
                                                               ItemDropped="OnItemDropped"
-                                                              Class="d-flex flex-column flex-grow-1">
+                                                              Class="d-flex flex-column flex-grow-1"
+                                                              @ref="@mudItemDropContainer"
+                                                              Style="background-color: var(--mud-palette-surface); min-height: 100px; border: 2px dashed var(--mud-palette-primary);">
 
                                                 <ChildContent>
-                                                    <div class="d-flex flex-column flex-grow-1">
+                                                    <!-- Contas Disponíveis -->
+                                                    <MudPaper class="d-flex flex-column flex-grow-1">
                                                         <MudListSubheader class="mt-4 pb-2">Contas Disponíveis</MudListSubheader>
                                                         <MudDropZone T="ClsConta" Identifier="Disponiveis"
                                                                      ItemDraggingClass="mud-info-text"
                                                                      Class="d-flex flex-wrap flex-grow-1 pa-2 rounded" />
-                                                    </div>
+                                                    </MudPaper>
 
-                                                    <div class="d-flex flex-column flex-grow-1">
+                                                    <!-- Contas Vinculadas -->
+                                                    <MudPaper class="d-flex flex-column flex-grow-1 p-2">
                                                         <MudListSubheader class="mt-4 pb-2">Contas vinculadas à forma</MudListSubheader>
-                                                        <MudDropZone Style="background-color: var(--mud-palette-surface); min-height: 70px" T="ClsConta" Identifier="Vinculadas"
+                                                        <MudDropZone Style="background-color: var(--mud-palette-surface); min-height: 100px; border: 2px dashed var(--mud-palette-primary);"
+                                                                     T="ClsConta" Identifier="Vinculadas"
                                                                      DraggingClass="mud-alert-text-normal"
-                                                                     Class="d-flex flex-wrap flex-grow-1 pa-2 rounded" />
-                                                    </div>
+                                                                     Class="d-flex flex-wrap flex-grow-1 pa-2 rounded">
+                                                            @if (!FormaDeRecebimento.ContasIds.Any())
+                                                            {
+                                                                <MudStack Class="w-100" Row="false" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                                                                    <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" Color="Color.Primary" />
+                                                                    <MudText Typo="Typo.body1" Align="Align.Center">
+                                                                        Arraste as contas desejadas para esta área
+                                                                    </MudText>
+                                                                    <MudText Typo="Typo.caption" Color="Color.Primary" Align="Align.Center">
+                                                                        ou clique em uma conta para vinculá-la
+                                                                    </MudText>
+                                                                </MudStack>
+                                                            }
+                                                        </MudDropZone>
+                                                    </MudPaper>
                                                 </ChildContent>
 
                                                 <ItemRenderer>
-                                                    <div class="rounded mud-paper-outlined d-flex align-center pa-3 ma-2">
+                                                    <MudPaper Class="rounded mud-paper-outlined d-flex align-center pa-3 ma-2 cursor-pointer"
+                                                              onclick="@(() => OnContaClicked(context))">
                                                         <MudImage Width="15" Src="@AppState.GetBancoIcon(context.CodIconeDoBanco)" class="mr-2" />
                                                         @context.NomeConta
-                                                    </div>
+                                                    </MudPaper>
                                                 </ItemRenderer>
                                             </MudDropContainer>
-
 
 
 
@@ -149,8 +181,13 @@
                         }
                         else
                         {
-                            <MudSkeleton Class="w-100"
-                                         Height="120px" />
+                            <MudStack Class="w-100">
+
+                                <MudSkeleton Class="w-100"
+                                             Height="500px" />
+
+                               
+                            </MudStack>
 
                         }
 
@@ -191,6 +228,7 @@
     [Parameter] public int idDaForma { get; set; } = 0;
     private ClsFormaDeRecebimento FormaDeRecebimento { get; set; } = new ClsFormaDeRecebimento();
 
+    MudDropContainer<ClsConta> mudItemDropContainer;
     private List<ClsConta> Contas { get; set; } = new List<ClsConta>();
 
     protected override async Task OnInitializedAsync()
@@ -203,11 +241,19 @@
             if (!ECriacao)
             {
                 FormaDeRecebimento = await FormasService.GetFormaDeRecebimentoAsync(idDaForma) ?? new ClsFormaDeRecebimento();
+
+                if (FormaDeRecebimento.ListasDeContasDaForma.Any())
+                {
+                    foreach (var contas in FormaDeRecebimento.ListasDeContasDaForma)
+                    {
+                        FormaDeRecebimento.ContasIds.Add(contas.Conta.Id);
+                    }
+                }
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao carregar método: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao carregar forma: {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -230,7 +276,7 @@
             }
             else
             {
-                ResponseAPi = await FormasService.AdicionarFormaDeRecebimentoAsync(FormaDeRecebimento);
+                ResponseAPi = await FormasService.AtualizarFormaDeRecebimentoAsync(FormaDeRecebimento);
 
             }
 
@@ -280,26 +326,97 @@
         };
     }
 
-    private void OnItemDropped(MudItemDropInfo<ClsConta> dropInfo)
+    private async Task OnItemDropped(MudItemDropInfo<ClsConta> dropInfo)
     {
-        var conta = dropInfo.Item;
-
-        if (dropInfo.DropzoneIdentifier == "Vinculadas")
+        try
         {
-            if (!FormaDeRecebimento.ContasIds.Contains(conta.Id))
-                FormaDeRecebimento.ContasIds.Add(conta.Id);
+            var conta = dropInfo.Item;
+
+            if (dropInfo.DropzoneIdentifier == "Vinculadas")
+            {
+                if (!ECriacao)
+                {
+                    var respostaApi = await FormasService.AdicionarContaAFormaDeRecebimento(FormaDeRecebimento.Id, conta.Id);
+
+                    string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                    Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+                }
+
+                if (!FormaDeRecebimento.ContasIds.Contains(conta.Id))
+                    FormaDeRecebimento.ContasIds.Add(conta.Id);
+            }
+            else if (dropInfo.DropzoneIdentifier == "Disponiveis")
+            {
+                if (!ECriacao)
+                {
+                    var ReferenciaNaTabela = FormaDeRecebimento.ListasDeContasDaForma.FirstOrDefault(z => z.Conta.Id == conta.Id);
+
+                    if (ReferenciaNaTabela is not null)
+                    {
+                        var respostaApi = await FormasService.RemoverContaDaFormaDeRecebimento(ReferenciaNaTabela.Id);
+
+                        string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                        Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+                    }
+                }
+                if (FormaDeRecebimento.ContasIds.Contains(conta.Id))
+                    FormaDeRecebimento.ContasIds.Remove(conta.Id);
+            }
+
+
+            StateHasChanged();
+
         }
-        else if (dropInfo.DropzoneIdentifier == "Disponiveis")
+        catch (Exception ex)
         {
-            if (FormaDeRecebimento.ContasIds.Contains(conta.Id))
-                FormaDeRecebimento.ContasIds.Remove(conta.Id);
+
+            Snackbar.Add("Erro ao processar a ação de arrastar e soltar.", Severity.Error);
         }
 
-        // opcional: forçar re-render se necessário
-        // StateHasChanged();
     }
 
+    private async Task OnContaClicked(ClsConta conta)
+    {
+        try
+        {
+            if (FormaDeRecebimento.ContasIds.Contains(conta.Id))
+            {
+                if (!ECriacao)
+                {
+                    var ReferenciaNaTabela = FormaDeRecebimento.ListasDeContasDaForma.FirstOrDefault(z => z.Conta.Id == conta.Id);
 
+                    if (ReferenciaNaTabela is not null)
+                    {
+                        var respostaApi = await FormasService.RemoverContaDaFormaDeRecebimento(ReferenciaNaTabela.Id);
+
+                        string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                        Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+                    }
+                }
+                FormaDeRecebimento.ContasIds.Remove(conta.Id);
+            }
+            else
+            {
+                if (!ECriacao)
+                {
+                    var respostaApi = await FormasService.AdicionarContaAFormaDeRecebimento(FormaDeRecebimento.Id, conta.Id);
+
+                    string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                    Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+                }
+                FormaDeRecebimento.ContasIds.Add(conta.Id);
+
+            }
+
+            mudItemDropContainer?.Refresh();
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao processar a ação de clicar na conta: {ex.Message}", Severity.Error);
+        }
+    }
 
 
 }
