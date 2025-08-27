@@ -1,0 +1,171 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/financeiro/lancamentos"
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeFormas
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pessoas
+@using MudBlazor.Extensions.Services
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject LancamentoFinanceiroService LancamentoFinanceiroService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Lançamentos Financeiro</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Lançamentos financeiro cadastrados.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=" true" OnClick="@(() => { })">Novo Lançamento</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsLancamentoFinanceiro"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection="false"
+                     SelectOnRowClick=true
+                     Class="rounded-3 custom-striped"
+                     Loading="CarregandoLancamentos"
+                     Hover
+                     ServerData="LoadServerData">
+            <ToolBarContent>
+
+
+            </ToolBarContent>
+            <Columns>
+                <TemplateColumn Title="Banco">
+                    <CellTemplate Context="context">
+                        <img src="@AppState.GetBancoIcon(context.Item.Conta.CodIconeDoBanco)"
+                             alt="Banco"
+                             style="width:32px;height:32px;" />
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição"></PropertyColumn>
+                <PropertyColumn Property="x => x.TipoDeLancamento.Descricao" Title="Tipo"></PropertyColumn>
+                <PropertyColumn Property="x => x.Valor" Title="Valor" Format="C" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")"></PropertyColumn>
+                <PropertyColumn Property="x => x.DataDeEmissao" Title="Emissão" Format="dd/MM/yyyy"></PropertyColumn>
+                <PropertyColumn Property="x => x.DataDeVencimento" Title="Vencimento" Format="dd/MM/yyyy"></PropertyColumn>
+
+                <TemplateColumn T="ClsLancamentoFinanceiro" Title="Ações">
+                    <CellTemplate Context="context">
+
+                        @if (context.Item.Pago)
+                        {
+                            <MudTooltip Text="Clique para declarar como não pago" Color="Color.Primary">
+                                <MudIconButton OnClick=@(async p => { context.Item.Pago = false; }) Icon="@Icons.Material.Filled.ThumbUp"
+                                               Color="Color.Success" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+
+                            <MudTooltip Text="Clique para declarar como pago" Color="Color.Primary">
+                                <MudIconButton OnClick=@(async p => { context.Item.Pago = true;}) Icon="@Icons.Material.Filled.ThumbDown"
+                                               Color="Color.Error" />
+                            </MudTooltip>
+                        }
+
+                    </CellTemplate>
+                </TemplateColumn>
+
+
+                <TemplateColumn T="ClsLancamentoFinanceiro" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para deletar o lançamento" Color="Color.Error">
+                            <MudIconButton OnClick=@(async p => { }) Icon="@Icons.Material.Filled.Delete"
+                                           Color="Color.Error" />
+                        </MudTooltip>
+
+                    </CellTemplate>
+                </TemplateColumn>
+
+
+                <TemplateColumn T="ClsLancamentoFinanceiro">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick=@(async p => { })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" />
+                                </MudTooltip>
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+
+                <MudDataGridPager T="ClsLancamentoFinanceiro" RowsPerPageString="Lançamentos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20 }) />
+
+            </PagerContent>
+        </MudDataGrid>
+
+    </MudLayout>
+
+
+
+</MudPaper>
+
+
+
+
+@code {
+    private bool CarregandoLancamentos = false;
+    private IEnumerable<ClsLancamentoFinanceiro> LancamentosFinanceiros = new List<ClsLancamentoFinanceiro>();
+    private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef;
+
+
+    private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> state)
+    {
+        try
+        {
+            CarregandoLancamentos = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await LancamentoFinanceiroService.GetLancamentosPorPagina(page, pageSize);
+
+            return new GridData<ClsLancamentoFinanceiro>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar lançamentos: {ex.Message}", Severity.Error);
+            return new GridData<ClsLancamentoFinanceiro>
+            {
+
+            };
+
+        }
+        finally
+        {
+            CarregandoLancamentos = false;
+        }
+
+    }
+}

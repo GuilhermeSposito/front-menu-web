@@ -41,7 +41,7 @@
             <Columns>
                 <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
-                <PropertyColumn Property="x => x.ValorTotalEmPags" Title="Valor Total Em Pagamentos" />
+                <PropertyColumn Property="x => x.ValorTotalEmPags" Title="Valor Total Em Pagamentos" Format="C" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")" />
                 <TemplateColumn T="ClsMetodosDePagMerchant" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar o método" Color="Color.Primary">

@@ -165,13 +165,6 @@
         </MudPaper>
     }
 
-
-
-
-
-
-
-
 </MudPaper>
 
 
@@ -246,12 +239,12 @@
             var result = await ProdutoService.GetProdutosPorPaginaAsync(page, pageSize, StringDePesquisa, _selectedGrupo?.Id);
 
 
-
             return new GridData<ClsProduto>
             {
                 Items = result.Data,
                 TotalItems = result.Total
             };
+
         }
         catch (Exception ex)
         {

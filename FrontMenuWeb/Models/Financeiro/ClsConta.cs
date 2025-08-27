@@ -8,6 +8,7 @@ public class ClsConta
     [JsonPropertyName("nomeConta")] public string NomeConta { get; set; } = string.Empty;
     [JsonPropertyName("codIconeBanco")] public int CodIconeDoBanco { get; set; } = 0;
     [JsonPropertyName("saldoInicial")] public float SaldoInicial { get; set; }
+    [JsonPropertyName("saldoAtual")] public float SaldoAtual { get; set; }
     [JsonPropertyName("dataInicial")] public DateTime DataInicial { get; set; } = DateTime.Now.ToLocalTime();
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
 }
