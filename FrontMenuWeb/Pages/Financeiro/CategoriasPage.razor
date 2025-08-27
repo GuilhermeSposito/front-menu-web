@@ -42,7 +42,6 @@
                 <HierarchyColumn T="ClsCategoria" InitiallyExpandedFunc="@(x => x.SubsCategorias?.Any() == true)" />
                 <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
-                <PropertyColumn Property="x => x.ValorTotalDeDespesas" Title="Valor Despesas" />
                 <TemplateColumn T="ClsCategoria" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para excluir categoria" Color="Color.Error">
@@ -98,7 +97,6 @@
                             <Columns>
                                 <PropertyColumn Property="x => x.Id" Title="Sub Código" />
                                 <PropertyColumn Property="x => x.Descricao" Title="Sub Descrição" />
-                                <PropertyColumn Property="x => x.ValorTotalDeDespesas" Title="Valor Despesas" />
                                 <TemplateColumn T="ClsSubCategoria" Title="Deletar">
                                     <CellTemplate Context="subContext">
                                         <MudTooltip Text="Clique para excluir sub categoria" Color="Color.Error">
