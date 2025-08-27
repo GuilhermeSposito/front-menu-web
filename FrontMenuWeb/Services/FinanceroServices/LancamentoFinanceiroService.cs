@@ -23,4 +23,12 @@ public class LancamentoFinanceiroService
         return response!;
     }
 
+    public async Task<ClsLancamentoFinanceiro> GetLancamentoAsync(int idDoLancamento)
+    {
+        var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsLancamentoFinanceiro>>(
+           $"financeiro/lancamentos/{idDoLancamento}");
+
+        return response!.Data.Objeto ?? new ClsLancamentoFinanceiro();
+    }
+
 }

@@ -50,6 +50,11 @@ public class CategoriasService
         return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>() ?? new ReturnApiRefatored<ClsSubCategoria>();
     }
 
+    public async Task<List<ClsSubCategoria>> GetSubsCategoriasAsync(int SubCategoriaId)
+    {
+        var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>($"financeiro/categorias/subs/{SubCategoriaId}");
+        return response?.Data.Lista ?? new List<ClsSubCategoria>();
+    }
     public async Task<ClsSubCategoria> GetSubCategoriaAsync(int SubCategoriaId)
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsSubCategoria>>($"financeiro/categorias/sub/{SubCategoriaId}");

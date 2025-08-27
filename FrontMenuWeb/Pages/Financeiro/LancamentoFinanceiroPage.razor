@@ -4,6 +4,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeFormas
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeLancamentos
 @using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Services.FinanceroServices
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
@@ -25,7 +26,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de Lançamentos financeiro cadastrados.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=" true" OnClick="@(() => { })">Novo Lançamento</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeAdicionarOuEditar(true); })">Novo Lançamento</MudButton>
             </div>
         </div>
 
@@ -71,7 +72,7 @@
                         {
 
                             <MudTooltip Text="Clique para declarar como pago" Color="Color.Primary">
-                                <MudIconButton OnClick=@(async p => { context.Item.Pago = true;}) Icon="@Icons.Material.Filled.ThumbDown"
+                                <MudIconButton OnClick=@(async p => { context.Item.Pago = true; }) Icon="@Icons.Material.Filled.ThumbDown"
                                                Color="Color.Error" />
                             </MudTooltip>
                         }
@@ -103,7 +104,7 @@
 
 
                                 <MudTooltip Text="Clique para editar" Color="Color.Primary">
-                                    <MudMenuItem OnClick=@(async p => { })
+                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditar(false, context.Item);})
                                                  Icon="@Icons.Material.TwoTone.Edit"
                                                  IconColor="Color.Primary"
                                                  Label="Editar" />
@@ -167,5 +168,32 @@
             CarregandoLancamentos = false;
         }
 
+    }
+
+    private async Task AbreModalDeAdicionarOuEditar(bool CriandoLancamento = false, ClsLancamentoFinanceiro? LancamentoParaEditar = null)
+    {
+        var IdDoLancamento = 0;
+
+        if (LancamentoParaEditar is not null)
+        {
+            IdDoLancamento = LancamentoParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdDoLancamento", IdDoLancamento},
+           { "ECriacao", CriandoLancamento}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeEditarEAdicionarLacamento>(CriandoLancamento ? "Adicionar Lançamento" : "Editar Lançamento", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+
+            StateHasChanged();
+        }
     }
 }

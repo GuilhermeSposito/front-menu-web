@@ -8,11 +8,11 @@ namespace FrontMenuWeb.Models.Financeiro;
 public class ClsLancamentoFinanceiro
 {
     [JsonPropertyName("id")] public int Id { get; set; }
-    [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("Valor")] public float Valor { get; set; }
-    [JsonPropertyName("DataVencimento")] public DateTime DataDeVencimento { get; set; }
-    [JsonPropertyName("DataEmissao")] public DateTime DataDeEmissao { get; set; }
-    [JsonPropertyName("DataPagamento")] public DateTime? DataDePagamento { get; set; }
+    [JsonPropertyName("DataVencimento")] public DateTime? DataDeVencimento { get; set; } = DateTime.Today;
+    [JsonPropertyName("DataEmissao")] public DateTime? DataDeEmissao { get; set; } = DateTime.Today;
+    [JsonPropertyName("DataPagamento")] public DateTime? DataDePagamento { get; set; } = DateTime.Today;
     [JsonPropertyName("Pago")] public bool Pago { get; set; } = false;
     [JsonPropertyName("Repete")] public bool Repete { get; set; } = false;
     [JsonPropertyName("Parcelado")] public bool Parcelado { get; set; } = false;

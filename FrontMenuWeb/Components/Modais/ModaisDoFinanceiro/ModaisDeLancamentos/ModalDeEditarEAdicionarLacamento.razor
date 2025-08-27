@@ -1,0 +1,366 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@inject LancamentoFinanceiroService LancamentoFinanceiroService
+@inject ContasService ContasService
+@inject FormasDeRecebimentoService FormasService
+@inject MetodosDePagMerchantService MetodosService
+@inject CategoriasService CategoriasService
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+            @if (!CarregandoLancamento)
+            {
+                if (ECriacao)
+                {
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                        <MudRadioGroup @bind-Value="Lancamento.TipoDeLancamento">
+                            @foreach (var tipo in clsTipoDeLancamentos)
+                            {
+                                <MudRadio Value="tipo" Color="Color.Primary">@tipo.Descricao</MudRadio>
+                            }
+                        </MudRadioGroup>
+                    </MudStack>
+                }
+                <MudDivider Light=true Class="my-2" />
+                <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                            <MudStack Class="w-100" Row=true>
+                                <MudTextField @bind-Value=@Lancamento.Descricao Label="Descrição" Required RequiredError="A Descrição é obrigatória" Immediate=true Class="w-75" Variant="Variant.Filled" />
+                                <MudTextField @bind-Value=@Lancamento.Identificado Label="Identificação" Immediate=true Class="w-25" Variant="Variant.Filled" />
+                            </MudStack>
+                        </MudFocusTrap>
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Filled"
+                                             Format="N2"
+                                             Label="Valor"
+                                             Required
+                                             RequiredError="O Valor é obrigatório"
+                                             Culture="_pt"
+                                             T="float"
+                                             Class="w-25"
+                                             HideSpinButtons="true"
+                                             AdornmentText="R$"
+                                             Min="0"
+                                             Adornment="Adornment.Start"
+                                             @bind-Value="Lancamento.Valor" />
+
+                            <MudDatePicker Class="w-25" Label="Data de Emissão" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeEmissao" Placeholder="Selecione a Data de emissão" />
+                        </MudStack>
+
+                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+
+                            <MudDatePicker Class="w-50" Label="Data de Pagamento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDePagamento" Placeholder="Selecione a Data de pagamento" />
+
+                            <MudDatePicker Class="w-50" Label="Data de Vencimento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeVencimento" Placeholder="Selecione a Data de vencimento" />
+                        </MudStack>
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                        <MudStack Class="w-100" Row=false>
+                            <MudSelect T="ClsConta" ToStringFunc="c => c?.NomeConta" Label="Conta" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.Conta" Immediate=true Required RequiredError="A Conta é obrigatória">
+                                @foreach (var conta in Contas)
+                                {
+                                    <MudSelectItem Value="conta">
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <img src="@AppState.GetBancoIcon(conta.CodIconeDoBanco)" alt="Bradesco" width="24" height="24" />
+                                            <span>@conta.NomeConta</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudSelect T="ClsMetodosDePagMerchant" ToStringFunc="c => c?.Descricao" Label="Método de pagamento" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.MetodoDePagamento" Immediate=true Required RequiredError="O Método de Pagamento é obrigatória">
+                                @foreach (var Metodo in MetodosDePagamento)
+                                {
+                                    <MudSelectItem Value="Metodo">@Metodo.Descricao</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudStack>
+
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                        <MudStack Class="w-100" Row=false>
+                            <MudSelect T="ClsCategoria"
+                                       Value="Lancamento.Categoria"
+                                       ValueChanged="OnCategoriaChanged"
+                                       ToStringFunc="c => c?.Descricao"
+                                       Label="Categoria"
+                                       Variant="Variant.Filled"
+                                       Class="w-100"
+                                       Immediate="true">
+                                @foreach (var cat in Categorias)
+                                {
+                                    <MudSelectItem Value="cat">@cat.Descricao</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudSelect T="ClsSubCategoria" Disabled=@(SubsCategorias.Count == 0 ? true : false) ToStringFunc="c => c?.Descricao" Label="SubCategoria" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.SubCategoria" Immediate=true>
+                                @foreach (var sub in SubsCategorias)
+                                {
+                                    <MudSelectItem Value="sub">@sub.Descricao</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudStack>
+
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
+
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudStack>
+                                <MudText>Parcelado</MudText>
+                                <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } })" />
+                            </MudStack>
+
+                            <MudStack>
+                                <MudText>Despesa Fixa</MudText>
+                                <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; } })" />
+                            </MudStack>
+                        </MudStack>
+
+                        @if (Lancamento.Parcelado || Lancamento.EDespesaFixa)
+                        {
+                            if (Lancamento.Parcelado)
+                            {
+
+                                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                    <MudNumericField Label="Quantidade de parcelas" Class="w-75" T="int" @bind-Value=@Lancamento.QtdParcelas Variant="Variant.Filled" Min="0"></MudNumericField>
+                                </MudStack>
+                            }
+
+                            if (Lancamento.EDespesaFixa)
+                            {
+                                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                    <MudNumericField Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
+                                </MudStack>
+                            }
+
+
+                        }
+
+                    </MudStack>
+
+
+                    <MudStack Class="w-100" Style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        @if (Lancamento.Pago)
+                        {
+                            <MudAvatar Color="Color.Success" Style="width:100px; height:100px" Variant="Variant.Outlined">
+                                <MudTooltip Text="Clique para declarar lançamento como não pago" Color="Color.Primary">
+                                    <MudIconButton OnClick=@(async p => { Lancamento.Pago = false; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.ThumbUp" />
+                                </MudTooltip>
+                            </MudAvatar>
+                        }
+                        else
+                        {
+                            <MudAvatar Color="Color.Error" Style="width:100px; height:100px" Variant="Variant.Outlined">
+                                <MudTooltip Text="Clique para declarar lançamento como pago" Color="Color.Primary">
+                                    <MudIconButton OnClick=@(async p => { Lancamento.Pago = true; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Error" Icon="@Icons.Material.Filled.ThumbDown" />
+                                </MudTooltip>
+                            </MudAvatar>
+
+                        }
+
+                        <MudAvatar Color="Color.Success" Style="width:100px; height:100px" Variant="Variant.Outlined">
+                            <MudTooltip Text="Anexar Arquivo" Color="Color.Primary">
+                                <MudIconButton Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.AttachFile" />
+                            </MudTooltip>
+                        </MudAvatar>
+                    </MudStack>
+                </MudForm>
+
+                <div>
+                    @if (ErroAoAdicionarLancamento)
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-2">
+                            @MensagemDeErro
+                        </MudAlert>
+                    }
+                </div>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">@(ECriacao ? "Adicionar" : "Atualizar")</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    private bool ErroAoAdicionarLancamento = false;
+    private string MensagemDeErro = string.Empty;
+    private bool CarregandoLancamento = true;
+
+    [Parameter] public bool ECriacao { get; set; }
+    [Parameter] public int IdDoLancamento { get; set; } = 0;
+
+    //Instanciando todas as classes que serão usadas
+    private List<ClsTipoDeLancamento> clsTipoDeLancamentos { get; set; } = new List<ClsTipoDeLancamento>()
+    {
+        new ClsTipoDeLancamento() { Id = 1, Descricao = "Receita", fator = 1 },
+        new ClsTipoDeLancamento() { Id = 2, Descricao = "Despesa", fator = -1  }
+    };
+    private ClsLancamentoFinanceiro Lancamento { get; set; } = new ClsLancamentoFinanceiro();
+    private List<ClsMetodosDePagMerchant> MetodosDePagamento = new List<ClsMetodosDePagMerchant>();
+    private List<ClsCategoria> Categorias { get; set; } = new List<ClsCategoria>();
+    private List<ClsSubCategoria> SubsCategorias { get; set; } = new List<ClsSubCategoria>();
+    private List<ClsConta> Contas { get; set; } = new List<ClsConta>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            clsTipoDeLancamentos = new List<ClsTipoDeLancamento>()
+             {
+                new ClsTipoDeLancamento() { Id = 1, Descricao = "Receita", fator = 1 },
+                new ClsTipoDeLancamento() { Id = 2, Descricao = "Despesa", fator = -1 }
+             };
+
+            Lancamento = new ClsLancamentoFinanceiro()
+            {
+                TipoDeLancamento = clsTipoDeLancamentos[1] // "Despesa" como default
+            };
+
+            if (!ECriacao)
+            {
+                Lancamento = await LancamentoFinanceiroService.GetLancamentoAsync(IdDoLancamento) ?? throw new Exception("Lançamento não encontrado");
+            }
+
+            await CarregarContas();
+            await CarregarMetodos();
+            CarregarCategorias();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Lançamento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoLancamento = false;
+        }
+
+
+    }
+
+    private async Task OnCategoriaChanged(ClsCategoria categoriaSelecionada)
+    {
+        Lancamento.Categoria = categoriaSelecionada;
+        Lancamento.SubCategoria = null; // Reseta a subcategoria selecionada
+
+        // Aqui faz a chamada à API para buscar subcategorias
+        SubsCategorias = await CategoriasService.GetSubsCategoriasAsync(categoriaSelecionada.Id);
+
+        StateHasChanged(); // força atualização da tela
+    }
+
+    private async void CarregarCategorias()
+    {
+        try
+        {
+            var ResponseAPi = await CategoriasService.GetCategoriasAsync();
+            Categorias = ResponseAPi ?? new List<ClsCategoria>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar categorias: {ex.Message}", Severity.Error);
+        }
+    }
+    private async Task CarregarMetodos()
+    {
+        try
+        {
+            var ResponseAPi = await MetodosService.GetMetodosAsync();
+            MetodosDePagamento = ResponseAPi ?? throw new Exception("");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Métodos de pagamento: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CarregarContas()
+    {
+        try
+        {
+            var ResponseAPi = await ContasService.GetContasAsync();
+            Contas = ResponseAPi ?? throw new Exception("");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar contas: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            ReturnApiRefatored<ClsFormaDeRecebimento> ResponseAPi = new ReturnApiRefatored<ClsFormaDeRecebimento>(); // mudar quando colocar a logica
+
+            if (ECriacao)
+            {
+
+
+            }
+            else
+            {
+
+
+            }
+
+
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (ResponseAPi.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                MensagemDeErro = MensagemDeRetorno;
+
+
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar lançamento: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+
+
+}
