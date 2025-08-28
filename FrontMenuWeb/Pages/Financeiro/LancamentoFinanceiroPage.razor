@@ -38,7 +38,9 @@
                      Class="rounded-3 custom-striped"
                      Loading="CarregandoLancamentos"
                      Hover
-                     ServerData="LoadServerData">
+                     HorizontalScrollbar="false"
+                     ServerData="LoadServerData"
+                     RowClick="@(async (row) => { await AbreModalDeAdicionarOuEditar(false, row.Item); })">
             <ToolBarContent>
 
 
@@ -52,7 +54,15 @@
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
-                <PropertyColumn Property="x => x.Descricao" Title="Descrição"></PropertyColumn>
+                <TemplateColumn T="ClsLancamentoFinanceiro" Title="Descrição">
+                    <CellTemplate Context="context">
+                        <MudText>@context.Item.Descricao</MudText>
+                        @if (!String.IsNullOrEmpty(context.Item.Identificado))
+                        {
+                            <MudText> - @context.Item.Identificado</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
                 <PropertyColumn Property="x => x.TipoDeLancamento.Descricao" Title="Tipo"></PropertyColumn>
                 <PropertyColumn Property="x => x.Valor" Title="Valor" Format="C" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")"></PropertyColumn>
                 <PropertyColumn Property="x => x.DataDeEmissao" Title="Emissão" Format="dd/MM/yyyy"></PropertyColumn>
@@ -84,7 +94,7 @@
                 <TemplateColumn T="ClsLancamentoFinanceiro" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para deletar o lançamento" Color="Color.Error">
-                            <MudIconButton OnClick=@(async p => { }) Icon="@Icons.Material.Filled.Delete"
+                            <MudIconButton OnClick=@(async p => { await DeletaLancamento(context.Item); }) Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error" />
                         </MudTooltip>
 
@@ -104,7 +114,7 @@
 
 
                                 <MudTooltip Text="Clique para editar" Color="Color.Primary">
-                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditar(false, context.Item);})
+                                    <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditar(false, context.Item); })
                                                  Icon="@Icons.Material.TwoTone.Edit"
                                                  IconColor="Color.Primary"
                                                  Label="Editar" />
@@ -134,7 +144,7 @@
 @code {
     private bool CarregandoLancamentos = false;
     private IEnumerable<ClsLancamentoFinanceiro> LancamentosFinanceiros = new List<ClsLancamentoFinanceiro>();
-    private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef;
+    private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef = new();
 
 
     private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> state)
@@ -192,8 +202,39 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-
+            await dataGridRef.ReloadServerData();
             StateHasChanged();
+        }
+    }
+
+    private async Task DeletaLancamento(ClsLancamentoFinanceiro Lancamento)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir o lançamento {Lancamento.Descricao}? Atenção, essa ação não pode ser desfeita" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await LancamentoFinanceiroService.DeleteLancamentoAsync(Lancamento);
+
+                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    await dataGridRef.ReloadServerData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir Lançamento: {ex.Message}", Severity.Error);
         }
     }
 }

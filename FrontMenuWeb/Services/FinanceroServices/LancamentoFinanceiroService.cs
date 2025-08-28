@@ -31,4 +31,22 @@ public class LancamentoFinanceiroService
         return response!.Data.Objeto ?? new ClsLancamentoFinanceiro();
     }
 
+    public async Task<ReturnApiRefatored<ClsLancamentoFinanceiro>> CreateLancamentoAsync(ClsLancamentoFinanceiro novoLancamento)
+    {
+        var response = await _HttpClient.PostAsJsonAsync("financeiro/lancamentos", novoLancamento);
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsLancamentoFinanceiro>>() ?? new ReturnApiRefatored<ClsLancamentoFinanceiro>();
+    }
+    public async Task<ReturnApiRefatored<ClsLancamentoFinanceiro>> UpdateLancamentoAsync(ClsLancamentoFinanceiro LancamentoAMudar)
+    {
+        var response = await _HttpClient.PatchAsJsonAsync($"financeiro/lancamentos/{LancamentoAMudar.Id}", LancamentoAMudar);
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsLancamentoFinanceiro>>() ?? new ReturnApiRefatored<ClsLancamentoFinanceiro>();
+    }
+
+    public async Task<ReturnApiRefatored<ClsLancamentoFinanceiro>> DeleteLancamentoAsync(ClsLancamentoFinanceiro LancamentoAMudar)
+    {
+        var response = await _HttpClient.DeleteAsync($"financeiro/lancamentos/{LancamentoAMudar.Id}");
+        return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsLancamentoFinanceiro>>() ?? new ReturnApiRefatored<ClsLancamentoFinanceiro>();
+    }
+
+
 }

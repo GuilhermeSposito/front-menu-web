@@ -40,7 +40,8 @@
 
                     <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
                         <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
-                            <MudNumericField Immediate="false"
+                            <MudNumericField @ref="_numeric"
+                                             Immediate="false"
                                              Variant="Variant.Filled"
                                              Format="N2"
                                              Label="Valor"
@@ -53,7 +54,8 @@
                                              AdornmentText="R$"
                                              Min="0"
                                              Adornment="Adornment.Start"
-                                             @bind-Value="Lancamento.Valor" />
+                                             @bind-Value="Lancamento.Valor"
+                                             onfocus="@HandleFocus" />
 
                             <MudDatePicker Class="w-25" Label="Data de Emissão" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeEmissao" Placeholder="Selecione a Data de emissão" />
                         </MudStack>
@@ -189,6 +191,73 @@
                     }
                 </div>
             }
+            else
+            {
+                if (ECriacao)
+                {
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Height="30px" Width="30px" />
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Height="30px" Width="30px" />
+                    </MudStack>
+                }
+                <MudDivider Light=true Class="my-2" />
+                <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                            <MudStack Class="w-100" Row=true>
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-75" />
+                                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-25" />
+                            </MudStack>
+                        </MudFocusTrap>
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-50" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-50" />
+                        </MudStack>
+
+                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-50" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-50" />
+                        </MudStack>
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                        <MudStack Class="w-100" Row=false>
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+
+                        </MudStack>
+
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                        <MudStack Class="w-100" Row=false>
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+                            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+                        </MudStack>
+
+                    </MudStack>
+
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
+
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+
+                    </MudStack>
+
+
+                    <MudStack Class="w-100" Style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+
+                        <MudSkeleton SkeletonType="SkeletonType.Circle" Width="50px" Height="50px" />
+                    </MudStack>
+                </MudForm>
+            }
         </DialogContent>
         <DialogActions>
             <MudButton OnClick="Cancelar">Cancelar</MudButton>
@@ -202,6 +271,7 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    private MudNumericField<float> _numeric;
 
     private bool ErroAoAdicionarLancamento = false;
     private string MensagemDeErro = string.Empty;
@@ -312,16 +382,24 @@
     {
         try
         {
-            ReturnApiRefatored<ClsFormaDeRecebimento> ResponseAPi = new ReturnApiRefatored<ClsFormaDeRecebimento>(); // mudar quando colocar a logica
+            ReturnApiRefatored<ClsLancamentoFinanceiro> ResponseAPi = new ReturnApiRefatored<ClsLancamentoFinanceiro>(); // mudar quando colocar a logica
+
+            //define as chaves estrangeiras para enviar para a api
+            Lancamento.CategoriaID = Lancamento.Categoria?.Id ?? null;
+            Lancamento.SubCategoriaID = Lancamento.SubCategoria?.Id ?? null;
+            Lancamento.PessoaID = Lancamento.Pessoa?.Id ?? null;
+            Lancamento.ContaId = Lancamento.Conta.Id;
+            Lancamento.MetodoDePagID = Lancamento.MetodoDePagamento.Id;
+            Lancamento.TipoDeLancFinanceiroID = Lancamento.TipoDeLancamento.Id;
 
             if (ECriacao)
             {
-
-
+                ResponseAPi = await LancamentoFinanceiroService.CreateLancamentoAsync(Lancamento);
             }
             else
             {
 
+                ResponseAPi = await LancamentoFinanceiroService.UpdateLancamentoAsync(Lancamento);
 
             }
 
@@ -336,8 +414,6 @@
             else
             {
                 MensagemDeErro = MensagemDeRetorno;
-
-
             }
 
         }
@@ -361,6 +437,12 @@
         MudDialog.Cancel();
     }
 
-
+    private async Task HandleFocus(FocusEventArgs args)
+    {
+        // O campo interno do MudNumericField é um InputBase,
+        // podemos chamar SelectAsync() nele.
+        await _numeric.FocusAsync();  // garante o foco
+        await _numeric.SelectAsync(); // seleciona todo o texto
+    }
 
 }

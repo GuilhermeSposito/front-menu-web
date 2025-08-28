@@ -21,13 +21,23 @@ public class ClsLancamentoFinanceiro
     [JsonPropertyName("EDespesaFixa")] public bool EDespesaFixa { get; set; } = false;
     [JsonPropertyName("Obs")] public string Obs { get; set; } = string.Empty;
 
+    //Chaves estrangeiras
+    [JsonPropertyName("tipoDeLancFinanceiro_id")] public int TipoDeLancFinanceiroID { get; set; }
+    [JsonPropertyName("conta_id")] public int ContaId { get; set; }
+    [JsonPropertyName("categoria_id")] public int? CategoriaID { get; set; }
+    [JsonPropertyName("sub_categoria_id")] public int? SubCategoriaID { get; set; }
+    [JsonPropertyName("metodo_de_pagamento_id")] public int MetodoDePagID { get; set; }
+    [JsonPropertyName("pessoa_id")] public int? PessoaID { get; set; }
+
+
+
     //Tabelas de relacionamento
-    [JsonPropertyName("TipoDeLancamento")] public ClsTipoDeLancamento TipoDeLancamento { get; set; } = new();
-    [JsonPropertyName("Conta")] public ClsConta Conta { get; set; } = new();
-    [JsonPropertyName("Categoria")] public ClsCategoria? Categoria { get; set; }
-    [JsonPropertyName("SubCategoria")] public ClsSubCategoria? SubCategoria { get; set; }
-    [JsonPropertyName("MetodoDePagamento")] public ClsMetodosDePagMerchant MetodoDePagamento { get; set; } = new();
-    [JsonPropertyName("Pessoa")] public ClsPessoas? Pessoa { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("TipoDeLancamento")] public ClsTipoDeLancamento TipoDeLancamento { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Conta")] public ClsConta Conta { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Categoria")] public ClsCategoria? Categoria { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("SubCategoria")] public ClsSubCategoria? SubCategoria { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("MetodoDePagamento")] public ClsMetodosDePagMerchant MetodoDePagamento { get; set; } = new();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Pessoa")] public ClsPessoas? Pessoa { get; set; }
 
 
 }
