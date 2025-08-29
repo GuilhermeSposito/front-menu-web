@@ -30,6 +30,77 @@
             </div>
         </div>
 
+        <MudPaper Class="p-2 mb-2 w-100">
+            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" class="w-100">
+
+                <MudStack Class="w-100">
+                    <MudStack AlignItems=AlignItems.Center Justify="Justify.Center" Row=true Class="w-100">
+                        <MudSelect Placeholder="Nenhum filtro selecionado" SelectedValuesChanged="OnFiltrosChanged" Clearable=true Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" ToStringFunc="c => c?.NomeDoFiltro" HelperText="Selecione os filtros que você deseja aplicar" T="ClsFiltros" Label="Filtros" MultiSelection=true>
+                            @foreach (var filtro in Filtros.filtros)
+                            {
+                                <MudSelectItem T="ClsFiltros" Value="@filtro">@filtro.NomeDoFiltro</MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudButton Disabled=@(FiltrosSelecionados.Count() == 0 ? true : false) Variant="Variant.Filled" Color="Color.Primary" OnClick="OnCLickFiltro">
+                            <MudIcon Icon="@Icons.Material.Filled.FilterList" />
+                            Filtrar
+                        </MudButton>
+                    </MudStack>
+
+                    <MudStack Class="w-100">
+                        @foreach (var filtro in FiltrosSelecionados)
+                        {
+                            <MudCard Style="background-color: var(--mud-palette-background);" Class="p-2 m-1">
+                                <MudCardHeader>
+                                    <CardHeaderAvatar>
+                                        <MudAvatar Color="Color.Primary">@filtro.NomeDoFiltro.Substring(0,1)</MudAvatar>
+                                    </CardHeaderAvatar>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.body1">@filtro.NomeDoFiltro</MudText>                                    
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    @switch (filtro.NomeDoFiltro)
+                                    {
+                                        case "Periodo":
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" />
+                                                <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" />
+                                            </MudStack>
+                                            break;
+                                        case "Data de Emissão":
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                <MudDatePicker @bind-Date="FiltroDataDeEmissão" Label="Data emissão" />
+                                            </MudStack>
+                                            break;
+                                        case "Situação":
+                                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexStart">
+                                                <MudRadioGroup @bind-Value=FiltroPago T="bool?">
+                                                    <MudRadio T="bool?" Value="true" Color="Color.Primary">Pagos</MudRadio>
+                                                    <MudRadio T="bool?" Value="false" Color="Color.Primary">Não Pagos</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudStack>
+                                            break;
+                                        case "Descrição":
+                                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexStart">
+                                                <MudTextField OnKeyDown="@(e => HandleKeyDown(e))" T="string" @bind-Value=FiltroDescricao Immediate=true Label="Descrição" Placeholder="Digite parte ou a descrição completa do lançamento" />
+                                            </MudStack>
+                                            break;
+                                        default:
+                                            <MudText>Filtro não implementado ainda</MudText>
+                                            break;
+                                    }
+                                </MudCardContent>
+                            </MudCard>
+                        }
+                    </MudStack>
+
+                </MudStack>
+
+            </MudStack>
+        </MudPaper>
+
         <MudDataGrid T="ClsLancamentoFinanceiro"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
@@ -42,7 +113,6 @@
                      ServerData="LoadServerData"
                      RowClick="@(async (row) => { await AbreModalDeAdicionarOuEditar(false, row.Item); })">
             <ToolBarContent>
-
 
             </ToolBarContent>
             <Columns>
@@ -146,6 +216,15 @@
     private IEnumerable<ClsLancamentoFinanceiro> LancamentosFinanceiros = new List<ClsLancamentoFinanceiro>();
     private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef = new();
 
+    private IEnumerable<ClsFiltros> FiltrosSelecionados { get; set; } = new HashSet<ClsFiltros>();
+
+
+    //lógica do filtros
+    private DateTime? FiltroDateTimeInicial = null;
+    private DateTime? FiltroDateTimeFinal = null;
+    private DateTime? FiltroDataDeEmissão = null;
+    private bool? FiltroPago = null;
+    private string? FiltroDescricao = null;
 
     private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> state)
     {
@@ -156,7 +235,16 @@
             int page = state.Page + 1;
             int pageSize = state.PageSize;
 
-            var result = await LancamentoFinanceiroService.GetLancamentosPorPagina(page, pageSize);
+
+            var result = await LancamentoFinanceiroService
+                                            .GetLancamentosPorPagina(page,
+                                                pageSize,
+                                                DataInicial: FiltroDateTimeInicial,
+                                                DataFinal: FiltroDateTimeFinal,
+                                                DataEmissao: FiltroDataDeEmissão,
+                                                Pagos: FiltroPago,
+                                                FiltroDescricao: FiltroDescricao
+                                            );
 
             return new GridData<ClsLancamentoFinanceiro>
             {
@@ -237,4 +325,36 @@
             Snackbar.Add($"Erro ao excluir Lançamento: {ex.Message}", Severity.Error);
         }
     }
+
+    private async Task OnCLickFiltro()
+    {
+        await dataGridRef!.ReloadServerData();
+    }
+
+    private async Task OnFiltrosChanged(IEnumerable<ClsFiltros> filtros)
+    {
+        if (filtros.Count() == 0)
+        {
+            FiltroDateTimeInicial = null;
+            FiltroDateTimeFinal = null;
+            FiltroDataDeEmissão = null;
+            FiltroPago = null;
+            FiltroDescricao = null;
+
+            await dataGridRef!.ReloadServerData();
+        }
+
+        FiltrosSelecionados = filtros;
+
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnCLickFiltro();
+        }
+    }
+
 }

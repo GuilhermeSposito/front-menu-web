@@ -49,3 +49,22 @@ public class ClsTipoDeLancamento
     [JsonPropertyName("fator")] public int fator { get; set; } = 1; // 1 para receita, -1 para despesa
 
 }
+
+
+public class ClsFiltros
+{
+    public int Id { get; set; } = 0;
+    public string NomeDoFiltro { get; set; } = string.Empty;
+}
+
+public static class Filtros
+{
+    public static List<ClsFiltros> filtros = new List<ClsFiltros>
+    {
+        new ClsFiltros { Id = 0, NomeDoFiltro = "Descrição" },
+        new ClsFiltros { Id = 1, NomeDoFiltro = "Periodo" },
+        new ClsFiltros { Id = 2, NomeDoFiltro = "Situação" },
+        new ClsFiltros { Id = 4, NomeDoFiltro = "Data de Emissão" },
+        new ClsFiltros { Id = 3, NomeDoFiltro = "Fornecedor" }
+    };
+}

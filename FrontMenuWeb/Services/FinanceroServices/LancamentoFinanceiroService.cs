@@ -15,10 +15,32 @@ public class LancamentoFinanceiroService
         _HttpClient = http;
     }
 
-    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize)
+    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null)
     {
+        string QuerysStrings = "";
+
+        if(DataInicial is not null && DataFinal is not null)
+        {
+            QuerysStrings += $"&DataEmissaoInicio={DataInicial?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataEmissaoFinal={DataFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
+        }
+
+        if(DataEmissao is not null)
+        {
+            QuerysStrings += $"&DataEmissao={DataEmissao?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
+        }
+
+        if(Pagos is not null)
+        {
+            QuerysStrings += $"&Pago={Pagos}";
+        }
+
+        if(!string.IsNullOrEmpty(FiltroDescricao))
+        {
+            QuerysStrings += $"&descricao={FiltroDescricao}";
+        }
+
         var response = await _HttpClient.GetFromJsonAsync<PaginatedResponse<ClsLancamentoFinanceiro>>(
-           $"financeiro/lancamentos?page={page}&limit={pageSize}");
+           $"financeiro/lancamentos?page={page}&limit={pageSize}{QuerysStrings}");
 
         return response!;
     }
