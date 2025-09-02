@@ -54,10 +54,10 @@
                             <MudCard Style="background-color: var(--mud-palette-background);" Class="p-2 m-1">
                                 <MudCardHeader>
                                     <CardHeaderAvatar>
-                                        <MudAvatar Color="Color.Primary">@filtro.NomeDoFiltro.Substring(0,1)</MudAvatar>
+                                        <MudAvatar Color="Color.Primary">@filtro.NomeDoFiltro.Substring(0, 1)</MudAvatar>
                                     </CardHeaderAvatar>
                                     <CardHeaderContent>
-                                        <MudText Typo="Typo.body1">@filtro.NomeDoFiltro</MudText>                                    
+                                        <MudText Typo="Typo.body1">@filtro.NomeDoFiltro</MudText>
                                     </CardHeaderContent>
                                 </MudCardHeader>
                                 <MudCardContent>
@@ -84,7 +84,17 @@
                                             break;
                                         case "Descrição":
                                             <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexStart">
-                                                <MudTextField OnKeyDown="@(e => HandleKeyDown(e))" T="string" @bind-Value=FiltroDescricao Immediate=true Label="Descrição" Placeholder="Digite parte ou a descrição completa do lançamento" />
+                                                <MudTextField OnKeyDown="@(e => HandleKeyDown(e))" T="string" @bind-Value=FiltroDescricao Immediate=true Label="Descrição" Placeholder="Digite parte ou a descrição completa do lançamento" HelperText="Clique no botão de filtro ou aperte enter para buscar!" />
+                                            </MudStack>
+                                            break;
+                                        case "Data De Pagamento":
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                <MudDatePicker @bind-Date="FiltroDataDePagamento" Label="Data De Pagamento" />
+                                            </MudStack>
+                                            break;
+                                        case "Data De Vencimento":
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                <MudDatePicker @bind-Date="FiltroDataDeVencimento" Label="Data De Vencimento" />
                                             </MudStack>
                                             break;
                                         default:
@@ -101,21 +111,48 @@
             </MudStack>
         </MudPaper>
 
+
         <MudDataGrid T="ClsLancamentoFinanceiro"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
-                     MultiSelection="false"
-                     SelectOnRowClick=true
+                     MultiSelection=@MultiSelecao
+                     SelectOnRowClick=@MultiSelecao
                      Class="rounded-3 custom-striped"
                      Loading="CarregandoLancamentos"
                      Hover
                      HorizontalScrollbar="false"
                      ServerData="LoadServerData"
-                     RowClick="@(async (row) => { await AbreModalDeAdicionarOuEditar(false, row.Item); })">
+                     SelectedItems="LancamentosSelecionados">
             <ToolBarContent>
+                <MudStack Class="p-2 w-100">
+                    <MudStack AlignItems=AlignItems.Center Justify="Justify.FlexStart" Row=true>
+                        <MudText>Seleção</MudText>
+                        <MudSwitch T="bool" Value=@MultiSelecao Color="Color.Success" ValueChanged="@(async valor => { MultiSelecao = valor; LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>(); })" />
 
+                        @foreach (var lancamento in LancamentosSelecionados)
+                        {
+                            <MudText>
+                                @lancamento.Descricao,
+                            </MudText>
+                        }
+
+
+                    </MudStack>
+                    @if (LancamentosSelecionados.Count > 0)
+                    {
+                        <MudStack Row=true>
+                            <MudButton Color="Color.Primary" OnClick=@(async p => { await DeclaraPagos(); }) Variant="Variant.Filled">Declarar Todos como pago</MudButton>
+                            <MudButton Color="Color.Primary"  OnClick=@(async p => { await ApagaTodos(); }) Variant="Variant.Filled">Excluir Selecionados</MudButton>
+                        </MudStack>
+                    }
+                </MudStack>
             </ToolBarContent>
             <Columns>
+                @if (MultiSelecao)
+                {
+                    <SelectColumn T="ClsLancamentoFinanceiro" />
+                }
+
                 <TemplateColumn Title="Banco">
                     <CellTemplate Context="context">
                         <img src="@AppState.GetBancoIcon(context.Item.Conta.CodIconeDoBanco)"
@@ -126,11 +163,28 @@
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                 <TemplateColumn T="ClsLancamentoFinanceiro" Title="Descrição">
                     <CellTemplate Context="context">
+
+                        @if (context.Item.Parcelado)
+                        {
+                            <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdParcelas</MudText>
+                            <MudDivider Light=true Class="my-2" />
+                        }
+                        else if (context.Item.EDespesaFixa)
+                        {
+                            <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdMesesDeDespesaFixa</MudText>
+                            <MudDivider Light=true Class="my-2" />
+                        }
+
+
                         <MudText>@context.Item.Descricao</MudText>
+
+
                         @if (!String.IsNullOrEmpty(context.Item.Identificado))
                         {
-                            <MudText> - @context.Item.Identificado</MudText>
+                            <MudDivider Light=true Class="my-2" />
+                            <MudText> @context.Item.Identificado</MudText>
                         }
+
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.TipoDeLancamento.Descricao" Title="Tipo"></PropertyColumn>
@@ -144,7 +198,7 @@
                         @if (context.Item.Pago)
                         {
                             <MudTooltip Text="Clique para declarar como não pago" Color="Color.Primary">
-                                <MudIconButton OnClick=@(async p => { context.Item.Pago = false; }) Icon="@Icons.Material.Filled.ThumbUp"
+                                <MudIconButton OnClick=@(async p => { context.Item.Pago = false; await AtualizaLancamnto(context.Item); }) Icon="@Icons.Material.Filled.ThumbUp"
                                                Color="Color.Success" />
                             </MudTooltip>
                         }
@@ -152,7 +206,7 @@
                         {
 
                             <MudTooltip Text="Clique para declarar como pago" Color="Color.Primary">
-                                <MudIconButton OnClick=@(async p => { context.Item.Pago = true; }) Icon="@Icons.Material.Filled.ThumbDown"
+                                <MudIconButton Disabled=@(CarregandoLancamentos) OnClick=@(async p => { context.Item.Pago = true; await AtualizaLancamnto(context.Item); }) Icon="@Icons.Material.Filled.ThumbDown"
                                                Color="Color.Error" />
                             </MudTooltip>
                         }
@@ -217,23 +271,25 @@
     private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef = new();
 
     private IEnumerable<ClsFiltros> FiltrosSelecionados { get; set; } = new HashSet<ClsFiltros>();
-
+    private bool MultiSelecao = false;
 
     //lógica do filtros
     private DateTime? FiltroDateTimeInicial = null;
     private DateTime? FiltroDateTimeFinal = null;
     private DateTime? FiltroDataDeEmissão = null;
+    private DateTime? FiltroDataDePagamento = null;
+    private DateTime? FiltroDataDeVencimento = null;
     private bool? FiltroPago = null;
     private string? FiltroDescricao = null;
 
-    private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> state)
+    private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> lancamentos)
     {
         try
         {
             CarregandoLancamentos = true;
 
-            int page = state.Page + 1;
-            int pageSize = state.PageSize;
+            int page = lancamentos.Page + 1;
+            int pageSize = lancamentos.PageSize;
 
 
             var result = await LancamentoFinanceiroService
@@ -243,7 +299,9 @@
                                                 DataFinal: FiltroDateTimeFinal,
                                                 DataEmissao: FiltroDataDeEmissão,
                                                 Pagos: FiltroPago,
-                                                FiltroDescricao: FiltroDescricao
+                                                FiltroDescricao: FiltroDescricao,
+                                                FiltroDataPagamento: FiltroDataDePagamento,
+                                                FiltroDataDeVencimento: FiltroDataDeVencimento
                                             );
 
             return new GridData<ClsLancamentoFinanceiro>
@@ -340,6 +398,8 @@
             FiltroDataDeEmissão = null;
             FiltroPago = null;
             FiltroDescricao = null;
+            FiltroDataDePagamento = null;
+            FiltroDataDeVencimento = null;
 
             await dataGridRef!.ReloadServerData();
         }
@@ -356,5 +416,95 @@
             await OnCLickFiltro();
         }
     }
+
+
+    private async Task AtualizaLancamnto(ClsLancamentoFinanceiro lancamento)
+    {
+        var ResponsaApi = await LancamentoFinanceiroService.UpdateLancamentoAsync(lancamento);
+
+        string MensagemDeRetorno = string.Join(", ", ResponsaApi.Status == "success" ? ResponsaApi.Data.Messages : ResponsaApi.Messages);
+        Snackbar.Add(MensagemDeRetorno, ResponsaApi.Status == "success" ? Severity.Success : Severity.Error);
+        if (ResponsaApi.Status == "success")
+            await dataGridRef!.ReloadServerData();
+    }
+
+    private async Task DeclaraPagos()
+    {
+        try
+        {
+            if (LancamentosSelecionados is not null)
+            {
+                foreach (var lancamento in LancamentosSelecionados)
+                {
+                    lancamento.Pago = true;
+
+                    var ResponsaApi = await LancamentoFinanceiroService.UpdateLancamentoAsync(lancamento);
+
+                }
+
+                Snackbar.Add($"Todos os lançamentos selecionados foram atualizados!", Severity.Success);
+                await dataGridRef!.ReloadServerData();
+
+                LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
+                MultiSelecao = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar lançamentos", Severity.Error);
+        }
+
+    }
+
+    private async Task ApagaTodos()
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir os lançamento selecionados? Atenção, essa ação não pode ser desfeita" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                if (LancamentosSelecionados is not null)
+                {
+                    foreach (var lancamento in LancamentosSelecionados)
+                    {
+                        var ResponsaApi = await LancamentoFinanceiroService.DeleteLancamentoAsync(lancamento);
+                    }
+
+                    Snackbar.Add($"Todos os lançamentos selecionados foram apagados!", Severity.Success);
+                    await dataGridRef!.ReloadServerData();
+
+                    LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
+                    MultiSelecao = false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao apagar lançamentos", Severity.Error);
+        }
+
+    }
+
+    private async Task OnInternalInputChenge(string value)
+    {
+        await dataGridRef!.ReloadServerData();
+    }
+
+    private HashSet<ClsLancamentoFinanceiro> LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
+    void SelectedItemsChanged(HashSet<ClsLancamentoFinanceiro> items)
+    {
+        //LancamentosSelecionados = items.ToList();
+    }
+
 
 }

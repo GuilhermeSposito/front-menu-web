@@ -16,10 +16,13 @@ public class ClsLancamentoFinanceiro
     [JsonPropertyName("Pago")] public bool Pago { get; set; } = false;
     [JsonPropertyName("Repete")] public bool Repete { get; set; } = false;
     [JsonPropertyName("Parcelado")] public bool Parcelado { get; set; } = false;
-    [JsonPropertyName("QtdParcela")] public int QtdParcelas { get; set; } = 0;
+    [JsonPropertyName("QtdDeParcelas")] public int QtdParcelas { get; set; } = 0;
     [JsonPropertyName("Identificador")] public string Identificado { get; set; } = string.Empty;
     [JsonPropertyName("EDespesaFixa")] public bool EDespesaFixa { get; set; } = false;
     [JsonPropertyName("Obs")] public string Obs { get; set; } = string.Empty;
+    [JsonPropertyName("QtdMesesDeDespesaFixa")] public int QtdMesesDeDespesaFixa { get; set; } = 0;
+    [JsonPropertyName("QtdAtualDaParcela")] public int QtdAtualDaParcela { get; set; } = 0;
+
 
     //Chaves estrangeiras
     [JsonPropertyName("tipoDeLancFinanceiro_id")] public int TipoDeLancFinanceiroID { get; set; }
@@ -65,6 +68,8 @@ public static class Filtros
         new ClsFiltros { Id = 1, NomeDoFiltro = "Periodo" },
         new ClsFiltros { Id = 2, NomeDoFiltro = "Situação" },
         new ClsFiltros { Id = 4, NomeDoFiltro = "Data de Emissão" },
-        new ClsFiltros { Id = 3, NomeDoFiltro = "Fornecedor" }
+        new ClsFiltros { Id = 5, NomeDoFiltro = "Fornecedor" },
+        new ClsFiltros { Id = 6, NomeDoFiltro = "Data De Pagamento" },
+        new ClsFiltros { Id = 7, NomeDoFiltro = "Data De Vencimento" }
     };
 }

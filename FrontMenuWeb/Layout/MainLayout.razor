@@ -24,73 +24,84 @@
                          Size="Size.Medium"
                          Color="Color.Inherit"
                          Icon="@Icons.Material.Filled.Info"
-                         ActivationEvent="@MouseEvent.MouseOver">
+                         AnchorOrigin="Origin.TopRight"
+                         TransformOrigin="Origin.TopRight">
 
-                    <MudMenuItem Icon="@Icons.Material.Filled.Circle" IconColor="Color.Success">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
+                    <!-- Ifood -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.Fastfood" />
+                                    </MudAvatar>
                                     <MudText Typo="Typo.h6">Ifood</MudText>
-                                </CardHeaderContent>
-                                <CardHeaderActions>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
-                                </CardHeaderActions>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudText Typo="Typo.body2">Seu ifood está ativo/online e esperando por pedidos!</MudText>
-                            </MudCardContent>
-                        </MudCard>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Seu ifood está ativo/online e esperando por pedidos!
+                            </MudText>
+                        </MudPaper>
                     </MudMenuItem>
 
-                    <MudMenuItem Icon="@Icons.Material.Filled.Sync" IconColor="Color.Success">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
+                    <!-- App do Garçom -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.Sync" />
+                                    </MudAvatar>
                                     <MudText Typo="Typo.h6">App do Garçom</MudText>
-                                </CardHeaderContent>
-                                <CardHeaderActions>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
-                                </CardHeaderActions>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudText Typo="Typo.body2">Seu app de Garçom está ativo/online e esperando por pedidos!</MudText>
-                            </MudCardContent>
-                        </MudCard>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Seu app de Garçom está ativo/online e esperando por pedidos!
+                            </MudText>
+                        </MudPaper>
                     </MudMenuItem>
 
-                    <MudMenuItem Icon="@Icons.Material.Filled.DeliveryDining" IconColor="Color.Success">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
+                    <!-- Entregas -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" />
+                                    </MudAvatar>
                                     <MudText Typo="Typo.h6">Entregas</MudText>
-                                </CardHeaderContent>
-                                <CardHeaderActions>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
-                                </CardHeaderActions>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudText Typo="Typo.body2">Sua integração com as plataformas de entregas estão ativas</MudText>
-                            </MudCardContent>
-                        </MudCard>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Sua integração com as plataformas de entregas estão ativas
+                            </MudText>
+                        </MudPaper>
                     </MudMenuItem>
 
-                    <MudMenuItem Icon="@Icons.Material.Filled.Circle" IconColor="Color.Error">
-                        <MudCard>
-                            <MudCardHeader>
-                                <CardHeaderContent>
+                    <!-- Cardápio Digital -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Error" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" />
+                                    </MudAvatar>
                                     <MudText Typo="Typo.h6">Cardápio Digital</MudText>
-                                </CardHeaderContent>
-                                <CardHeaderActions>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
-                                </CardHeaderActions>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudText Typo="Typo.body2">Sua integração com seu cardápio digital está ativa, mas seu cardápio está offline</MudText>
-                            </MudCardContent>
-                        </MudCard>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Sua integração com seu cardápio digital está ativa, mas seu cardápio está offline
+                            </MudText>
+                        </MudPaper>
                     </MudMenuItem>
-
                 </MudMenu>
+
+
+           
             </MudAppBar>
 
             <MudDrawer Style="background-color: var(--mud-palette-surface);" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">

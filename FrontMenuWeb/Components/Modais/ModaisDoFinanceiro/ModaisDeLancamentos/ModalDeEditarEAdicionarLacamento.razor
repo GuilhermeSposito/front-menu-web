@@ -145,7 +145,7 @@
                             if (Lancamento.EDespesaFixa)
                             {
                                 <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                    <MudNumericField Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
+                                    <MudNumericField @bind-Value=@Lancamento.QtdMesesDeDespesaFixa Immediate=true Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
                                 </MudStack>
                             }
 
@@ -391,6 +391,11 @@
             Lancamento.ContaId = Lancamento.Conta.Id;
             Lancamento.MetodoDePagID = Lancamento.MetodoDePagamento.Id;
             Lancamento.TipoDeLancFinanceiroID = Lancamento.TipoDeLancamento.Id;
+
+            var jsonValues = System.Text.Json.JsonSerializer.Serialize(Lancamento);
+
+            Console.WriteLine(jsonValues);
+
 
             if (ECriacao)
             {
