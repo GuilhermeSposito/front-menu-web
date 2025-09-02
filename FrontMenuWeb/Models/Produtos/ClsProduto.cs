@@ -219,6 +219,11 @@ public class PaginatedResponse<T>
 {
     public List<T> Data { get; set; } = new();
     public int Total { get; set; }
+    public float totalPago { get; set; } = 0;
+    public float totalNaoPago { get; set; } = 0;
+    public float totalEmLancamentos { get; set; } = 0;
+    public float totalReceita { get; set; } = 0;
+    public float totalDespesa { get; set; } = 0;
     public int Page { get; set; }
     public int LastPage { get; set; }
 }
