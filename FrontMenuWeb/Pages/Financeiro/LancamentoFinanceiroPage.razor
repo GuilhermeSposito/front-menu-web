@@ -17,6 +17,8 @@
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
 @inject LancamentoFinanceiroService LancamentoFinanceiroService
+@inject PessoasService PessoasService
+@inject MetodosDePagMerchantService MetodosDePagMerchantService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -112,15 +114,58 @@
                                                     <MudTextField OnKeyDown="@(e => HandleKeyDown(e))" T="string" @bind-Value=FiltroDescricao Immediate=true Label="Descrição" Placeholder="Digite parte ou a descrição completa do lançamento" HelperText="Clique no botão de filtro ou aperte enter para buscar!" />
                                                 </MudStack>
                                                 break;
-                                            case "Data De Pagamento":
+                                            case "Data de Pagamento":
                                                 <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
                                                     <MudDatePicker @bind-Date="FiltroDataDePagamento" Label="Data De Pagamento" />
                                                 </MudStack>
                                                 break;
-                                            case "Data De Vencimento":
+                                            case "Data de Vencimento":
                                                 <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
                                                     <MudDatePicker @bind-Date="FiltroDataDeVencimento" Label="Data De Vencimento" />
                                                 </MudStack>
+                                                break;
+                                            case "Fornecedor":
+                                                <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexStart">
+                                                    <MudAutocomplete T="ClsPessoas"
+                                                                     SearchFunc="Search"
+                                                                     Value="PessoaSelecionadaParaOFiltro"
+                                                                     ToStringFunc="p => p?.Nome"
+                                                                     Label="Fornecedores / Clientes"
+                                                                     Placeholder="Digite o nome do fornecedor ou cliente"
+                                                                     HelperText="Procure pelo cliente ou pelo fornecedor"
+                                                                     Dense="true"
+                                                                     DebounceInterval="200"
+                                                                     Clearable
+                                                                     Adornment="Adornment.End"
+                                                                     AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                                     ResetValueOnEmptyText="true"
+                                                                     CoerceText="true"
+                                                                     ValueChanged="@(async p => await OnPessoaSelecionada(p))"
+                                                                     ShowProgressIndicator="true">
+                                                        <ProgressIndicatorTemplate>
+                                                            <MudProgressLinear Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                                                        </ProgressIndicatorTemplate>
+                                                    </MudAutocomplete>
+                                                </MudStack>
+                                                break;
+                                            case "Método de Pagamento":
+                                                <MudSelect T="ClsMetodosDePagMerchant"
+                                                           Label="Método de Pagamento"
+                                                           Value="MetodoSelecionadoraOFiltro"
+                                                           Placeholder="Nenhum filtro para Método selecionado selecionado"
+                                                           MultiSelection="false"
+                                                           Clearable="true"
+                                                           ClearIcon="@Icons.Material.Filled.Delete"
+                                                           Adornment="Adornment.Start"
+                                                           AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                           HelperText="Selecione os métodos para filtrar o que você deseja"
+                                                           ToStringFunc="c => c?.Descricao"
+                                                           ValueChanged="@(async (metodo) => await OnMetodoSelecionado(metodo))">
+                                                    @foreach (var metodo in MetodosDePagamentosParaOFiltro)
+                                                    {
+                                                        <MudSelectItem Value="@metodo">@metodo.Descricao</MudSelectItem>
+                                                    }
+                                                </MudSelect>
                                                 break;
                                             default:
                                                 <MudText>Filtro não implementado ainda</MudText>
@@ -138,21 +183,31 @@
             </MudStack>
         </MudPaper>
 
-        <MudPaper Class="mb-3 mt-3 w-100">
-            <MudStack Class="p-2 w-100">
+        <MudPaper Class="mb-3 p-3 mt-3 w-100">
+            <MudStack Class="p-2 w-100" Breakpoint="Breakpoint.Sm">
 
-                <MudStack AlignItems=AlignItems.Center Justify="Justify.FlexStart" Row=true>
-                    <MudText>Seleção</MudText>
-                    <MudSwitch T="bool" Value=@MultiSelecao Color="Color.Success" ValueChanged="@(async valor => { MultiSelecao = valor; LancamentosSelecionados.Clear(); })" />
-
-                    @foreach (var lancamento in LancamentosSelecionados)
-                    {
-                        <MudText>
-                            @lancamento.Descricao,
-                        </MudText>
-                    }
-
-
+                <MudStack AlignItems=AlignItems.Start Justify="Justify.FlexStart">
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudStack Class="w-25" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                            <MudText>Seleção de Lançamentos</MudText>
+                            <MudSwitch T="bool" Value=@MultiSelecao Color="Color.Success" ValueChanged="@(async valor => { MultiSelecao = valor; LancamentosSelecionados.Clear(); })" />
+                        </MudStack>
+                        <MudStack Class="w-75" AlignItems="AlignItems.End" Justify="Justify.Center">
+                            @if (MultiSelecao)
+                            {
+                                <MudStack>
+                                    <MudText Color="Color.Error" Typo="Typo.h6">Valor Despesas: @LancamentosSelecionados.Where(x => x.TipoDeLancamento.fator == -1).Sum(x => x.Valor).ToString("C")</MudText>
+                                    <MudText Color="Color.Success" Typo="Typo.h6">Valor Receitas: @LancamentosSelecionados.Where(x => x.TipoDeLancamento.fator == 1).Sum(x => x.Valor).ToString("C")</MudText>
+                                </MudStack>
+                            }
+                        </MudStack>
+                    </MudStack>
+                    <MudStack Wrap="Wrap.Wrap" Row=true AlignItems="AlignItems.Center">
+                        @foreach (var lancamento in LancamentosSelecionados)
+                        {
+                            <MudChip Value=@lancamento OnClose="Closed" T="ClsLancamentoFinanceiro" Color="Color.Info" Variant="Variant.Text" Class="m-1">@lancamento.Descricao</MudChip>
+                        }
+                    </MudStack>
                 </MudStack>
                 @if (LancamentosSelecionados.Count > 0)
                 {
@@ -175,6 +230,7 @@
                      Hover
                      HorizontalScrollbar="false"
                      ServerData="LoadServerData"
+                     SelectedItems="LancamentosSelecionados"
                      SelectedItemsChanged="SelectedItemsChanged">
             <ToolBarContent>
 
@@ -195,28 +251,34 @@
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                 <TemplateColumn T="ClsLancamentoFinanceiro" Title="Descrição">
                     <CellTemplate Context="context">
-
-                        @if (context.Item.Parcelado)
-                        {
-                            <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdParcelas</MudText>
-                            <MudDivider Light=true Class="my-2" />
-                        }
-                        else if (context.Item.EDespesaFixa)
-                        {
-                            <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdMesesDeDespesaFixa</MudText>
-                            <MudDivider Light=true Class="my-2" />
-                        }
-
-
-                        <MudText>@context.Item.Descricao</MudText>
+                        <MudStack Class="w-100" Spacing="0">
+                            @if (context.Item.Parcelado)
+                            {
+                                <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdParcelas</MudText>
+                                <MudDivider Light=true Class="my-2" />
+                            }
+                            else if (context.Item.EDespesaFixa)
+                            {
+                                <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdMesesDeDespesaFixa</MudText>
+                                <MudDivider Light=true Class="my-2" />
+                            }
 
 
-                        @if (!String.IsNullOrEmpty(context.Item.Identificado))
-                        {
-                            <MudDivider Light=true Class="my-2" />
-                            <MudText> @context.Item.Identificado</MudText>
-                        }
 
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudText>@context.Item.Descricao</MudText>
+                            </MudItem>
+
+
+                            @if (!String.IsNullOrEmpty(context.Item.Identificado))
+                            {
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudDivider Light=true Class="my-2" />
+                                    <MudText> @context.Item.Identificado</MudText>
+                                </MudItem>
+
+                            }
+                        </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
                 <TemplateColumn T="ClsLancamentoFinanceiro" Title="Tipo">
@@ -232,6 +294,7 @@
                 @* <PropertyColumn Property="x => x.Valor" Title="Valor" Format="C" CellStyle="color:red;font-weight:600" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")"></PropertyColumn>*@
                 <PropertyColumn Property="x => x.DataDeEmissao" Title="Emissão" Format="dd/MM/yyyy"></PropertyColumn>
                 <PropertyColumn Property="x => x.DataDeVencimento" Title="Vencimento" Format="dd/MM/yyyy"></PropertyColumn>
+                <PropertyColumn Property="x => x.MetodoDePagamento.Descricao" Title="Método"></PropertyColumn>
 
                 <TemplateColumn T="ClsLancamentoFinanceiro" Title="Ações">
                     <CellTemplate Context="context">
@@ -297,41 +360,48 @@
             </PagerContent>
         </MudDataGrid>
 
-        <MudStack Class="w-100 mt-4" Row="true" AlignItems="AlignItems.Stretch" Justify="Justify.SpaceBetween" Spacing="3">
+        <MudGrid Class="w-100 mt-4" GutterSize="3">
             <!-- Total Pagos -->
-            <MudCard Class="rounded-2xl shadow-lg" Style="width: 32% ;background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
-                <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
-                    <MudText Typo="Typo.h6" Class="opacity-90">Total Pagos</MudText>
-                    <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalPagos.ToString("C")</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total Pagos</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalPagos.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
             <!-- Total Não Pagos -->
-            <MudCard Class="rounded-2xl shadow-lg" Style="width: 32% ;background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
-                <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                    <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
-                    <MudText Typo="Typo.h6" Class="opacity-90">Total Em Aberto</MudText>
-                    <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalNaoPagos.ToString("C")</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total Em Aberto</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalNaoPagos.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
 
             <!-- Total Geral -->
-            <MudCard Class="rounded-2xl shadow-lg" Style="width: 32% ;background: linear-gradient(135deg, #F88113, #FFB347); color:white;">
-                <MudStack Row=true>
-                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                        <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
-                        <MudText Typo="Typo.h6" Class="opacity-90">Total Receita</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalReceitas.ToString("C")</MudText>
-                    </MudCardContent>
-                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                        <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
-                        <MudText Typo="Typo.h6" Class="opacity-90">Total Despesas</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDespesas.ToString("C")</MudText>
-                    </MudCardContent>
-                </MudStack>
-            </MudCard>
-        </MudStack>
+            <MudItem xs="12" sm="12" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #F88113, #FFB347); color:white;">
+                    <MudStack Row=true>
+                        <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                            <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
+                            <MudText Typo="Typo.h6" Class="opacity-90">Total Receita</MudText>
+                            <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalReceitas.ToString("C")</MudText>
+                        </MudCardContent>
+                        <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                            <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
+                            <MudText Typo="Typo.h6" Class="opacity-90">Total Despesas</MudText>
+                            <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDespesas.ToString("C")</MudText>
+                        </MudCardContent>
+                    </MudStack>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
 
 
     </MudLayout>
@@ -359,6 +429,10 @@
     private DateTime? FiltroDataDeVencimento = null;
     private bool? FiltroPago = null;
     private string? FiltroDescricao = null;
+    private ClsPessoas? PessoaSelecionadaParaOFiltro = null;
+    private List<ClsPessoas> PessoasParaOFiltro = new List<ClsPessoas>();
+    private List<ClsMetodosDePagMerchant> MetodosDePagamentosParaOFiltro = new List<ClsMetodosDePagMerchant>();
+    private ClsMetodosDePagMerchant? MetodoSelecionadoraOFiltro = null;
 
     //Valores de retorno
     private float TotalPagos = 0;
@@ -366,6 +440,7 @@
     private float TotalGeral = 0;
     private float TotalDespesas = 0;
     private float TotalReceitas = 0;
+
 
     private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> lancamentos)
     {
@@ -386,7 +461,9 @@
                                                 Pagos: FiltroPago,
                                                 FiltroDescricao: FiltroDescricao,
                                                 FiltroDataPagamento: FiltroDataDePagamento,
-                                                FiltroDataDeVencimento: FiltroDataDeVencimento
+                                                FiltroDataDeVencimento: FiltroDataDeVencimento,
+                                                FiltroDePessoa: PessoaSelecionadaParaOFiltro,
+                                                FiltroDeMetodoDePagamento: MetodoSelecionadoraOFiltro
                                             );
 
 
@@ -417,6 +494,20 @@
         finally
         {
             CarregandoLancamentos = false;
+        }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await MetodosDePagMerchantService.GetMetodosAsync();
+            MetodosDePagamentosParaOFiltro = result ?? new List<ClsMetodosDePagMerchant>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar métodos de pagamento: {ex.Message}", Severity.Error);
         }
 
     }
@@ -470,7 +561,7 @@
                 Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
 
                 if (respostaApi.Status == "success")
-                    await dataGridRef.ReloadServerData();
+                    await dataGridRef!.ReloadServerData();
             }
         }
         catch (Exception ex)
@@ -495,6 +586,8 @@
             FiltroDescricao = null;
             FiltroDataDePagamento = null;
             FiltroDataDeVencimento = null;
+            PessoaSelecionadaParaOFiltro = null;
+            MetodoSelecionadoraOFiltro = null;
 
             await dataGridRef!.ReloadServerData();
         }
@@ -502,6 +595,15 @@
         FiltrosSelecionados = filtros;
 
 
+    }
+
+    void Closed(MudChip<ClsLancamentoFinanceiro> chip)
+    {
+        if (chip.Value is not null)
+        {
+            LancamentosSelecionados.Remove(chip.Value);
+            StateHasChanged();
+        }
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -529,7 +631,9 @@
         {
             if (LancamentosSelecionados is not null)
             {
-                foreach (var lancamento in LancamentosSelecionados)
+                var LancamentosComoLista = LancamentosSelecionados.ToList();
+
+                foreach (var lancamento in LancamentosComoLista)
                 {
                     lancamento.Pago = true;
 
@@ -546,7 +650,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao atualizar lançamentos", Severity.Error);
+            Snackbar.Add($"Erro ao atualizar lançamentos {ex.Message}", Severity.Error);
         }
 
     }
@@ -592,10 +696,10 @@
 
 
 
-    private List<ClsLancamentoFinanceiro> LancamentosSelecionados = new List<ClsLancamentoFinanceiro>();
+    private HashSet<ClsLancamentoFinanceiro> LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
     void SelectedItemsChanged(HashSet<ClsLancamentoFinanceiro> items)
     {
-        LancamentosSelecionados = items.ToList();
+        LancamentosSelecionados = items;
     }
 
     private async Task AtualizarPeriodoRapido(int index)
@@ -634,5 +738,42 @@
         StateHasChanged();
         await dataGridRef!.ReloadServerData();
     }
+
+    private async Task<IEnumerable<ClsPessoas>> Search(string value, CancellationToken token)
+    {
+        try
+        {
+            if (value is null)
+                value = string.Empty;
+
+            // sempre busca na API, mesmo se value estiver vazio
+            var returnApiRefatored = await PessoasService.GetPessoasPaginado(value);
+
+            PessoasParaOFiltro = returnApiRefatored.Data.Lista ?? new List<ClsPessoas>();
+
+            return PessoasParaOFiltro.Where(x => (x.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) || (x.NomeFantasia?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar Pessoas: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<ClsPessoas>();
+        }
+    }
+
+    private async Task OnPessoaSelecionada(ClsPessoas? pessoa)
+    {
+        PessoaSelecionadaParaOFiltro = pessoa;
+        await dataGridRef!.ReloadServerData();
+    }
+
+
+    private async Task OnMetodoSelecionado(ClsMetodosDePagMerchant? metodo)
+    {
+        MetodoSelecionadoraOFiltro = metodo;
+        await dataGridRef!.ReloadServerData();
+    }
+
+
 
 }

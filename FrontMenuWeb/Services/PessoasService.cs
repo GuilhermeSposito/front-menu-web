@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Pessoas;
+﻿using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Json;
 using static System.Net.WebRequestMethods;
@@ -37,6 +38,12 @@ public class PessoasService
             return new ClsPessoas();
 
         return response.Data.Pessoa; 
+    }
+
+    public async Task<ReturnApiRefatored<ClsPessoas>> GetPessoasPaginado(string? queryName)
+    {
+        ReturnApiRefatored<ClsPessoas>? response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsPessoas>>($"pessoas/find/auto-complete?queryName={queryName}");
+        return response ?? new ReturnApiRefatored<ClsPessoas>();
     }
 
     public async Task<RetornoApiPessoas> CadastraPessoa(ClsPessoas pessoaASerCadastrada)

@@ -69,7 +69,8 @@ public static class Filtros
         new ClsFiltros { Id = 2, NomeDoFiltro = "Situação" },
         new ClsFiltros { Id = 4, NomeDoFiltro = "Data de Emissão" },
         new ClsFiltros { Id = 5, NomeDoFiltro = "Fornecedor" },
-        new ClsFiltros { Id = 6, NomeDoFiltro = "Data De Pagamento" },
-        new ClsFiltros { Id = 7, NomeDoFiltro = "Data De Vencimento" }
+        new ClsFiltros { Id = 6, NomeDoFiltro = "Data de Pagamento" },
+        new ClsFiltros { Id = 7, NomeDoFiltro = "Data de Vencimento" },
+        new ClsFiltros { Id = 7, NomeDoFiltro = "Método de Pagamento" }
     };
 }

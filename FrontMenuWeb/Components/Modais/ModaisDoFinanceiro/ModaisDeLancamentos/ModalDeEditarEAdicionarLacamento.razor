@@ -1,7 +1,10 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.FinanceroServices
 @using System.Globalization
@@ -10,6 +13,7 @@
 @inject FormasDeRecebimentoService FormasService
 @inject MetodosDePagMerchantService MetodosService
 @inject CategoriasService CategoriasService
+@inject PessoasService PessoasService
 
 <MudPaper Square="false" Elevation="0">
     <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
@@ -29,157 +33,183 @@
                 }
                 <MudDivider Light=true Class="my-2" />
                 <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
-                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
-                        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
                             <MudStack Class="w-100" Row=true>
                                 <MudTextField @bind-Value=@Lancamento.Descricao Label="Descrição" Required RequiredError="A Descrição é obrigatória" Immediate=true Class="w-75" Variant="Variant.Filled" />
                                 <MudTextField @bind-Value=@Lancamento.Identificado Label="Identificação" Immediate=true Class="w-25" Variant="Variant.Filled" />
                             </MudStack>
-                        </MudFocusTrap>
-                    </MudStack>
 
-                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
-                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
-                            <MudNumericField @ref="_numeric"
-                                             Immediate="false"
-                                             Variant="Variant.Filled"
-                                             Format="N2"
-                                             Label="Valor"
-                                             Required
-                                             RequiredError="O Valor é obrigatório"
-                                             Culture="_pt"
-                                             T="float"
-                                             Class="w-25"
-                                             HideSpinButtons="true"
-                                             AdornmentText="R$"
-                                             Min="0"
-                                             Adornment="Adornment.Start"
-                                             @bind-Value="Lancamento.Valor"
-                                             onfocus="@HandleFocus" />
-
-                            <MudDatePicker Class="w-25" Label="Data de Emissão" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeEmissao" Placeholder="Selecione a Data de emissão" />
                         </MudStack>
 
-                        <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                            <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+                                <MudNumericField @ref="_numeric"
+                                                 Immediate="false"
+                                                 Variant="Variant.Filled"
+                                                 Format="N2"
+                                                 Label="Valor"
+                                                 Required
+                                                 RequiredError="O Valor é obrigatório"
+                                                 Culture="_pt"
+                                                 T="float"
+                                                 Class="w-25"
+                                                 HideSpinButtons="true"
+                                                 AdornmentText="R$"
+                                                 Min="0"
+                                                 Adornment="Adornment.Start"
+                                                 @bind-Value="Lancamento.Valor"
+                                                 onfocus="@HandleFocus" />
 
-                            <MudDatePicker Class="w-50" Label="Data de Pagamento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDePagamento" Placeholder="Selecione a Data de pagamento" />
-
-                            <MudDatePicker Class="w-50" Label="Data de Vencimento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeVencimento" Placeholder="Selecione a Data de vencimento" />
-                        </MudStack>
-                    </MudStack>
-
-                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
-
-                        <MudStack Class="w-100" Row=false>
-                            <MudSelect T="ClsConta" ToStringFunc="c => c?.NomeConta" Label="Conta" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.Conta" Immediate=true Required RequiredError="A Conta é obrigatória">
-                                @foreach (var conta in Contas)
-                                {
-                                    <MudSelectItem Value="conta">
-                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                            <img src="@AppState.GetBancoIcon(conta.CodIconeDoBanco)" alt="Bradesco" width="24" height="24" />
-                                            <span>@conta.NomeConta</span>
-                                        </MudStack>
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
-                            <MudSelect T="ClsMetodosDePagMerchant" ToStringFunc="c => c?.Descricao" Label="Método de pagamento" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.MetodoDePagamento" Immediate=true Required RequiredError="O Método de Pagamento é obrigatória">
-                                @foreach (var Metodo in MetodosDePagamento)
-                                {
-                                    <MudSelectItem Value="Metodo">@Metodo.Descricao</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudStack>
-
-                    </MudStack>
-
-                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
-
-                        <MudStack Class="w-100" Row=false>
-                            <MudSelect T="ClsCategoria"
-                                       Value="Lancamento.Categoria"
-                                       ValueChanged="OnCategoriaChanged"
-                                       ToStringFunc="c => c?.Descricao"
-                                       Label="Categoria"
-                                       Variant="Variant.Filled"
-                                       Class="w-100"
-                                       Immediate="true">
-                                @foreach (var cat in Categorias)
-                                {
-                                    <MudSelectItem Value="cat">@cat.Descricao</MudSelectItem>
-                                }
-                            </MudSelect>
-                            <MudSelect T="ClsSubCategoria" Disabled=@(SubsCategorias.Count == 0 ? true : false) ToStringFunc="c => c?.Descricao" Label="SubCategoria" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.SubCategoria" Immediate=true>
-                                @foreach (var sub in SubsCategorias)
-                                {
-                                    <MudSelectItem Value="sub">@sub.Descricao</MudSelectItem>
-                                }
-                            </MudSelect>
-                        </MudStack>
-
-                    </MudStack>
-
-                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
-
-                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                            <MudStack>
-                                <MudText>Parcelado</MudText>
-                                <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } })" />
+                                <MudDatePicker Class="w-25" Label="Data de Emissão" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeEmissao" Placeholder="Selecione a Data de emissão" />
                             </MudStack>
 
-                            <MudStack>
-                                <MudText>Despesa Fixa</MudText>
-                                <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; } })" />
+                            <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+
+                                <MudDatePicker Class="w-50" Label="Data de Pagamento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDePagamento" Placeholder="Selecione a Data de pagamento" />
+
+                                <MudDatePicker Class="w-50" Label="Data de Vencimento" Variant="Variant.Filled" Editable="true" @bind-Date="Lancamento.DataDeVencimento" Placeholder="Selecione a Data de vencimento" />
                             </MudStack>
                         </MudStack>
 
-                        @if (Lancamento.Parcelado || Lancamento.EDespesaFixa)
-                        {
-                            if (Lancamento.Parcelado)
-                            {
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
 
-                                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                    <MudNumericField Label="Quantidade de parcelas" Class="w-75" T="int" @bind-Value=@Lancamento.QtdParcelas Variant="Variant.Filled" Min="0"></MudNumericField>
-                                </MudStack>
+                            <MudStack Class="w-100" Row=false>
+                                <MudSelect T="ClsConta" ToStringFunc="c => c?.NomeConta" Label="Conta" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.Conta" Immediate=true Required RequiredError="A Conta é obrigatória">
+                                    @foreach (var conta in Contas)
+                                    {
+                                        <MudSelectItem Value="conta">
+                                            <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                                <img src="@AppState.GetBancoIcon(conta.CodIconeDoBanco)" alt="Bradesco" width="24" height="24" />
+                                                <span>@conta.NomeConta</span>
+                                            </MudStack>
+                                        </MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudSelect T="ClsMetodosDePagMerchant" ToStringFunc="c => c?.Descricao" Label="Método de pagamento" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.MetodoDePagamento" Immediate=true Required RequiredError="O Método de Pagamento é obrigatória">
+                                    @foreach (var Metodo in MetodosDePagamento)
+                                    {
+                                        <MudSelectItem Value="Metodo">@Metodo.Descricao</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+
+                        </MudStack>
+
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                            <MudTextField Value="PesquisaPessoa" Label="Fornecedor / Cliente" HelperText="Procure pelo Fornecedor/Cliente"  @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Filled" />
+                            @if (MostrarSugestoes)
+                            {
+                                <MudPaper Class="pa-2" Elevation="4">
+                                    <MudList T="ClsPessoas" Dense="true">
+                                        @foreach (var pessoa in PessoasParaSelecionar)
+                                        {
+                                            <MudListItem OnClick="@(async x => { await SelecionarPessoa(pessoa); })">
+                                                @pessoa.Nome
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                </MudPaper>
                             }
 
-                            if (Lancamento.EDespesaFixa)
-                            {
-                                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                    <MudNumericField @bind-Value=@Lancamento.QtdMesesDeDespesaFixa Immediate=true Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
+                            <MudStack AlignItems="AlignItems.End">
+                                <MudButton OnClick="AbreModalDeAdicionarPessoa" Variant="Variant.Filled" Color="Color.Primary">Cadastrar</MudButton>
+                            </MudStack>
+
+                        </MudStack>
+
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+
+                            <MudStack Class="w-100" Row=false>
+                                <MudSelect T="ClsCategoria"
+                                           Value="Lancamento.Categoria"
+                                           ValueChanged="OnCategoriaChanged"
+                                           ToStringFunc="c => c?.Descricao"
+                                           Label="Categoria"
+                                           Variant="Variant.Filled"
+                                           Class="w-100"
+                                           Immediate="true">
+                                    @foreach (var cat in Categorias)
+                                    {
+                                        <MudSelectItem Value="cat">@cat.Descricao</MudSelectItem>
+                                    }
+                                </MudSelect>
+                                <MudSelect T="ClsSubCategoria" Disabled=@(SubsCategorias.Count == 0 ? true : false) ToStringFunc="c => c?.Descricao" Label="SubCategoria" Variant="Variant.Filled" Class="w-100" @bind-Value="Lancamento.SubCategoria" Immediate=true>
+                                    @foreach (var sub in SubsCategorias)
+                                    {
+                                        <MudSelectItem Value="sub">@sub.Descricao</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudStack>
+
+                        </MudStack>
+
+
+
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
+
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudStack>
+                                    <MudText>Parcelado</MudText>
+                                    <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } })" />
                                 </MudStack>
+
+                                <MudStack>
+                                    <MudText>Despesa Fixa</MudText>
+                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; } })" />
+                                </MudStack>
+                            </MudStack>
+
+                            @if (Lancamento.Parcelado || Lancamento.EDespesaFixa)
+                            {
+                                if (Lancamento.Parcelado)
+                                {
+
+                                    <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudNumericField Label="Quantidade de parcelas" Class="w-75" T="int" @bind-Value=@Lancamento.QtdParcelas Variant="Variant.Filled" Min="0"></MudNumericField>
+                                    </MudStack>
+                                }
+
+                                if (Lancamento.EDespesaFixa)
+                                {
+                                    <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudNumericField @bind-Value=@Lancamento.QtdMesesDeDespesaFixa Immediate=true Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
+                                    </MudStack>
+                                }
+
+
                             }
 
-
-                        }
-
-                    </MudStack>
+                        </MudStack>
 
 
-                    <MudStack Class="w-100" Style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                        @if (Lancamento.Pago)
-                        {
+                        <MudStack Class="w-100" Style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            @if (Lancamento.Pago)
+                            {
+                                <MudAvatar Color="Color.Success" Style="width:100px; height:100px" Variant="Variant.Outlined">
+                                    <MudTooltip Text="Clique para declarar lançamento como não pago" Color="Color.Primary">
+                                        <MudIconButton OnClick=@(async p => { Lancamento.Pago = false; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.ThumbUp" />
+                                    </MudTooltip>
+                                </MudAvatar>
+                            }
+                            else
+                            {
+                                <MudAvatar Color="Color.Error" Style="width:100px; height:100px" Variant="Variant.Outlined">
+                                    <MudTooltip Text="Clique para declarar lançamento como pago" Color="Color.Primary">
+                                        <MudIconButton OnClick=@(async p => { Lancamento.Pago = true; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Error" Icon="@Icons.Material.Filled.ThumbDown" />
+                                    </MudTooltip>
+                                </MudAvatar>
+
+                            }
+
                             <MudAvatar Color="Color.Success" Style="width:100px; height:100px" Variant="Variant.Outlined">
-                                <MudTooltip Text="Clique para declarar lançamento como não pago" Color="Color.Primary">
-                                    <MudIconButton OnClick=@(async p => { Lancamento.Pago = false; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.ThumbUp" />
+                                <MudTooltip Text="Anexar Arquivo" Color="Color.Primary">
+                                    <MudIconButton Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.AttachFile" />
                                 </MudTooltip>
                             </MudAvatar>
-                        }
-                        else
-                        {
-                            <MudAvatar Color="Color.Error" Style="width:100px; height:100px" Variant="Variant.Outlined">
-                                <MudTooltip Text="Clique para declarar lançamento como pago" Color="Color.Primary">
-                                    <MudIconButton OnClick=@(async p => { Lancamento.Pago = true; }) Size="Size.Large" Style="width:100px; height:100px" Color="Color.Error" Icon="@Icons.Material.Filled.ThumbDown" />
-                                </MudTooltip>
-                            </MudAvatar>
-
-                        }
-
-                        <MudAvatar Color="Color.Success" Style="width:100px; height:100px" Variant="Variant.Outlined">
-                            <MudTooltip Text="Anexar Arquivo" Color="Color.Primary">
-                                <MudIconButton Size="Size.Large" Style="width:100px; height:100px" Color="Color.Success" Icon="@Icons.Material.Filled.AttachFile" />
-                            </MudTooltip>
-                        </MudAvatar>
-                    </MudStack>
+                        </MudStack>
+                    </MudFocusTrap>
                 </MudForm>
 
                 <div>
@@ -292,6 +322,12 @@
     private List<ClsSubCategoria> SubsCategorias { get; set; } = new List<ClsSubCategoria>();
     private List<ClsConta> Contas { get; set; } = new List<ClsConta>();
 
+    //Logia de autocomplete sem MudAutocomplete
+    private List<ClsPessoas> PessoasParaSelecionar { get; set; } = new List<ClsPessoas>();
+    private ClsPessoas? PessoaSelecionada = null;
+    private string PesquisaPessoa = string.Empty;
+    private bool MostrarSugestoes = false;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -311,10 +347,17 @@
             if (!ECriacao)
             {
                 Lancamento = await LancamentoFinanceiroService.GetLancamentoAsync(IdDoLancamento) ?? throw new Exception("Lançamento não encontrado");
+
+                //carregar pessoa selecionada
+                if(Lancamento.Pessoa is not null)
+                {
+                    PesquisaPessoa = Lancamento.Pessoa.Nome ?? Lancamento.Pessoa.NomeFantasia;
+                }
             }
 
             await CarregarContas();
             await CarregarMetodos();
+            await CarregarPessoas();
             CarregarCategorias();
         }
         catch (Exception ex)
@@ -329,6 +372,7 @@
 
     }
 
+
     private async Task OnCategoriaChanged(ClsCategoria categoriaSelecionada)
     {
         Lancamento.Categoria = categoriaSelecionada;
@@ -340,6 +384,18 @@
         StateHasChanged(); // força atualização da tela
     }
 
+    private async Task CarregarPessoas()
+    {
+        try
+        {
+            var ResponseAPi = await PessoasService.GetPessoasPaginado(null);
+            PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar pessoas: {ex.Message}", Severity.Error);
+        }
+    }
     private async void CarregarCategorias()
     {
         try
@@ -391,6 +447,7 @@
             Lancamento.ContaId = Lancamento.Conta.Id;
             Lancamento.MetodoDePagID = Lancamento.MetodoDePagamento.Id;
             Lancamento.TipoDeLancFinanceiroID = Lancamento.TipoDeLancamento.Id;
+            Lancamento.PessoaID = PessoaSelecionada?.Id ?? null;
 
             var jsonValues = System.Text.Json.JsonSerializer.Serialize(Lancamento);
 
@@ -448,6 +505,55 @@
         // podemos chamar SelectAsync() nele.
         await _numeric.FocusAsync();  // garante o foco
         await _numeric.SelectAsync(); // seleciona todo o texto
+    }
+
+
+    private async Task ValueDeAutoCompleteMudou(string? value)
+    {
+        PesquisaPessoa = value ?? string.Empty;
+
+        try
+        {
+            var ResponseAPi = await PessoasService.GetPessoasPaginado(PesquisaPessoa);
+            PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao procurar pessoas: {ex.Message}", Severity.Error);
+
+        }
+    }
+
+    private async Task SelecionarPessoa(ClsPessoas pessoa)
+    {
+        PessoaSelecionada = pessoa;
+        Lancamento.Pessoa = pessoa;
+        PesquisaPessoa = pessoa.Nome;
+        MostrarSugestoes = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnFocusAutoCompleteManual(FocusEventArgs args)
+    {
+        MostrarSugestoes = true;
+    }
+    private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
+    {
+        
+        MostrarSugestoes = false;
+    }
+
+    private async void AbreModalDeAdicionarPessoa()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            StateHasChanged();
+        }
     }
 
 }

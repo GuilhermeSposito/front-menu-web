@@ -1,5 +1,6 @@
 ﻿using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Financeiro;
+using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Json;
 using static System.Net.WebRequestMethods;
@@ -15,7 +16,7 @@ public class LancamentoFinanceiroService
         _HttpClient = http;
     }
 
-    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null)
+    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null, ClsPessoas? FiltroDePessoa = null, ClsMetodosDePagMerchant? FiltroDeMetodoDePagamento = null)
     {
         string QuerysStrings = "";
 
@@ -49,6 +50,16 @@ public class LancamentoFinanceiroService
             QuerysStrings += $"&DataVencimento={FiltroDataDeVencimento?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
         }
 
+        if (FiltroDePessoa is not null)
+        {
+            QuerysStrings += $"&IdPessoa={FiltroDePessoa.Id}";
+        }
+
+        if (FiltroDeMetodoDePagamento is not null)
+        {
+            QuerysStrings += $"&IdDoMetodo={FiltroDeMetodoDePagamento.Id}";
+        }
+
         var response = await _HttpClient.GetFromJsonAsync<PaginatedResponse<ClsLancamentoFinanceiro>>(
            $"financeiro/lancamentos?page={page}&limit={pageSize}{QuerysStrings}");
 
@@ -70,6 +81,11 @@ public class LancamentoFinanceiroService
     }
     public async Task<ReturnApiRefatored<ClsLancamentoFinanceiro>> UpdateLancamentoAsync(ClsLancamentoFinanceiro LancamentoAMudar)
     {
+        if(LancamentoAMudar.Pessoa is not null)
+            LancamentoAMudar.PessoaID = LancamentoAMudar.Pessoa.Id;
+
+        LancamentoAMudar.Pessoa = null;
+
         var response = await _HttpClient.PatchAsJsonAsync($"financeiro/lancamentos/{LancamentoAMudar.Id}", LancamentoAMudar);
         return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsLancamentoFinanceiro>>() ?? new ReturnApiRefatored<ClsLancamentoFinanceiro>();
     }
