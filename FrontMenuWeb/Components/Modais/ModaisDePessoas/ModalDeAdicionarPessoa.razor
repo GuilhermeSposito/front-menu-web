@@ -102,7 +102,8 @@
                     </MudFocusTrap>
 
                 }
-                else{
+                else
+                {
                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
 
                         <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
@@ -123,8 +124,8 @@
                                           Clearable
                                           Required
                                           RequiredError="O Nome é obrigatório" />
-                     
-                           
+
+
                             <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable />
                             <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Text" Clearable />
 
@@ -159,7 +160,7 @@
                             <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Text" Clearable />
                         </MudPaper>
                     </MudFocusTrap>
-                
+
 
                 }
 
@@ -269,7 +270,7 @@
         TipoPessoaId = 1, // Cliente por padrão
     };
 
-    private EnderecoPessoa NovoEndereco { get; set; } = new EnderecoPessoa()
+    private EnderecoPessoa? NovoEndereco { get; set; } = new EnderecoPessoa()
     {
         TipoEndereco = "Casa"
     };
@@ -486,38 +487,41 @@
     {
         try
         {
-            if (!string.IsNullOrEmpty(NovoEndereco.Rua) && !string.IsNullOrEmpty(NovoEndereco.Bairro) && !string.IsNullOrEmpty(NovoEndereco.Numero) && !string.IsNullOrEmpty(NovoEndereco.Cidade) && !string.IsNullOrEmpty(NovoEndereco.Estado))
+            if (string.IsNullOrEmpty(NovoEndereco.Rua) || string.IsNullOrEmpty(NovoEndereco.Bairro) || string.IsNullOrEmpty(NovoEndereco.Numero) || string.IsNullOrEmpty(NovoEndereco.Cidade) || string.IsNullOrEmpty(NovoEndereco.Estado))
             {
-                NovaPessoa.Endereco = NovoEndereco;
-                var response = await PessoasService.CadastraPessoa(NovaPessoa);
+                NovaPessoa.Endereco = null;
 
-                if (response is not null)
-                {
-                    if (response is null)
-                    {
-                        Snackbar.Add("Erro ao cadastrar pessoa.", severity: Severity.Error);
-                        ErroAoModificarPessoa = true;
-                    }
-
-                    if (response is not null && response.Status != "success")
-                    {
-                        Snackbar.Add(response.message ?? "Erro ao cadastrar pessoa.", severity: Severity.Error);
-                        ErroAoModificarPessoa = true;
-                    }
-
-                    if (response is not null && response.Status == "success")
-                    {
-                        Snackbar.Add(response.Data.Message ?? "Pessoa Cadastrada com sucesso!", severity: Severity.Success);
-                        MudDialog.Close(DialogResult.Ok(true));
-                    }
-                }
+                Snackbar.Add("Campos obrigatórios do endereço faltando, Pessoa foi cadastrada sem endereço. Edite ela para adicionar um endereço.", severity: Severity.Warning);
             }
             else
             {
-                ErroAoModificarPessoa = true;
-                MensagemErro = "Por favor, preencha todos os campos obrigatórios do endereço.";
+                NovaPessoa.Endereco = NovoEndereco;
 
             }
+
+            var response = await PessoasService.CadastraPessoa(NovaPessoa);
+
+            if (response is not null)
+            {
+                if (response is null)
+                {
+                    Snackbar.Add("Erro ao cadastrar pessoa.", severity: Severity.Error);
+                    ErroAoModificarPessoa = true;
+                }
+
+                if (response is not null && response.Status != "success")
+                {
+                    Snackbar.Add(response.message ?? "Erro ao cadastrar pessoa.", severity: Severity.Error);
+                    ErroAoModificarPessoa = true;
+                }
+
+                if (response is not null && response.Status == "success")
+                {
+                    Snackbar.Add(response.Data.Message ?? "Pessoa Cadastrada com sucesso!", severity: Severity.Success);
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+            }
+
         }
         catch (Exception ex)
         {
