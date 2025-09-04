@@ -12,7 +12,7 @@ public class ClsLancamentoFinanceiro
     [JsonPropertyName("Valor")] public float Valor { get; set; }
     [JsonPropertyName("DataVencimento")] public DateTime? DataDeVencimento { get; set; } = DateTime.Today;
     [JsonPropertyName("DataEmissao")] public DateTime? DataDeEmissao { get; set; } = DateTime.Today;
-    [JsonPropertyName("DataPagamento")] public DateTime? DataDePagamento { get; set; } = DateTime.Today;
+    [JsonPropertyName("DataPagamento")] public DateTime? DataDePagamento { get; set; } = null;
     [JsonPropertyName("Pago")] public bool Pago { get; set; } = false;
     [JsonPropertyName("Repete")] public bool Repete { get; set; } = false;
     [JsonPropertyName("Parcelado")] public bool Parcelado { get; set; } = false;
@@ -71,6 +71,7 @@ public static class Filtros
         new ClsFiltros { Id = 5, NomeDoFiltro = "Fornecedor" },
         new ClsFiltros { Id = 6, NomeDoFiltro = "Data de Pagamento" },
         new ClsFiltros { Id = 7, NomeDoFiltro = "Data de Vencimento" },
-        new ClsFiltros { Id = 7, NomeDoFiltro = "Método de Pagamento" }
+        new ClsFiltros { Id = 7, NomeDoFiltro = "Método de Pagamento" },
+        new ClsFiltros { Id = 7, NomeDoFiltro = "Tipo de Lançamento" }
     };
 }

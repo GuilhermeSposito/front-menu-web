@@ -449,10 +449,6 @@
             Lancamento.TipoDeLancFinanceiroID = Lancamento.TipoDeLancamento.Id;
             Lancamento.PessoaID = PessoaSelecionada?.Id ?? null;
 
-            var jsonValues = System.Text.Json.JsonSerializer.Serialize(Lancamento);
-
-            Console.WriteLine(jsonValues);
-
 
             if (ECriacao)
             {

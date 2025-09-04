@@ -167,6 +167,14 @@
                                                     }
                                                 </MudSelect>
                                                 break;
+                                            case "Tipo de Lançamento":
+                                                <MudStack Class="w-100" Row=true AlignItems="AlignItems.End" Justify="Justify.FlexStart">
+                                                    <MudRadioGroup @bind-Value=FiltroTipoDeLancamento T="int?">
+                                                        <MudRadio T="int?" Value="2" Color="Color.Primary">Despesa</MudRadio>
+                                                        <MudRadio T="int?" Value="1" Color="Color.Primary">Receita</MudRadio>
+                                                    </MudRadioGroup>
+                                                </MudStack>
+                                                break;
                                             default:
                                                 <MudText>Filtro não implementado ainda</MudText>
                                                 break;
@@ -302,7 +310,7 @@
                         @if (context.Item.Pago)
                         {
                             <MudTooltip Text="Clique para declarar como não pago" Color="Color.Primary">
-                                <MudIconButton OnClick=@(async p => { context.Item.Pago = false; await AtualizaLancamnto(context.Item); }) Icon="@Icons.Material.Filled.ThumbUp"
+                                <MudIconButton OnClick=@(async p => { context.Item.Pago = false; await AtualizaLancamnto(context.Item, true); }) Icon="@Icons.Material.Filled.ThumbUp"
                                                Color="Color.Success" />
                             </MudTooltip>
                         }
@@ -310,7 +318,7 @@
                         {
 
                             <MudTooltip Text="Clique para declarar como pago" Color="Color.Primary">
-                                <MudIconButton Disabled=@(CarregandoLancamentos) OnClick=@(async p => { context.Item.Pago = true; await AtualizaLancamnto(context.Item); }) Icon="@Icons.Material.Filled.ThumbDown"
+                                <MudIconButton Disabled=@(CarregandoLancamentos) OnClick=@(async p => { context.Item.Pago = true; await AtualizaLancamnto(context.Item, true); }) Icon="@Icons.Material.Filled.ThumbDown"
                                                Color="Color.Error" />
                             </MudTooltip>
                         }
@@ -427,6 +435,7 @@
     private DateTime? FiltroDataDeEmissão = null;
     private DateTime? FiltroDataDePagamento = null;
     private DateTime? FiltroDataDeVencimento = null;
+    private int? FiltroTipoDeLancamento = null; // 1 = Receita, 2 = Despesa
     private bool? FiltroPago = null;
     private string? FiltroDescricao = null;
     private ClsPessoas? PessoaSelecionadaParaOFiltro = null;
@@ -463,7 +472,8 @@
                                                 FiltroDataPagamento: FiltroDataDePagamento,
                                                 FiltroDataDeVencimento: FiltroDataDeVencimento,
                                                 FiltroDePessoa: PessoaSelecionadaParaOFiltro,
-                                                FiltroDeMetodoDePagamento: MetodoSelecionadoraOFiltro
+                                                FiltroDeMetodoDePagamento: MetodoSelecionadoraOFiltro,
+                                                FiltroDeTipoDeLancamento: FiltroTipoDeLancamento
                                             );
 
 
@@ -588,6 +598,7 @@
             FiltroDataDeVencimento = null;
             PessoaSelecionadaParaOFiltro = null;
             MetodoSelecionadoraOFiltro = null;
+            FiltroTipoDeLancamento = null;
 
             await dataGridRef!.ReloadServerData();
         }
@@ -615,8 +626,19 @@
     }
 
 
-    private async Task AtualizaLancamnto(ClsLancamentoFinanceiro lancamento)
+    private async Task AtualizaLancamnto(ClsLancamentoFinanceiro lancamento, bool atualizandoPago = false)
     {
+
+        if (atualizandoPago && lancamento.Pago)
+        {
+            lancamento.DataDePagamento = DateTime.Today;
+
+        }else if (atualizandoPago && !lancamento.Pago)
+        {
+            lancamento.DataDePagamento = null;
+        }
+
+
         var ResponsaApi = await LancamentoFinanceiroService.UpdateLancamentoAsync(lancamento);
 
         string MensagemDeRetorno = string.Join(", ", ResponsaApi.Status == "success" ? ResponsaApi.Data.Messages : ResponsaApi.Messages);
