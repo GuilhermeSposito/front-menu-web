@@ -21,6 +21,7 @@ public class ClsLancamentoFinanceiro
     [JsonPropertyName("EDespesaFixa")] public bool EDespesaFixa { get; set; } = false;
     [JsonPropertyName("Obs")] public string Obs { get; set; } = string.Empty;
     [JsonPropertyName("QtdMesesDeDespesaFixa")] public int QtdMesesDeDespesaFixa { get; set; } = 0;
+    [JsonPropertyName("TipoDeDespesaFixa")] public int? TipoDeDespesaFixa { get; set; } //1-diaria 2-semanal 3-mensal 
     [JsonPropertyName("QtdAtualDaParcela")] public int QtdAtualDaParcela { get; set; } = 0;
 
 

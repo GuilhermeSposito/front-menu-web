@@ -98,7 +98,7 @@
 
                         <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
 
-                            <MudTextField Value="PesquisaPessoa" Label="Fornecedor / Cliente" HelperText="Procure pelo Fornecedor/Cliente"  @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Filled" />
+                            <MudTextField Value="PesquisaPessoa" Label="Fornecedor / Cliente" HelperText="Procure pelo Fornecedor/Cliente" @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Filled" />
                             @if (MostrarSugestoes)
                             {
                                 <MudPaper Class="pa-2" Elevation="4">
@@ -157,12 +157,13 @@
 
                                 <MudStack>
                                     <MudText>Despesa Fixa</MudText>
-                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; } })" />
+                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; }/* */})" />
                                 </MudStack>
                             </MudStack>
 
                             @if (Lancamento.Parcelado || Lancamento.EDespesaFixa)
                             {
+                                <MudDivider Light=true Class="my-2" />
                                 if (Lancamento.Parcelado)
                                 {
 
@@ -173,6 +174,31 @@
 
                                 if (Lancamento.EDespesaFixa)
                                 {
+                                    <MudStack Spacing="0" Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudStack AlignItems="AlignItems.Start" Justify="Justify.Center">
+                                            <MudText Color="Color.Error">Tipo da Despesa Fixa (Não Está Funcionando)</MudText>
+                                        </MudStack>
+                                        <MudRadioGroup @bind-Value=TipoDeDespesaFixa T="int?">
+                                            <MudRadio T="int?" Value="1" Color="Color.Primary">Diária</MudRadio>
+                                            <MudRadio T="int?" Value="2" Color="Color.Primary">Semanal</MudRadio>
+                                            <MudRadio T="int?" Value="3" Color="Color.Primary">Mensal</MudRadio>
+                                        </MudRadioGroup>
+
+                                        @if (TipoDeDespesaFixa is not null && TipoDeDespesaFixa == 1)
+                                        {
+                                            <MudStack Class="w-100" Row=true Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Segunda">Segunda-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Terca">Terça-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Quarta">Quarta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Quinta">Quinta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Sexta">Sexta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Sabado">Sábado</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Domingo">Domingo</MudCheckBox>
+                                            </MudStack>
+                                        }
+
+                                    </MudStack>
+
                                     <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
                                         <MudNumericField @bind-Value=@Lancamento.QtdMesesDeDespesaFixa Immediate=true Label="Quantidade De Meses da despesa fixa" Class="w-75" T="int" Variant="Variant.Filled" Min="0"></MudNumericField>
                                     </MudStack>
@@ -328,6 +354,15 @@
     private string PesquisaPessoa = string.Empty;
     private bool MostrarSugestoes = false;
 
+    private int? TipoDeDespesaFixa = null; // 1 - Diaria 2 - Semanal 3 - Mensal
+    private bool Segunda = true;
+    private bool Terca = true;
+    private bool Quarta = true;
+    private bool Quinta = true;
+    private bool Sexta = true;
+    private bool Sabado = true;
+    private bool Domingo = true;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -349,7 +384,7 @@
                 Lancamento = await LancamentoFinanceiroService.GetLancamentoAsync(IdDoLancamento) ?? throw new Exception("Lançamento não encontrado");
 
                 //carregar pessoa selecionada
-                if(Lancamento.Pessoa is not null)
+                if (Lancamento.Pessoa is not null)
                 {
                     PesquisaPessoa = Lancamento.Pessoa.Nome ?? Lancamento.Pessoa.NomeFantasia;
                 }
@@ -438,6 +473,11 @@
     {
         try
         {
+            if (Lancamento.EDespesaFixa && TipoDeDespesaFixa is null || Lancamento.QtdMesesDeDespesaFixa <= 0)
+                throw new Exception("Para despesas fixas, selecione o tipo e a quantidade de meses.");
+            else
+                Lancamento.TipoDeDespesaFixa = TipoDeDespesaFixa;
+
             ReturnApiRefatored<ClsLancamentoFinanceiro> ResponseAPi = new ReturnApiRefatored<ClsLancamentoFinanceiro>(); // mudar quando colocar a logica
 
             //define as chaves estrangeiras para enviar para a api
@@ -535,7 +575,7 @@
     }
     private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
     {
-        
+
         MostrarSugestoes = false;
     }
 

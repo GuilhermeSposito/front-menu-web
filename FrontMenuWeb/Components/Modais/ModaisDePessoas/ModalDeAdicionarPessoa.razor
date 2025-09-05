@@ -34,7 +34,7 @@
                             <MudTextField Label="Nome Completo"
                                           Value="NovaPessoa.Nome"
                                           ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
-                                          Variant="Variant.Text"
+                                          Variant="Variant.Filled"
                                           Clearable
                                           Required
                                           RequiredError="O Nome é obrigatório" />
@@ -43,13 +43,13 @@
                                 <MudItem xs="12" sm="12">
                                     <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
-                                                  Variant="@Variant.Text" Clearable
+                                                  Variant="@Variant.Filled" Clearable
                                                   RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                             </MudGrid>
-                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Filled" Clearable />
                         </MudPaper>
                     </MudFocusTrap>
                 }
@@ -72,7 +72,7 @@
                             <MudTextField Label="Razão Social"
                                           Value="NovaPessoa.RazaoSocial"
                                           ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiusculaRazaoSocial)"
-                                          Variant="Variant.Text"
+                                          Variant="Variant.Filled"
                                           Clearable
                                           Required
                                           RequiredError="A Razão Social é obrigatória" />
@@ -81,23 +81,23 @@
                                 <MudItem xs="12" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
-                                                  Variant="@Variant.Text" Clearable
+                                                  Variant="@Variant.Filled" Clearable
                                                   RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
                                                   Value="@maskedPhone2" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged2)"
-                                                  Variant="@Variant.Text" Clearable />
+                                                  Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
                                                   Value="@NovaPessoa.Telefone2"
-                                                  Variant="@Variant.Text" Clearable />
+                                                  Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                             </MudGrid>
-                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Filled" Clearable />
                         </MudPaper>
                     </MudFocusTrap>
 
@@ -120,19 +120,19 @@
                             <MudTextField Label="Nome Completo"
                                           Value="NovaPessoa.Nome"
                                           ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
-                                          Variant="Variant.Text"
+                                          Variant="Variant.Filled"
                                           Clearable
                                           Required
                                           RequiredError="O Nome é obrigatório" />
 
 
-                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Desconto" T="int?" @bind-Value="NovaPessoa.Desconto" Variant="Variant.Filled" Clearable />
 
                             <MudTextField Label="Razão Social"
                                           Value="NovaPessoa.RazaoSocial"
                                           ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiusculaRazaoSocial)"
-                                          Variant="Variant.Text"
+                                          Variant="Variant.Filled"
                                           Clearable
                                           Required
                                           RequiredError="A Razão Social é obrigatória" />
@@ -141,23 +141,23 @@
                                 <MudItem xs="12" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
-                                                  Variant="@Variant.Text" Clearable
+                                                  Variant="@Variant.Filled" Clearable
                                                   RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
                                                   Value="@maskedPhone2" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged2)"
-                                                  Variant="@Variant.Text" Clearable />
+                                                  Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
                                     <MudTextField Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
                                                   Value="@NovaPessoa.Telefone2"
-                                                  Variant="@Variant.Text" Clearable />
+                                                  Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                             </MudGrid>
-                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Text" Clearable />
-                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Text" Clearable />
+                            <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Variant="Variant.Filled" Clearable />
                         </MudPaper>
                     </MudFocusTrap>
 
@@ -170,45 +170,45 @@
                     </MudText>
                     <MudGrid>
                         <MudItem xs="12" sm="8">
-                            <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                            <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12" sm="4">
-                            <MudTextField Required RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                            <MudTextField Required RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                            <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                            <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12" sm="3">
-                            <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                            <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Filled" MaxLength="2" />
                         </MudItem>
 
                         <MudItem xs="12" sm="5">
-                            <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
+                            <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Filled"
                                           Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
+                            <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
+                            <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Filled" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
+                            <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Filled" />
                         </MudItem>
 
 
                         <MudItem xs="12">
-                            <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
+                            <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Filled" />
                         </MudItem>
 
 
