@@ -23,6 +23,13 @@ public class ClsLancamentoFinanceiro
     [JsonPropertyName("QtdMesesDeDespesaFixa")] public int QtdMesesDeDespesaFixa { get; set; } = 0;
     [JsonPropertyName("TipoDeDespesaFixa")] public int? TipoDeDespesaFixa { get; set; } //1-diaria 2-semanal 3-mensal 
     [JsonPropertyName("QtdAtualDaParcela")] public int QtdAtualDaParcela { get; set; } = 0;
+    [JsonPropertyName("Segunda")] public bool Segunda { get; set; } = true;
+    [JsonPropertyName("Terca")] public bool Terca { get; set; } = true;
+    [JsonPropertyName("Quarta")] public bool Quarta { get; set; } = true;
+    [JsonPropertyName("Quinta")] public bool Quinta { get; set; } = true;
+    [JsonPropertyName("Sexta")] public bool Sexta { get; set; } = true;
+    [JsonPropertyName("Sabado")] public bool Sabado { get; set; } = true;
+    [JsonPropertyName("Domingo")] public bool Domingo { get; set; } = true;
 
 
     //Chaves estrangeiras
@@ -72,7 +79,15 @@ public static class Filtros
         new ClsFiltros { Id = 5, NomeDoFiltro = "Fornecedor" },
         new ClsFiltros { Id = 6, NomeDoFiltro = "Data de Pagamento" },
         new ClsFiltros { Id = 7, NomeDoFiltro = "Data de Vencimento" },
-        new ClsFiltros { Id = 7, NomeDoFiltro = "Método de Pagamento" },
-        new ClsFiltros { Id = 7, NomeDoFiltro = "Tipo de Lançamento" }
+        new ClsFiltros { Id = 8, NomeDoFiltro = "Método de Pagamento" },
+        new ClsFiltros { Id = 9, NomeDoFiltro = "Tipo de Lançamento" }
+    };
+
+    public static List<ClsFiltros> FiltrosDePeriodo = new List<ClsFiltros>
+    {
+       
+        new ClsFiltros { Id = 1, NomeDoFiltro = "Data de Emissão" }, 
+        new ClsFiltros { Id = 2, NomeDoFiltro = "Data de Pagamento" },
+        new ClsFiltros { Id = 3, NomeDoFiltro = "Data de Vencimento" },
     };
 }

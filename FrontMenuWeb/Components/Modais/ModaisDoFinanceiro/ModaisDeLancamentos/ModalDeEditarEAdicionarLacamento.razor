@@ -187,13 +187,13 @@
                                         @if (TipoDeDespesaFixa is not null && TipoDeDespesaFixa == 1)
                                         {
                                             <MudStack Class="w-100" Row=true Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Segunda">Segunda-feira</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Terca">Terça-feira</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Quarta">Quarta-feira</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Quinta">Quinta-feira</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Sexta">Sexta-feira</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Sabado">Sábado</MudCheckBox>
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Checked="Domingo">Domingo</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value=@Lancamento.Segunda >Segunda-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Terca">Terça-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Quarta">Quarta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Quinta">Quinta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Sexta">Sexta-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Sabado">Sábado</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Domingo">Domingo</MudCheckBox>
                                             </MudStack>
                                         }
 
@@ -355,13 +355,7 @@
     private bool MostrarSugestoes = false;
 
     private int? TipoDeDespesaFixa = null; // 1 - Diaria 2 - Semanal 3 - Mensal
-    private bool Segunda = true;
-    private bool Terca = true;
-    private bool Quarta = true;
-    private bool Quinta = true;
-    private bool Sexta = true;
-    private bool Sabado = true;
-    private bool Domingo = true;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -473,7 +467,9 @@
     {
         try
         {
-            if (Lancamento.EDespesaFixa && TipoDeDespesaFixa is null || Lancamento.QtdMesesDeDespesaFixa <= 0)
+            Console.WriteLine(Lancamento.EDespesaFixa && TipoDeDespesaFixa is null);
+
+            if (Lancamento.EDespesaFixa && TipoDeDespesaFixa is null && Lancamento.QtdMesesDeDespesaFixa <= 0)
                 throw new Exception("Para despesas fixas, selecione o tipo e a quantidade de meses.");
             else
                 Lancamento.TipoDeDespesaFixa = TipoDeDespesaFixa;

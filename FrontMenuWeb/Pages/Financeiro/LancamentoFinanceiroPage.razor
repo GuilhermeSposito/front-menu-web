@@ -91,10 +91,31 @@
                                         @switch (filtro.NomeDoFiltro)
                                         {
                                             case "Periodo":
-                                                <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
-                                                    <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" />
-                                                    <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" />
-                                                </MudStack>
+                                                <MudStack>
+                                                    <MudSelect T="ClsFiltros"
+                                                               Label="Filtros de Periodo"
+                                                               Placeholder="Nenhum filtro selecionado"
+                                                               MultiSelection="false"
+                                                               Clearable="true"
+                                                               Variant="Variant.Filled"
+                                                               AdornmentColor="Color.Primary"
+                                                               ClearIcon="@Icons.Material.Filled.Delete"
+                                                               Adornment="Adornment.Start"
+                                                               AdornmentIcon="@Icons.Material.Outlined.Search"
+                                                               HelperText="Selecione os filtros por periodo que você deseja aplicar"
+                                                               ToStringFunc="c => c?.NomeDoFiltro"
+                                                               SelectedValuesChanged="onFiltroPorPeriodoChenged"
+                                                               SelectedValues="FiltroPorPeriodoSelecionados">
+                                                        @foreach (var filtro in Filtros.FiltrosDePeriodo)
+                                                        {
+                                                            <MudSelectItem Value="@filtro">@filtro.NomeDoFiltro</MudSelectItem>
+                                                        }
+                                                    </MudSelect>
+                                                </MudStack>                                                    
+                                                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                        <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" />
+                                                        <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" />
+                                                    </MudStack>   
                                                 break;
                                             case "Data de Emissão":
                                                 <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
@@ -267,8 +288,8 @@
                             }
                             else if (context.Item.EDespesaFixa)
                             {
-                                <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdMesesDeDespesaFixa</MudText>
-                                <MudDivider Light=true Class="my-2" />
+                                @*   <MudText>@context.Item.QtdAtualDaParcela / @context.Item.QtdMesesDeDespesaFixa</MudText>
+                                <MudDivider Light=true Class="my-2" />*@
                             }
 
 
@@ -427,6 +448,7 @@
     private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef = new();
 
     private IEnumerable<ClsFiltros> FiltrosSelecionados { get; set; } = new HashSet<ClsFiltros>() { Filtros.filtros.FirstOrDefault(x => x.NomeDoFiltro == "Periodo")! };
+    private IEnumerable<ClsFiltros> FiltroPorPeriodoSelecionados { get; set; } = new HashSet<ClsFiltros>() { Filtros.FiltrosDePeriodo.FirstOrDefault(x => x.NomeDoFiltro == "Data de Vencimento")! };
     private bool MultiSelecao = false;
 
     //lógica do filtros
@@ -473,7 +495,8 @@
                                                 FiltroDataDeVencimento: FiltroDataDeVencimento,
                                                 FiltroDePessoa: PessoaSelecionadaParaOFiltro,
                                                 FiltroDeMetodoDePagamento: MetodoSelecionadoraOFiltro,
-                                                FiltroDeTipoDeLancamento: FiltroTipoDeLancamento
+                                                FiltroDeTipoDeLancamento: FiltroTipoDeLancamento,
+                                                TiposDeFiltrosDePeriodo: FiltroPorPeriodoSelecionados
                                             );
 
 
@@ -608,6 +631,21 @@
 
     }
 
+    private async Task onFiltroPorPeriodoChenged(IEnumerable<ClsFiltros> filtros)
+    {
+        if (filtros.Count() == 0)
+        {
+            FiltroDateTimeInicial = null;
+            FiltroDateTimeFinal = null;
+
+            await dataGridRef!.ReloadServerData();
+        }
+
+        FiltroPorPeriodoSelecionados = filtros;
+
+
+    }
+
     void Closed(MudChip<ClsLancamentoFinanceiro> chip)
     {
         if (chip.Value is not null)
@@ -633,7 +671,8 @@
         {
             lancamento.DataDePagamento = DateTime.Today;
 
-        }else if (atualizandoPago && !lancamento.Pago)
+        }
+        else if (atualizandoPago && !lancamento.Pago)
         {
             lancamento.DataDePagamento = null;
         }

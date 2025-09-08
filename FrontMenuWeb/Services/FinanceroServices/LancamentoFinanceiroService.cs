@@ -16,36 +16,45 @@ public class LancamentoFinanceiroService
         _HttpClient = http;
     }
 
-    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null, ClsPessoas? FiltroDePessoa = null, ClsMetodosDePagMerchant? FiltroDeMetodoDePagamento = null, int? FiltroDeTipoDeLancamento = null)
+    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null, ClsPessoas? FiltroDePessoa = null, ClsMetodosDePagMerchant? FiltroDeMetodoDePagamento = null, int? FiltroDeTipoDeLancamento = null, IEnumerable<ClsFiltros>? TiposDeFiltrosDePeriodo = null)
     {
         string QuerysStrings = "";
 
-        if(DataInicial is not null && DataFinal is not null)
+        if (DataInicial is not null && DataFinal is not null && TiposDeFiltrosDePeriodo!.Any(x => x.Id == 1)) //aqui define se o filtro de periodo é pela data de emissao
         {
             QuerysStrings += $"&DataEmissaoInicio={DataInicial?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataEmissaoFinal={DataFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
         }
+        if (DataInicial is not null && DataFinal is not null && TiposDeFiltrosDePeriodo!.Any(x => x.Id == 2)) //aqui define se o filtro de periodo é pela data de pagamento
+        {
+            QuerysStrings += $"&DataPagamentoInicio={DataInicial?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataPagamentoFinal={DataFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
+        }
+        if (DataInicial is not null && DataFinal is not null && TiposDeFiltrosDePeriodo!.Any(x => x.Id == 3)) //aqui define se o filtro de periodo é pela data de vencimento
+        {
+            QuerysStrings += $"&DataVencimentoInicio={DataInicial?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataVencimentoFinal={DataFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
 
-        if(DataEmissao is not null)
+        }
+
+        if (DataEmissao is not null)
         {
             QuerysStrings += $"&DataEmissao={DataEmissao?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
         }
 
-        if(Pagos is not null)
+        if (Pagos is not null)
         {
             QuerysStrings += $"&Pago={Pagos}";
         }
 
-        if(!string.IsNullOrEmpty(FiltroDescricao))
+        if (!string.IsNullOrEmpty(FiltroDescricao))
         {
             QuerysStrings += $"&descricao={FiltroDescricao}";
         }
 
-        if(FiltroDataPagamento is not null)
+        if (FiltroDataPagamento is not null)
         {
             QuerysStrings += $"&DataPagamento={FiltroDataPagamento?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
         }
 
-        if(FiltroDataDeVencimento is not null)
+        if (FiltroDataDeVencimento is not null)
         {
             QuerysStrings += $"&DataVencimento={FiltroDataDeVencimento?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
         }
@@ -60,7 +69,7 @@ public class LancamentoFinanceiroService
             QuerysStrings += $"&IdDoMetodo={FiltroDeMetodoDePagamento.Id}";
         }
 
-        if(FiltroDeTipoDeLancamento is not null)
+        if (FiltroDeTipoDeLancamento is not null)
         {
             QuerysStrings += $"&TipoLancamento={FiltroDeTipoDeLancamento}";
         }
@@ -86,7 +95,7 @@ public class LancamentoFinanceiroService
     }
     public async Task<ReturnApiRefatored<ClsLancamentoFinanceiro>> UpdateLancamentoAsync(ClsLancamentoFinanceiro LancamentoAMudar)
     {
-        if(LancamentoAMudar.Pessoa is not null)
+        if (LancamentoAMudar.Pessoa is not null)
             LancamentoAMudar.PessoaID = LancamentoAMudar.Pessoa.Id;
 
         LancamentoAMudar.Pessoa = null;
