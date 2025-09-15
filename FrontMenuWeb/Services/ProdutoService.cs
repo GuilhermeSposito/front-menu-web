@@ -4,6 +4,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
+using Nextended.Core.Extensions;
+using MudBlazor.Extensions.Components.ObjectEdit;
 
 namespace FrontMenuWeb.Services;
 
@@ -85,4 +88,41 @@ public class ProdutoService
     }   
     
   
+}
+
+
+public class ComplementosServices
+{
+    private HttpClient _http;
+    public ComplementosServices(HttpClient http)
+    {
+        _http = http;
+    }
+
+    public async Task<List<ClsGrupoDeComplemento>> GetGruposDeComplementos()
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>("complementos/grupo-de-complementos") ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+
+        return response.Data.Lista ?? new List<ClsGrupoDeComplemento>();
+    }
+
+    public async Task<ClsGrupoDeComplemento> GetGrupoDeComplementos(int idDoGrupo)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>($"complementos/grupo-de-complementos/{idDoGrupo}") ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+        return response.Data.Objeto ?? new ClsGrupoDeComplemento();
+    }
+
+    public async Task<List<ClsComplemento>> GetComplementos(int page, int pageSize)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos?limit={pageSize}&page={page}") ?? new ReturnApiRefatored<ClsComplemento>();
+
+        return response.Data.Lista ?? new List<ClsComplemento>();
+    }
+
+    public async Task<PaginatedResponse<ClsComplemento>> GetComplementosPagineted(int page, int pageSize)
+    {
+        var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsComplemento>>($"complementos?limit={pageSize}&page={page}") ?? new PaginatedResponse<ClsComplemento>();
+
+        return response ?? new PaginatedResponse<ClsComplemento>();
+    }
 }

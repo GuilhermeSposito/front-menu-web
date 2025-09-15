@@ -67,6 +67,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<CategoriasService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MetodosDePagMerchantService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<FormasDeRecebimentoService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<LancamentoFinanceiroService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<ComplementosServices>());
 
 
 builder.Services.AddMudServices();

@@ -170,6 +170,16 @@ code {
 }
 
 
+.card-complemento-hover {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.card-complemento:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    background-color: var(--mud-palette-surface); /* ou outra cor */
+}
+
 /** --------------------------------- login ----------------------------------------------------*/
 :root {
     --sophos-orange: #f97316;

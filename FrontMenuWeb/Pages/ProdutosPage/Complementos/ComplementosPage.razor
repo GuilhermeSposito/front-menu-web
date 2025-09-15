@@ -1,0 +1,319 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/complementos"
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosService
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">@(SelecionadoDinamico == 0 ? "Grupo de Complementos" : "Complementos")</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">@(SelecionadoDinamico == 0 ? "Lista de Grupo de Complementos Cadastrados." : "Lista de Complementos Cadastrados.")</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoGrupos ? true : false" OnClick="@(() => { })">@(SelecionadoDinamico == 0 ? "Novo Grupo" : "Novo Complementos")</MudButton>
+            </div>
+        </div>
+        <MudDivider Class="mb-4" Light=true />
+        <MudTabs Elevation="2" @bind-ActivePanelIndex="SelecionadoDinamico" Class="w-100 h-100" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Grupos">   
+                @foreach (var grupo in GruposDeComplementos)
+                {
+                    <MudCard Class="mb-2">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary">@grupo.Descricao.Substring(0, 1)</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.body1">@grupo.Descricao</MudText>
+                                <MudText Typo="Typo.body2">@grupo.GrupoInfo</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@((grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(grupo)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                                @if (grupo.Ativo)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Pause" Color="Color.Primary" />
+                                }
+                                else
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Primary" />
+                                }
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            @if (grupo.Expanded)
+                            {
+                                <MudDivider Class="mb-1" Light=true />
+                                @*aqui vai os complementos do grupo*@
+                                @foreach (var complemento in grupo.Complementos)
+                                {
+                                    <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
+                                        <MudCardHeader>
+                                            <CardHeaderContent>
+                                                <MudText Typo="Typo.body1">@complemento.Complemento.Descricao</MudText>
+                                                <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
+                                            </CardHeaderContent>
+                                            <CardHeaderActions>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Pause" Color="Color.Primary" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                            </CardHeaderActions>
+                                        </MudCardHeader>
+                                    </MudCard>
+                                }
+
+
+                                @if (grupo.Complementos.Count() == 0)
+                                {
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento cadastrado neste grupo.</MudText>
+                                    </MudStack>
+                                }
+                            }
+
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudTabPanel>
+            <MudTabPanel Text="Complementos">
+                <MudDataGrid T="ClsComplemento"
+                             @ref="dataGridRef"
+                             EditTrigger="DataGridEditTrigger.Manual"
+                             MultiSelection="false"
+                             SelectOnRowClick=true
+                             Class="rounded-3 custom-striped"
+                             Loading="CarregandoComplementos"
+                             Hover
+                             ServerData="LoadServerData">
+                    <Columns>
+                        <PropertyColumn Property="c => c.Descricao" Title="Descrição" />
+                        <PropertyColumn Property="c => c.ComplementoInfo" Title="Informações" />
+                        <TemplateColumn T="ClsComplemento" Title="Ativo">
+                            <CellTemplate Context="context">
+                                <MudTooltip Text="Clique para ativar/desativar o método" Color="Color.Primary">
+                                    <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; })" />
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn T="ClsComplemento" Title="Grupos">
+                            <CellTemplate Context="context">
+                                <MudTooltip Text="@string.Join(", ", context.Item.Grupos.Select(g => g.Grupo.Descricao))">
+                                    <MudText Class="ellipsis-text">
+                                        @string.Join(", ", context.Item.Grupos.Select(g => g.Grupo.Descricao))
+                                    </MudText>
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <PropertyColumn Property="x => x.Valor" Title="Valor Adicional" Format="C" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")" />
+
+                        <TemplateColumn T="ClsComplemento">
+                            <CellTemplate Context="context">
+                                <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                                    <MudMenu Dense=false
+                                             Variant="Variant.Text"
+                                             Size="Size.Medium"
+                                             Color="Color.Inherit"
+                                             Icon="@Icons.Material.TwoTone.MoreVert">
+
+
+                                        <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                            <MudMenuItem OnClick=@(async p => { })
+                                                         Icon="@Icons.Material.TwoTone.Edit"
+                                                         IconColor="Color.Primary"
+                                                         Label="Editar" />
+                                        </MudTooltip>
+
+                                        <MudTooltip Text="Clique para Deletar" Color="Color.Primary">
+                                            <MudMenuItem OnClick=@(async p => { })
+                                                         Icon="@Icons.Material.TwoTone.Delete"
+                                                         IconColor="Color.Error"
+                                                         Label="Deletar" />
+                                        </MudTooltip>
+
+                                    </MudMenu>
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                    <PagerContent>
+
+                        <MudDataGridPager T="ClsComplemento" RowsPerPageString="Complemento por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 40, 60, 300}) />
+
+                    </PagerContent>
+                </MudDataGrid>
+            </MudTabPanel>
+
+        </MudTabs>
+
+
+
+    </MudLayout>
+</MudPaper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@code {
+    //Logica De Complementos
+    private bool CarregandoGrupos = true;
+    private bool CarregandoComplementos = false;
+    private List<ClsGrupoDeComplemento> GruposDeComplementos = new();
+    private List<ClsComplemento> Complementos = new();
+    private int SelecionadoDinamico = 0; //Seleciona se esta manipulado grupos ou complementos //1-Grupos //2-Complementos
+
+
+    //Grid De Complementos
+    private MudDataGrid<ClsComplemento>? dataGridRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await AtualizaGruposDecomplementos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao buscar Complementos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoGrupos = false;
+
+        }
+    }
+
+    private void AoExpandirCardDeGrupo(ClsGrupoDeComplemento grupo)
+    {
+        grupo.Expanded = !grupo.Expanded;
+    }
+
+
+    private async Task AtualizaGruposDecomplementos()
+    {
+        CarregandoGrupos = true;
+        try
+        {
+            GruposDeComplementos = await ComplementosService.GetGruposDeComplementos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar grupos de complementos: {ex.ToString()}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoGrupos = false;
+            StateHasChanged();
+        }
+
+    }
+
+
+    //Parte para fazer resonsividade //--------------------------------------------------------------------------------------
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "65%";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "95%" : "65%";
+
+        if (_width < 768)
+        {
+
+        }
+        else
+        {
+
+        }
+
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task<GridData<ClsComplemento>> LoadServerData(GridState<ClsComplemento> state)
+    {
+        try
+        {
+            CarregandoComplementos = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await ComplementosService.GetComplementosPagineted(page, pageSize);
+
+
+            return new GridData<ClsComplemento>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar produtos: {ex.Message}", Severity.Error);
+            return new GridData<ClsComplemento>
+            {
+
+            };
+
+        }
+        finally
+        {
+            CarregandoComplementos = false;
+        }
+
+    }
+}
