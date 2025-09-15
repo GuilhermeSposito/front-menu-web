@@ -112,11 +112,11 @@ public class ComplementosServices
         return response.Data.Objeto ?? new ClsGrupoDeComplemento();
     }
 
-    public async Task<List<ClsComplemento>> GetComplementos(int page, int pageSize)
+    public async Task<ClsComplemento> GetComplemento(int IdDoComplemento)
     {
-        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos?limit={pageSize}&page={page}") ?? new ReturnApiRefatored<ClsComplemento>();
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}") ?? new ReturnApiRefatored<ClsComplemento>();
 
-        return response.Data.Lista ?? new List<ClsComplemento>();
+        return response.Data.Objeto ?? new ClsComplemento();
     }
 
     public async Task<PaginatedResponse<ClsComplemento>> GetComplementosPagineted(int page, int pageSize)
@@ -124,5 +124,20 @@ public class ComplementosServices
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsComplemento>>($"complementos?limit={pageSize}&page={page}") ?? new PaginatedResponse<ClsComplemento>();
 
         return response ?? new PaginatedResponse<ClsComplemento>();
+    }
+
+    public async Task<ReturnApiRefatored<ClsGrupoDeComplemento>> UpdateGrupoDeComplemento(ClsGrupoDeComplemento grupo)
+    {
+        var response = await _http.PatchAsJsonAsync($"complementos/grupo-de-complementos/{grupo.Id}", grupo);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>() ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+        return result;
+    }
+    public async Task<ReturnApiRefatored<ClsComplemento>> UpdateComplemento(ClsComplemento complemento)
+    {
+        complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
+
+        var response = await _http.PatchAsJsonAsync($"complementos/{complemento.Id}", complemento);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsComplemento>>() ?? new ReturnApiRefatored<ClsComplemento>();
+        return result;
     }
 }

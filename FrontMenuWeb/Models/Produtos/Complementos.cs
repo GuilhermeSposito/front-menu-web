@@ -31,7 +31,8 @@ public class ClsComplemento
     [JsonPropertyName("ComplementoInfo")] public string? ComplementoInfo { get; set; }
     [JsonPropertyName("valor")] public float Valor { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
-    [JsonPropertyName("ComplementosDosGrupos")] public List<ClsComplementoDoGrupo> Grupos { get; set; } = new();
+    [JsonPropertyName("grupos")] public List<int> GruposIds { get; set; } = new List<int>();
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("ComplementosDosGrupos")] public List<ClsComplementoDoGrupo> Grupos { get; set; } = new();
 }
 
 
