@@ -3,6 +3,7 @@
 @page "/complementos"
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -24,77 +25,85 @@
                 <MudText Class="mb-3" Typo="Typo.body1">@(SelecionadoDinamico == 0 ? "Lista de Grupo de Complementos Cadastrados." : "Lista de Complementos Cadastrados.")</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoGrupos ? true : false" OnClick="@(() => { })">@(SelecionadoDinamico == 0 ? "Novo Grupo" : "Novo Complementos")</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoGrupos ? true : false"
+                OnClick="@( async () => {
+                    if(SelecionadoDinamico == 0){
+                        await AbrirModalDeAdicionarOuEditarGrupoDeComplementos(true);
+                        }else{
+
+                }})">@(SelecionadoDinamico == 0 ? "Novo Grupo" : "Novo Complementos")</MudButton>
             </div>
         </div>
         <MudDivider Class="mb-4" Light=true />
-        <MudTabs Elevation="2" @bind-ActivePanelIndex="SelecionadoDinamico" Class="w-100 h-100" Rounded="true" ApplyEffectsToContainer="true">
-            <MudTabPanel Text="Grupos">
-                @foreach (var grupo in GruposDeComplementos)
-                {
-                    <MudCard Class="mb-2">
-                        <MudCardHeader>
-                            <CardHeaderAvatar>
-                                <MudAvatar Color="Color.Primary">@grupo.Descricao.Substring(0, 1)</MudAvatar>
-                            </CardHeaderAvatar>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.body1">@grupo.Descricao</MudText>
-                                <MudText Typo="Typo.body2">@grupo.GrupoInfo</MudText>
-                            </CardHeaderContent>
-                            <CardHeaderActions>
-                                <MudTooltip Text="Clique para ver complementos deste grupo." Color="Color.Primary">
-                                    <MudIconButton Icon="@((grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(grupo)" />
-                                </MudTooltip>
-                                <MudTooltip Text="Clique para adicionar complementos neste grupo." Color="Color.Primary">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
-                                </MudTooltip>
-                                <MudTooltip Text="Clique para pausar/ativar Grupo" Color="Color.Primary">
-                                    <MudIconButton Icon=@( !grupo.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaGrupoDeComplemento(grupo); })" />
-                                </MudTooltip>
-                                <MudTooltip Text="Clique para editar grupo." Color="Color.Primary">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                                </MudTooltip>
-                                <MudTooltip Text="Clique para deletar grupo." Color="Color.Error">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                                </MudTooltip>
-                            </CardHeaderActions>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            @if (grupo.Expanded)
-                            {
-                                <MudDivider Class="mb-1" Light=true />
-                                @*aqui vai os complementos do grupo*@
-                                @foreach (var complemento in grupo.Complementos)
+        <MudTabs Ripple=true Color="Color.Primary" SliderAnimation=true Outlined=true Elevation="0" @bind-ActivePanelIndex="SelecionadoDinamico" Class="w-100 h-100" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Icon="@Icons.Material.Filled.GroupWork"  Text="Grupos">
+                <MudStack Spacing="4">
+                    @foreach (var grupo in GruposDeComplementos)
+                    {
+                        <MudCard>
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudAvatar Color="Color.Primary">@grupo.Descricao.Substring(0, 1)</MudAvatar>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">@grupo.Descricao</MudText>
+                                    <MudText Typo="Typo.body2">@grupo.GrupoInfo</MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    <MudTooltip Text="Clique para ver complementos deste grupo." Color="Color.Primary">
+                                        <MudIconButton Icon="@((grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(grupo)" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Clique para adicionar complementos neste grupo." Color="Color.Primary">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Clique para pausar/ativar Grupo" Color="Color.Primary">
+                                        <MudIconButton Icon=@( !grupo.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaGrupoDeComplemento(grupo); })" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Clique para editar grupo." Color="Color.Primary">
+                                        <MudIconButton OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarGrupoDeComplementos(false, grupo);}) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Clique para deletar grupo." Color="Color.Error">
+                                        <MudIconButton OnClick=@(async ()=> { await DeletaGrupoDeComplementos(grupo);}) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                    </MudTooltip>
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                @if (grupo.Expanded)
                                 {
-                                    <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
-                                        <MudCardHeader>
-                                            <CardHeaderContent>
-                                                <MudText Typo="Typo.body1">@complemento.Complemento.Descricao</MudText>
-                                                <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
-                                            </CardHeaderContent>
-                                            <CardHeaderActions>
-                                                <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                                            </CardHeaderActions>
-                                        </MudCardHeader>
-                                    </MudCard>
+                                    <MudDivider Class="mb-1" Light=true />
+                                    @*aqui vai os complementos do grupo*@
+                                    @foreach (var complemento in grupo.Complementos)
+                                    {
+                                        <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
+                                            <MudCardHeader>
+                                                <CardHeaderContent>
+                                                    <MudText Typo="Typo.body1">@complemento.Complemento.Descricao</MudText>
+                                                    <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
+                                                </CardHeaderContent>
+                                                <CardHeaderActions>
+                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                                </CardHeaderActions>
+                                            </MudCardHeader>
+                                        </MudCard>
+                                    }
+
+
+                                    @if (grupo.Complementos.Count() == 0)
+                                    {
+                                        <MudStack AlignItems="AlignItems.Center">
+                                            <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento cadastrado neste grupo.</MudText>
+                                        </MudStack>
+                                    }
                                 }
 
-
-                                @if (grupo.Complementos.Count() == 0)
-                                {
-                                    <MudStack AlignItems="AlignItems.Center">
-                                        <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento cadastrado neste grupo.</MudText>
-                                    </MudStack>
-                                }
-                            }
-
-                        </MudCardContent>
-                    </MudCard>
-                }
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </MudStack>
             </MudTabPanel>
-            <MudTabPanel Text="Complementos">
+            <MudTabPanel Icon="@Icons.Material.Filled.PlaylistAddCheckCircle" Text="Complementos">
                 <MudDataGrid T="ClsComplemento"
                              @ref="dataGridRef"
                              EditTrigger="DataGridEditTrigger.Manual"
@@ -110,7 +119,7 @@
                         <TemplateColumn T="ClsComplemento" Title="Ativo">
                             <CellTemplate Context="context">
                                 <MudTooltip Text="Clique para ativar/desativar o método" Color="Color.Primary">
-                                    <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { await PausaEDespausaComplemento(context.Item);})" />
+                                    <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { await PausaEDespausaComplemento(context.Item); })" />
                                 </MudTooltip>
                             </CellTemplate>
                         </TemplateColumn>
@@ -287,6 +296,60 @@
             Snackbar.Add($"{ex.Message}", Severity.Error);
         }
 
+    }
+
+    public async Task AbrirModalDeAdicionarOuEditarGrupoDeComplementos(bool criandoGrupo = false, ClsGrupoDeComplemento? GrupoDEComplementoParaEditar = null)
+    {
+        //ModalDeAdicionarEEditarUmGrupoDeComplementos
+        var IdDoGrupo = 0;
+
+        if (GrupoDEComplementoParaEditar is not null)
+        {
+            IdDoGrupo = GrupoDEComplementoParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdDoGrupo", IdDoGrupo},
+           { "ECriacao", criandoGrupo}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEEditarUmGrupoDeComplementos>(criandoGrupo ? "Adicionar Grupo" : "Editar Grupo", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await AtualizaGruposDecomplementos();
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task DeletaGrupoDeComplementos(ClsGrupoDeComplemento Grupo)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir o grupo {Grupo.Descricao} ? Atenção ! Essa Ação não pode ser desfeita e exclui-lo irá remover toda a relação com os produtos!" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                 var respostaApi = await ComplementosService.DeleteGrupoDeComplemento(Grupo.Id);
+
+                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    await AtualizaGruposDecomplementos();
+               
+            }
     }
 
 

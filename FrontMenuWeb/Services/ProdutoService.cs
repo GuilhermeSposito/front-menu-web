@@ -112,6 +112,30 @@ public class ComplementosServices
         return response.Data.Objeto ?? new ClsGrupoDeComplemento();
     }
 
+    public async Task<ReturnApiRefatored<ClsGrupoDeComplemento>> CreateGrupoDeComplemento(ClsGrupoDeComplemento grupo)
+    {
+        var response = await _http.PostAsJsonAsync("complementos/grupo-de-complementos", grupo);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>() ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+        return result;
+    }
+    public async Task<ReturnApiRefatored<ClsGrupoDeComplemento>> UpdateGrupoDeComplemento(ClsGrupoDeComplemento grupo)
+    {
+        var response = await _http.PatchAsJsonAsync($"complementos/grupo-de-complementos/{grupo.Id}", grupo);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>() ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+        return result;
+    }
+
+    public async Task<ReturnApiRefatored<ClsGrupoDeComplemento>> DeleteGrupoDeComplemento(int idDoGrupo)
+    {
+        var response = await _http.DeleteAsync($"complementos/grupo-de-complementos/{idDoGrupo}");
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>() ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
+        return result;
+    }
+
+
+
+    //Parte de complementos
+
     public async Task<ClsComplemento> GetComplemento(int IdDoComplemento)
     {
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}") ?? new ReturnApiRefatored<ClsComplemento>();
@@ -126,12 +150,6 @@ public class ComplementosServices
         return response ?? new PaginatedResponse<ClsComplemento>();
     }
 
-    public async Task<ReturnApiRefatored<ClsGrupoDeComplemento>> UpdateGrupoDeComplemento(ClsGrupoDeComplemento grupo)
-    {
-        var response = await _http.PatchAsJsonAsync($"complementos/grupo-de-complementos/{grupo.Id}", grupo);
-        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGrupoDeComplemento>>() ?? new ReturnApiRefatored<ClsGrupoDeComplemento>();
-        return result;
-    }
     public async Task<ReturnApiRefatored<ClsComplemento>> UpdateComplemento(ClsComplemento complemento)
     {
         complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
