@@ -24,7 +24,7 @@ public class ProdutoService
 
         return response;
     }
-    
+
     public async Task<ClsProduto> GetProdutoAsync(string ProdutoID)
     {
         ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/{ProdutoID}") ?? new ClsProduto();
@@ -52,25 +52,25 @@ public class ProdutoService
         var response = await _http.PatchAsJsonAsync($"produtos/{produto.Id}", produto);
         return response;
 
-    }  
-    
+    }
+
     public async Task<HttpResponseMessage> EditaPrecoDoProduto(Preco preco)
     {
         var response = await _http.PatchAsJsonAsync($"produtos/preco/modificar/{preco.Id}", preco);
         return response;
-    }    
-    
+    }
+
     public async Task<HttpResponseMessage> DeletaProduto(ClsProduto produto)
     {
         var response = await _http.DeleteAsync($"produtos/{produto.Id}");
         return response;
-    }   
+    }
     public async Task<HttpResponseMessage> DeletaPreco(Preco preco)
     {
         var response = await _http.DeleteAsync($"produtos/preco/deletar/{preco.Id}");
         return response;
-    } 
-    
+    }
+
     public async Task<HttpResponseMessage> AdicionaValorNoProduto(string idProduto, Preco preco)
     {
         AdicionarPrecoDto precoDto = new AdicionarPrecoDto()
@@ -85,9 +85,9 @@ public class ProdutoService
 
         var response = await _http.PostAsJsonAsync($"produtos/preco/adicionar/{idProduto}", precoDto);
         return response;
-    }   
-    
-  
+    }
+
+
 }
 
 
@@ -150,12 +150,34 @@ public class ComplementosServices
         return response ?? new PaginatedResponse<ClsComplemento>();
     }
 
-    public async Task<ReturnApiRefatored<ClsComplemento>> UpdateComplemento(ClsComplemento complemento)
+    public async Task<ReturnApiRefatored<ClsComplemento>> UpdateComplemento(ClsComplemento complemento, bool VizualizaGrupos = true)
     {
-        complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
+        if (VizualizaGrupos)
+            complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
 
         var response = await _http.PatchAsJsonAsync($"complementos/{complemento.Id}", complemento);
-        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsComplemento>>() ?? new ReturnApiRefatored<ClsComplemento>();
+
+        string rawResponse = await response.Content.ReadAsStringAsync();
+        //Console.WriteLine(rawResponse);
+
+        var result = JsonSerializer.Deserialize<ReturnApiRefatored<ClsComplemento>>(rawResponse)
+                     ?? new ReturnApiRefatored<ClsComplemento>();
+
+        return result;
+    }
+    public async Task<ReturnApiRefatored<ClsComplemento>> CreateComplemento(ClsComplemento complemento, bool VizualizaGrupos = true)
+    {
+        if (VizualizaGrupos)
+            complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
+
+        var response = await _http.PostAsJsonAsync($"complementos", complemento);
+
+        string rawResponse = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(rawResponse);
+
+        var result = JsonSerializer.Deserialize<ReturnApiRefatored<ClsComplemento>>(rawResponse)
+                     ?? new ReturnApiRefatored<ClsComplemento>();
+
         return result;
     }
 }

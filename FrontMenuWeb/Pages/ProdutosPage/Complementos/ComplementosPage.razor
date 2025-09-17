@@ -30,7 +30,7 @@
                     if(SelecionadoDinamico == 0){
                         await AbrirModalDeAdicionarOuEditarGrupoDeComplementos(true);
                         }else{
-
+                        await AbrirModalDeAdicionarOuEditarComplemento(true);
                 }})">@(SelecionadoDinamico == 0 ? "Novo Grupo" : "Novo Complementos")</MudButton>
             </div>
         </div>
@@ -54,7 +54,7 @@
                                         <MudIconButton Icon="@((grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(grupo)" />
                                     </MudTooltip>
                                     <MudTooltip Text="Clique para adicionar complementos neste grupo." Color="Color.Primary">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                                        <MudIconButton  OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarComplemento(true, IdDoGrupoQueJaVaiRelacionar: grupo.Id);}) Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
                                     </MudTooltip>
                                     <MudTooltip Text="Clique para pausar/ativar Grupo" Color="Color.Primary">
                                         <MudIconButton Icon=@( !grupo.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaGrupoDeComplemento(grupo); })" />
@@ -71,7 +71,6 @@
                                 @if (grupo.Expanded)
                                 {
                                     <MudDivider Class="mb-1" Light=true />
-                                    @*aqui vai os complementos do grupo*@
                                     @foreach (var complemento in grupo.Complementos)
                                     {
                                         <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
@@ -82,7 +81,7 @@
                                                 </CardHeaderContent>
                                                 <CardHeaderActions>
                                                     <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                    <MudIconButton OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento);}) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
                                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
                                                 </CardHeaderActions>
                                             </MudCardHeader>
@@ -145,14 +144,14 @@
 
 
                                         <MudTooltip Text="Clique para editar" Color="Color.Primary">
-                                            <MudMenuItem OnClick=@(async p => { })
+                                            <MudMenuItem OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarComplemento(false, context.Item);})
                                                          Icon="@Icons.Material.TwoTone.Edit"
                                                          IconColor="Color.Primary"
                                                          Label="Editar" />
                                         </MudTooltip>
 
                                         <MudTooltip Text="Clique para Deletar" Color="Color.Primary">
-                                            <MudMenuItem OnClick=@(async p => { })
+                                            <MudMenuItem 
                                                          Icon="@Icons.Material.TwoTone.Delete"
                                                          IconColor="Color.Error"
                                                          Label="Deletar" />
@@ -327,6 +326,41 @@
 
     }
 
+    public async Task AbrirModalDeAdicionarOuEditarComplemento(bool criandoGrupo = false, ClsComplemento? ComplementoParaEditar = null, int IdDoGrupoQueJaVaiRelacionar = 0)
+    {
+        //ModalDeAdicionarEEditarUmGrupoDeComplementos
+        var IdDoComplemento = 0;
+
+        if (ComplementoParaEditar is not null)
+        {
+            IdDoComplemento = ComplementoParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdDoComplemento", IdDoComplemento},
+           { "ECriacao", criandoGrupo},
+           { "IdDoGrupoQueJaVaiRelacionar", IdDoGrupoQueJaVaiRelacionar }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEEditarComplementos>(criandoGrupo ? "Adicionar Complemento" : "Editar Complemento", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            if (dataGridRef is not null)
+            {
+                await dataGridRef.ReloadServerData();
+            }
+
+            await AtualizaGruposDecomplementos();
+            StateHasChanged();
+        }
+
+    }
+
     private async Task DeletaGrupoDeComplementos(ClsGrupoDeComplemento Grupo)
     {
         var parameters = new DialogParameters<ModalDeExcluir>
@@ -352,6 +386,7 @@
             }
     }
 
+ 
 
     //Parte para fazer resonsividade //--------------------------------------------------------------------------------------
     [Inject] private IBrowserViewportService BrowserViewportService { get; set; }

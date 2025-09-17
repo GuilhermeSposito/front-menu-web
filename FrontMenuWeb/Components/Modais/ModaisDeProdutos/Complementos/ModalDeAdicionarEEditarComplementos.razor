@@ -1,0 +1,332 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@inject ComplementosServices ComplementosServices
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+            @if (!CarregandoComplemento)
+            {
+                <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
+                            <MudStack Class="w-100" Row=true>
+                                <MudTextField @bind-Value=@Complemento.Descricao Label="Descrição" Required RequiredError="A Descrição é obrigatória" Immediate=true Class="w-75" Variant="Variant.Filled" />
+                                <MudSwitch T="bool" Value=@Complemento.Ativo Color="Color.Success" Class="w-25" ValueChanged="@(async valor => { Complemento.Ativo = valor; })" />
+                            </MudStack>
+                            <MudStack Class="w-100">
+                                <MudTextField @bind-Value=@Complemento.ComplementoInfo Label="Informações" HelperText="Explique em uma frase curta o que é o complemento." Immediate=true Class="w-100" Variant="Variant.Filled" />
+                            </MudStack>
+                            <MudStack Class="w-100" AlignItems="AlignItems.Center" Row=true>
+                                <MudNumericField @ref="_numeric"
+                                                 Immediate="false"
+                                                 Variant="Variant.Filled"
+                                                 Format="N2"
+                                                 Label="Valor"
+                                                 Required
+                                                 RequiredError="O Valor é obrigatório"
+                                                 Culture="_pt"
+                                                 T="float"
+                                                 Class="w-25"
+                                                 HideSpinButtons="true"
+                                                 AdornmentText="R$"
+                                                 Min="0"
+                                                 Adornment="Adornment.Start"
+                                                 @bind-Value="Complemento.Valor"
+                                                 onfocus="@HandleFocus" />
+                            </MudStack>
+
+                        </MudStack>
+
+                        <MudCard Class="w-100" style="background-color: var(--mud-palette-background);">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">Grupos de Complementos Relacionados</MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    <MudTooltip Text="Arraste e Solte os grupos para adiciona-los na relação de complemento com o grupo.">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Info" Color="Color.Default" />
+                                    </MudTooltip>
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudDropContainer T="ClsGrupoDeComplemento"
+                                                  Items="GruposDeComplemento"
+                                                  ItemsSelector="Selector"
+                                                  ItemDropped="OnItemDropped"
+                                                  Class="d-flex flex-column flex-grow-1"
+                                                  @ref="@mudItemDropContainer"
+                                                  Style="background-color: var(--mud-palette-surface); min-height: 100px; border: 2px dashed var(--mud-palette-primary);">
+
+                                    <ChildContent>
+                                        <MudPaper class="d-flex flex-column flex-grow-1">
+                                            <MudListSubheader class="mt-4 pb-2">Grupos de Complemento Disponíveis</MudListSubheader>
+                                            <MudDropZone T="ClsGrupoDeComplemento" Identifier="Disponiveis"
+                                                         ItemDraggingClass="mud-info-text"
+                                                         Class="d-flex flex-wrap flex-grow-1 pa-2 rounded" />
+                                        </MudPaper>
+
+                                        <MudPaper class="d-flex flex-column flex-grow-1 p-2">
+                                            <MudListSubheader class="mt-4 pb-2">Grupos de Complementos vinculadas ao Complemento</MudListSubheader>
+                                            <MudDropZone Style="background-color: var(--mud-palette-surface); min-height: 100px; border: 2px dashed var(--mud-palette-primary);"
+                                                         T="ClsGrupoDeComplemento" Identifier="Vinculadas"
+                                                         DraggingClass="mud-alert-text-normal"
+                                                         Class="d-flex flex-wrap flex-grow-1 pa-2 rounded">
+                                                @if (!Complemento.GruposIds.Any())
+                                                {
+                                                    <MudStack Class="w-100" Row="false" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                                                        <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" Color="Color.Primary" />
+                                                        <MudText Typo="Typo.body1" Align="Align.Center">
+                                                            Arraste os grupos desejados para esta área
+                                                        </MudText>
+                                                        <MudText Typo="Typo.caption" Color="Color.Primary" Align="Align.Center">
+                                                            ou clique em um grupo vinculá-lo
+                                                        </MudText>
+                                                    </MudStack>
+                                                }
+                                            </MudDropZone>
+                                        </MudPaper>
+                                    </ChildContent>
+
+                                    <ItemRenderer>
+                                        <MudPaper Class="rounded mud-paper-outlined d-flex align-center pa-3 ma-2 cursor-pointer"
+                                                  onclick="@(() => OnGrupoClicked(context))">
+                                            @context.Descricao
+                                        </MudPaper>
+                                    </ItemRenderer>
+                                </MudDropContainer>
+
+
+
+
+                            </MudCardContent>
+
+                        </MudCard>
+
+                    </MudFocusTrap>
+                </MudForm>
+            }
+            else
+            {
+                <MudStack Class="w-100" Row=true>
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-75" />
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-25" />
+                </MudStack>
+                <MudStack Class="w-100 mt-2">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="70px" Class="w-100" />
+                </MudStack>
+
+
+            }
+
+
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton style="color: #F88113" OnClick="Submit">@(ECriacao ? "Adicionar" : "Atualizar")</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    private MudNumericField<float> _numeric;
+
+    private bool ErroAoAdicionarGrupoDeComplementos = false;
+    private string MensagemDeErro = string.Empty;
+    private bool CarregandoComplemento = true;
+
+    [Parameter] public bool ECriacao { get; set; }
+    [Parameter] public int IdDoComplemento { get; set; } = 0;
+    [Parameter] public int IdDoGrupoQueJaVaiRelacionar { get; set; } = 0;
+
+    private ClsComplemento Complemento = new ClsComplemento();
+
+    MudDropContainer<ClsGrupoDeComplemento> mudItemDropContainer;
+    private List<ClsGrupoDeComplemento> GruposDeComplemento { get; set; } = new List<ClsGrupoDeComplemento>();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            GruposDeComplemento = await ComplementosServices.GetGruposDeComplementos();
+
+
+            if (!ECriacao)
+            {
+                Complemento = await ComplementosServices.GetComplemento(IdDoComplemento);
+            }
+            else
+            {
+                if (IdDoGrupoQueJaVaiRelacionar != 0)
+                {
+                    Complemento.GruposIds.Add(IdDoGrupoQueJaVaiRelacionar);
+                }
+            }
+
+
+
+            foreach (var grupo in GruposDeComplemento)
+            {
+                foreach (var grupoDeComplementos in Complemento.Grupos)
+                {
+                    if (grupoDeComplementos.Grupo.Id == grupo.Id)
+                    {
+                        Complemento.GruposIds.Add(grupoDeComplementos.Grupo.Id);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Grupo de complementos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoComplemento = false;
+        }
+
+
+    }
+
+
+
+    private async Task Submit()
+    {
+        try
+        {
+            ReturnApiRefatored<ClsComplemento> ResponseAPi = new ReturnApiRefatored<ClsComplemento>(); // mudar quando colocar a logica
+
+            if (ECriacao)
+            {
+                ResponseAPi = await ComplementosServices.CreateComplemento(Complemento, false);
+            }
+            else
+            {
+                ResponseAPi = await ComplementosServices.UpdateComplemento(Complemento, false);
+            }
+
+
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (ResponseAPi.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                MensagemDeErro = MensagemDeRetorno;
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar complemento: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private bool Selector(ClsGrupoDeComplemento grupo, string dropzone)
+    {
+        return dropzone switch
+        {
+            "Vinculadas" => Complemento.GruposIds.Contains(grupo.Id),
+            "Disponiveis" => !Complemento.GruposIds.Contains(grupo.Id),
+            _ => false
+        };
+    }
+
+    private async Task OnItemDropped(MudItemDropInfo<ClsGrupoDeComplemento> dropInfo)
+    {
+        try
+        {
+            var grupo = dropInfo.Item;
+
+            if (dropInfo.DropzoneIdentifier == "Vinculadas")
+            {
+                if (!Complemento.GruposIds.Contains(grupo.Id))
+                {
+                    Complemento.GruposIds.Add(grupo.Id);
+                }
+            }
+            else if (dropInfo.DropzoneIdentifier == "Disponiveis")
+            {
+
+                if (Complemento.GruposIds.Contains(grupo.Id))
+                    Complemento.GruposIds.Remove(grupo.Id);
+            }
+
+
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+
+            Snackbar.Add("Erro ao processar a ação de arrastar e soltar.", Severity.Error);
+        }
+
+    }
+
+    private async Task OnGrupoClicked(ClsGrupoDeComplemento grupo)
+    {
+        try
+        {
+            if (Complemento.GruposIds.Contains(grupo.Id))
+            {
+
+                Complemento.GruposIds.Remove(grupo.Id);
+            }
+            else
+            {
+
+                Complemento.GruposIds.Add(grupo.Id);
+
+            }
+
+            mudItemDropContainer?.Refresh();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao processar a ação de clicar no grupo de complemento: {ex.Message}", Severity.Error);
+        }
+    }
+
+
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task HandleFocus(FocusEventArgs args)
+    {
+        await _numeric.FocusAsync();  // garante o foco
+        await _numeric.SelectAsync(); // seleciona todo o texto
+    }
+
+}
