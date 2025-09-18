@@ -12,7 +12,7 @@ public class ClsProduto
     [JsonPropertyName("descricao")] public string? Descricao { get; set; }
     [JsonPropertyName("ncm")] public string? NCM { get; set; }
     [JsonPropertyName("cest")] public string? CEST { get; set; }
-
+    [JsonPropertyName("GruposDeComplementosDoProduto")] public List<ClsGruposDeComplementosDoProduto>? GruposDeComplementosDoProduto { get; set; }
     [JsonPropertyName("cod_barra")] public string? CodBarras { get; set; }
     [JsonPropertyName("imagem_produto")] public string? ImgProduto { get; set; }
     [JsonPropertyName("impressora_comanda1")] public string? ImpressoraComanda1 { get; set; }

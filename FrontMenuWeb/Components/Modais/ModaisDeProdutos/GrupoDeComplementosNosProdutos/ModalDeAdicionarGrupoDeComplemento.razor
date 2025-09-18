@@ -1,0 +1,201 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@inject ComplementosServices ComplementosServices
+
+
+<MudDialog OnKeyDown="OnKeyDownAsync">
+    <DialogContent>
+        @if (!carregandoGrupos)
+        {
+            <MudText Class="mb-3" Typo="Typo.h6" Align="Align.Center">Selecione os Grupos de Complementos para adicionar ao produto @Produto.Descricao</MudText>
+            <MudSelect MultiSelection=true T="ClsGrupoDeComplemento" ToStringFunc="c => c?.Descricao" Label="Grupos Selecionados" SelectedValues=@GruposSelecionados SelectedValuesChanged="OnFiltrosChanged">
+                @foreach (var grupo in Grupos)
+                {
+                    <MudSelectItem T="ClsGrupoDeComplemento" Value="grupo">@grupo.Descricao</MudSelectItem>
+                }
+            </MudSelect>
+            <MudDivider Class="mb-2 mt-3" Light=true />
+            <MudStack Class="w-100" Spacing="2">
+                @foreach (var Grupo in GruposSelecionados)
+                {
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary">@Grupo.Descricao.Substring(0, 1)</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudStack Row="true" AlignItems=AlignItems.Center Spacing="3">
+                                    <MudText Typo="Typo.body1">@Grupo.Descricao</MudText>
+                                    @if (Grupo.QtdMin > 0)
+                                    {
+                                        <MudChip T="string" Color="Color.Primary">Obrigatório</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Primary">Opcional</MudChip>
+                                    }
+                                </MudStack>
+                                <MudText Typo="Typo.body2">@Grupo.GrupoInfo</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudStack Class="w-100 p-1">
+                                <MudNumericField HelperText="Descreva a quantidade Minima de complementos permitidos" Label="Quantidade Minima Permitida para Seleção dos Complementos" Variant="Variant.Filled" T="int" Immediate=true @bind-Value=@Grupo.QtdMin></MudNumericField>
+                                <MudNumericField HelperText="Descreva a quantidade Maxima de complementos permitidos" Label="Quantidade Maxima Permitida para Seleção dos Complementos" Variant="Variant.Filled" T="int" Immediate=true @bind-Value=@Grupo.QtdMax></MudNumericField>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </MudStack>
+
+
+        }
+        else
+        {
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            <MudText>Carregando Grupos de Complementos...</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Inject]
+    private IDialogService _dialogService { get; set; } // for MessageBox
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    private IEnumerable<ClsGrupoDeComplemento> GruposSelecionados = new HashSet<ClsGrupoDeComplemento>();
+    private List<ClsGruposDeComplementosDoProduto> GruposNosProdutos = new List<ClsGruposDeComplementosDoProduto>();
+
+    [Parameter] public ClsProduto Produto { get; set; } = new();
+
+    //Lógica para ter os Grupos de Complemento
+    private List<ClsGrupoDeComplemento> Grupos = new();
+    private bool carregandoGrupos = true;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Grupos = await ComplementosServices.GetGruposDeComplementos();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar os Grupos de Complementos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            carregandoGrupos = false;
+        }
+
+    }
+
+    private async Task OnFiltrosChanged(IEnumerable<ClsGrupoDeComplemento> grupos)
+    {
+        GruposSelecionados = grupos;
+
+    }
+
+
+    private async Task Submit()
+    {
+        try
+        {
+            List<string> erros = new List<string>();
+            List<string> sucess = new List<string>();
+
+            carregandoGrupos = true;
+            foreach (var grupo in GruposSelecionados)
+            {
+                var Relacao = new ClsGruposDeComplementosDoProduto()
+                {
+                    Grupo = grupo,
+                    GrupoId = grupo.Id,
+                    ProdutoId = Produto.Id ?? "",
+                    QtdMin = grupo.QtdMin,
+                    QtdMax = grupo.QtdMax
+                };
+
+                var returnApi = await ComplementosServices.VincularGrupoDeComplementoAoProduto(Relacao);
+
+                if (returnApi.Status == "error")
+                {
+                    erros.Add(returnApi.Messages.FirstOrDefault() ?? "");
+                }
+                else
+                {
+                    foreach (var message in returnApi.Data.Messages)
+                    {
+                        sucess.Add(message);
+                    }
+                }
+
+            }
+
+            if (erros.Count() == 0)
+            {
+                if (sucess.Count > 0)
+                {
+                    var MensagemDeSucesso = string.Join(", ", sucess);
+                    Snackbar.Add($"Sucesso em adicionar as relações: {MensagemDeSucesso}", Severity.Success);
+                }
+
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                if (sucess.Count > 0)
+                {
+                    var MensagemDeSucesso = string.Join(", ", sucess);
+                    Snackbar.Add($"Sucesso em adicionar as relações: {MensagemDeSucesso}", Severity.Success);
+                }
+
+                var mensagemDeErro = string.Join(", ", erros);
+                Snackbar.Add($"Alguns erros ocorreram ao adicionar as relações: {mensagemDeErro}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar relação: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            carregandoGrupos = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Enter":
+            case "NumpadEnter":
+                if (GruposSelecionados.Count() == 0)
+                {
+                    await _dialogService.ShowMessageBox(
+                        "Sorry",
+                        @"You must either select a coffee and close with Enter or cancel with Escape!",
+                        yesText: "Got it",
+                        options: new DialogOptions() { CloseOnEscapeKey = true });
+                    return;
+                }
+                Submit();
+                break;
+        }
+    }
+
+}

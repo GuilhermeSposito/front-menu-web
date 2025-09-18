@@ -152,6 +152,7 @@
 
                                         <MudTooltip Text="Clique para Deletar" Color="Color.Primary">
                                             <MudMenuItem 
+                                                         OnClick=@(async ()=> { await DeletaComplemento( context.Item);})
                                                          Icon="@Icons.Material.TwoTone.Delete"
                                                          IconColor="Color.Error"
                                                          Label="Deletar" />
@@ -369,21 +370,47 @@
                     { x => x.ButtonText, "Sim" },
                     { x => x.Color, Color.Error}
                 };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-            var result = await dialog.Result;
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
 
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-            {
-                 var respostaApi = await ComplementosService.DeleteGrupoDeComplemento(Grupo.Id);
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var respostaApi = await ComplementosService.DeleteGrupoDeComplemento(Grupo.Id);
 
-                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
-                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+            string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+            Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
 
-                if (respostaApi.Status == "success")
-                    await AtualizaGruposDecomplementos();
-               
+            if (respostaApi.Status == "success")
+                await AtualizaGruposDecomplementos();
+
+        }
+    }
+
+    private async Task DeletaComplemento(ClsComplemento complemento )
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir o complemento {complemento.Descricao} ? Atenção ! Essa Ação não pode ser desfeita e exclui-lo irá remover toda a relação com os Grupos de complementos!" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var respostaApi = await ComplementosService.DeleteComplemento(complemento.Id);
+
+            string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+            Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (respostaApi.Status == "success")
+            {   await AtualizaGruposDecomplementos();
+                await dataGridRef!.ReloadServerData();
             }
+        }
     }
 
  

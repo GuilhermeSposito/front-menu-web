@@ -180,4 +180,28 @@ public class ComplementosServices
 
         return result;
     }
+
+    public async Task<ReturnApiRefatored<ClsComplemento>> DeleteComplemento(int IdDoComplemento)
+    {
+        var response = await _http.DeleteAsync($"complementos/{IdDoComplemento}");
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsComplemento>>() ?? new ReturnApiRefatored<ClsComplemento>();
+        return result;
+    }
+
+
+
+    //Parte de vinculo de grupos de complemento com produtos
+    public async Task<ReturnApiRefatored<ClsGruposDeComplementosDoProduto>> VincularGrupoDeComplementoAoProduto(ClsGruposDeComplementosDoProduto grupo)
+    {
+        var response = await _http.PostAsJsonAsync($"complementos/produtos", grupo);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGruposDeComplementosDoProduto>>() ?? new ReturnApiRefatored<ClsGruposDeComplementosDoProduto>();
+        return result;
+    }
+
+    public async Task<ReturnApiRefatored<ClsGruposDeComplementosDoProduto>> DeletarVinculoDeGrupoDeComplementoDoProduto(int idDoVinculo)
+    {
+        var response = await _http.DeleteAsync($"complementos/produtos/{idDoVinculo}");
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGruposDeComplementosDoProduto>>() ?? new ReturnApiRefatored<ClsGruposDeComplementosDoProduto>();
+        return result;
+    }
 }

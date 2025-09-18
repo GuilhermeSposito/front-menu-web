@@ -3,6 +3,8 @@
 @page "/produtos"
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -13,6 +15,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
 @inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
@@ -625,7 +628,7 @@
                 else
                 {
                     Snackbar.Add($"Produto {Prod.Descricao} exclúido com sucesso!", Severity.Error);
-                    await AtualizaProdutos();
+                    await dataGridRef!.ReloadServerData();
                 }
 
             }
@@ -888,6 +891,116 @@
         return InvokeAsync(StateHasChanged);
     }
 
+    private void AoExpandirCardDeGrupo(ClsGrupoDeComplemento grupo)
+    {
+        grupo.Expanded = !grupo.Expanded;
+    }
+
+    private async Task AbreModalDeAdicionarGruposDeComplementos(ClsProduto produto)
+    {
+        var parameters = new DialogParameters
+        {
+           { "Produto", produto}
+        };
+
+        var GruposDeComplementosParAdicionar = new List<ClsGrupoDeComplemento>();
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, MaxWidth = MaxWidth.Large };
+        var dialogReference = await DialogService.ShowAsync<ModalDeAdicionarGrupoDeComplemento>("Adicionar Grupos De Complementos", parameters, options);
+
+
+        StateHasChanged();
+        var dialogResult = await dialogReference.Result;
+        if (dialogResult.Canceled)
+        {
+            Snackbar.Add("Operação cancelada.", Severity.Info);
+            StateHasChanged();
+        }
+        else
+        {
+            carregandoProdutoParaEdicao = true;
+            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(produto.Id ?? "");
+            StateHasChanged();
+            carregandoProdutoParaEdicao = false;
+        }
+    }
+
+    private async Task AbreModalDeRemoverGrupoDeComplementoDoProduto(ClsGruposDeComplementosDoProduto grupo)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                  { x => x.ContentText, $"Você tem certeza que deseja excluir o Grupo de complementos {grupo.Grupo.Descricao}? Essa operação não pode ser desfeita. " },
+                  { x => x.ButtonText, "Sim" },
+                  { x => x.Color, Color.Error}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+
+                var response = await ComplementosServices.DeletarVinculoDeGrupoDeComplementoDoProduto(grupo.Id);
+                if (response.Status == "error")
+                {                
+                    Snackbar.Add($"Erro ao excluir grupo de complementos: {string.Join(", ", response.Messages)}", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add($"Grupo de complementos {grupo.Grupo.Descricao} exclúido com sucesso!", Severity.Success);
+                    carregandoProdutoParaEdicao = true;
+                    ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(ProdutoSelecionadoParaEdicao?.Id ?? "");
+                    StateHasChanged();
+                    carregandoProdutoParaEdicao = false;
+                }
+
+            }
+
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir grupo de complementos do grupo: {ex.ToString()}", Severity.Error);
+        }
+
+    }
+
+
+    public async Task AbrirModalDeAdicionarOuEditarComplemento(bool criandoGrupo = false, ClsComplemento? ComplementoParaEditar = null, int IdDoGrupoQueJaVaiRelacionar = 0)
+    {
+        //ModalDeAdicionarEEditarUmGrupoDeComplementos
+        var IdDoComplemento = 0;
+
+        if (ComplementoParaEditar is not null)
+        {
+            IdDoComplemento = ComplementoParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdDoComplemento", IdDoComplemento},
+           { "ECriacao", criandoGrupo},
+           { "IdDoGrupoQueJaVaiRelacionar", IdDoGrupoQueJaVaiRelacionar }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEEditarComplementos>(criandoGrupo ? "Adicionar Complemento" : "Editar Complemento", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            carregandoProdutoParaEdicao = true;
+            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(ProdutoSelecionadoParaEdicao?.Id ?? "");
+            StateHasChanged();
+            carregandoProdutoParaEdicao = false;
+        }
+
+    }
+
 }
 
 
@@ -1079,68 +1192,110 @@
 
 
                                             <MudPaper Class="h-100">
-                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
+                                                <MudDivider Class="mb-2" Light=true />
+                                                <MudStack Class="p-4" Row=true Justify="Justify.Center">
+                                                    <MudStack AlignItems="AlignItems.Center" Class="w-75">
+                                                        <MudText Typo="Typo.h6">Grupo De Complementos</MudText>
+                                                    </MudStack>
+                                                    <MudStack Class="w-25 mb-2">
+                                                        <MudButton OnClick=@(async () => { await AbreModalDeAdicionarGruposDeComplementos(ProdutoSelecionadoParaEdicao); }) Variant="Variant.Filled" Color="Color.Primary">Adicionar Grupo</MudButton>
+                                                    </MudStack>
+                                                </MudStack>
+                                                @*--------------Aqui vai ser a parte de complementos---------------------------*@
 
-
-                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
-
-                                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
-                                                        <MudRadioGroup T="bool"
-                                                                       Value="ProdutoSelecionadoParaEdicao.CardapioDoDia"
-                                                                       ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.CardapioDoDia = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
-                                                            <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                            <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                                        </MudRadioGroup>
-                                                    </MudPaper>
-
-                                                </MudPaper>
-
-                                                @if (ProdutoSelecionadoParaEdicao.CardapioDoDia)
+                                                @if (ProdutoSelecionadoParaEdicao.GruposDeComplementosDoProduto is not null && ProdutoSelecionadoParaEdicao.GruposDeComplementosDoProduto.Count() == 0)
                                                 {
-                                                    <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
-
-                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                            <MudNumericField T="int"
-                                                                             Value="ProdutoSelecionado.QtdBase"
-                                                                             Immediate="false"
-                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdBase = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
-                                                                             Label="Qtd Base"
-                                                                             Variant="Variant.Outlined"
-                                                                             Step="1"
-                                                                             Min="0"
-                                                                             Max="100" />
-                                                        </MudPaper>
-
-                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                            <MudNumericField T="int"
-                                                                             Value="ProdutoSelecionado.QtdGuarnicao"
-                                                                             Immediate="false"
-                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdGuarnicao = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
-                                                                             Label="Qtd Guarnição"
-                                                                             Variant="Variant.Outlined"
-                                                                             Step="1"
-                                                                             Min="0"
-                                                                             Max="100" />
-                                                        </MudPaper>
-
-
-                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                            <MudNumericField T="int"
-                                                                             Value="ProdutoSelecionadoParaEdicao.QtdCarnes"
-                                                                             Immediate="false"
-                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdCarnes = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
-                                                                             Label="Qtd Carnes"
-                                                                             Variant="Variant.Outlined"
-                                                                             Step="1"
-                                                                             Min="0"
-                                                                             Max="100" />
-                                                        </MudPaper>
-
-
-
-
-                                                    </MudPaper>
+                                                    <MudStack Class="w-100 mt-3" AlignItems="AlignItems.Center">
+                                                        <MudText Color="Color.Error">Nenhum complemento relacionado ao produto</MudText>
+                                                    </MudStack>
                                                 }
+                                                else if (ProdutoSelecionadoParaEdicao.GruposDeComplementosDoProduto is not null)
+                                                {
+
+                                                    @foreach (var relacao in ProdutoSelecionadoParaEdicao.GruposDeComplementosDoProduto)
+                                                    {
+                                                        <MudCard>
+                                                            <MudCardHeader>
+                                                                <CardHeaderAvatar>
+                                                                    <MudAvatar Color="Color.Primary">@relacao.Grupo.Descricao.Substring(0, 1)</MudAvatar>
+                                                                </CardHeaderAvatar>
+                                                                <CardHeaderContent>
+                                                                    <MudStack Row="true" AlignItems=AlignItems.Center Spacing="3">
+                                                                        <MudText Typo="Typo.body1">@relacao.Grupo.Descricao</MudText>
+
+                                                                        @if (relacao.QtdMin == 0)
+                                                                        {
+                                                                            <MudChip T="string" Color="Color.Primary">Opcional</MudChip>
+
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <MudChip T="string" Color="Color.Primary">Obrigatório</MudChip>
+                                                                        }
+
+                                                                        @if (@relacao.QtdMin > 0)
+                                                                        {
+                                                                            <MudText Color="Color.Error" Typo="Typo.body2">Quantidade Minima: @relacao.QtdMin</MudText>
+                                                                        }
+                                                                        @if (@relacao.QtdMax > 0)
+                                                                        {
+                                                                            <MudText Color="Color.Error" Typo="Typo.body2">Quantidade Maxíma: @relacao.QtdMax</MudText>
+                                                                        }
+
+                                                                    </MudStack>
+                                                                    <MudText Typo="Typo.body2">@relacao.Grupo.GrupoInfo</MudText>
+                                                                </CardHeaderContent>
+                                                                <CardHeaderActions>
+                                                                    <MudTooltip Text="Clique para ver complementos deste grupo." Color="Color.Primary">
+                                                                        <MudIconButton Icon="@((relacao.Grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(relacao.Grupo)" />
+                                                                    </MudTooltip>
+                                                                    <MudTooltip Text="Clique para adicionar complementos neste grupo." Color="Color.Primary">
+                                                                        <MudIconButton OnClick=@(async () => { await AbrirModalDeAdicionarOuEditarComplemento(true, IdDoGrupoQueJaVaiRelacionar: relacao.Grupo.Id);}) Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                                                                    </MudTooltip>    
+                                                                    <MudTooltip Text="Clique para deletar grupo." Color="Color.Error">
+                                                                        <MudIconButton OnClick=@(async () => { await AbreModalDeRemoverGrupoDeComplementoDoProduto(relacao); }) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                                                    </MudTooltip>
+                                                                </CardHeaderActions>
+                                                            </MudCardHeader>
+                                                            <MudCardContent>
+                                                                @if (relacao.Grupo.Expanded)
+                                                                {
+                                                                    <MudDivider Class="mb-1" Light=true />
+                                                                    @foreach (var complemento in relacao.Grupo.Complementos)
+                                                                    {
+                                                                        <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
+                                                                            <MudCardHeader>
+                                                                                <CardHeaderContent>
+                                                                                    <MudText Typo="Typo.body1">@complemento.Complemento.Descricao</MudText>
+                                                                                    <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
+                                                                                </CardHeaderContent>
+                                                                                <CardHeaderActions>
+                                                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { /*await PausaEDespausaComplemento(complemento.Complemento);*/ })" />
+                                                                                    <MudIconButton OnClick=@(async () => {/* await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento);*/ }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                                                </CardHeaderActions>
+                                                                            </MudCardHeader>
+                                                                        </MudCard>
+                                                                    }
+
+
+                                                                    @if (relacao.Grupo.Complementos.Count() == 0)
+                                                                    {
+                                                                        <MudStack AlignItems="AlignItems.Center">
+                                                                            <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento cadastrado neste grupo.</MudText>
+                                                                        </MudStack>
+                                                                    }
+                                                                }
+
+                                                            </MudCardContent>
+                                                        </MudCard>
+                                                    }
+                                                }
+
+
+
+
+
+
 
 
                                             </MudPaper>
@@ -1620,6 +1775,66 @@
 
 
 
+
+@* <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
+
+                                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
+                                                        <MudRadioGroup T="bool"
+                                                                       Value="ProdutoSelecionadoParaEdicao.CardapioDoDia"
+                                                                       ValueChanged="@(valor => { ProdutoSelecionadoParaEdicao.CardapioDoDia = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                            <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                            <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                        </MudRadioGroup>
+                                                    </MudPaper>
+
+                                                </MudPaper>
+
+                                                @if (ProdutoSelecionadoParaEdicao.CardapioDoDia)
+                                                {
+                                                    <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionado.QtdBase"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdBase = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Base"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionado.QtdGuarnicao"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdGuarnicao = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Guarnição"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+
+                                                        <MudPaper Elevation="0" Class="w-100" Square="false">
+                                                            <MudNumericField T="int"
+                                                                             Value="ProdutoSelecionadoParaEdicao.QtdCarnes"
+                                                                             Immediate="false"
+                                                                             ValueChanged="@(valor => {ProdutoSelecionadoParaEdicao.QtdCarnes = valor; OnSaveChanges(ProdutoSelecionadoParaEdicao);})"
+                                                                             Label="Qtd Carnes"
+                                                                             Variant="Variant.Outlined"
+                                                                             Step="1"
+                                                                             Min="0"
+                                                                             Max="100" />
+                                                        </MudPaper>
+
+
+
+
+                                                    </MudPaper>
+                                                }*@
 
 
 
