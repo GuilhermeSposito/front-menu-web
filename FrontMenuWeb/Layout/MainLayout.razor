@@ -186,7 +186,7 @@
     private Breakpoint _breakpoint = Breakpoint.Lg;
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
     private string ProgramName = "Sophos";
-
+    private const string ThemePreferenceKey = "themePreference"; // chave no localStorage
 
     private void ToggleDrawer()
     {
@@ -194,8 +194,28 @@
 
     }
 
+    private async void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+
+        await SetThemeAsync(_isDarkMode);
+    }
+
+    private async Task SetThemeAsync(bool isDarkMode)
+    {
+        await LocalStorage.SetItemAsync(ThemePreferenceKey, isDarkMode);
+
+    }
+
+
     protected override async Task OnInitializedAsync()
     {
+        if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
+        {
+            bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
+            _isDarkMode = isDarkMode;
+        }
+
 
         _theme = new()
         {
@@ -232,10 +252,7 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    private void DarkModeToggle()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
+
 
     private readonly PaletteLight _lightPalette = new()
     {
