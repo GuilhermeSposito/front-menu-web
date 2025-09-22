@@ -70,7 +70,7 @@
                             <MudCardContent>
                                 @if (grupo.Expanded)
                                 {
-                                    <MudDivider Class="mb-1" Light=true />
+                                    <MudDivider Class="mb-2" Light=true />
                                     @foreach (var complemento in grupo.Complementos)
                                     {
                                         <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
@@ -82,7 +82,7 @@
                                                 <CardHeaderActions>
                                                     <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
                                                     <MudIconButton OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento);}) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                                    <MudIconButton OnClick=@(async ()=> { await PausaEDespausaComplemento(complemento.Complemento, grupo);}) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
                                                 </CardHeaderActions>
                                             </MudCardHeader>
                                         </MudCard>
@@ -266,15 +266,35 @@
         }
     }
 
-    private async Task PausaEDespausaComplemento(ClsComplemento complementoEnviado)
+    private async Task PausaEDespausaComplemento(ClsComplemento complementoEnviado, ClsGrupoDeComplemento? GrupoDEComplemento = null)
     {
         try
         {
+            var Complemento = new ClsComplemento();
 
-            complementoEnviado.Ativo = !complementoEnviado.Ativo;
+            if(GrupoDEComplemento is not null)
+            {
+                var idDoGrupo = GrupoDEComplemento.Id;
+                
+                var GrupoNoComplemento = complementoEnviado.Grupos.FirstOrDefault(g => g.Grupo.Id == idDoGrupo);
 
-            var Complemento = await ComplementosService.GetComplemento(complementoEnviado.Id);
-            Complemento.Ativo = complementoEnviado.Ativo;
+                if (GrupoNoComplemento is not null)
+                {
+                   complementoEnviado.Grupos.Remove(GrupoNoComplemento);
+                }
+                
+                Complemento = complementoEnviado;
+
+              
+            }
+
+            if (GrupoDEComplemento is null)
+            {
+                complementoEnviado.Ativo = !complementoEnviado.Ativo;
+
+                Complemento = await ComplementosService.GetComplemento(complementoEnviado.Id);
+                Complemento.Ativo = complementoEnviado.Ativo;
+            }
 
             var result = await ComplementosService.UpdateComplemento(Complemento);
 
@@ -300,7 +320,6 @@
 
     public async Task AbrirModalDeAdicionarOuEditarGrupoDeComplementos(bool criandoGrupo = false, ClsGrupoDeComplemento? GrupoDEComplementoParaEditar = null)
     {
-        //ModalDeAdicionarEEditarUmGrupoDeComplementos
         var IdDoGrupo = 0;
 
         if (GrupoDEComplementoParaEditar is not null)
@@ -329,7 +348,6 @@
 
     public async Task AbrirModalDeAdicionarOuEditarComplemento(bool criandoGrupo = false, ClsComplemento? ComplementoParaEditar = null, int IdDoGrupoQueJaVaiRelacionar = 0)
     {
-        //ModalDeAdicionarEEditarUmGrupoDeComplementos
         var IdDoComplemento = 0;
 
         if (ComplementoParaEditar is not null)

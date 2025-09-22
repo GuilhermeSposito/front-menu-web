@@ -4,12 +4,19 @@
 @page "/"
 
 <!-- Alertas e Notificações -->
-<MudAlert Icon="@Icons.Material.Filled.Notifications" Severity="Severity.Info" Class="mb-4">
-    Você tem 0 pedidos aguardando confirmação
-</MudAlert>
-<MudAlert Icon="@Icons.Material.Filled.Notifications" Severity="Severity.Error" Class="mb-4">
-    Caixa Fechado, Abra o caixa para iniciar as vendas. 
-</MudAlert>
+@if (AvisoDePedidosAguardando)
+{
+    <MudAlert CloseIconClicked=@(() => { AvisoDePedidosAguardando = !AvisoDePedidosAguardando;}) CloseIcon="@Icons.Material.Filled.Close" Icon="@Icons.Material.Filled.Notifications" ShowCloseIcon=true Severity="Severity.Info" Class="mb-4">
+        Você tem 0 pedidos aguardando confirmação
+    </MudAlert>
+}
+@if (AvisoDeCaixaFechado)
+{
+    <MudAlert CloseIconClicked=@(() => { AvisoDeCaixaFechado = !AvisoDeCaixaFechado;}) Icon="@Icons.Material.Filled.Notifications" CloseIcon="@Icons.Material.Filled.Close" ShowCloseIcon=true Severity="Severity.Error" Class="mb-4">
+        Caixa Fechado, Abra o caixa para iniciar as vendas.
+    </MudAlert>
+}
+
 
 <MudGrid Class="pa-4" Spacing="3">
 
@@ -150,7 +157,8 @@
     private DateTime? dataSelecionada = DateTime.Today;
     private string statusSelecionado = "Todos";
 
-
+    private bool AvisoDePedidosAguardando = true;
+    private bool AvisoDeCaixaFechado = true;
 
 
     // Dados para gráfico
@@ -174,7 +182,7 @@
     // Lista de pedidos
     private List<Pedido> pedidos = new List<Pedido>
     {
-       
+
     };
 
     private List<Pedido> pedidosFiltrados = new List<Pedido>();

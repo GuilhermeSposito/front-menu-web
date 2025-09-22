@@ -153,12 +153,16 @@ public class ComplementosServices
     public async Task<ReturnApiRefatored<ClsComplemento>> UpdateComplemento(ClsComplemento complemento, bool VizualizaGrupos = true)
     {
         if (VizualizaGrupos)
+        {
             complemento.GruposIds = complemento.Grupos.Select(x => x.Grupo.Id).ToList();
+
+            complemento.Grupos = null; // para evitar conflito de dados
+        }
 
         var response = await _http.PatchAsJsonAsync($"complementos/{complemento.Id}", complemento);
 
         string rawResponse = await response.Content.ReadAsStringAsync();
-        //Console.WriteLine(rawResponse);
+        Console.WriteLine(rawResponse);
 
         var result = JsonSerializer.Deserialize<ReturnApiRefatored<ClsComplemento>>(rawResponse)
                      ?? new ReturnApiRefatored<ClsComplemento>();

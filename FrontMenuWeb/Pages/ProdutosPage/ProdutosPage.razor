@@ -944,7 +944,7 @@
 
                 var response = await ComplementosServices.DeletarVinculoDeGrupoDeComplementoDoProduto(grupo.Id);
                 if (response.Status == "error")
-                {                
+                {
                     Snackbar.Add($"Erro ao excluir grupo de complementos: {string.Join(", ", response.Messages)}", Severity.Error);
                 }
                 else
@@ -997,6 +997,44 @@
             ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(ProdutoSelecionadoParaEdicao?.Id ?? "");
             StateHasChanged();
             carregandoProdutoParaEdicao = false;
+        }
+
+    }
+
+    private async Task PausaEDespausaComplemento(ClsComplemento complementoEnviado)
+    {
+        try
+        {
+            var Complemento = new ClsComplemento();
+
+
+            complementoEnviado.Ativo = !complementoEnviado.Ativo;
+
+            Complemento = await ComplementosServices.GetComplemento(complementoEnviado.Id);
+            Complemento.Ativo = complementoEnviado.Ativo;
+
+
+            var result = await ComplementosServices.UpdateComplemento(Complemento);
+
+            if (result.Status == "success")
+            {
+                Snackbar.Add($"{string.Join(", ", result.Data.Messages)}", Severity.Success);
+            }
+            else
+            {
+                string mensagemDeErro = string.Join(", ", result.Messages);
+                Snackbar.Add(mensagemDeErro, Severity.Error);
+            }
+
+
+            carregandoProdutoParaEdicao = true;
+            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(ProdutoSelecionadoParaEdicao?.Id ?? "");
+            StateHasChanged();
+            carregandoProdutoParaEdicao = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
         }
 
     }
@@ -1146,8 +1184,6 @@
                                             <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
                                             <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
 
-
-
                                                 <MudSelect Class="m-2"
                                                            @bind-Value="@ProdutoSelecionadoParaEdicao.ImpressoraComanda1"
                                                            T="string"
@@ -1250,8 +1286,8 @@
                                                                         <MudIconButton Icon="@((relacao.Grupo.Expanded) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Color="Color.Primary" OnClick="() => AoExpandirCardDeGrupo(relacao.Grupo)" />
                                                                     </MudTooltip>
                                                                     <MudTooltip Text="Clique para adicionar complementos neste grupo." Color="Color.Primary">
-                                                                        <MudIconButton OnClick=@(async () => { await AbrirModalDeAdicionarOuEditarComplemento(true, IdDoGrupoQueJaVaiRelacionar: relacao.Grupo.Id);}) Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
-                                                                    </MudTooltip>    
+                                                                        <MudIconButton OnClick=@(async () => { await AbrirModalDeAdicionarOuEditarComplemento(true, IdDoGrupoQueJaVaiRelacionar: relacao.Grupo.Id); }) Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
+                                                                    </MudTooltip>
                                                                     <MudTooltip Text="Clique para deletar grupo." Color="Color.Error">
                                                                         <MudIconButton OnClick=@(async () => { await AbreModalDeRemoverGrupoDeComplementoDoProduto(relacao); }) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
                                                                     </MudTooltip>
@@ -1270,8 +1306,8 @@
                                                                                     <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
                                                                                 </CardHeaderContent>
                                                                                 <CardHeaderActions>
-                                                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { /*await PausaEDespausaComplemento(complemento.Complemento);*/ })" />
-                                                                                    <MudIconButton OnClick=@(async () => {/* await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento);*/ }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento);})" />
+                                                                                    <MudIconButton OnClick=@(async () => { await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
                                                                                 </CardHeaderActions>
                                                                             </MudCardHeader>
                                                                         </MudCard>

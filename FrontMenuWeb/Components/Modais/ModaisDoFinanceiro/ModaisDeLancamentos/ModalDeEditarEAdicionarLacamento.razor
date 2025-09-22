@@ -152,16 +152,16 @@
                             <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
                                 <MudStack>
                                     <MudText>Parcelado</MudText>
-                                    <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } })" />
+                                    <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { if(ECriacao){ Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } }})" />
                                 </MudStack>
 
                                 <MudStack>
                                     <MudText>Despesa Fixa</MudText>
-                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; }/* */})" />
+                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => {if(ECriacao){ Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; }}})" />
                                 </MudStack>
                             </MudStack>
 
-                            @if (Lancamento.Parcelado || Lancamento.EDespesaFixa)
+                            @if ((Lancamento.Parcelado || Lancamento.EDespesaFixa) && ECriacao)
                             {
                                 <MudDivider Light=true Class="my-2" />
                                 if (Lancamento.Parcelado)
@@ -176,7 +176,7 @@
                                 {
                                     <MudStack Spacing="0" Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
                                         <MudStack AlignItems="AlignItems.Start" Justify="Justify.Center">
-                                            <MudText Color="Color.Error">Tipo da Despesa Fixa (Não Está Funcionando)</MudText>
+                                            <MudText>Tipo da Despesa Fixa</MudText>
                                         </MudStack>
                                         <MudRadioGroup @bind-Value=TipoDeDespesaFixa T="int?">
                                             <MudRadio T="int?" Value="1" Color="Color.Primary">Diária</MudRadio>

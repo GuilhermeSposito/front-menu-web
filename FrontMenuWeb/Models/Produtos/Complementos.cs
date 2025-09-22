@@ -7,7 +7,7 @@ public class ClsGrupoDeComplemento
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("grupoInfo")] public string? GrupoInfo { get; set; }
-    [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("ComplementosDosGrupos")] public List<ClsComplementoDoGrupo> Complementos { get; set; } = new List<ClsComplementoDoGrupo>();
 
     [JsonIgnore] public int QtdMin { get; set; } = 0; // usado para controle de relação com produto
@@ -42,7 +42,7 @@ public class ClsComplemento
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("ComplementoInfo")] public string? ComplementoInfo { get; set; }
     [JsonPropertyName("valor")] public float Valor { get; set; }
-    [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("grupos")] public List<int> GruposIds { get; set; } = new List<int>();
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("ComplementosDosGrupos")] public List<ClsComplementoDoGrupo> Grupos { get; set; } = new();
 }
