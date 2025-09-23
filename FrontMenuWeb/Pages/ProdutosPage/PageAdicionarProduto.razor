@@ -23,12 +23,10 @@
         }
         else
         {
-            <MudTabs Style="max-height: 100%; overflow: auto;" @ref="_tabs" Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabs Style="max-height: 100%; overflow: auto;" @ref="_tabs" Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="p-2">
                 <MudTabPanel Text="Principais">
-                    <div class="d-flex flex-column justify-content-around ">
-                        @*Div de informações principais*@
-                        <div>
-
+                    <MudStack Class="d-flex flex-column justify-content-around w-100">
+                        <MudStack>
 
                             <MudGrid Class="d-flex align-items-stretch px-4">
                                 <MudItem xs="12">
@@ -52,7 +50,7 @@
                                 </MudItem>
                                 <MudItem xs="12" sm="6">
                                     <MudPaper Class="d-flex flex-column  align-center justify-center mud-width-full py-8">
-                                        <MudPaper Elevation="0" Square="false" Class="w-100">
+                                        <MudPaper Elevation="0" Square="false" Class="w-100 p-2">
                                             <MudSelect @bind-Value="Produto.Grupo"
                                                        T="ClsGrupo"
                                                        ToStringFunc="g=> g.Descricao"
@@ -94,7 +92,7 @@
                                         </MudSelect>
                                     </MudPaper>
                                 </MudItem>
-                                <MudItem xs="12" sm="12" Class="h-100">  
+                                <MudItem xs="12" sm="12" Class="h-100">
                                     <MudPaper Class="h-100">
                                         <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Impressoras </MudPaper>
                                         <MudPaper Elevation="0" Square="false" Class="d-flex flex-wrap gap-2 justify-between mud-width-full py-8">
@@ -141,74 +139,6 @@
 
                                         </MudPaper>
 
-
-                                        <MudItem xs="12" sm="12" Class="h-100">
-                                            @*Cardapio do dia*@
-                                            <MudPaper Class="h-100">
-                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center fw-bold"> Cardápío do dia </MudPaper>
-
-
-                                                <MudPaper Elevation="0" Square="false" Class="d-flex align-items-center justify-content-center mt-4">
-
-                                                    <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center" Elevation="0" Square="false">
-                                                        <MudRadioGroup T="bool"
-                                                                       Value="Produto.CardapioDoDia"
-                                                                       ValueChanged="@(valor => { Produto.CardapioDoDia = valor; })">
-                                                            <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
-                                                            <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
-                                                        </MudRadioGroup>
-                                                    </MudPaper>
-
-                                                </MudPaper>
-
-                                                <MudPaper Elevation="0" Class="d-flex flex-wrap gap-1 justify-content-around align-items-center w-100 mt-2" Square="false">
-
-                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="Produto.QtdBase"
-                                                                         Immediate="false"
-                                                                         ValueChanged="@(valor => {Produto.QtdBase = valor;})"
-                                                                         Label="Qtd Base"
-                                                                         Variant="Variant.Outlined"
-                                                                         Step="1"
-                                                                         Min="0"
-                                                                         Max="100" />
-                                                    </MudPaper>
-
-                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="Produto.QtdGuarnicao"
-                                                                         Immediate="false"
-                                                                         ValueChanged="@(valor => {Produto.QtdGuarnicao = valor;})"
-                                                                         Label="Qtd Guarnição"
-                                                                         Variant="Variant.Outlined"
-                                                                         Step="1"
-                                                                         Min="0"
-                                                                         Max="100" />
-                                                    </MudPaper>
-
-
-                                                    <MudPaper Elevation="0" Class="w-100" Square="false">
-                                                        <MudNumericField T="int"
-                                                                         Value="Produto.QtdCarnes"
-                                                                         Immediate="false"
-                                                                         ValueChanged="@(valor => {Produto.QtdCarnes = valor;})"
-                                                                         Label="Qtd Carnes"
-                                                                         Variant="Variant.Outlined"
-                                                                         Step="1"
-                                                                         Min="0"
-                                                                         Max="100" />
-                                                    </MudPaper>
-
-
-
-
-                                                </MudPaper>
-
-
-
-                                            </MudPaper>
-                                        </MudItem>
                                     </MudPaper>
                                 </MudItem>
                                 <MudItem xs="12" sm="12">
@@ -374,13 +304,13 @@
 
 
 
-                        </div>
+                        </MudStack>
 
                         <div>
                             <MudButton OnClick="IrParaProximaAba" Color="Color.Primary" Class="mt-4">Próxima Aba</MudButton>
 
                         </div>
-                    </div>
+                    </MudStack>
                 </MudTabPanel>
                 <MudTabPanel Text="Preços">
                     <div class="d-flex flex-column justify-content-around ">
