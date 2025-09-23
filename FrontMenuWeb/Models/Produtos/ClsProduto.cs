@@ -46,6 +46,7 @@ public class ClsProduto
 
 
 
+
     private string? _CST;
 
     [JsonPropertyName("cst")]

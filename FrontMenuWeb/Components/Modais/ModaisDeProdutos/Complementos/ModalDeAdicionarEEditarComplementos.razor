@@ -9,6 +9,7 @@
 @using FrontMenuWeb.Services.FinanceroServices
 @using System.Globalization
 @inject ComplementosServices ComplementosServices
+@inject ProdutoService ProdutoServices
 
 <MudPaper Square="false" Elevation="0">
     <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
@@ -16,11 +17,41 @@
             @if (!CarregandoComplemento)
             {
                 <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
+                    <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
+                        <MudText>Selecione um produto apenas se o complemento for um produto!</MudText>
+                        <MudTextField Clearable=true OnClearButtonClick="ClearPesquisaProduto" Value="PesquisaDeProduto" Label="Produto" HelperText="Procure pelo Produto" @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Filled" />
+                        @if (MostrarSugestoes)
+                        {
+                            <MudPaper Class="pa-2" Elevation="4">
+                                <MudList T="ClsPessoas" Dense="true">
+                                    @foreach (var produto in ProdutosParaSelecionar)
+                                    {
+                                        <MudListItem OnClick="@(async x => { await SelecionarProduto(produto); })">
+                                            <MudText>@produto.CodigoInterno -  @produto.Descricao</MudText>
+                                        </MudListItem>
+                                    }
+                                </MudList>
+                            </MudPaper>
+                        }
+
+                    </MudStack>
+
                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100">
-                            <MudStack Class="w-100" Row=true>
-                                <MudTextField @bind-Value=@Complemento.Descricao Label="Descrição" Required RequiredError="A Descrição é obrigatória" Immediate=true Class="w-75" Variant="Variant.Filled" />
-                                <MudSwitch T="bool" Value=@Complemento.Ativo Color="Color.Success" Class="w-25" ValueChanged="@(async valor => { Complemento.Ativo = valor; })" />
+                        <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
+                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudStack Class="w-75">
+                                    <MudTextField @bind-Value=@Complemento.Descricao Label="Descrição" Required RequiredError="A Descrição é obrigatória" Immediate=true Variant="Variant.Filled" />
+                                </MudStack>
+                                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-25" Row=true>
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudText Typo="Typo.body2" Class="mb-1">Ativo</MudText>
+                                        <MudSwitch T="bool" Value=@Complemento.Ativo Color="Color.Success" ValueChanged="@(async valor => { Complemento.Ativo = valor; })" />
+                                    </MudStack>
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudText Typo="Typo.body2" Class="mb-1">É Produto</MudText>
+                                        <MudSwitch T="bool" Value=@Complemento.EProduto Color="Color.Success" ValueChanged="@(async valor => { })" />
+                                    </MudStack>
+                                </MudStack>
                             </MudStack>
                             <MudStack Class="w-100">
                                 <MudTextField @bind-Value=@Complemento.ComplementoInfo Label="Informações" HelperText="Explique em uma frase curta o que é o complemento." Immediate=true Class="w-100" Variant="Variant.Filled" />
@@ -157,7 +188,11 @@
     MudDropContainer<ClsGrupoDeComplemento> mudItemDropContainer;
     private List<ClsGrupoDeComplemento> GruposDeComplemento { get; set; } = new List<ClsGrupoDeComplemento>();
 
-
+    //Logica para o autocomplete manual
+    private bool MostrarSugestoes = false;
+    private List<ClsProduto> ProdutosParaSelecionar { get; set; } = new List<ClsProduto>();
+    private ClsProduto? ProdutoSelecionado = null;
+    private string PesquisaDeProduto = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,6 +204,15 @@
             if (!ECriacao)
             {
                 Complemento = await ComplementosServices.GetComplemento(IdDoComplemento);
+
+                if (Complemento.EProduto)
+                {
+                    if(Complemento.Produto is not null)
+                    {
+                        ProdutoSelecionado = Complemento.Produto;
+                        PesquisaDeProduto = Complemento.Produto.Descricao ?? string.Empty;
+                    }
+                }
             }
             else
             {
@@ -177,7 +221,6 @@
                     Complemento.GruposIds.Add(IdDoGrupoQueJaVaiRelacionar);
                 }
             }
-
 
 
             foreach (var grupo in GruposDeComplemento)
@@ -203,6 +246,50 @@
 
     }
 
+    private async Task SelecionarProduto(ClsProduto produto)
+    {
+        ProdutoSelecionado = produto;
+        Complemento.EProduto = true;
+        Complemento.ProdutoId = produto.Id;
+        Complemento.Descricao = produto.Descricao ?? string.Empty;
+        PesquisaDeProduto = produto.Descricao ?? string.Empty;
+        MostrarSugestoes = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OnFocusAutoCompleteManual(FocusEventArgs args)
+    {
+        MostrarSugestoes = true;
+    }
+    private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
+    {
+
+        MostrarSugestoes = false;
+    }
+     private async void ClearPesquisaProduto(MouseEventArgs e)
+    {      Complemento.EProduto = false;
+      ProdutoSelecionado = null;
+        Complemento.ProdutoId = null;
+        PesquisaDeProduto = string.Empty;
+            MostrarSugestoes = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ValueDeAutoCompleteMudou(string? value)
+    {
+        PesquisaDeProduto = value ?? string.Empty;
+
+        try
+        {
+            var ResponseAPi = await ProdutoServices.GetProdutoAutoComplete(PesquisaDeProduto);
+            ProdutosParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsProduto>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao procurar produtos: {ex.Message}", Severity.Error);
+
+        }
+    }
 
 
     private async Task Submit()

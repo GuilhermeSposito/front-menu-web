@@ -1,12 +1,14 @@
-﻿using FrontMenuWeb.Models.Produtos;
+﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Pessoas;
+using FrontMenuWeb.Models.Produtos;
+using MudBlazor.Extensions.Components.ObjectEdit;
+using Nextended.Core.Extensions;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Text.Json;
-using FrontMenuWeb.DTOS;
-using FrontMenuWeb.Models;
-using Nextended.Core.Extensions;
-using MudBlazor.Extensions.Components.ObjectEdit;
+using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Services;
 
@@ -16,6 +18,13 @@ public class ProdutoService
     public ProdutoService(HttpClient http)
     {
         _http = http;
+    }
+
+
+    public async Task<ReturnApiRefatored<ClsProduto>> GetProdutoAutoComplete(string? queryName)
+    {
+        ReturnApiRefatored<ClsProduto>? response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsProduto>>($"produtos/find/auto-complete?queryName={queryName}");
+        return response ?? new ReturnApiRefatored<ClsProduto>();
     }
 
     public async Task<List<ClsProduto>> GetProdutosAsync()
@@ -135,6 +144,7 @@ public class ComplementosServices
 
 
     //Parte de complementos
+
 
     public async Task<ClsComplemento> GetComplemento(int IdDoComplemento)
     {
