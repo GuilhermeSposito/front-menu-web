@@ -1,5 +1,6 @@
 ﻿@using FrontMenuWeb.Models.Merchant
 @using MudBlazor;
+@using System.Text.Json
 
 @inherits LayoutComponentBase
 
@@ -17,7 +18,12 @@
                 @if (AppState.MerchantLogado is not null)
                 {
                     <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
+                    @if(AppState.MerchantLogado.FuncionarioLogado is not null)
+                    {
+                        <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">/  @AppState.MerchantLogado.FuncionarioLogado.Nome</MudText>
+                    }
                 }
+                
                 <MudSpacer />
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
                 <MudMenu Variant="Variant.Text"
@@ -101,7 +107,7 @@
                 </MudMenu>
 
 
-           
+
             </MudAppBar>
 
             <MudDrawer Style="background-color: var(--mud-palette-surface);" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -114,6 +120,9 @@
                         <MudNavLink Icon="@Icons.Material.Filled.Inventory" Href="/produtos">Produtos</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AddCircle" Href="/complementos">Complementos</MudNavLink>
                     </MudNavGroup>
+
+                    @*<MudNavLink Href="/claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Claims</MudNavLink>*@
+
 
                     <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.People" Href="/pessoas">Pessoas</MudNavLink>
@@ -231,7 +240,23 @@
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            AppState.MerchantLogado = await MerchantServices.GetMerchantAsync();
+            ClsMerchant? merchant = null;
+            IEnumerable<System.Security.Claims.Claim> claims;
+
+            claims = user.Claims;
+
+            var merchantClaim = claims.FirstOrDefault(c => c.Type == "Merchant");
+            if (merchantClaim != null)
+            {
+                merchant = JsonSerializer.Deserialize<ClsMerchant?>(
+                    merchantClaim.Value,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                if (merchant is not null)
+                    AppState.MerchantLogado = merchant;
+            }
+            //AppState.MerchantLogado = await MerchantServices.GetMerchantAsync();
         }
     }
 

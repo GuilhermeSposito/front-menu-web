@@ -2,6 +2,8 @@
 @attribute [Authorize]
 @page "/claims"
 @using System.Security.Claims
+@using FrontMenuWeb.Models.Merchant
+@using System.Text.Json
 
 <h3>Claims do Usuário</h3>
 
@@ -21,6 +23,7 @@ else
 
 @code {
     private IEnumerable<Claim> claims;
+    ClsMerchant merchant = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,6 +33,20 @@ else
         if (user.Identity.IsAuthenticated)
         {
             claims = user.Claims;
+            claims = user.Claims;
+
+            // Pega a claim do Merchant
+            var merchantClaim = claims.FirstOrDefault(c => c.Type == "Merchant");
+            if (merchantClaim != null)
+            {
+                merchant = JsonSerializer.Deserialize<ClsMerchant>(
+                    merchantClaim.Value,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                // Salva no AppState
+                AppState.MerchantLogado = merchant;
+            }
         }
     }
 }

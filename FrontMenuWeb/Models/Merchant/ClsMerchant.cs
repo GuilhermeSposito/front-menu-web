@@ -14,6 +14,7 @@ public class ClsMerchant
     [JsonPropertyName("marcaDepartamento")] public string? MarcaDepartamento { get; set; } = string.Empty;
     [JsonPropertyName("legendaDoVoluma")] public string? LegendaDoVolume { get; set; } = string.Empty;
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } 
+    [JsonPropertyName("FuncionarioLogado")] public ClsFuncionario? FuncionarioLogado { get; set; } 
 
 
 }

@@ -1,6 +1,7 @@
 ﻿@page "/login"
 @rendermode RenderMode.InteractiveWebAssembly
 @using System.ComponentModel.DataAnnotations
+@using System.Text.Json.Serialization
 @layout LoginLayout
 
 
@@ -108,8 +109,8 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResult>();
-                await LocalStorage.SetItemAsync("authToken", result.token);
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.token);
+                await LocalStorage.SetItemAsync("authToken", result.Token);
+                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Token);
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else
@@ -141,8 +142,13 @@
 
     public class LoginResult
     {
-        public bool success { get; set; }
-        public string token { get; set; }
-        public int expiresIn { get; set; }
+        [JsonPropertyName("sucess")]
+        public bool Success { get; set; }
+
+        [JsonPropertyName("token")]
+        public string Token { get; set; }
+
+        [JsonPropertyName("expiresIn")]
+        public int ExpiresIn { get; set; }
     }
 }

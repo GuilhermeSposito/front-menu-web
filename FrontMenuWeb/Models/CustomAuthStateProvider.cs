@@ -79,14 +79,29 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         return claims;
     }
 
-    private byte[] ParseBase64WithoutPadding(string base64)
+    /* private byte[] ParseBase64WithoutPadding(string base64)
+     {
+         switch (base64.Length % 4)
+         {
+             case 2: base64 += "=="; break;
+             case 3: base64 += "="; break;
+         }
+
+         return Convert.FromBase64String(base64);
+     }*/
+
+    private byte[] ParseBase64WithoutPadding(string base64Url)
     {
-        switch (base64.Length % 4)
+        // Converte Base64URL para Base64 padrão
+        string s = base64Url.Replace('-', '+').Replace('_', '/');
+
+        // Adiciona padding se necessário
+        switch (s.Length % 4)
         {
-            case 2: base64 += "=="; break;
-            case 3: base64 += "="; break;
+            case 2: s += "=="; break;
+            case 3: s += "="; break;
         }
 
-        return Convert.FromBase64String(base64);
+        return Convert.FromBase64String(s);
     }
 }
