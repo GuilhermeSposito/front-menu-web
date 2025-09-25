@@ -3,152 +3,168 @@
 
 @page "/"
 
-<!-- Alertas e Notificações -->
-@if (AvisoDePedidosAguardando)
-{
-    <MudAlert CloseIconClicked=@(() => { AvisoDePedidosAguardando = !AvisoDePedidosAguardando;}) CloseIcon="@Icons.Material.Filled.Close" Icon="@Icons.Material.Filled.Notifications" ShowCloseIcon=true Severity="Severity.Info" Class="mb-4">
-        Você tem 0 pedidos aguardando confirmação
-    </MudAlert>
-}
-@if (AvisoDeCaixaFechado)
-{
-    <MudAlert CloseIconClicked=@(() => { AvisoDeCaixaFechado = !AvisoDeCaixaFechado;}) Icon="@Icons.Material.Filled.Notifications" CloseIcon="@Icons.Material.Filled.Close" ShowCloseIcon=true Severity="Severity.Error" Class="mb-4">
-        Caixa Fechado, Abra o caixa para iniciar as vendas.
-    </MudAlert>
-}
+<MudStack Class="pagina-home min-vh-100">
+
+    <!-- Alertas e Notificações -->
+    @if (AvisoDePedidosAguardando)
+    {
+        <MudAlert CloseIconClicked=@(() => { AvisoDePedidosAguardando = !AvisoDePedidosAguardando; }) CloseIcon="@Icons.Material.Filled.Close" Icon="@Icons.Material.Filled.Notifications" ShowCloseIcon=true Severity="Severity.Info" Class="mb-4">
+            Você tem 0 pedidos aguardando confirmação
+        </MudAlert>
+    }
+    @if (AvisoDeCaixaFechado)
+    {
+        <MudAlert CloseIconClicked=@(() => { AvisoDeCaixaFechado = !AvisoDeCaixaFechado; }) Icon="@Icons.Material.Filled.Notifications" CloseIcon="@Icons.Material.Filled.Close" ShowCloseIcon=true Severity="Severity.Error" Class="mb-4">
+            Caixa Fechado, Abra o caixa para iniciar as vendas.
+        </MudAlert>
+    }
 
 
-<MudGrid Class="pa-4" Spacing="3">
+    <MudGrid Class="pa-4" Spacing="3">
 
-    <!-- Cards de métricas -->
-    <MudItem xs="12" sm="4" Style="cursor:pointer">
-        <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #FF9800, #F57C00); color:white;">
-            <MudCardContent>
-                <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" />
-                <MudText Typo="Typo.h6">Vendas Hoje</MudText>
-                <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0.00</MudText>
-                <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        @if (!UsuarioPermitidoAcessarDashboard)
+        {
+            <div class="overlay-blur">
+                <div class="overlay-conteudo">
+                    <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Large" Color="Color.Error" />
+                    <MudText Typo="Typo.h5" Class="mt-2">Acesso Negado</MudText>
+                    <MudText Typo="Typo.body1">
+                        Infelizmente o seu perfil de usuário não permite acesso à Dashboard. Caso precise dessa funcionalidade, solicite autorização ao administrador.
+                    </MudText>
+                </div>
+            </div>
+        }
 
-    <MudItem xs="12" sm="4" Style="cursor:pointer">
-        <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #4CAF50, #2E7D32); color:white;">
-            <MudCardContent>
-                <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" />
-                <MudText Typo="Typo.h6">Total de Pedidos</MudText>
-                <MudText Typo="Typo.h4" Class="font-weight-bold">0</MudText>
-                <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
 
-    <MudItem xs="12" sm="4" Style="cursor:pointer">
-        <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #2196F3, #1565C0); color:white;">
-            <MudCardContent>
-                <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" />
-                <MudText Typo="Typo.h6">Ticket Médio</MudText>
-                <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0,00</MudText>
-                <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        <!-- Cards de métricas -->
+        <MudItem xs="12" sm="4" Style="cursor:pointer">
+            <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #FF9800, #F57C00); color:white;">
+                <MudCardContent>
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" />
+                    <MudText Typo="Typo.h6">Vendas Hoje</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0.00</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <!-- Barras de progresso -->
-    <MudItem xs="12" sm="4">
-        <MudCard>
-            <MudCardContent>
-                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
-                    <MudText>Delivery - 80% (28/35)</MudText>
-                </MudStack>
-                <MudProgressLinear Color="Color.Primary" Value="80" Rounded />
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        <MudItem xs="12" sm="4" Style="cursor:pointer">
+            <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #4CAF50, #2E7D32); color:white;">
+                <MudCardContent>
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" />
+                    <MudText Typo="Typo.h6">Total de Pedidos</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">0</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <MudItem xs="12" sm="4">
-        <MudCard>
-            <MudCardContent>
-                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.Storefront" Color="Color.Info" />
-                    <MudText>Balcão - 92% (Fila: 12 / 8)</MudText>
-                </MudStack>
-                <MudProgressLinear Color="Color.Info" Value="92" Rounded />
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
+        <MudItem xs="12" sm="4" Style="cursor:pointer">
+            <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #2196F3, #1565C0); color:white;">
+                <MudCardContent>
+                    <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" />
+                    <MudText Typo="Typo.h6">Ticket Médio</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0,00</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-    <MudItem xs="12" sm="4">
-        <MudCard>
-            <MudCardContent>
-                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                    <MudIcon Icon="@Icons.Material.Filled.Restaurant" Color="Color.Secondary" />
-                    <MudText>Mesas - 72% (18/25)</MudText>
-                </MudStack>
-                <MudProgressLinear Color="Color.Secondary" Value="72" Rounded />
-            </MudCardContent>
-        </MudCard>
-    </MudItem>
-</MudGrid>
-<!-- Filtros e Tabela de Pedidos -->
-<MudCard Class="pa-4" Elevation="3">
-    <MudCardHeader>
-        <MudText Typo="Typo.h6">Pedidos Recentes</MudText>
-    </MudCardHeader>
-    <MudCardContent>
-        <!-- Filtros -->
-        <MudGrid Spacing="2" Class="mb-4">
-            <MudItem xs="12" sm="6" md="3">
-                <MudTextField @bind-Value="filtroBusca" Label="Buscar pedidos" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <MudDatePicker Label="Data" @bind-Date="dataSelecionada" />
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <MudSelect Label="Status" @bind-Value="statusSelecionado">
-                    <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
-                    <MudSelectItem Value="@("Recebido")">Recebido</MudSelectItem>
-                    <MudSelectItem Value="@("Em preparo")">Em preparo</MudSelectItem>
-                    <MudSelectItem Value="@("Pronto")">Pronto</MudSelectItem>
-                    <MudSelectItem Value="@("Entregue")">Entregue</MudSelectItem>
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="3">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FiltrarPedidos">
-                    <MudIcon Icon="@Icons.Material.Filled.FilterList" />
-                    Filtrar
-                </MudButton>
-            </MudItem>
-        </MudGrid>
+        <!-- Barras de progresso -->
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
+                        <MudText>Delivery - 80% (28/35)</MudText>
+                    </MudStack>
+                    <MudProgressLinear Color="Color.Primary" Value="80" Rounded />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-        <!-- Tabela de Pedidos -->
-        <MudTable Items="@pedidosFiltrados" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
-            <HeaderContent>
-                <MudTh>Nº Pedido</MudTh>
-                <MudTh>Cliente</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh>Valor</MudTh>
-                <MudTh>Hora</MudTh>
-                <MudTh>Ações</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd>@context.NumeroPedido</MudTd>
-                <MudTd>@context.Cliente</MudTd>
-                <MudTd>
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Storefront" Color="Color.Info" />
+                        <MudText>Balcão - 92% (Fila: 12 / 8)</MudText>
+                    </MudStack>
+                    <MudProgressLinear Color="Color.Info" Value="92" Rounded />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-                </MudTd>
-                <MudTd>@context.Valor.ToString("C")</MudTd>
-                <MudTd>@context.Hora.ToString("HH:mm")</MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" Size="Size.Small" />
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudCardContent>
-</MudCard>
+        <MudItem xs="12" sm="4">
+            <MudCard>
+                <MudCardContent>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Restaurant" Color="Color.Secondary" />
+                        <MudText>Mesas - 72% (18/25)</MudText>
+                    </MudStack>
+                    <MudProgressLinear Color="Color.Secondary" Value="72" Rounded />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+    <!-- Filtros e Tabela de Pedidos -->
+    <MudCard Class="pa-4" Elevation="3">
+        <MudCardHeader>
+            <MudText Typo="Typo.h6">Pedidos Recentes</MudText>
+        </MudCardHeader>
+        <MudCardContent>
+            <!-- Filtros -->
+            <MudGrid Spacing="2" Class="mb-4">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudTextField @bind-Value="filtroBusca" Label="Buscar pedidos" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudDatePicker Label="Data" @bind-Date="dataSelecionada" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect Label="Status" @bind-Value="statusSelecionado">
+                        <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
+                        <MudSelectItem Value="@("Recebido")">Recebido</MudSelectItem>
+                        <MudSelectItem Value="@("Em preparo")">Em preparo</MudSelectItem>
+                        <MudSelectItem Value="@("Pronto")">Pronto</MudSelectItem>
+                        <MudSelectItem Value="@("Entregue")">Entregue</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FiltrarPedidos">
+                        <MudIcon Icon="@Icons.Material.Filled.FilterList" />
+                        Filtrar
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
 
+            <!-- Tabela de Pedidos -->
+            <MudTable Items="@pedidosFiltrados" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                <HeaderContent>
+                    <MudTh>Nº Pedido</MudTh>
+                    <MudTh>Cliente</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Valor</MudTh>
+                    <MudTh>Hora</MudTh>
+                    <MudTh>Ações</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.NumeroPedido</MudTd>
+                    <MudTd>@context.Cliente</MudTd>
+                    <MudTd>
+
+                    </MudTd>
+                    <MudTd>@context.Valor.ToString("C")</MudTd>
+                    <MudTd>@context.Hora.ToString("HH:mm")</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" Size="Size.Small" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+</MudStack>
 
 @code {
     private bool drawerOpen = true;
@@ -160,6 +176,7 @@
     private bool AvisoDePedidosAguardando = true;
     private bool AvisoDeCaixaFechado = true;
 
+    private bool UsuarioPermitidoAcessarDashboard = false;
 
     // Dados para gráfico
     private List<ChartSeries> vendasSeries = new List<ChartSeries>
@@ -218,5 +235,32 @@
     {
         ultimaAtualizacao = DateTime.Now;
         StateHasChanged();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (AppState.MerchantLogado.FuncionarioLogado is not null)
+            {
+                if (AppState.MerchantLogado.FuncionarioLogado.AcessoDashboard)
+                {
+                    UsuarioPermitidoAcessarDashboard = true;
+                }
+                else
+                {
+                    UsuarioPermitidoAcessarDashboard = false;
+                }
+            }
+            else
+            {
+                UsuarioPermitidoAcessarDashboard = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
+        }
     }
 }

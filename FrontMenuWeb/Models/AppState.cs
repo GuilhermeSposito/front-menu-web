@@ -1,4 +1,6 @@
-﻿using FrontMenuWeb.Models.Merchant;
+﻿using FrontMenuWeb.Components.Modais.ModaisGenericos;
+using FrontMenuWeb.Models.Merchant;
+using MudBlazor;
 
 namespace FrontMenuWeb.Models;
 

@@ -1,5 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+.pagina-home {
+    position: relative; /* referência para o overlay */
+}
+
+/* cobre só a área da página */
+.overlay-blur {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    pointer-events: all;
+}
+
+.overlay-conteudo {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    max-width: 400px;
+}
 
 nav a {
     text-decoration: none !important;

@@ -18,12 +18,12 @@
                 @if (AppState.MerchantLogado is not null)
                 {
                     <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
-                    @if(AppState.MerchantLogado.FuncionarioLogado is not null)
+                    @if (AppState.MerchantLogado.FuncionarioLogado is not null)
                     {
                         <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">/  @AppState.MerchantLogado.FuncionarioLogado.Nome</MudText>
                     }
                 }
-                
+
                 <MudSpacer />
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
                 <MudMenu Variant="Variant.Text"
@@ -116,18 +116,20 @@
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
 
                     <MudNavGroup Title="Catálogo" Icon="@Icons.Material.Filled.Inventory" Expanded="false">
-                        <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/grupos">Grupos</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.Inventory" Href="/produtos">Produtos</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.AddCircle" Href="/complementos">Complementos</MudNavLink>
+
+                        <MudNavLink Icon="@Icons.Material.Filled.Category" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/grupos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroGrupoProduto); })">Grupos</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Inventory" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/produtos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroProduto); })">Produtos</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AddCircle" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/complementos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroProduto); })">Complementos</MudNavLink>
+
                     </MudNavGroup>
 
                     @*<MudNavLink Href="/claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Claims</MudNavLink>*@
 
 
                     <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
-                        <MudNavLink Icon="@Icons.Material.Filled.People" Href="/pessoas">Pessoas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.People" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/pessoas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDePessoa); })">Pessoas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.GroupWork" Href="/pagemconst">Funcionários</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.Percent" Href="/aliquotas">Alíquotas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Percent" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/aliquotas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeAliquotas); })">Alíquotas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Mesas/Comandas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Discount" Href="/pagemconst">Promoções</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Place" Href="/pagemconst">Bairros</MudNavLink>
@@ -138,17 +140,13 @@
                     <MudNavGroup Title="Financeiro" Icon="@Icons.Material.Filled.CurrencyExchange" Expanded="false">
 
                         <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
-                            <MudNavLink Icon="@Icons.Material.Filled.AccountBalance" Href="/financeiro/contas">Contas</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.Category" Href="/financeiro/categorias">Categorias</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/financeiro/formas-de-recebimento">Forma de Recebimento</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" Href="/financeiro/metodos">Método de Pagamentos</MudNavLink>
-
+                            <MudNavLink Icon="@Icons.Material.Filled.AccountBalance" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/contas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeContas); })">Contas</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.Category" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/categorias", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeCategoriasFinanceiro); })">Categorias</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/formas-de-recebimento", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroFormasDeRecebimento); })">Forma de Recebimento</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/metodos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraFormaDePagamento); })">Método de Pagamentos</MudNavLink>
                         </MudNavGroup>
 
-                        <MudNavLink Icon="@Icons.Material.Filled.Wallet" Href="/financeiro/lancamentos">Lançamento financeiro</MudNavLink>
-
-
-
+                        <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
@@ -333,6 +331,47 @@
         false => Icons.Material.Outlined.DarkMode,
     };
 
+
+    private async void HandleNavClick(ClsMerchant merchantLogado, string url, bool? temAcesso)
+    {
+        if (merchantLogado.FuncionarioLogado is null)
+        {
+            Navigation.NavigateTo(url);
+            return;
+        }
+
+        if (temAcesso == true)
+        {
+            Navigation.NavigateTo(url);
+        }
+        else
+        {
+            await AbreMensagemDeAcessoNegado();
+        }
+    }
+
+    private async Task AbreMensagemDeAcessoNegado()
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeAcessoNegado>
+            {
+                  { x => x.ContentText, $"Desculpe. Infelizmente você não tem acesso a esse modulo." },
+                  { x => x.ButtonText, "OK" },
+                  { x => x.Color, Color.Success}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
+            var result = await dialog.Result;
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao declarar acesso negado: {ex.Message}", Severity.Error);
+        }
+
+    }
 }
 
 
