@@ -125,10 +125,9 @@
 
                     @*<MudNavLink Href="/claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Claims</MudNavLink>*@
 
-
                     <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.People" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/pessoas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDePessoa); })">Pessoas</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.GroupWork" Href="/pagemconst">Funcionários</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.GroupWork" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/funcionarios", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeFuncionarios); })">Funcionários</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Percent" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/aliquotas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeAliquotas); })">Alíquotas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Mesas/Comandas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Discount" Href="/pagemconst">Promoções</MudNavLink>

@@ -1,0 +1,240 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/funcionarios"
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject IHttpClientFactory HttpClientFactory
+@inject FuncionariosService FuncionariosService
+@using MudBlazor.Extensions.Services
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Funcionários</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Funcionários cadastrados.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoFuncionarios" OnClick="@(() => { })">Novo Funcionário</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsFuncionario"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection="false"
+                     SelectOnRowClick=true
+                     Class="rounded-3 custom-striped"
+                     Loading="CarregandoFuncionarios"
+                     Hover
+                     ServerData="LoadServerData">
+            <ToolBarContent>
+                <MudStack Class="p-2 w-100 mt-2">
+                    <MudAutocomplete T="ClsFuncionario"
+                                     SearchFunc="Search"
+                                     Value="FuncionarioSelecionadoParaOFiltro"
+                                     ToStringFunc="p => p?.Nome"
+                                     Label="Funcionário"
+                                     Placeholder="Digite o nome do funcionário para pesquisa-lo"
+                                     Dense="true"
+                                     Variant="Variant.Filled"
+                                     DebounceInterval="200"
+                                     Clearable
+                                     Adornment="Adornment.End"
+                                     AdornmentIcon="@Icons.Material.Outlined.Search"
+                                     ResetValueOnEmptyText="true"
+                                     CoerceText="true"
+                                     ValueChanged="@(async p => await OnFuncionarioSelecionada(p))"
+                                     ShowProgressIndicator="true">
+                        <ProgressIndicatorTemplate>
+                            <MudProgressLinear Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                        </ProgressIndicatorTemplate>
+                    </MudAutocomplete>
+                </MudStack>
+
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Nome" Title="Nome"></PropertyColumn>
+                <PropertyColumn Property="x => x.Funcao" Title="Função"></PropertyColumn>
+                <PropertyColumn Property="x => x.Email" Title="E-mail"></PropertyColumn>
+                <TemplateColumn T="ClsFuncionario" Title="Celular">
+                    <CellTemplate Context="context">
+                        @FormatarTelefone(context.Item.Celular!)
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.UltimoPagamento" Title="Ultimo Pagamento" Format="dd/MM/yyyy"></PropertyColumn>
+                <PropertyColumn Property="x => x.Salario" Title="Salário" Format="C" CellStyle="color:red;font-weight:600" Culture="@System.Globalization.CultureInfo.GetCultureInfo("pt-BR")"></PropertyColumn>
+            </Columns>
+            <PagerContent>
+
+                <MudDataGridPager T="ClsFuncionario" RowsPerPageString="Funcionários por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 20, 30, 40 }) />
+
+            </PagerContent>
+        </MudDataGrid>
+
+    </MudLayout>
+    <MudStack Class="w-100 mt-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
+            <MudCard Class="rounded-2xl shadow-lg w-50" Style="background: linear-gradient(135deg, #F88113, #FFB347); color:white;">
+                <MudStack Row=true>
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total em Salários</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalEmSalario.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudStack>
+            </MudCard>
+    </MudStack>
+
+</MudPaper>
+
+
+@code {
+    //Lógica para mostrar os funcionarios
+    private MudDataGrid<ClsFuncionario>? dataGridRef;
+    private List<ClsFuncionario> Funcionarios = new List<ClsFuncionario>();
+    private bool CarregandoFuncionarios = true;
+    private string ValorDePesquisaNome = string.Empty;
+    private List<ClsFuncionario> FuncionariosSearched = new List<ClsFuncionario>();
+    private ClsFuncionario? FuncionarioSelecionadoParaOFiltro = null;
+    private List<ClsFuncionario> FuncionariosParaOFiltro = new List<ClsFuncionario>();
+
+    //logica que mostra o valor total de salarios
+    private float TotalEmSalario = 0f;
+
+    private async Task<GridData<ClsFuncionario>> LoadServerData(GridState<ClsFuncionario> state)
+    {
+        try
+        {
+            CarregandoFuncionarios = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await FuncionariosService.GetFuncionariosPorPaginaAsync(page, pageSize, ValorDePesquisaNome);
+
+            TotalEmSalario = result.totalEmSalarios;
+
+            return new GridData<ClsFuncionario>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar funcionários: {ex.Message}", Severity.Error);
+            return new GridData<ClsFuncionario> { };
+        }
+        finally
+        {
+            CarregandoFuncionarios = false;
+        }
+
+    }
+
+    private async Task<IEnumerable<ClsFuncionario>> Search(string value, CancellationToken token)
+    {
+        try
+        {
+            if (value is null)
+                value = string.Empty;
+
+            // sempre busca na API, mesmo se value estiver vazio
+            var returnApiRefatored = await FuncionariosService.GetFuncionariosAutoComplete(value);
+
+            FuncionariosParaOFiltro = returnApiRefatored.Data.Lista ?? new List<ClsFuncionario>();
+
+            return FuncionariosParaOFiltro.Where(x => (x.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) || (x.Celular?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar Funcionário: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<ClsFuncionario>();
+        }
+    }
+
+    private async Task OnFuncionarioSelecionada(ClsFuncionario? funcionario)
+    {
+        FuncionarioSelecionadoParaOFiltro = funcionario;
+        if (funcionario is not null)
+            ValorDePesquisaNome = funcionario.Nome;
+        else
+            ValorDePesquisaNome = string.Empty;
+
+        await dataGridRef!.ReloadServerData();
+    }
+
+
+    private string FormatarTelefone(string telefone)
+    {
+        if (string.IsNullOrWhiteSpace(telefone))
+            return "";
+
+        telefone = new string(telefone.Where(char.IsDigit).ToArray());
+
+        if (telefone.Length == 11)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 00000-0000");
+        else if (telefone.Length == 10)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 0000-0000");
+        else
+            return telefone; // ou trate como inválido
+    }
+
+    //*********************** PROPS PARA A LOGICA DE ABRIR O DRAWER DE INFOS E EDITAR CLIENTE OU FORNECEDOR******************************************************/
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private ClsFuncionario FuncionarioSelecionadoParaEdicao = new ClsFuncionario();
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "40%";
+    private bool CarregandoFuncionarioParaEdicao = false;
+    //*****************************************************************************/
+
+    private void OpenDrawer(Anchor anchor)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "80%" : "45%";
+
+        return InvokeAsync(StateHasChanged);
+    }
+}
