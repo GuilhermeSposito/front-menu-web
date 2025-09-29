@@ -22,28 +22,41 @@
                 <MudStack Class="w-100" Spacing="3">
                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
-                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Nome Required=true RequiredError="O Nome é Obrigatório" Variant="Variant.Filled" Label="Nome" Class="w-75" />
-                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Funcao Variant="Variant.Filled" Label="Função" Class="w-25" />
+                            <MudGrid>
+                                <MudItem xs="12" md="8">
+                                    <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Nome Required=true RequiredError="O Nome é Obrigatório" Variant="Variant.Filled" Label="Nome" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Funcao Variant="Variant.Filled" Label="Função" />
+                                </MudItem>
+                            </MudGrid>
                         </MudStack>
 
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
-                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.CPF Variant="Variant.Filled" Label="CPF" Class="w-75" />
-                            <MudNumericField @ref="_numeric"
-                                             Immediate="false"
-                                             Variant="Variant.Filled"
-                                             Format="N2"
-                                             Label="Valor"
-                                             Required
-                                             RequiredError="O Salario é obrigatório"
-                                             Culture="_pt"
-                                             T="float"
-                                             Class="w-25"
-                                             HideSpinButtons="true"
-                                             AdornmentText="R$"
-                                             Min="0"
-                                             Adornment="Adornment.Start"
-                                             @bind-Value="Funcionario.Salario"
-                                             onfocus="@HandleFocus" />
+                            <MudGrid>
+                                <MudItem xs="12" md="8">
+                                    <MudTextField T="string" Immediate=true @bind-Value=Funcionario.CPF Variant="Variant.Filled" Label="CPF" />
+                                </MudItem>
+                                <MudItem xs="12" md="4">
+                                    <MudNumericField @ref="_numeric"
+                                                     Immediate="false"
+                                                     Variant="Variant.Filled"
+                                                     Format="N2"
+                                                     Label="Valor"
+                                                     Required
+                                                     RequiredError="O Salario é obrigatório"
+                                                     Culture="_pt"
+                                                     T="float"
+                                                     HideSpinButtons="true"
+                                                     AdornmentText="R$"
+                                                     Min="0"
+                                                     Adornment="Adornment.Start"
+                                                     @bind-Value="Funcionario.Salario"
+                                                     onfocus="@HandleFocus" />
+                                </MudItem>
+                            </MudGrid>
+
+
                         </MudStack>
 
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
@@ -103,14 +116,22 @@
                             {
                                 @*Senha e Email*@
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
-                                    <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Email Required=true RequiredError="O Email é Obrigatório" Variant="Variant.Filled" Label="Email" Class="w-50" />
-                                    @if (ECriacao)
+                                    <MudTextField T="string" HelperText="Digite um email válido" Immediate=true @bind-Value=Funcionario.Email Required=true RequiredError="O Email é Obrigatório" Variant="Variant.Filled" Label="Email" Class="w-50" />
+                                    @if (ECriacao || Funcionario.EditandoSenha)
                                     {
                                         <MudTextField Class="w-50" T="string" Label="Senha" HelperText="Escolha uma senha forte"
-                                        InputType="InputType.Password"
-                                        Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
-                                        RequiredError="Senha é obrigatória"
-                                        Variant="Variant.Filled"/>
+                                                      @bind-Value=Funcionario.Senha
+                                                      InputType="InputType.Password"
+                                                      Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                                                      RequiredError="Senha é obrigatória"
+                                                      Variant="Variant.Filled"
+                                                      Immediate=true />
+                                    }
+                                </MudStack>
+                                <MudStack AlignItems="AlignItems.Start" Class="w-25">
+                                    @if (!ECriacao)
+                                    {
+                                        <MudButton Color="Color.Primary" OnClick="@(() => { Funcionario.EditandoSenha = !Funcionario.EditandoSenha; })">Mudar Senha</MudButton>
                                     }
                                 </MudStack>
 
@@ -119,42 +140,116 @@
                                     <MudText Typo="Typo.h6">Acessos</MudText>
                                     <MudText Color="Color.Error" Typo="Typo.body1">(Selecione As Permissões do Funcionário)</MudText>
                                 </MudStack>
-                                <MudStack style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoDashboard" Color="Color.Primary">Permite Acesso a Dashboard</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroGrupoProduto" Color="Color.Primary">Permitir acesso ao cadastro de grupos de produtos</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroProduto" Color="Color.Primary">Permitir acesso ao cadastro de produtos</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoEditarProduto" Color="Color.Primary">Permitir acesso para editar produtos</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoDeletaProduto" Color="Color.Primary">Permitir acesso para deletar produtos</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeAliquotas" Color="Color.Primary">Permitir acesso aos cadastros de aliquotas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePessoa" Color="Color.Primary">Permitir acesso aos cadastros de pessoas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraMesaOuComandas" Color="Color.Primary">Permitir acesso aos cadastros de mesas/comandas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePromocoes" Color="Color.Primary">Permitir acesso aos cadastros de promoções</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeGarcons" Color="Color.Primary">Permitir acesso aos cadastros de garçons</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeMotoboy" Color="Color.Primary">Permitir acesso aos cadastros de Motoboy</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoFinanceiro" Color="Color.Primary">Permitir acesso ao módulo financeiro</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeContas" Color="Color.Primary">Permitir acesso aos cadastros de contas do financeiro</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeCategoriasFinanceiro" Color="Color.Primary">Permitir acesso aos cadastros de categorias do financeiro</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraFormaDePagamento" Color="Color.Primary">Permitir acesso aos cadastros de Métodos De pagamento.</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroFormasDeRecebimento" Color="Color.Primary">Permitir acesso aos cadastros de Formas de Recebimento</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoLancamentosFinanceiro" Color="Color.Primary">Permitir acesso ao módulos de lançamento financeiro</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraLancamento" Color="Color.Primary">Permitir acesso aos cadastros de lançamentos financeiros</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoEstatisticas" Color="Color.Primary">Permitir acesso aos módulo de estatisticas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoVendas" Color="Color.Primary">Permitir acesso as vendas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoLancaVenda" Color="Color.Primary">Permitir lançamento de vendas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoEditaVenda" Color="Color.Primary">Permitir acesso para editar venda</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCancelaVenda" Color="Color.Primary">Permitir acesso para cancelar venda</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCancelaItensDaVenda" Color="Color.Primary">Permitir acesso para cancelar os itens das vendas</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoConfiguracoes" Color="Color.Primary">Permitir acesso as configurações</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoConfigsDeImpressao" Color="Color.Primary">Permitir acesso as configurações de impressão</MudCheckBox>
-                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeFuncionarios" Color="Color.Primary">Permitir acesso aos cadastros de funcionários</MudCheckBox>
+                                <MudStack style="background-color: var(--mud-palette-background);" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                    <MudGrid Class="w-100">
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoDashboard" Color="Color.Primary">Permite Acesso a Dashboard</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroGrupoProduto" Color="Color.Primary">Permitir acesso ao cadastro de grupos de produtos</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroProduto" Color="Color.Primary">Permitir acesso ao cadastro de produtos</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoEditarProduto" Color="Color.Primary">Permitir acesso para editar produtos</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoDeletaProduto" Color="Color.Primary">Permitir acesso para deletar produtos</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeAliquotas" Color="Color.Primary">Permitir acesso aos cadastros de aliquotas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePessoa" Color="Color.Primary">Permitir acesso aos cadastros de pessoas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastraMesaOuComandas" Color="Color.Primary">Permitir acesso aos cadastros de mesas/comandas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePromocoes" Color="Color.Primary">Permitir acesso aos cadastros de promoções</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeGarcons" Color="Color.Primary">Permitir acesso aos cadastros de garçons</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeMotoboy" Color="Color.Primary">Permitir acesso aos cadastros de Motoboy</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoFinanceiro" Color="Color.Primary">Permitir acesso ao módulo financeiro</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeContas" Color="Color.Primary">Permitir acesso aos cadastros de contas do financeiro</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeCategoriasFinanceiro" Color="Color.Primary">Permitir acesso aos cadastros de categorias do financeiro</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastraFormaDePagamento" Color="Color.Primary">Permitir acesso aos cadastros de Métodos De pagamento.</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroFormasDeRecebimento" Color="Color.Primary">Permitir acesso aos cadastros de Formas de Recebimento</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoLancamentosFinanceiro" Color="Color.Primary">Permitir acesso ao módulos de lançamento financeiro</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastraLancamento" Color="Color.Primary">Permitir acesso aos cadastros de lançamentos financeiros</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoEstatisticas" Color="Color.Primary">Permitir acesso aos módulo de estatisticas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoVendas" Color="Color.Primary">Permitir acesso as vendas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoLancaVenda" Color="Color.Primary">Permitir lançamento de vendas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoEditaVenda" Color="Color.Primary">Permitir acesso para editar venda</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCancelaVenda" Color="Color.Primary">Permitir acesso para cancelar venda</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCancelaItensDaVenda" Color="Color.Primary">Permitir acesso para cancelar os itens das vendas</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoConfiguracoes" Color="Color.Primary">Permitir acesso as configurações</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoConfigsDeImpressao" Color="Color.Primary">Permitir acesso as configurações de impressão</MudCheckBox>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="6" md="3">
+                                            <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeFuncionarios" Color="Color.Primary">Permitir acesso aos cadastros de funcionários</MudCheckBox>
+                                        </MudItem>
+                                    </MudGrid>
+
                                 </MudStack>
-
-
-
                             }
-
                         </MudStack>
 
+                        @if (!ECriacao)
+                        {
+                            <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
+
+                            <MudStack>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                    <MudText Typo="Typo.h6">Demissão</MudText>
+                                    <MudText Color="Color.Error" Typo="Typo.body1">(Essa parte é de Demissão) (Somente em caso de demissão !)</MudText>
+                                </MudStack>
+
+                                <MudGrid>
+                                    <MudItem xs="12" md="12">
+                                        <MudTextField T="string" Immediate=true @bind-Value=Funcionario.motivoDemissao Required=true RequiredError="O motivo da demissão é Obrigatório" Variant="Variant.Filled" Label="Motivo da demissão" HelperText="Informe o motivo da demissão do funcionário" />
+                                    </MudItem>
+                                    <MudItem xs="12" md="6">
+                                        <MudDatePicker Label="Data de demissão" Variant="Variant.Filled" Editable="true" @bind-Date="Funcionario.Demissao" Placeholder="Selecione a Data de demissão" />
+                                    </MudItem>
+
+                                </MudGrid>
+                            </MudStack>
+                        }
                     </MudFocusTrap>
                 </MudStack>
             }
@@ -194,6 +289,8 @@
     {
         try
         {
+
+
             if (!ECriacao)
             {
                 Funcionario = await FuncionariosService.GetFuncionarioByIdAsync(IdDoFuncionario);
@@ -218,6 +315,15 @@
     {
         try
         {
+            if (Funcionario.usaOSistema || Funcionario.EditandoSenha)
+            {
+                if (string.IsNullOrEmpty(Funcionario.Email) || string.IsNullOrEmpty(Funcionario.Email))
+                {
+                    Snackbar.Add("Para que o funcionário utilize o sistema, é necessário que o email e a senha sejam preenchidos.", Severity.Error);
+                    return;
+                }
+            }
+
             ReturnApiRefatored<ClsFuncionario> ResponseAPi = new ReturnApiRefatored<ClsFuncionario>();
 
             if (ECriacao)

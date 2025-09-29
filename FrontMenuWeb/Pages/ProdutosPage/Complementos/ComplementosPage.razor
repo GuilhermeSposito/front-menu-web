@@ -38,6 +38,10 @@
         <MudTabs Ripple=true Color="Color.Primary" SliderAnimation=true Outlined=true Elevation="0" @bind-ActivePanelIndex="SelecionadoDinamico" Class="w-100 h-100" Rounded="true" ApplyEffectsToContainer="true">
             <MudTabPanel Icon="@Icons.Material.Filled.GroupWork"  Text="Grupos">
                 <MudStack Spacing="4">
+                    @if(GruposDeComplementos is null || GruposDeComplementos.Count == 0)
+                    {
+                          <AvisoDeDadosVazios ReferenciaDados="Grupo de Complementos" />
+                    }
                     @foreach (var grupo in GruposDeComplementos)
                     {
                         <MudCard>
@@ -112,6 +116,9 @@
                              Loading="CarregandoComplementos"
                              Hover
                              ServerData="LoadServerData">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Complementos" />
+            </NoRecordsContent>
                     <Columns>
                         <PropertyColumn Property="c => c.Descricao" Title="Descrição" />
                         <PropertyColumn Property="c => c.ComplementoInfo" Title="Informações" />

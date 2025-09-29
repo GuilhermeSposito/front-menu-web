@@ -51,5 +51,11 @@ public class FuncionariosService
         ReturnApiRefatored<ClsFuncionario>? returnCorreto = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsFuncionario>>();
         return returnCorreto ?? new ReturnApiRefatored<ClsFuncionario>();
     }
+    public async Task<ReturnApiRefatored<ClsFuncionario>> DeleteFuncionario(ClsFuncionario funcionario)
+    {
+        var response = await _http.DeleteAsync($"funcionarios/{funcionario.Id}");
+        ReturnApiRefatored<ClsFuncionario>? returnCorreto = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsFuncionario>>();
+        return returnCorreto ?? new ReturnApiRefatored<ClsFuncionario>();
+    }
 
 }

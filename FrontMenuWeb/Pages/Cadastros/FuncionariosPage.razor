@@ -94,12 +94,18 @@
                                                  IconColor="Color.Primary"
                                                  Label="Editar" />
                                 </MudTooltip>
+                                <MudTooltip Text="Clique para deletar" Color="Color.Error">
+                                    <MudMenuItem OnClick=@(async p => { await DeletaFuncionario(context.Item); })
+                                                 Icon="@Icons.Material.TwoTone.Delete"
+                                                 IconColor="Color.Primary"
+                                                 Label="Deletar" />
+                                </MudTooltip>
 
                             </MudMenu>
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
-            
+
             </Columns>
             <PagerContent>
                 <MudDataGridPager T="ClsFuncionario" RowsPerPageString="Funcionários por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 20, 30, 40 }) />
@@ -107,18 +113,22 @@
         </MudDataGrid>
 
     </MudLayout>
-    <MudStack Class="w-100 mt-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
-            <MudCard Class="rounded-2xl shadow-lg w-50" Style="background: linear-gradient(135deg, #F88113, #FFB347); color:white;">
-                <MudStack Row=true>
-                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                        <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
-                        <MudText Typo="Typo.h6" Class="opacity-90">Total em Salários</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalEmSalario.ToString("C")</MudText>
-                    </MudCardContent>
-                </MudStack>
-            </MudCard>
-    </MudStack>
-
+    @if (TotalEmSalario > 0)
+    {
+        <MudGrid Class="w-100 mt-2">
+            <MudItem xs="12" lg="6">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #F88113, #FFB347); color:white;">
+                    <MudStack Row=true>
+                        <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                            <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
+                            <MudText Typo="Typo.h6" Class="opacity-90">Total em Salários</MudText>
+                            <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalEmSalario.ToString("C")</MudText>
+                        </MudCardContent>
+                    </MudStack>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
 </MudPaper>
 
 
@@ -162,7 +172,7 @@
             return new GridData<ClsFuncionario> { };
         }
         finally
-        {     
+        {
             CarregandoFuncionarios = false;
             await InvokeAsync(StateHasChanged);
         }
@@ -242,6 +252,37 @@
         {
             await dataGridRef.ReloadServerData();
             StateHasChanged();
+        }
+    }
+
+    private async Task DeletaFuncionario(ClsFuncionario funcionario)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir o funcionário {funcionario.Nome}? Atenção, essa ação não pode ser desfeita, e perderá toda a referencia a ele" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await FuncionariosService.DeleteFuncionario(funcionario);
+
+                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    await dataGridRef!.ReloadServerData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir Lançamento: {ex.Message}", Severity.Error);
         }
     }
 

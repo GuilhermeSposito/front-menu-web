@@ -49,7 +49,8 @@ public class ClsFuncionario
     [JsonPropertyName("AcessoCancelaItensDaVenda")] public bool AcessoCancelaItensDaVenda { get; set; } = true;
     [JsonPropertyName("AcessoConfiguracoes")] public bool AcessoConfiguracoes { get; set; } = true;
     [JsonPropertyName("AcessoConfigsDeImpressao")] public bool AcessoConfigsDeImpressao { get; set; } = true;
-    [JsonPropertyName("AcessoCadastroDeFuncionarios")] public bool AcessoCadastroDeFuncionarios { get; set; } = true;
+    [JsonPropertyName("AcessoCadastroDeFuncionarios")] public bool AcessoCadastroDeFuncionarios { get; set; } = false;
     [JsonPropertyName("ativo")] public bool ativo { get; set; } = true;
+    [JsonPropertyName("TrocandoSenha")] public bool EditandoSenha { get; set; } = false;
 
 }

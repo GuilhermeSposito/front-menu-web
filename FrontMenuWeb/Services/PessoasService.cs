@@ -54,14 +54,6 @@ public class PessoasService
 
         return response!;
 
-       /* if (response is null)
-            return "Erro ao cadastrar pessoa;";
-
-        if (response.Status != "success")
-             return response.message ?? "Erro ao cadastrar pessoa;";
-
-        return response.Data.Message ?? "Pessoa cadastrada com sucesso!";*/
-
     }
 
     public async Task<string> UpdatePessoa(ClsPessoas pessoaASerCadastrada)

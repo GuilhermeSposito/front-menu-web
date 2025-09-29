@@ -125,6 +125,7 @@
 
                     @*<MudNavLink Href="/claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Claims</MudNavLink>*@
 
+                    @*Cadastros*@
                     <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.People" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/pessoas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDePessoa); })">Pessoas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.GroupWork" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/funcionarios", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeFuncionarios); })">Funcionários</MudNavLink>
