@@ -19,6 +19,12 @@
                     <MudButton Disabled="IsLoading ? true : false" @onclick="OpenDialogAddGrupoAsync" Variant="Variant.Filled" Color="Color.Primary">Novo Grupo</MudButton>
                 </div>
             </div>
+
+            @if (grupos is null || grupos.Count == 0)
+            {
+                <AvisoDeDadosVazios ReferenciaDados="grupos" />
+            }
+
             <MudDataGrid Loading=IsLoading Striped="true" T="ClsGrupo" Items="@grupos" class="rounded-3">
                 <Columns>
                     <PropertyColumn Property="x => x.Id" Title="Id" />

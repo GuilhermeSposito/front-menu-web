@@ -9,6 +9,7 @@ public class ClsFuncionario
     [JsonPropertyName("cpf")] public string CPF { get; set; } = string.Empty;
     [JsonPropertyName("funcao")] public string Funcao { get; set; } = string.Empty;
     [JsonPropertyName("email")] public string Email { get; set; } = string.Empty;
+    [JsonPropertyName("senha")] public string Senha { get; set; } = string.Empty;
     [JsonPropertyName("salario")] public float Salario { get; set; } = 0f;
     [JsonPropertyName("ultimoPag")] public DateTime? UltimoPagamento { get; set; } 
     [JsonPropertyName("modificadoEm")] public DateTime? ModificadoEm { get; set; } 
@@ -21,7 +22,7 @@ public class ClsFuncionario
     [JsonPropertyName("bairro")] public string Bairro { get; set; } = string.Empty;
     [JsonPropertyName("cidade")] public string Cidade { get; set; } = string.Empty;
     [JsonPropertyName("cep")] public string Cep { get; set; } = string.Empty;
-    [JsonPropertyName("usaOSistema")] public bool usaOSistema { get; set; } = true;
+    [JsonPropertyName("usaOSistema")] public bool usaOSistema { get; set; } = false;
     [JsonPropertyName("AcessoDashboard")] public bool AcessoDashboard { get; set; } = true;
     [JsonPropertyName("AcessoCadastroProduto")] public bool AcessoCadastroProduto { get; set; } = true;
     [JsonPropertyName("AcessoCadastroGrupoProduto")] public bool AcessoCadastroGrupoProduto { get; set; } = true;
@@ -44,6 +45,7 @@ public class ClsFuncionario
     [JsonPropertyName("AcessoVendas")] public bool AcessoVendas { get; set; } = true;
     [JsonPropertyName("AcessoLancaVenda")] public bool AcessoLancaVenda { get; set; } = true;
     [JsonPropertyName("AcessoCancelaVenda")] public bool AcessoCancelaVenda { get; set; } = true;
+    [JsonPropertyName("AcessoEditaVenda")] public bool AcessoEditaVenda { get; set; } = true;
     [JsonPropertyName("AcessoCancelaItensDaVenda")] public bool AcessoCancelaItensDaVenda { get; set; } = true;
     [JsonPropertyName("AcessoConfiguracoes")] public bool AcessoConfiguracoes { get; set; } = true;
     [JsonPropertyName("AcessoConfigsDeImpressao")] public bool AcessoConfigsDeImpressao { get; set; } = true;

@@ -1,0 +1,401 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using System.Globalization
+@using FrontMenuWeb.Services.ServicosDeTerceiros
+@inject FuncionariosService FuncionariosService
+@inject CEPService CEPService
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+
+            @if (!CarregandoFuncionario)
+            {
+                <MudStack Class="w-100" Spacing="3">
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Nome Required=true RequiredError="O Nome é Obrigatório" Variant="Variant.Filled" Label="Nome" Class="w-75" />
+                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Funcao Variant="Variant.Filled" Label="Função" Class="w-25" />
+                        </MudStack>
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                            <MudTextField T="string" Immediate=true @bind-Value=Funcionario.CPF Variant="Variant.Filled" Label="CPF" Class="w-75" />
+                            <MudNumericField @ref="_numeric"
+                                             Immediate="false"
+                                             Variant="Variant.Filled"
+                                             Format="N2"
+                                             Label="Valor"
+                                             Required
+                                             RequiredError="O Salario é obrigatório"
+                                             Culture="_pt"
+                                             T="float"
+                                             Class="w-25"
+                                             HideSpinButtons="true"
+                                             AdornmentText="R$"
+                                             Min="0"
+                                             Adornment="Adornment.Start"
+                                             @bind-Value="Funcionario.Salario"
+                                             onfocus="@HandleFocus" />
+                        </MudStack>
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                            <MudDatePicker Class="w-75" Label="Data de admissão" Variant="Variant.Filled" Editable="true" @bind-Date="Funcionario.Admissao" Placeholder="Selecione a Data de Admissão" />
+                            <MudNumericField Class="w-25" T="int" @bind-Value=Funcionario.DiaDoPagamento Variant="Variant.Filled" Min="0" Immediate=true Label="Dia de Pagamento" />
+                        </MudStack>
+
+                        <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
+
+                        <MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                <MudText Typo="Typo.h6">Endereço</MudText>
+                                <MudText Color="Color.Error" Typo="Typo.body1">(Essa parte não é obrigatória, mas recomendada!)</MudText>
+                            </MudStack>
+
+                            <MudGrid>
+                                <MudItem xs="12" sm="12">
+                                    <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="Funcionario.Rua" Variant="Variant.Filled" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="Funcionario.Bairro" Variant="Variant.Filled" />
+                                </MudItem>
+
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="Funcionario.Cidade" Variant="Variant.Filled" />
+                                </MudItem>
+
+
+                                <MudItem xs="12" sm="5">
+                                    <MudTextField Label="CEP" @bind-Value="Funcionario.Cep" Variant="Variant.Filled"
+                                                  Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
+                                </MudItem>
+
+                            </MudGrid>
+
+                        </MudStack>
+
+                        <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
+
+                        <MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                <MudText Typo="Typo.h6">Sistema</MudText>
+                                <MudText Color="Color.Error" Typo="Typo.body1">(Essa parte é sobre o acesso ao sistema !) (NÂO É OBRIGATÓRIO)</MudText>
+                            </MudStack>
+
+                            <MudStack style="background-color: var(--mud-palette-background);" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                <MudText Typo="Typo.h6">Funcionário utiliza o sistema ?</MudText>
+                                <MudSwitch T="bool" @bind-Value=@Funcionario.usaOSistema Color="Color.Success" />
+                            </MudStack>
+
+                            @if (!Funcionario.usaOSistema)
+                            {
+                                <AvisoDeDadosVazios ReferenciaDados="Acesso ao sistema pelo funcionário" />
+                            }
+                            else
+                            {
+                                @*Senha e Email*@
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                    <MudTextField T="string" Immediate=true @bind-Value=Funcionario.Email Required=true RequiredError="O Email é Obrigatório" Variant="Variant.Filled" Label="Email" Class="w-50" />
+                                    @if (ECriacao)
+                                    {
+                                        <MudTextField Class="w-50" T="string" Label="Senha" HelperText="Escolha uma senha forte"
+                                        InputType="InputType.Password"
+                                        Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                                        RequiredError="Senha é obrigatória"
+                                        Variant="Variant.Filled"/>
+                                    }
+                                </MudStack>
+
+                                <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                                    <MudText Typo="Typo.h6">Acessos</MudText>
+                                    <MudText Color="Color.Error" Typo="Typo.body1">(Selecione As Permissões do Funcionário)</MudText>
+                                </MudStack>
+                                <MudStack style="background-color: var(--mud-palette-background);" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoDashboard" Color="Color.Primary">Permite Acesso a Dashboard</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroGrupoProduto" Color="Color.Primary">Permitir acesso ao cadastro de grupos de produtos</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroProduto" Color="Color.Primary">Permitir acesso ao cadastro de produtos</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoEditarProduto" Color="Color.Primary">Permitir acesso para editar produtos</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoDeletaProduto" Color="Color.Primary">Permitir acesso para deletar produtos</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeAliquotas" Color="Color.Primary">Permitir acesso aos cadastros de aliquotas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePessoa" Color="Color.Primary">Permitir acesso aos cadastros de pessoas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraMesaOuComandas" Color="Color.Primary">Permitir acesso aos cadastros de mesas/comandas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDePromocoes" Color="Color.Primary">Permitir acesso aos cadastros de promoções</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeGarcons" Color="Color.Primary">Permitir acesso aos cadastros de garçons</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeMotoboy" Color="Color.Primary">Permitir acesso aos cadastros de Motoboy</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoFinanceiro" Color="Color.Primary">Permitir acesso ao módulo financeiro</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeContas" Color="Color.Primary">Permitir acesso aos cadastros de contas do financeiro</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeCategoriasFinanceiro" Color="Color.Primary">Permitir acesso aos cadastros de categorias do financeiro</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraFormaDePagamento" Color="Color.Primary">Permitir acesso aos cadastros de Métodos De pagamento.</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroFormasDeRecebimento" Color="Color.Primary">Permitir acesso aos cadastros de Formas de Recebimento</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoLancamentosFinanceiro" Color="Color.Primary">Permitir acesso ao módulos de lançamento financeiro</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastraLancamento" Color="Color.Primary">Permitir acesso aos cadastros de lançamentos financeiros</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoEstatisticas" Color="Color.Primary">Permitir acesso aos módulo de estatisticas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoVendas" Color="Color.Primary">Permitir acesso as vendas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoLancaVenda" Color="Color.Primary">Permitir lançamento de vendas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoEditaVenda" Color="Color.Primary">Permitir acesso para editar venda</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCancelaVenda" Color="Color.Primary">Permitir acesso para cancelar venda</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCancelaItensDaVenda" Color="Color.Primary">Permitir acesso para cancelar os itens das vendas</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoConfiguracoes" Color="Color.Primary">Permitir acesso as configurações</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoConfigsDeImpressao" Color="Color.Primary">Permitir acesso as configurações de impressão</MudCheckBox>
+                                    <MudCheckBox @bind-Value="Funcionario.AcessoCadastroDeFuncionarios" Color="Color.Primary">Permitir acesso aos cadastros de funcionários</MudCheckBox>
+                                </MudStack>
+
+
+
+                            }
+
+                        </MudStack>
+
+                    </MudFocusTrap>
+                </MudStack>
+            }
+            else
+            {
+
+            }
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Submit">@(ECriacao ? "Adicionar" : "Atualizar")</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    private MudNumericField<float> _numeric;
+
+    private bool ErroAoAdicionarFuncionario = false;
+    private string MensagemDeErro = string.Empty;
+    private bool CarregandoFuncionario = true;
+
+    [Parameter] public bool ECriacao { get; set; }
+    [Parameter] public int IdDoFuncionario { get; set; } = 0;
+
+    private ClsFuncionario Funcionario = new ClsFuncionario();
+    private bool CarregandoRespostaDaApiDeCep = false;
+    private bool ErroAoAdicionarEndereco = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!ECriacao)
+            {
+                Funcionario = await FuncionariosService.GetFuncionarioByIdAsync(IdDoFuncionario);
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Lançamento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoFuncionario = false;
+        }
+
+    }
+
+
+
+    private async Task Submit()
+    {
+        try
+        {
+            ReturnApiRefatored<ClsFuncionario> ResponseAPi = new ReturnApiRefatored<ClsFuncionario>();
+
+            if (ECriacao)
+            {
+                ResponseAPi = await FuncionariosService.CreatefuncionarioAsync(Funcionario);
+            }
+            else
+            {
+
+                ResponseAPi = await FuncionariosService.UpdateFuncionarioAsync(Funcionario);
+
+            }
+
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (ResponseAPi.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                MensagemDeErro = MensagemDeRetorno;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao adicionar funcionário: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task HandleFocus(FocusEventArgs args)
+    {
+        // O campo interno do MudNumericField é um InputBase,
+        // podemos chamar SelectAsync() nele.
+        await _numeric.FocusAsync();  // garante o foco
+        await _numeric.SelectAsync(); // seleciona todo o texto
+    }
+
+
+    private async Task ProcuraCep()
+    {
+        try
+        {
+
+            if (!string.IsNullOrWhiteSpace(Funcionario.Cep))
+            {
+                CarregandoRespostaDaApiDeCep = true;
+                var endereco = await CEPService.ConsultarCepAsync(Funcionario.Cep);
+                CarregandoRespostaDaApiDeCep = false;
+                if (endereco != null)
+                {
+                    Funcionario.Rua = endereco.Logradouro!;
+                    Funcionario.Bairro = endereco.Bairro!;
+                    Funcionario.Cidade = endereco.Cidade!;
+                }
+                else
+                {
+                    // Tratar caso o CEP não seja encontrado
+                    Funcionario.Rua = string.Empty;
+                    Funcionario.Bairro = string.Empty;
+                    Funcionario.Cidade = string.Empty;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro Ao procurar rua por cep", Severity.Error);
+            ErroAoAdicionarEndereco = true;
+        }
+    }
+
+    private async Task ProcuraCepPorRua()
+    {
+        try
+        {
+
+            if (!string.IsNullOrWhiteSpace(Funcionario.Rua))
+            {
+                CarregandoRespostaDaApiDeCep = true;
+                var enderecos = await CEPService.ConsultarCepPorRuaAsync(Funcionario.Rua);
+                CarregandoRespostaDaApiDeCep = false;
+                if (enderecos != null && enderecos.Count > 0)
+                {
+                    var endereco = enderecos.FirstOrDefault();
+                    if (enderecos.Count > 1)
+                    {
+                        if (!string.IsNullOrEmpty(Funcionario.Rua))
+                            await OpenDialogAsync(enderecos);
+                    }
+
+                    if (_enderecoSelecionado is not null)
+                    {
+                        endereco = _enderecoSelecionado;
+                    }
+
+                    Funcionario.Cep = endereco.Cep!;
+                    Funcionario.Rua = endereco.Logradouro!;
+                    Funcionario.Bairro = endereco.Bairro!;
+                    Funcionario.Cidade = endereco.Cidade!;
+
+                }
+                else
+                {
+
+                    Snackbar.Add("Rua não encontrada. Por favor, verifique o nome da rua.", Severity.Warning);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Tratar erro ao buscar CEP
+            ErroAoAdicionarEndereco = true;
+        }
+    }
+
+    private EnderecoViaCep? _enderecoSelecionado;
+    private async Task OpenDialogAsync(List<EnderecoViaCep> enderecos)
+    {
+        _enderecoSelecionado = null;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters
+        {
+            { "Enderecos", enderecos }
+        };
+
+        var dialogReference = await DialogService.ShowAsync<ModalDeVariosLogradouros>("Varios endereços encontrado com essa chave de pesquisa.", parameters, options);
+
+
+        StateHasChanged();
+
+        var dialogResult = await dialogReference.Result;
+        if (dialogResult.Canceled)
+        {
+            _enderecoSelecionado = null;
+            StateHasChanged();
+        }
+        else
+        {
+            _enderecoSelecionado = dialogResult.Data as EnderecoViaCep;
+            StateHasChanged();
+        }
+    }
+
+
+    private IEnumerable<string> PasswordStrength(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+        {
+            yield return "Senha é Obrigatória";
+            yield break;
+        }
+        if (pw.Length < 8)
+            yield return "Senha deve ter um tamanho maior que 8";
+        if (!Regex.IsMatch(pw, @"[A-Z]"))
+            yield return "Senha deve conter uma letra maiúscula";
+        if (!Regex.IsMatch(pw, @"[a-z]"))
+            yield return "Senha deve conter uma letra minúscula";
+        if (!Regex.IsMatch(pw, @"[0-9]"))
+            yield return "Senha deve conter ao menos um número";
+    }
+
+
+}
+

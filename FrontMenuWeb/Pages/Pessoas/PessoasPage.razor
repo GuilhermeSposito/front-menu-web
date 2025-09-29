@@ -37,7 +37,9 @@
                      EditTrigger="DataGridEditTrigger.Manual"
                      Items="@Pessoas"
                      class="rounded-3">
-
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Pessoas" />
+            </NoRecordsContent>
             <ToolBarContent>
 
                 <div class="gap-2 w-100 d-flex ">
