@@ -52,5 +52,6 @@ public class ClsFuncionario
     [JsonPropertyName("AcessoCadastroDeFuncionarios")] public bool AcessoCadastroDeFuncionarios { get; set; } = false;
     [JsonPropertyName("ativo")] public bool ativo { get; set; } = true;
     [JsonPropertyName("TrocandoSenha")] public bool EditandoSenha { get; set; } = false;
+    [JsonIgnore] public bool Demitindo { get; set; } = false;
 
 }

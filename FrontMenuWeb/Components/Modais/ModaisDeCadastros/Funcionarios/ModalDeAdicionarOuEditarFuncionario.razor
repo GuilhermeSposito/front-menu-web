@@ -10,6 +10,7 @@
 @using FrontMenuWeb.Services.FinanceroServices
 @using System.Globalization
 @using FrontMenuWeb.Services.ServicosDeTerceiros
+@inject IJSRuntime JS
 @inject FuncionariosService FuncionariosService
 @inject CEPService CEPService
 
@@ -19,6 +20,21 @@
 
             @if (!CarregandoFuncionario)
             {
+                @if(!ECriacao)
+                {
+                    <MudStack Row=true Class="mb-2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudText Typo="Typo.body1">ATIVO</MudText>
+                        <MudSwitch T="bool" @bind-Value=@Funcionario.ativo Color="Color.Success" />
+                    </MudStack>
+
+                    <MudStack>
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="@(async ()=> {await IrParaDemissao();})">DEMITIR</MudButton>
+                    </MudStack>
+                </MudStack>
+                }
+
+                <MudDivider DividerType="DividerType.FullWidth" Class="mb-2" Light=true />
                 <MudStack Class="w-100" Spacing="3">
                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
@@ -42,9 +58,9 @@
                                                      Immediate="false"
                                                      Variant="Variant.Filled"
                                                      Format="N2"
-                                                     Label="Valor"
+                                                     Label="Salário"
                                                      Required
-                                                     RequiredError="O Salario é obrigatório"
+                                                     RequiredError="O Salário é obrigatório"
                                                      Culture="_pt"
                                                      T="float"
                                                      HideSpinButtons="true"
@@ -229,11 +245,11 @@
                             }
                         </MudStack>
 
-                        @if (!ECriacao)
+                        @if (!ECriacao && (Funcionario.Demitindo || !string.IsNullOrEmpty(Funcionario.motivoDemissao)))
                         {
                             <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
 
-                            <MudStack>
+                            <MudStack id="destino-demissao">
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
                                     <MudText Typo="Typo.h6">Demissão</MudText>
                                     <MudText Color="Color.Error" Typo="Typo.body1">(Essa parte é de Demissão) (Somente em caso de demissão !)</MudText>
@@ -255,7 +271,54 @@
             }
             else
             {
-
+                @*Carregando*@
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                <MudDivider DividerType="DividerType.FullWidth" Class="mt-2" Light=true />
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="6" md="6">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="6" md="6">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="3" md="3">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
             }
 
         </DialogContent>
@@ -332,6 +395,10 @@
             }
             else
             {
+                if (Funcionario.Demitindo)
+                {
+                    Funcionario.ativo = false;
+                }
 
                 ResponseAPi = await FuncionariosService.UpdateFuncionarioAsync(Funcionario);
 
@@ -502,6 +569,15 @@
             yield return "Senha deve conter ao menos um número";
     }
 
+    private async Task IrParaDemissao()
+    {
+        Funcionario.Demitindo = true;
+        await Task.Delay(100);
 
+        await JS.InvokeVoidAsync(
+              "eval",
+              "document.getElementById('destino-demissao').scrollIntoView({ behavior: 'smooth', block: 'start' });"
+        );
+    }
 }
 

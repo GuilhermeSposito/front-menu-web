@@ -104,6 +104,9 @@
     {
         try
         {
+            loginSucesso = true;
+            MensagemDeErro = string.Empty;
+
             var response = await Http.PostAsJsonAsync("auth/login", loginModel);
 
             if (response.IsSuccessStatusCode)
@@ -115,9 +118,9 @@
             }
             else
             {
-                var res = await response.Content.ReadAsStringAsync();
+                var res = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<LoginResult>>();
                 loginSucesso = false;
-                MensagemDeErro = res;
+                MensagemDeErro = string.Join(", ", res.Messages);
             }
         }
         catch (Exception ex)
