@@ -58,6 +58,11 @@
 
 
             }
+            else
+            {
+                <MudSkeleton Height="150px" Width="100%" Animation="Animation.Wave" />
+                <MudSkeleton Height="200px" Width="100%" Animation="Animation.Wave" />
+            }
 
 
         </DialogContent>
@@ -115,6 +120,8 @@
     {
         try
         {
+            Carregando = true;
+
             if (Mesa.InicioDoIntervalo == 0 || Mesa.FimDoIntervalo == 0)
             {
                 Mesa.InicioDoIntervalo = null;
@@ -125,7 +132,7 @@
 
             if (ECriacao)
             {
-               
+
 
                 ResponseAPi = await MesasServices.CreateMesaAsync(Mesa);
             }
@@ -152,6 +159,11 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao adicionar mesa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+            await InvokeAsync(StateHasChanged);
         }
 
     }
