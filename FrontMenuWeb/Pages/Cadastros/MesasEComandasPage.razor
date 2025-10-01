@@ -1,0 +1,208 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/mesas-comandas"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Mesas
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject IHttpClientFactory HttpClientFactory
+@inject FuncionariosService FuncionariosService
+@using MudBlazor.Extensions.Services
+@inject MesasServices MesasServices
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <MudStack Row=true class="d-flex align-items-center justify-content-between">
+            <MudStack>
+                <MudText Typo="Typo.h4">Mesas / Comandas</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de mesas / comandas</MudText>
+            </MudStack>
+            <MudStack class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoMesas" OnClick="@(async () => { await AbreEdicaoOuCriacaoDeMesaOuComanda(true); })">Novo Cadastro</MudButton>
+            </MudStack>
+        </MudStack>
+
+
+        @*Data Grid*@
+        <MudDataGrid T="ClsMesasEComandas"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection="true"
+                     SelectOnRowClick=true
+                     Class="rounded-3 custom-striped"
+                     Loading="CarregandoMesas"
+                     Hover
+                     ServerData="LoadServerData"
+                     SelectedItems="MesasSelecionadas"
+                     SelectedItemsChanged="SelectedItemsChanged">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Mesas Ou Comandas" />
+            </NoRecordsContent>
+            <ToolBarContent>
+                @if(MesasSelecionadas.Count > 0)
+                {
+                    <MudButton Class="m-3" OnClick=DeletarMesaOuComanda Variant="Variant.Filled" Color="Color.Error">Excluir Selecionados</MudButton>
+                }
+
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="ClsMesasEComandas" />
+                <PropertyColumn Property="x => x.CodigoExterno" Title="Número"></PropertyColumn>
+                <TemplateColumn T="ClsMesasEComandas" Title="Bloquado">
+                    <CellTemplate Context="context">
+                        @(context.Item.Bloqueado ? "Sim" : "Não")
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsMesasEComandas" Title="Reservado">
+                    <CellTemplate Context="context">
+                        @(context.Item.Reservado ? "Sim" : "Não")
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsMesasEComandas">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+
+                                <MudMenuItem OnClick=@(async p => { await AbreEdicaoOuCriacaoDeMesaOuComanda(false, context.Item); })
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" ></MudMenuItem>   
+
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="ClsMesasEComandas" RowsPerPageString="Mesas por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 200, 300, 400 }) />
+            </PagerContent>
+        </MudDataGrid>
+
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+    private bool CarregandoMesas = false;
+    private MudDataGrid<ClsMesasEComandas>? dataGridRef;
+
+
+
+    private HashSet<ClsMesasEComandas> MesasSelecionadas = new HashSet<ClsMesasEComandas>();
+    void SelectedItemsChanged(HashSet<ClsMesasEComandas> items)
+    {
+        MesasSelecionadas = items;
+    }
+
+    private async Task<GridData<ClsMesasEComandas>> LoadServerData(GridState<ClsMesasEComandas> state)
+    {
+        try
+        {
+            CarregandoMesas = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await MesasServices.GetMesaPorPaginaAsync(page, pageSize);
+
+
+            return new GridData<ClsMesasEComandas>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar funcionários: {ex.Message}", Severity.Error);
+            return new GridData<ClsMesasEComandas> { };
+        }
+        finally
+        {
+            CarregandoMesas = false;
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+
+    private async Task AbreEdicaoOuCriacaoDeMesaOuComanda(bool eCriacao = false, ClsMesasEComandas? mesaParaEditar = null)
+    {
+        var IdDaMesa = 0;
+
+        if (mesaParaEditar is not null)
+        {
+            IdDaMesa = mesaParaEditar.Id;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "IdDaMesa", IdDaMesa},
+           { "ECriacao", eCriacao}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarOuEditarMesa>(eCriacao ? "Adicionar Mesa/Comanda" : "Editar Mesa/Comanda", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await dataGridRef.ReloadServerData();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletarMesaOuComanda()
+    {
+        List<int> ListaDeIds = new List<int>();
+
+        ListaDeIds.AddRange(MesasSelecionadas.Select(m => m.Id));
+        try
+        {
+            if (ListaDeIds.Count > 0)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir a(s) {string.Join(",", MesasSelecionadas.Select(m => m.Id))} mesa(s) / comanda(s)? Essa operação não pode ser desfeita. " },
+                    { x => x.ButtonText, "sim" },
+                    { x => x.Color, Color.Error}
+                };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+                var result = await dialog.Result;
+                if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                {
+                    ReturnApiRefatored<ClsMesasEComandas> responseApi = await MesasServices.DeleteMesaAsync(ListaDeIds);
+                    string MensagemDeRetorno = string.Join(", ", responseApi.Status == "success" ? responseApi.Data.Messages : responseApi.Messages);
+                    Snackbar.Add(MensagemDeRetorno, responseApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                    if (responseApi.Status == "success")
+                    {
+                        MesasSelecionadas.Clear();
+                        await dataGridRef!.ReloadServerData();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir mesa(s) / comanda(s): {ex.Message}", Severity.Error);
+        } 
+    }
+
+}

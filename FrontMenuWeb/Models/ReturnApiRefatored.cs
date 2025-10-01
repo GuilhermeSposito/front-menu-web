@@ -20,8 +20,7 @@ public class Data<T>
 {
     [JsonExtensionData] public Dictionary<string, JsonElement> ExtraData { get; set; } = new();
 
-    [JsonPropertyName("message")]
-    public List<string> Messages { get; set; } = new List<string>();
+    [JsonPropertyName("message")]public List<string> Messages { get; set; } = new List<string>();
 
     public List<T>? Lista
     {
