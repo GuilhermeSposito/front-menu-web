@@ -67,13 +67,16 @@
                                                     </CardHeaderAvatar>
                                                     <CardHeaderContent>
                                                         <MudText Color="Color.Primary" Typo="Typo.body1">@pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido</MudText>
-                                                        @if(pedido.Pedido.Cliente is not null)
+                                                        @if (pedido.Pedido.Cliente is not null)
                                                         {
                                                             <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                         }
                                                     </CardHeaderContent>
                                                     <CardHeaderActions>
-                                                        <MudCheckBox T="bool" @bind-Value=@pedido.Selecionado />
+                                                        @if (!pedido.UltimaEtapa)
+                                                        {
+                                                            <MudCheckBox ValueChanged=@(() => { pedido.Selecionado = !pedido.Selecionado; if (pedido.Selecionado) { ItensSelecionadosPArAProximaEtapa.Add(pedido); } else { ItensSelecionadosPArAProximaEtapa.Remove(pedido); } }) T="bool" Value=@pedido.Selecionado />
+                                                        }
                                                     </CardHeaderActions>
                                                 </MudCardHeader>
                                                 <MudCardContent>
@@ -98,7 +101,7 @@
                                                             <MudDivider DividerType="DividerType.FullWidth" Light=true />
                                                         }
 
-                                                        <MudStack  Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
+                                                        <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
                                                             <MudStack Spacing="2" Class="w-100">
                                                                 <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
                                                                 <MudDivider />
@@ -134,13 +137,22 @@
                                                 <MudCardActions>
                                                     <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                         <MudStack Row=true>
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
-                                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                            <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                                                                <MudMenuItem Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
+                                                                <MudMenuItem Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
+                                                                <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
+                                                                <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
+                                                            </MudMenu>
                                                         </MudStack>
                                                         <MudStack>
-                                                        <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
-                                                            <MudIconButton Size="Size.Large" Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" />
-                                                        </MudTooltip>
+                                                            <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
+                                                                @if (!pedido.UltimaEtapa)
+                                                                {
+                                                                    <MudIconButton OnClick="@(async () => { await MudaEtapaDoPedido(pedido); })" Size="Size.Large" Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" />
+
+                                                                }
+                                                            </MudTooltip>
                                                         </MudStack>
                                                     </MudStack>
                                                 </MudCardActions>
@@ -176,6 +188,21 @@
             </MudStack>
         }
 
+        @if (ItensSelecionadosPArAProximaEtapa.Count > 0)
+        {
+            <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
+                      Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
+                <MudText>Você selecionou @ItensSelecionadosPArAProximaEtapa.Count pedidos, deseja envia-los para proxima etapa ?</MudText>
+
+                <MudPaper Elevation="0" Square="false">
+
+                    <MudButton Color="Color.Default" OnClick="@(async () => { ItensSelecionadosPArAProximaEtapa.Clear();})">Descartar</MudButton>
+                    <MudButton Color="Color.Success" OnClick="@(async () => { await MudaEtapaDoPedido();})" Class="ml-2">Enviar para proxima etapa</MudButton>
+
+                </MudPaper>
+            </MudPaper>
+        }
+
     </MudLayout>
 </MudPaper>
 
@@ -189,7 +216,7 @@
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "DESPACHADO", Selector = "DESPACHADO" },
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "FINALIZADO", Selector = "FINALIZADO" },
     };
-
+    public List<ClsDeSuporteParaMostrarPedidos> ItensSelecionadosPArAProximaEtapa = new List<ClsDeSuporteParaMostrarPedidos>();
 
     private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
     {
@@ -233,9 +260,67 @@
     }
 
 
-    private void ItemUpdated(MudItemDropInfo<ClsDeSuporteParaMostrarPedidos> dropItem)
+    private async Task MudaEtapaDoPedido(ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
-        dropItem.Item!.Selector = dropItem.DropzoneIdentifier;
+        if (Supor is not null)
+        {
+            Snackbar.Add($"Mudando etapa do pedido {Supor.Pedido.Id}...", Severity.Info);
+
+            if (Supor.Selector == "NOVO")
+            {
+                Supor.Selector = "PREPARANDO";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (Supor.Selector == "PREPARANDO")
+            {
+                Supor.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (Supor.Selector == "DESPACHADO")
+            {
+                Supor.Selector = "FINALIZADO";
+                Supor.UltimaEtapa = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+        }else if (ItensSelecionadosPArAProximaEtapa.Count > 0)
+        {
+            foreach (var item in ItensSelecionadosPArAProximaEtapa)
+            {
+                if (item.Selector == "NOVO")
+                {
+                    item.Selector = "PREPARANDO";
+                    item.Selecionado = false;
+                    await InvokeAsync(StateHasChanged);
+                    continue;
+                }
+
+                if (item.Selector == "PREPARANDO")
+                {
+                    item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
+                    item.Selecionado = false;
+                    await InvokeAsync(StateHasChanged);
+                    continue;
+                }
+
+                if (item.Selector == "DESPACHADO")
+                {
+                    item.Selector = "FINALIZADO";
+                    item.UltimaEtapa = true;
+                    item.Selecionado = false;
+                    await InvokeAsync(StateHasChanged);
+                    continue;
+                }
+            }
+
+            ItensSelecionadosPArAProximaEtapa.Clear();
+            await InvokeAsync(StateHasChanged);
+        }
+
     }
 
 

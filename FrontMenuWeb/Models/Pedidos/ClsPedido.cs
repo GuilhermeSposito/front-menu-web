@@ -40,6 +40,7 @@ public class ClsDeSuporteParaMostrarPedidos
     public bool Selecionado { get; set; } = false;
     public bool Expandido { get; set; } = false;
     public string Selector { get; set; } = string.Empty;
+    public bool UltimaEtapa { get; set; } = false;
 }
 
 public class ClsPedido
