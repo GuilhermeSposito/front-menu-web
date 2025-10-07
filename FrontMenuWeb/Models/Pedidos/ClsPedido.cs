@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Produtos;
+﻿using FrontMenuWeb.Models.Pessoas;
+using FrontMenuWeb.Models.Produtos;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
@@ -37,7 +38,7 @@ public class ClsDeSuporteParaMostrarPedidos
 {
     public ClsPedido Pedido { get; set; } = new ClsPedido();
     public bool Selecionado { get; set; } = false;
-   // public StatusPedidos StatusPedido { get; set; } = StatusPedidos.ABERTO;
+    public bool Expandido { get; set; } = false;
     public string Selector { get; set; } = string.Empty;
 }
 
@@ -51,6 +52,7 @@ public class ClsPedido
     [JsonPropertyName("EtapaPedido")] public string EtapaPedido { get; set; } = string.Empty;
     [JsonPropertyName("status")] public string StatusPedido { get; set; } = string.Empty;
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
+    [JsonPropertyName("cliente")] public ClsPessoas? Cliente { get; set; } = new ClsPessoas();
 
 }
 
