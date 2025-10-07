@@ -1,0 +1,77 @@
+﻿using FrontMenuWeb.Models.Produtos;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
+namespace FrontMenuWeb.Models.Pedidos;
+
+public enum TiposDePedido
+{
+    [Display(Name = "BALCÃO")] BALCAO,
+    MESA,
+    DELIVERY,
+    RETIRADA,
+}
+
+public enum EtapasPedido
+{
+    NOVO,
+    PREPARANDO,
+    DESPACHADO,
+    PRONTO,
+    FINALIZADO
+}
+
+public enum StatusPedidos
+{
+    ABERTO,
+    FECHANDO,
+    FECHADO,
+    CANCELADO,
+    ENTREGUE,
+    DESPACHADO,
+    FINALIZADO
+}
+
+public class ClsDeSuporteParaMostrarPedidos
+{
+    public ClsPedido Pedido { get; set; } = new ClsPedido();
+    public bool Selecionado { get; set; } = false;
+   // public StatusPedidos StatusPedido { get; set; } = StatusPedidos.ABERTO;
+    public string Selector { get; set; } = string.Empty;
+}
+
+public class ClsPedido
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
+    [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
+    [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = string.Empty;
+    [JsonPropertyName("tipoDePedido")] public string TipoDePedido { get; set; } = string.Empty;
+    [JsonPropertyName("EtapaPedido")] public string EtapaPedido { get; set; } = string.Empty;
+    [JsonPropertyName("status")] public string StatusPedido { get; set; } = string.Empty;
+    [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
+
+}
+
+public class ItensPedido
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("Produto")] public ClsProduto? Produto { get; set; }
+    [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
+    [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
+    [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
+    [JsonPropertyName("Observacoes")] public string Observacoes { get; set; } = string.Empty;
+    [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
+}
+
+public class ComplementoNoItem
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("Produto")] public ClsComplemento? Complemento { get; set; }
+    [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
+    [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
+    [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
+}
