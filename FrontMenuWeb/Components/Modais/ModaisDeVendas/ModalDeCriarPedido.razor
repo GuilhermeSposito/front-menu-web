@@ -1,0 +1,122 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Services
+@inject PedidosService AliquotaService
+@inject ProdutoService ProdutoService
+@inject GrupoServices GrupoService
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
+<MudDialog Class="novo-pedido-dialog mud-width-full mud-height-full" Style="background-color: var(--mud-palette-background)">
+    <DialogContent>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100">
+            <MudGrid Class="w-100 h-100" >
+                <MudItem xs=12 sm="12" md="6" lg="2">
+                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4"></MudPaper>
+                </MudItem>
+                <MudItem xs=12 sm="12" md="6" lg="7">
+                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+                        <MudStack Class="w-100 h-100">
+                            <MudStack Class="w-100">
+                                <MudTextField Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                            </MudStack>
+                            <MudStack Class="w-100"></MudStack>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs=12 sm="12" md="12" lg="3">
+                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4"></MudPaper>
+                </MudItem>
+            </MudGrid>
+
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudTextField<string> _descricaoRef;
+    private string MensagemDeErro = "Erro ao criar pedido. Verifique os dados e tente novamente.";
+
+
+
+    private async Task Submit()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    //Lógicas se precisar de responsividade
+    bool _expanded = true;
+
+    private void OnExpandCollapseClick()
+    {
+        _expanded = !_expanded;
+    }
+
+    //Lógica do Drawer de edição de produto
+    private bool carregandoProdutoParaEdicao = true;
+    private ClsProduto? ProdutoSelecionadoParaEdicao = null!;
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "65%";
+    private bool UsandoMobile = false;
+    //--------------------------------------------------------------------------------------
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "95%" : "65%";
+
+        if (_width < 768)
+        {
+            UsandoMobile = true;
+        }
+        else
+        {
+            UsandoMobile = false;
+        }
+
+        return InvokeAsync(StateHasChanged);
+    }
+}
