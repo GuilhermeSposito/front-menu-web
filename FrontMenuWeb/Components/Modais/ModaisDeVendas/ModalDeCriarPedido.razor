@@ -8,25 +8,100 @@
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
-<MudDialog Class="novo-pedido-dialog mud-width-full mud-height-full" Style="background-color: var(--mud-palette-background)">
+<MudDialog TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background)">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-surface); box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
+            <MudText Typo="Typo.h6">Novo Pedido</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="Cancelar" />
+        </MudStack>
+    </TitleContent>
     <DialogContent>
         <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100">
-            <MudGrid Class="w-100 h-100" >
-                <MudItem xs=12 sm="12" md="6" lg="2">
-                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4"></MudPaper>
-                </MudItem>
+            <MudGrid Class="w-100 h-100">
+                @*MudItemDeGrupos*@
+                @if (!UsandoMobile)
+                {
+                    <MudItem xs=12 sm="12" md="6" lg="2">
+                        <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6">Grupos</MudText>
+                            </MudStack>
+                            <MudStack Class="w-100 h-100">
+                                @if (CarregandoGrupo)
+                                {
+                                    <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    <MudList T="ClsGrupo">
+                                        @foreach (var grupo in Grupos)
+                                        {
+                                            <MudListItem Class="mud-list-item-clickable">
+                                                <MudText Typo="Typo.body1">@grupo.Descricao</MudText>
+                                            </MudListItem>
+                                        }
+                                    </MudList>
+                                }
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                @*MudItem De Produtos*@
                 <MudItem xs=12 sm="12" md="6" lg="7">
                     <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
                         <MudStack Class="w-100 h-100">
                             <MudStack Class="w-100">
                                 <MudTextField Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
                             </MudStack>
-                            <MudStack Class="w-100"></MudStack>
+                            <MudStack Class="w-100 h-100">
+                                @if (CarregandoProduto)
+                                {
+                                    <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    <MudStack Class="w-100 h-100 p-2" Wrap="Wrap.Wrap" Row=true AlignItems="AlignItems.Start"  Justify="Justify.FlexStart">
+                                        @foreach (var produto in Produtos)
+                                        {
+                                            <MudPaper Elevation="4" Class="p-2" Style="background-color: var(--mud-palette-background); cursor:pointer;">
+                                                <MudStack Row=true>
+                                                   @*FOTO*@
+                                                   <MudStack Class="h-100">
+                                                       <MudAvatar Rounded=true Color="Color.Primary" Square=true>@produto.Descricao.Substring(0,1)</MudAvatar>
+                                                   </MudStack>
+
+                                                   @*Infos*@
+                                                   <MudStack>
+                                                       @*NOME*@
+                                                       <MudStack>
+                                                           <MudText Typo="Typo.h6">@produto.Descricao</MudText>
+                                                       </MudStack>
+                                                       @*Precos*@
+                                                       <MudStack>
+                                                           <MudText Typo="Typo.subtitle1">@produto.Precos.Count() Tamanhos</MudText>
+                                                       </MudStack>
+                                                   </MudStack>
+                                                    
+                                                </MudStack>
+                                            </MudPaper>
+                                        }
+                                    </MudStack>
+                                }
+                            </MudStack>
                         </MudStack>
                     </MudPaper>
                 </MudItem>
+
+                @*MudItem De Carrinho*@
                 <MudItem xs=12 sm="12" md="12" lg="3">
-                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4"></MudPaper>
+                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+
+                    </MudPaper>
                 </MudItem>
             </MudGrid>
 
@@ -40,8 +115,18 @@
     private IMudDialogInstance MudDialog { get; set; }
     private MudTextField<string> _descricaoRef;
     private string MensagemDeErro = "Erro ao criar pedido. Verifique os dados e tente novamente.";
+    private bool CarregandoProduto = true;
+    private bool CarregandoGrupo = true;
 
+    //props das visualizações
+    private List<ClsGrupo> Grupos = new();
+    private List<ClsProduto> Produtos = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarGrupos();
+        await CarregarProdutos();
+    }
 
     private async Task Submit()
     {
@@ -56,18 +141,70 @@
         }
     }
 
-    private void Cancelar()
+    private async Task CarregarGrupos()
     {
-        MudDialog.Cancel();
+        try
+        {
+            CarregandoGrupo = true;
+            Grupos = await GrupoService.GetGrupos();
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+        finally
+        {
+            CarregandoGrupo = false;
+            StateHasChanged();
+        }
     }
 
-    //Lógicas se precisar de responsividade
-    bool _expanded = true;
-
-    private void OnExpandCollapseClick()
+    private async Task CarregarProdutos()
     {
-        _expanded = !_expanded;
+        try
+        {
+            CarregandoProduto = true;
+
+            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, null, null);
+
+            Produtos = response.Data;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+
+
+        }
+        finally
+        {
+            CarregandoProduto = false;
+            StateHasChanged();
+
+        }
     }
+
+    private async void Cancelar()
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+          {
+              { x => x.ContentText, $"Ao sair da página, este pedido não será criado. Ele e as informações inseridas serão perdidas." },
+              { x => x.ButtonText, "Sim" },
+              { x => x.Color, Color.Error}
+          };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Sair da página", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            MudDialog.Cancel();
+        }
+
+    }
+
 
     //Lógica do Drawer de edição de produto
     private bool carregandoProdutoParaEdicao = true;

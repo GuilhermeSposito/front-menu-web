@@ -19,8 +19,6 @@
 @inject AliquotaService AliquotaService
 @inject ComplementosServices ComplementosServices
 @inject PedidosService PedidosService
-@implements IBrowserViewportObserver
-@implements IAsyncDisposable
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -202,13 +200,13 @@
         @if (ItensSelecionadosPArAProximaEtapa.Count > 0)
         {
             <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
-                      Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
+                      Style="color: #FFFF; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
                 <MudText>Você selecionou @ItensSelecionadosPArAProximaEtapa.Count pedidos, deseja envia-los para proxima etapa ?</MudText>
 
-                <MudPaper Elevation="0" Square="false">
+                <MudPaper Elevation="0" Style=" background-color: var(--mud-palette-primary);" Square="false">
 
-                    <MudButton Color="Color.Default" OnClick="@(async () => { ItensSelecionadosPArAProximaEtapa.Clear(); })">Descartar</MudButton>
-                    <MudButton Color="Color.Success" OnClick="@(async () => { await MudaEtapaDoPedido(); })" Class="ml-2">Enviar para proxima etapa</MudButton>
+                    <MudButton Style="color: #FFFF;" OnClick="@(async () => { ItensSelecionadosPArAProximaEtapa.Clear(); })">Descartar</MudButton>
+                    <MudButton Style="color: #FFFF;" OnClick="@(async () => { await MudaEtapaDoPedido(); })" Class="ml-2">Enviar para proxima etapa</MudButton>
 
                 </MudPaper>
             </MudPaper>
@@ -232,8 +230,7 @@
 
     private async Task AbrirCriacaoDePedido()
     {
-
-        var options = new DialogOptions {NoHeader = true,MaxWidth = MaxWidth.False, FullWidth = false,FullScreen = false, CloseOnEscapeKey = true };
+        var options = new DialogOptions {MaxWidth = MaxWidth.False, FullWidth = false,FullScreen = false, CloseOnEscapeKey = false, BackdropClick= false };
 
         var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", options);
         var result = await dialog.Result;
@@ -351,68 +348,9 @@
     }
 
 
-    //Lógicas se precisar de responsividade
-    bool _expanded = true;
 
-    private void OnExpandCollapseClick()
-    {
-        _expanded = !_expanded;
-    }
 
-    //Lógica do Drawer de edição de produto
-    private bool carregandoProdutoParaEdicao = true;
-    private ClsProduto? ProdutoSelecionadoParaEdicao = null!;
-    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
-    private bool _open;
-    private Anchor _anchor;
-    private string _height = "100%";
-    private int _width = 0;
-    private string _drawerWidth = "65%";
-    //--------------------------------------------------------------------------------------
-
-    private void OpenDrawer(Anchor anchor)
-    {
-        _open = true;
-        _anchor = anchor;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
-
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    public async ValueTask DisposeAsync()
-        => await BrowserViewportService.UnsubscribeAsync(this);
-
-    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
-
-    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
-    {
-        ReportRate = 50,
-        NotifyOnBreakpointOnly = false
-    };
-
-    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
-    {
-        _width = args.BrowserWindowSize.Width;
-
-        // Atualiza o tamanho do drawer com base na largura
-        _drawerWidth = _width < 768 ? "95%" : "65%";
-
-        if (_width < 768)
-        {
-         
-        }
-        else
-        {
-        }
-
-        return InvokeAsync(StateHasChanged);
-    }
-
+   
 
     public class ClsDeSuporteParaVizualicacaoDePedidos
     {

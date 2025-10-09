@@ -9,7 +9,7 @@ public class ClsProduto
     [JsonPropertyName("categoria")] public Categoria? Categoria { get; set; }
     [JsonPropertyName("categoria_id")] public int? CategoriaId { get; set; }
     [JsonPropertyName("grupo_id")] public int GrupoId { get; set; }
-    [JsonPropertyName("descricao")] public string? Descricao { get; set; }
+    [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("ncm")] public string? NCM { get; set; }
     [JsonPropertyName("cest")] public string? CEST { get; set; }
     [JsonPropertyName("GruposDeComplementosDoProduto")] public List<ClsGruposDeComplementosDoProduto>? GruposDeComplementosDoProduto { get; set; }
