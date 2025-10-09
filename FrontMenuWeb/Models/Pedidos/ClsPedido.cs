@@ -49,7 +49,7 @@ public class ClsPedido
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
     [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
     [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = string.Empty;
-    [JsonPropertyName("tipoDePedido")] public string TipoDePedido { get; set; } = string.Empty;
+    [JsonPropertyName("tipoDePedido")] public string TipoDePedido { get; set; } = "BALCÃO";
     [JsonPropertyName("EtapaPedido")] public string EtapaPedido { get; set; } = string.Empty;
     [JsonPropertyName("status")] public string StatusPedido { get; set; } = string.Empty;
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();

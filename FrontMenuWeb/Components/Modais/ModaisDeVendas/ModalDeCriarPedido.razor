@@ -1,18 +1,24 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
 @inject PedidosService AliquotaService
 @inject ProdutoService ProdutoService
 @inject GrupoServices GrupoService
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
+@inject PessoasService PessoaService
 
 <MudDialog TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background)">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-surface); box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
-            <MudText Typo="Typo.h6">Novo Pedido</MudText>
-            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="Cancelar" />
+            <MudText Class="ms-3" Typo="Typo.h6">Novo Pedido</MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" OnClick="Cancelar" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="Cancelar" />
+            </MudStack>
         </MudStack>
     </TitleContent>
     <DialogContent>
@@ -31,6 +37,7 @@
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
                                         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                        <MudText Color="Color.Primary" Typo="Typo.body1">Carregando grupos...</MudText>
                                     </MudStack>
                                 }
                                 else
@@ -38,7 +45,7 @@
                                     <MudList T="ClsGrupo">
                                         @foreach (var grupo in Grupos)
                                         {
-                                            <MudListItem Class="mud-list-item-clickable">
+                                            <MudListItem OnClick=@(async () => { await ColocarFiltroPorGrupo(grupo); }) Class="mud-list-item-clickable">
                                                 <MudText Typo="Typo.body1">@grupo.Descricao</MudText>
                                             </MudListItem>
                                         }
@@ -51,7 +58,7 @@
 
                 @*MudItem De Produtos*@
                 <MudItem xs=12 sm="12" md="6" lg="7">
-                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface); overflow-y: auto" Elevation="4">
                         <MudStack Class="w-100 h-100">
                             <MudStack Class="w-100">
                                 <MudTextField Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
@@ -61,35 +68,60 @@
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
                                         <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                        <MudText Color="Color.Primary" Typo="Typo.body1">Carregando produtos...</MudText>
+                                    </MudStack>
+                                }
+                                else if (Produtos.Count > 0)
+                                {
+                                    <MudStack Class="w-100 h-100 p-3" AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
+                                        <MudGrid>
+                                            @foreach (var produto in Produtos)
+                                            {
+                                                <MudItem xs=12 sm="6" md="4" lg="3">
+                                                    <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="4" Style="background-color: var(--mud-palette-background); cursor:pointer; min-height: 100px; max-height: 100px">
+                                                        <MudGrid Class="h-100">
+
+                                                            <MudItem Class="h-100" xs="6" md="6" lg="2">
+                                                                <MudStack>
+                                                                    <MudAvatar Size="Size.Medium" Color="Color.Primary" Square=true>@produto.Descricao.Substring(0, 1)</MudAvatar>
+                                                                </MudStack>
+
+                                                            </MudItem>
+
+                                                            @*Infos*@
+                                                            <MudItem xs="6" md="6" lg="10">
+                                                                <MudStack>
+                                                                    @*NOME*@
+                                                                    <MudStack Class="ms-1">
+                                                                        <MudText Typo="Typo.h6">@produto.Descricao</MudText>
+                                                                    </MudStack>
+                                                                    @*Precos*@
+                                                                    <MudStack Class="ms-1">
+                                                                        <MudText Typo="Typo.subtitle1">@produto.Precos.Count() Tamanhos</MudText>
+                                                                    </MudStack>
+                                                                </MudStack>
+                                                            </MudItem>
+
+                                                        </MudGrid>
+                                                    </MudPaper>
+                                                </MudItem>
+                                            }
+
+                                        </MudGrid>
                                     </MudStack>
                                 }
                                 else
                                 {
-                                    <MudStack Class="w-100 h-100 p-2" Wrap="Wrap.Wrap" Row=true AlignItems="AlignItems.Start"  Justify="Justify.FlexStart">
-                                        @foreach (var produto in Produtos)
-                                        {
-                                            <MudPaper Elevation="4" Class="p-2" Style="background-color: var(--mud-palette-background); cursor:pointer;">
-                                                <MudStack Row=true>
-                                                   @*FOTO*@
-                                                   <MudStack Class="h-100">
-                                                       <MudAvatar Rounded=true Color="Color.Primary" Square=true>@produto.Descricao.Substring(0,1)</MudAvatar>
-                                                   </MudStack>
-
-                                                   @*Infos*@
-                                                   <MudStack>
-                                                       @*NOME*@
-                                                       <MudStack>
-                                                           <MudText Typo="Typo.h6">@produto.Descricao</MudText>
-                                                       </MudStack>
-                                                       @*Precos*@
-                                                       <MudStack>
-                                                           <MudText Typo="Typo.subtitle1">@produto.Precos.Count() Tamanhos</MudText>
-                                                       </MudStack>
-                                                   </MudStack>
-                                                    
-                                                </MudStack>
-                                            </MudPaper>
-                                        }
+                                    <MudStack AlignItems="AlignItems.Center"
+                                              Justify="Justify.Center"
+                                              Style="width: 100%; height: 100%; opacity: 0.4;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                                            Nenhum item
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Align="Align.Center">
+                                            Seus produtos aparecerão aqui quando existirem.
+                                        </MudText>
                                     </MudStack>
                                 }
                             </MudStack>
@@ -99,7 +131,70 @@
 
                 @*MudItem De Carrinho*@
                 <MudItem xs=12 sm="12" md="12" lg="3">
-                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+                    <MudPaper Class="h-100 rounded p-2" Style="background-color: var(--mud-palette-surface); overflow: auto" Elevation="4">
+                        @*Informações do pedido*@
+                        <MudStack Class="w-100 h-25 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background);">
+                            <MudStack>
+                                <MudTextField Class="rounded-2" Value="PesquisaPessoa" Label="Pesquisa" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.People" PlaceHolder="Pesquisar cliente..." @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Outlined" />
+                                @if (MostrarSugestoes)
+                                {
+                                    <MudPaper Elevation="4">
+                                        <MudList T="ClsPessoas" Dense="true">
+                                            @foreach (var pessoa in PessoasParaSelecionar)
+                                            {
+                                                <MudListItem @onkeydown=@(async (e) => { await HandleKeyDown(e, pessoa); }) OnClick="@(async x => { await SelecionarPessoa(pessoa); })">
+                                                    @pessoa.Nome
+                                                </MudListItem>
+                                            }
+                                        </MudList>
+                                    </MudPaper>
+                                }
+                            </MudStack>
+
+                            <MudStack>
+                                <MudSelect Label="Tipo do Pedido" T="string" @bind-Value=@NovoPedido.TipoDePedido Variant="Variant.Outlined">
+                                    <MudSelectItem Value="@("BALCÃO")">
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
+                                            <span>BALCÃO</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                    <MudSelectItem Value="@("DELIVERY")">
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
+                                            <span>DELIVERY</span>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                </MudSelect>
+                            </MudStack>
+
+                            <MudStack>
+                                <MudExpansionPanels>
+                                    <MudExpansionPanel Icon="@Icons.Material.Filled.Notes" Text="Observações do pedido">
+                                        <MudStack Class="w-100 h-100">
+                                            <MudTextField T="string" Placeholder="Adicione uma observação no pedido" />
+                                        </MudStack>
+                                    </MudExpansionPanel>
+                                </MudExpansionPanels>
+                            </MudStack>
+                            <MudDivider Light=true Class="w-100" />
+
+
+                            @*Carrinho*@
+                            <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
+                                <MudButton OnClick="@(() => {NovoPedido.Itens.Clear();})">Limpar</MudButton>
+                            </MudStack>
+
+                            @*itens*@
+                            <MudStack>
+                                @foreach (var produtoNoPedido in NovoPedido.Itens)
+                                {
+                                    <MudText>@produtoNoPedido.Descricao</MudText>
+                                }
+                            </MudStack>
+
+                        </MudStack>
 
                     </MudPaper>
                 </MudItem>
@@ -122,6 +217,36 @@
     private List<ClsGrupo> Grupos = new();
     private List<ClsProduto> Produtos = new();
 
+    //Lógica do pedido
+    private ClsPedido NovoPedido = new();
+
+    //Lógica do AutoComplete de Pessoas
+    private List<ClsPessoas> PessoasParaSelecionar { get; set; } = new List<ClsPessoas>();
+    private ClsPessoas? PessoaSelecionada = null;
+    private string PesquisaPessoa = string.Empty;
+    private bool MostrarSugestoes = false;
+
+
+    public async Task AdicionarProdutoNoPedido(ClsProduto produto)
+    {
+        ItensPedido ItemParaAdicionarNoPedido = new()
+        {
+            Descricao = produto.Descricao,
+            Quantidade = 1,
+            PrecoUnitario = 55,
+            PrecoTotal = 60
+        };
+
+        NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
+        await InvokeAsync(StateHasChanged);
+
+        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+        {
+            Snackbar.Add($"Produto {produto.Descricao} tem complementos", Severity.Error);
+
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await CarregarGrupos();
@@ -133,11 +258,15 @@
         MudDialog.Cancel();
     }
 
-    private async Task HandleKeyDown(KeyboardEventArgs e)
+    private async Task HandleKeyDown(KeyboardEventArgs e, ClsPessoas pessoa)
     {
         if (e.Key == "Enter")
         {
-            await Submit();
+            PessoaSelecionada = pessoa;
+            NovoPedido.Cliente = pessoa;
+            PesquisaPessoa = pessoa.Nome;
+            MostrarSugestoes = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -152,7 +281,7 @@
         }
         catch (Exception ex)
         {
-
+            Snackbar.Add("Erro ao carregar grupos. Tente novamente.", Severity.Error);
         }
         finally
         {
@@ -175,14 +304,31 @@
         }
         catch (Exception ex)
         {
-
-
+            Snackbar.Add("Erro ao carregar produtos. Tente novamente.", Severity.Error);
         }
         finally
         {
             CarregandoProduto = false;
             StateHasChanged();
 
+        }
+    }
+
+    public async Task ColocarFiltroPorGrupo(ClsGrupo grupo)
+    {
+        try
+        {
+            CarregandoProduto = true;
+            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, null, grupo.Id);
+            Produtos = response.Data;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao carregar produtos. Tente novamente.", Severity.Error);
+        }
+        finally
+        {
+            CarregandoProduto = false;
         }
     }
 
@@ -205,6 +351,41 @@
 
     }
 
+    private async void OnFocusAutoCompleteManual(FocusEventArgs args)
+    {
+        MostrarSugestoes = true;
+        await ValueDeAutoCompleteMudou(PesquisaPessoa);
+    }
+    private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
+    {
+
+        MostrarSugestoes = false;
+    }
+
+    private async Task ValueDeAutoCompleteMudou(string? value)
+    {
+        PesquisaPessoa = value ?? string.Empty;
+
+        try
+        {
+            var ResponseAPi = await PessoaService.GetPessoasPaginado(PesquisaPessoa);
+            PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao procurar pessoas: {ex.Message}", Severity.Error);
+
+        }
+    }
+
+    private async Task SelecionarPessoa(ClsPessoas pessoa)
+    {
+        PessoaSelecionada = pessoa;
+        NovoPedido.Cliente = pessoa;
+        PesquisaPessoa = pessoa.Nome;
+        MostrarSugestoes = false;
+        await InvokeAsync(StateHasChanged);
+    }
 
     //Lógica do Drawer de edição de produto
     private bool carregandoProdutoParaEdicao = true;
