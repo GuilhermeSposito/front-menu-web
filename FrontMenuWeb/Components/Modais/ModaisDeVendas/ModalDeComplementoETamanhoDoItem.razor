@@ -1,0 +1,33 @@
+﻿<MudDialog>
+    <TitleContent>
+        @if (AtualizandoItem)
+        {
+            <MudText Class="ms-3" Typo="Typo.h6">Detalhes do item</MudText>
+        }
+        else
+        {
+            <MudText Class="ms-3" Typo="Typo.h6">Atualizando Item</MudText>
+
+        }
+    </TitleContent>
+    <DialogContent>
+        Dialog Content
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ClsProduto Produto { get; set; } = new ClsProduto();
+    [Parameter] public bool AtualizandoItem { get; set; } = false;
+
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}

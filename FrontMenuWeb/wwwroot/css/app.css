@@ -4,6 +4,11 @@
     position: relative; /* referência para o overlay */
 }
 
+.product-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(16,24,40,0.12);
+}
+
 .novo-pedido-dialog .mud-dialog {
     position: fixed !important;
     top: 0;

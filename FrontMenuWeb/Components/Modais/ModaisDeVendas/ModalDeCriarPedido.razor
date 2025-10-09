@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -74,41 +75,41 @@
                                 else if (Produtos.Count > 0)
                                 {
                                     <MudStack Class="w-100 h-100 p-3" AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
-                                        <MudGrid>
+                                        <MudGrid GutterSize="2">
                                             @foreach (var produto in Produtos)
                                             {
-                                                <MudItem xs=12 sm="6" md="4" lg="3">
-                                                    <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="4" Style="background-color: var(--mud-palette-background); cursor:pointer; min-height: 100px; max-height: 100px">
+                                                <MudItem xs="12" sm="6" md="4" lg="3">
+                                                    <MudPaper @onclick="async () => await AdicionarProdutoNoPedido(produto)"
+                                                              Elevation="6"
+                                                              Class="d-flex align-center pa-2 transition-all product-card"
+                                                              Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
                                                         <MudGrid Class="h-100">
-
-                                                            <MudItem Class="h-100" xs="6" md="6" lg="2">
-                                                                <MudStack>
-                                                                    <MudAvatar Size="Size.Medium" Color="Color.Primary" Square=true>@produto.Descricao.Substring(0, 1)</MudAvatar>
-                                                                </MudStack>
-
+                                                            <!-- Avatar -->
+                                                            <MudItem xs="3" Class="d-flex justify-center align-center">
+                                                                <MudAvatar Size="Size.Large"
+                                                                           Color="Color.Primary"
+                                                                           Square="true"
+                                                                           Class="fw-bold text-white">
+                                                                    @produto.Descricao.Substring(0, 1)
+                                                                </MudAvatar>
                                                             </MudItem>
 
-                                                            @*Infos*@
-                                                            <MudItem xs="6" md="6" lg="10">
-                                                                <MudStack>
-                                                                    @*NOME*@
-                                                                    <MudStack Class="ms-1">
-                                                                        <MudText Typo="Typo.h6">@produto.Descricao</MudText>
-                                                                    </MudStack>
-                                                                    @*Precos*@
-                                                                    <MudStack Class="ms-1">
-                                                                        <MudText Typo="Typo.subtitle1">@produto.Precos.Count() Tamanhos</MudText>
-                                                                    </MudStack>
-                                                                </MudStack>
+                                                            <!-- Informações -->
+                                                            <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                                                <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
+                                                                    @produto.Descricao
+                                                                </MudText>
+                                                                <MudText Typo="Typo.body2">
+                                                                    @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
+                                                                </MudText>
                                                             </MudItem>
-
                                                         </MudGrid>
                                                     </MudPaper>
                                                 </MudItem>
                                             }
-
                                         </MudGrid>
                                     </MudStack>
+
                                 }
                                 else
                                 {
@@ -135,7 +136,7 @@
                         @*Informações do pedido*@
                         <MudStack Class="w-100 h-25 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background);">
                             <MudStack>
-                                <MudTextField Class="rounded-2" Value="PesquisaPessoa" Label="Pesquisa" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.People" PlaceHolder="Pesquisar cliente..." @onfocus="OnFocusAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Outlined" />
+                                <MudTextField Class="rounded-2" Value="PesquisaPessoa" Label="Pesquisa" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.People" PlaceHolder="Pesquisar cliente..." @onfocus="OnFocusAutoCompleteManual" @onfocusout="OnFocusOutAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Outlined" />
                                 @if (MostrarSugestoes)
                                 {
                                     <MudPaper Elevation="4">
@@ -146,6 +147,12 @@
                                                     @pessoa.Nome
                                                 </MudListItem>
                                             }
+                                            <MudListItem OnClick="AbreModalDeAdicionarPessoa">
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Add" />
+                                                    <span>Adicionar Cliente</span>
+                                                </MudStack>
+                                            </MudListItem>
                                         </MudList>
                                     </MudPaper>
                                 }
@@ -183,7 +190,7 @@
                             @*Carrinho*@
                             <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
                                 <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
-                                <MudButton OnClick="@(() => {NovoPedido.Itens.Clear();})">Limpar</MudButton>
+                                <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar</MudButton>
                             </MudStack>
 
                             @*itens*@
@@ -227,8 +234,35 @@
     private bool MostrarSugestoes = false;
 
 
-    public async Task AdicionarProdutoNoPedido(ClsProduto produto)
+    public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
+
+        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+        {
+            var parameters = new DialogParameters
+            {
+               { "AtualizandoItem",AtualizandoItem},
+               { "Produto", produto}
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Cadastrar Pessoa", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+            }
+            else
+            {
+                Snackbar.Add("Produtos com informações obrigatórias não informadas", Severity.Error);
+                return;
+
+            }
+
+        }
+
+
         ItensPedido ItemParaAdicionarNoPedido = new()
         {
             Descricao = produto.Descricao,
@@ -239,12 +273,6 @@
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
         await InvokeAsync(StateHasChanged);
-
-        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
-        {
-            Snackbar.Add($"Produto {produto.Descricao} tem complementos", Severity.Error);
-
-        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -267,6 +295,19 @@
             PesquisaPessoa = pessoa.Nome;
             MostrarSugestoes = false;
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void AbreModalDeAdicionarPessoa()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            StateHasChanged();
         }
     }
 
@@ -359,7 +400,7 @@
     private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
     {
 
-        MostrarSugestoes = false;
+        //  MostrarSugestoes = false;
     }
 
     private async Task ValueDeAutoCompleteMudou(string? value)
