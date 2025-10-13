@@ -22,7 +22,7 @@
                 Label="Valor do tamanho"
                 Format="N2"
                 Culture="_pt"
-                T="double"
+                T="float"
                 HideSpinButtons="true"
                 @bind-Value="NovoPreco.Valor" />
 
@@ -59,7 +59,6 @@
     {
         if (NovoPreco.Valor > 0 && !string.IsNullOrEmpty(NovoPreco.DescricaoDoTamanho))
         {
-            Console.WriteLine($"Adicionando valor: {NovoPreco.Valor} para o produto: {Produto.Id}");
 
             var response = await ProdutoService.AdicionaValorNoProduto(Produto.Id!, NovoPreco);
 

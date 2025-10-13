@@ -271,7 +271,7 @@
                                                      Label="Valor do tamanho"
                                                      Format="N2"
                                                      Culture="_pt"
-                                                     T="double"
+                                                     T="float"
                                                      HideSpinButtons="true"
                                                      @bind-Value="preco.Valor" />
 
@@ -285,7 +285,7 @@
                     {
                         var precoMenor = ProdutoSelecionado.Precos
                         .OrderBy(x => x.Valor)
-                        .FirstOrDefault() ?? new Preco() { DescricaoDoTamanho = "Sem preço definido", Valor = 0.0 };
+                        .FirstOrDefault() ?? new Preco() { DescricaoDoTamanho = "Sem preço definido", Valor = 0f };
 
                         <MudItem xs="12">
                             <MudPaper Class="d-flex flex-wrap gap-2 align-center justify-center mud-width-full py-8">
@@ -309,7 +309,7 @@
                                                  Label="Valor do tamanho"
                                                  Format="N2"
                                                  Culture="_pt"
-                                                 T="double"
+                                                 T="float"
                                                  HideSpinButtons="true"
                                                  @bind-Value="precoMenor.Valor" />
 

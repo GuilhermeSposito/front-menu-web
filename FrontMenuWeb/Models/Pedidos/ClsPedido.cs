@@ -62,9 +62,10 @@ public class ItensPedido
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("Produto")] public ClsProduto? Produto { get; set; }
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
-    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
-    [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
-    [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
+    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 1;
+    [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; } = 0;
+    [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; } = 0;
+    [JsonPropertyName("Preco")] public Preco Preco { get; set; } = new Preco();
     [JsonPropertyName("Observacoes")] public string Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
 }
@@ -74,7 +75,7 @@ public class ComplementoNoItem
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("Produto")] public ClsComplemento? Complemento { get; set; }
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
-    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
+    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 0;
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
 }

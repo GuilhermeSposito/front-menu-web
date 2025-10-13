@@ -42,7 +42,7 @@ public class ClsProduto
     [JsonPropertyName("aliquota_id")] public int AliquotaId { get; set; }
     [JsonPropertyName("origem_produto")] public string? OrigemProduto { get; set; }
     [JsonPropertyName("trib_pis_confins")] public string? TribPisCofins { get; set; }
-
+    [JsonIgnore] public Preco PrecoSelecionado = new Preco();
 
 
 
@@ -122,12 +122,12 @@ public class ClsProduto
 public class Preco
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("id")] public string? Id { get; set; }
-    [JsonPropertyName("DescricaoTamanho")] public string? DescricaoDoTamanho { get; set; }
+    [JsonPropertyName("DescricaoTamanho")] public string? DescricaoDoTamanho { get; set; } = "Único";
     [JsonPropertyName("CustosInsumo")] public float? CustosDoInsumo { get; set; }
     [JsonPropertyName("CustoReal")] public float? CustoReal { get; set; }
     [JsonPropertyName("PrecoSujetido")] public float? PrecoSujetido { get; set; }
     [JsonPropertyName("PorcentagemDeLucro")] public float? PorcentagemDeLucro { get; set; }
-    [JsonPropertyName("Valor")] public double Valor { get; set; }
+    [JsonPropertyName("Valor")] public float Valor { get; set; } = 0f;
 }
 
 public class Categoria

@@ -325,7 +325,7 @@
                                         Produto.Precos.Add(new Preco()
                                         {
                                             DescricaoDoTamanho = "Sem preços definido",
-                                            Valor = 0.0
+                                            Valor = 0f
                                         });
 
                                     }
@@ -355,7 +355,7 @@
                                                                  Label="Valor do tamanho"
                                                                  Format="N2"
                                                                  Culture="_pt"
-                                                                 T="double"
+                                                                 T="float"
                                                                  HideSpinButtons="true"
                                                                  @bind-Value="preco.Valor" />
 
@@ -382,7 +382,7 @@
                                         var NovoPreco = new Preco()
                                         {
                                             DescricaoDoTamanho = "Padrão",
-                                            Valor = 0.0
+                                            Valor = 0f
                                         };
 
                                         Produto.Precos.Add(NovoPreco);
@@ -411,7 +411,7 @@
                                                              Label="Valor do tamanho"
                                                              Format="N2"
                                                              Culture="_pt"
-                                                             T="double"
+                                                             T="float"
                                                              HideSpinButtons="true"
                                                              @bind-Value="precoMenor.Valor" />
 

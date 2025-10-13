@@ -197,7 +197,7 @@
                             <MudStack>
                                 @foreach (var produtoNoPedido in NovoPedido.Itens)
                                 {
-                                    <MudText>@produtoNoPedido.Descricao</MudText>
+                                    <MudText>@produtoNoPedido.Descricao - @produtoNoPedido.Quantidade</MudText>
                                 }
                             </MudStack>
 
@@ -245,13 +245,16 @@
                { "Produto", produto}
             };
 
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
 
-            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Cadastrar Pessoa", parameters, options);
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
             var result = await dialog.Result;
 
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            if (!result!.Canceled && result.Data is ItensPedido itemPedido)
             {
+
+                NovoPedido.Itens.Add(itemPedido);
+                return;
             }
             else
             {
