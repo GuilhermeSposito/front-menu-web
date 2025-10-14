@@ -193,7 +193,7 @@
         {
             @*Carregando*@
             <MudStack Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-surface); min-height: 520px" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="w-50 my-7" />
             </MudStack>
         }
 
@@ -237,9 +237,14 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
+            Carregando = true;
+            await CarregarPedidos();
             await InvokeAsync(StateHasChanged);
+            Carregando = false;
         }
     }
+
+
 
 
     protected override async Task OnInitializedAsync()

@@ -48,24 +48,61 @@ public class ClsPedido
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
     [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
-    [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = string.Empty;
-    [JsonPropertyName("tipoDePedido")] public string TipoDePedido { get; set; } = "BALCÃO";
-    [JsonPropertyName("EtapaPedido")] public string EtapaPedido { get; set; } = string.Empty;
-    [JsonPropertyName("status")] public string StatusPedido { get; set; } = string.Empty;
+    [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = "SOPHOS";
+    [JsonPropertyName("TipoPedido")] public string TipoDePedido { get; set; } = "BALCÃO";
+    [JsonPropertyName("Etapa")] public string EtapaPedido { get; set; } = "NOVO";
+    [JsonPropertyName("Status")] public string StatusPedido { get; set; } = "FECHADO";
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
-    [JsonPropertyName("cliente")] public ClsPessoas? Cliente { get; set; } = new ClsPessoas();
+    private ClsPessoas? _cliente;
+
+    [JsonPropertyName("cliente")]
+    public ClsPessoas? Cliente
+    {
+        get => _cliente;
+        set
+        {
+            _cliente = value;
+            ClienteId = value?.Id ?? 0; // Atualiza automaticamente
+        }
+    }
+    [JsonPropertyName("ClienteId")] public int ClienteId { get; set; }
+    [JsonPropertyName("Endereco")] private EnderecoPessoa? _endereco;
+    public EnderecoPessoa? Endereco
+    {
+        get => _endereco;
+        set
+        {
+            _endereco = value;
+            EnderecoId = value?.Id ?? 0; // Atualiza automaticamente
+        }
+    }
+
+    [JsonPropertyName("EnderecoId")]
+    public int EnderecoId { get; set; }
 
 }
 
 public class ItensPedido
 {
     [JsonPropertyName("id")] public int Id { get; set; }
-    [JsonPropertyName("Produto")] public ClsProduto? Produto { get; set; }
+    [JsonPropertyName("Produto")]
+    private ClsProduto? _produto;
+    public ClsProduto? Produto
+    {
+        get => _produto;
+        set
+        {
+            _produto = value;
+            ProdutoId = value?.Id; // Atualiza o ID quando Produto é atribuído
+        }
+    }
+    [JsonPropertyName("ProdutoId")] public string? ProdutoId { get; set; }
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 1;
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; } = 0;
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; } = 0;
     [JsonPropertyName("Preco")] public Preco Preco { get; set; } = new Preco();
+    [JsonPropertyName("PrecoId")] public int PrecoId { get; set; }
     [JsonPropertyName("Observacoes")] public string Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
 }
@@ -73,7 +110,22 @@ public class ItensPedido
 public class ComplementoNoItem
 {
     [JsonPropertyName("id")] public int Id { get; set; }
-    [JsonPropertyName("Produto")] public ClsComplemento? Complemento { get; set; }
+    private ClsComplemento? _complemento;
+
+    [JsonPropertyName("Complemento")]
+    public ClsComplemento? Complemento
+    {
+        get => _complemento;
+        set
+        {
+            _complemento = value;
+            ComplementoId = value?.Id ?? 0; // Atualiza o ID quando o complemento é atribuído
+        }
+    }
+
+    [JsonPropertyName("ComplementoId")]
+    public int ComplementoId { get; set; }
+
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 0;
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }

@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Pedidos;
+﻿using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Json;
 using YamlDotNet.Core.Tokens;
@@ -19,6 +20,14 @@ public class PedidosService
            $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}");
 
         return response!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido)
+    {
+        var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
     }
 }
 

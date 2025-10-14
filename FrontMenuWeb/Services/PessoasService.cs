@@ -98,6 +98,13 @@ public class PessoasService
         return response.Data.Enderecos;
     }
 
+    public async Task<List<EnderecoPessoa>> GetEnderecosPorPessoa(int IdPessoa)
+    {
+        ReturnApiRefatored<EnderecoPessoa>? response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<EnderecoPessoa>>($"pessoas/endereco-por-pessoa/{IdPessoa}");
+
+        return response?.Data.Lista ?? new List<EnderecoPessoa>();
+    }
+
     public async Task<string> CadastraEndereco(EnderecoPessoa EnderecoASerCadastrado, int IdPessoa)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PostAsJsonAsync($"pessoas/endereco/create/{IdPessoa}", EnderecoASerCadastrado);
