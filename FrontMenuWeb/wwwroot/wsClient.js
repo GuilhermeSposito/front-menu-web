@@ -1,4 +1,4 @@
-﻿// wsClient.js
+﻿
 window.socketIO = {
     socket: null,
 
@@ -8,21 +8,12 @@ window.socketIO = {
         var token = localStorage.getItem("authToken");
 
         this.socket = io(url, {
-            transports: ['websocket'],
-            extraHeaders: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        /*this.socket = io(url, {
-            transports: ['websocket'],
-            extraHeaders:
+            query:
             {
-                Authorization: `Bearer ${token}`
+                token: `${token}`
             }
         });
-        */
-
+        
         this.socket.on("connect", () => {
             console.log("✅ Conectado ao servidor Socket.IO");
             DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
