@@ -9,7 +9,7 @@ window.socketIO = {
 
         this.socket = io(url, {
             transports: ['websocket'],
-            Headers: {
+            extraHeaders: {
                 Authorization: `Bearer ${token}`
             }
         });

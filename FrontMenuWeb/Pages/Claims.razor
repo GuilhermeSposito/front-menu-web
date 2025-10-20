@@ -21,7 +21,7 @@
 
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "ws://localhost:3030", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNZXJjaGFudCI6eyJpZCI6IjYwOWIxMmU1LTczZTAtNGE1OC04ZmVkLWVlY2JkMWNiNGFkZiIsImVtYWlsIjoic29waG9zQGRldi5jb20uYnIiLCJyYXphb1NvY2lhbCI6IlNvcGhvcyBBcGxpY2F0aXZvcyBlIFRlY25vbG9naWEgTFREQSIsIkltYWdlbUxvZ28iOiJodHRwczovL2V4ZW1wbG8uY29tL2xvZ28ucG5nIiwiTm9tZUZhbnRhc2lhIjoiU29waG9zIEFwcHMiLCJlbmRlcmVjb3NfbWVyY2hhbnQiOltdLCJkb2N1bWVudG9zIjpbXSwidGVsZWZvbmVzIjpbXSwibWFyY2FEZXBhcnRhbWVudG8iOm51bGwsImxlZ2VuZGFEb1ZvbHVtYSI6bnVsbCwiYXRpdm8iOnRydWV9LCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzYwOTU5MDg0LCJleHAiOjE3NjA5OTE0ODR9.sxIw49RTdvxPJ71QQM2Dd6ETZwcYP81mbZQyyY93C2A");
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "http://localhost:3030");
         status = "Conectado ao servidor Socket.IO";
     }
 
