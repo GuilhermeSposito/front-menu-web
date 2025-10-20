@@ -9,8 +9,8 @@ window.socketIO = {
 
         this.socket = io(url, {
             transports: ['websocket'],
-            query: {
-                token: token
+            Headers: {
+                Authorization: `Bearer ${token}`
             }
         });
 
