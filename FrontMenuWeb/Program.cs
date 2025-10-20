@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Extensions;
 using MudBlazor.Services;
 using System.Globalization;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);

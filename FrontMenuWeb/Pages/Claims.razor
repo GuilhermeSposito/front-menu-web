@@ -21,7 +21,7 @@
 
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "ws://localhost:3030");
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "https://syslogicadev.com/api/v1/");
         status = "Conectado ao servidor Socket.IO";
     }
 

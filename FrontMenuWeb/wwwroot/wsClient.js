@@ -2,49 +2,44 @@
 window.socketIO = {
     socket: null,
 
-    connectSocketIO: function (url) {
+    connectSocketIO: async (url) => {
         console.log("🧠 Tentando conectar ao Socket.IO:", url);
 
-        var token = localStorage.getItem("authToken");
-
-        this.socket = io(url, {
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNZXJjaGFudCI6eyJpZCI6IjYwOWIxMmU1LTczZTAtNGE1OC04ZmVkLWVlY2JkMWNiNGFkZiIsImVtYWlsIjoic29waG9zQGRldi5jb20uYnIiLCJyYXphb1NvY2lhbCI6IlNvcGhvcyBBcGxpY2F0aXZvcyBlIFRlY25vbG9naWEgTFREQSIsIkltYWdlbUxvZ28iOiJodHRwczovL2V4ZW1wbG8uY29tL2xvZ28ucG5nIiwiTm9tZUZhbnRhc2lhIjoiU29waG9zIEFwcHMiLCJlbmRlcmVjb3NfbWVyY2hhbnQiOltdLCJkb2N1bWVudG9zIjpbXSwidGVsZWZvbmVzIjpbXSwibWFyY2FEZXBhcnRhbWVudG8iOm51bGwsImxlZ2VuZGFEb1ZvbHVtYSI6bnVsbCwiYXRpdm8iOnRydWV9LCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzYwOTg3NTQ2LCJleHAiOjE3NjEwMTk5NDZ9.4TbRhmiPS94FzP6Rx9RblXwCZUHnkQa_MAUNTAjl6EI"
+        const socket = io("https://syslogicadev.com", {
+            path: "/socket.io/",
+            transports: ["websocket"],
             query:
             {
                 token: `${token}`
             }
         });
-        
-        this.socket.on("connect", () => {
+ 
+        socket.on("connect", () => {
             console.log("✅ Conectado ao servidor Socket.IO");
             DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
         });
 
-        this.socket.emit("registrar-merchant");
+       socket.emit("registrar-merchant");
 
         // Quando o servidor envia algo para o cliente
-        this.socket.on("registrado", (msg) => {
+       socket.on("registrado", (msg) => {
             console.log("📩 Mensagem recebida do servidor Registrado:", msg);
             DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", msg);
         });
 
         // Quando o servidor envia algo para o cliente
-        this.socket.on("pedido-recebido", (msg) => {
+      socket.on("pedido-recebido", (msg) => {
             console.log("📩 Mensagem recebida do servidor pedido-recebido:", msg);
             DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", msg);
         });
 
-        this.socket.on("disconnect", () => {
+       socket.on("disconnect", () => {
             console.log("❌ Desconectado do servidor Socket.IO");
         });
 
     },
 
-    sendSocketMessage: function (event, message) {
-        if (this.socket) {
-            console.log("🚀 Enviando mensagem:", message);
-            this.socket.emit(event, message);
-        } else {
-            console.warn("⚠️ Socket não está conectado.");
-        }
-    }
+   
+   
 };
