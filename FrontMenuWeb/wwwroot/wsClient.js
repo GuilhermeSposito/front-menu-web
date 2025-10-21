@@ -5,7 +5,8 @@ window.socketIO = {
     connectSocketIO: async (url) => {
         console.log("🧠 Tentando conectar ao Socket.IO:", url);
 
-        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNZXJjaGFudCI6eyJpZCI6IjYwOWIxMmU1LTczZTAtNGE1OC04ZmVkLWVlY2JkMWNiNGFkZiIsImVtYWlsIjoic29waG9zQGRldi5jb20uYnIiLCJyYXphb1NvY2lhbCI6IlNvcGhvcyBBcGxpY2F0aXZvcyBlIFRlY25vbG9naWEgTFREQSIsIkltYWdlbUxvZ28iOiJodHRwczovL2V4ZW1wbG8uY29tL2xvZ28ucG5nIiwiTm9tZUZhbnRhc2lhIjoiU29waG9zIEFwcHMiLCJlbmRlcmVjb3NfbWVyY2hhbnQiOltdLCJkb2N1bWVudG9zIjpbXSwidGVsZWZvbmVzIjpbXSwibWFyY2FEZXBhcnRhbWVudG8iOm51bGwsImxlZ2VuZGFEb1ZvbHVtYSI6bnVsbCwiYXRpdm8iOnRydWV9LCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzYwOTg3NTQ2LCJleHAiOjE3NjEwMTk5NDZ9.4TbRhmiPS94FzP6Rx9RblXwCZUHnkQa_MAUNTAjl6EI"
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJNZXJjaGFudCI6eyJpZCI6IjYwOWIxMmU1LTczZTAtNGE1OC04ZmVkLWVlY2JkMWNiNGFkZiIsImVtYWlsIjoic29waG9zQGRldi5jb20uYnIiLCJyYXphb1NvY2lhbCI6IlNvcGhvcyBBcGxpY2F0aXZvcyBlIFRlY25vbG9naWEgTFREQSIsIkltYWdlbUxvZ28iOiJodHRwczovL2V4ZW1wbG8uY29tL2xvZ28ucG5nIiwiTm9tZUZhbnRhc2lhIjoiU29waG9zIEFwcHMiLCJlbmRlcmVjb3NfbWVyY2hhbnQiOltdLCJkb2N1bWVudG9zIjpbXSwidGVsZWZvbmVzIjpbXSwibWFyY2FEZXBhcnRhbWVudG8iOm51bGwsImxlZ2VuZGFEb1ZvbHVtYSI6bnVsbCwiYXRpdm8iOnRydWV9LCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzYxMDQ5NzI1LCJleHAiOjE3NjEwODIxMjV9.gXqPwbzjvd5g8rgXFq1yHPxBdWgtUOVnb4wEtsOzSQk"
+
         const socket = io("https://syslogicadev.com", {
             path: "/socket.io/",
             transports: ["websocket"],
