@@ -1,6 +1,7 @@
 ﻿using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
+using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using YamlDotNet.Core.Tokens;
 
@@ -12,6 +13,18 @@ public class PedidosService
     public PedidosService(HttpClient http)
     {
         _http = http;
+    }
+
+    public static event Action<ClsPedido>? PedidoRecebido;
+
+
+    [JSInvokable]
+    public static Task ReceivePedido(string msg)
+    {
+        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
+
+        PedidoRecebido?.Invoke(pedido);
+        return Task.CompletedTask;
     }
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)

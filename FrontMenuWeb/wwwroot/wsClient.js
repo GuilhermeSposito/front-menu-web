@@ -31,7 +31,12 @@ window.socketIO = {
 
         // Quando o servidor envia algo para o cliente
       socket.on("pedido-recebido", (msg) => {
-            console.log("📩 Mensagem recebida do servidor pedido-recebido:", msg);
+          // Avisando o Blazor
+          if (window.DotNet) {
+              DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
+                  .then(() => console.log("Blazor foi notificado!"))
+                  .catch(err => console.error("Erro ao notificar Blazor:", err));
+          }
         });
 
        socket.on("disconnect", () => {
@@ -39,7 +44,11 @@ window.socketIO = {
         });
 
     },
+   
+};
 
-   
-   
+
+window.playNotificationSound = () => {
+    const audio = new Audio('/sounds/notify.mp3');
+    audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
 };

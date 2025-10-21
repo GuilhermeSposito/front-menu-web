@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/gestao-de-pedidos"
+@inject IJSRuntime JS
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
@@ -227,10 +228,12 @@
     };
     public List<ClsDeSuporteParaMostrarPedidos> ItensSelecionadosPArAProximaEtapa = new List<ClsDeSuporteParaMostrarPedidos>();
 
+    private string status = "Desconectado";
+
 
     private async Task AbrirCriacaoDePedido()
     {
-        var options = new DialogOptions {MaxWidth = MaxWidth.False, FullWidth = false,FullScreen = false, CloseOnEscapeKey = false, BackdropClick= false };
+        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
 
         var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", options);
         var result = await dialog.Result;
@@ -245,11 +248,44 @@
     }
 
 
-
-
     protected override async Task OnInitializedAsync()
     {
+        try
+        {
+            PedidosService.PedidoRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoRecebido(pedido));
+            };
+
+            await CarregarPedidos();
+
+            try
+            {
+                await Connect();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
         await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add("Novo pedido recebido!", Severity.Info);
+        await JS.InvokeVoidAsync("playNotificationSound");
+    }
+
+    private async Task Connect()
+    {
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "https://syslogicadev.com/api/v1/");
+        status = "Conectado";
     }
 
     private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
@@ -355,7 +391,6 @@
 
 
 
-   
 
     public class ClsDeSuporteParaVizualicacaoDePedidos
     {

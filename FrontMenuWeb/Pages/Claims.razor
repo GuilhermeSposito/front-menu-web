@@ -1,6 +1,5 @@
 ﻿@page "/signalr-demo"
 @inject IJSRuntime JS
-
 <h3>Conexão Socket.IO</h3>
 
 <p>@status</p>
@@ -12,12 +11,6 @@
     private string status = "Desconectado";
     private string lastMessage = "";
 
-    [JSInvokable]
-    public static Task ReceiveMessage(string msg)
-    {
-        Console.WriteLine($"📩 Mensagem recebida: {msg}");
-        return Task.CompletedTask;
-    }
 
     private async Task Connect()
     {
