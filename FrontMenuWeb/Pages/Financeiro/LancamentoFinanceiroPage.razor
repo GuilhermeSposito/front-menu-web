@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/lancamentos"
+@inject IJSRuntime JS
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeFormas
@@ -22,6 +23,7 @@
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
+
         <div class="d-flex align-items-center justify-content-between">
             <div>
                 <MudText Typo="Typo.h4">Lançamentos Financeiro</MudText>
@@ -31,6 +33,9 @@
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeAdicionarOuEditar(true); })">Novo Lançamento</MudButton>
             </div>
         </div>
+
+
+
 
         <MudPaper Class="p-2 mb-2 w-100">
             <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" class="w-100">
@@ -111,11 +116,11 @@
                                                             <MudSelectItem Value="@filtro">@filtro.NomeDoFiltro</MudSelectItem>
                                                         }
                                                     </MudSelect>
-                                                </MudStack>                                                    
-                                                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
-                                                        <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" />
-                                                        <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" />
-                                                    </MudStack>   
+                                                </MudStack>
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                                                    <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" />
+                                                    <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" />
+                                                </MudStack>
                                                 break;
                                             case "Data de Emissão":
                                                 <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
@@ -243,6 +248,7 @@
                     <MudStack Row=true>
                         <MudButton Color="Color.Primary" OnClick=@(async p => { await DeclaraPagos(); }) Variant="Variant.Filled">Declarar Todos como pago</MudButton>
                         <MudButton Color="Color.Primary" OnClick=@(async p => { await ApagaTodos(); }) Variant="Variant.Filled">Excluir Selecionados</MudButton>
+                        <MudButton Color="Color.Primary" OnClick=@(async p => { await GerarPdf(); }) Variant="Variant.Filled">Gerar Relatório</MudButton>
                     </MudStack>
                 }
             </MudStack>
@@ -453,6 +459,7 @@
     private IEnumerable<ClsFiltros> FiltrosSelecionados { get; set; } = new HashSet<ClsFiltros>() { Filtros.filtros.FirstOrDefault(x => x.NomeDoFiltro == "Periodo")! };
     private IEnumerable<ClsFiltros> FiltroPorPeriodoSelecionados { get; set; } = new HashSet<ClsFiltros>() { Filtros.FiltrosDePeriodo.FirstOrDefault(x => x.NomeDoFiltro == "Data de Vencimento")! };
     private bool MultiSelecao = false;
+    ClsConta ContaMaisUsada = new ClsConta();
 
     //lógica do filtros
     private DateTime? FiltroDateTimeInicial = null;
@@ -550,7 +557,7 @@
 
     private async Task AbreModalDeAdicionarOuEditar(bool CriandoLancamento = false, ClsLancamentoFinanceiro? LancamentoParaEditar = null)
     {
-        bool TemPermissao =  await VerificaPermissao();
+        bool TemPermissao = await VerificaPermissao();
         if (!TemPermissao)
         {
             await AbreMensagemDeAcessoNegado();
@@ -793,11 +800,26 @@
     }
 
 
+    private async Task GerarPdf()
+    {
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdf", "RelatorioPedidos.pdf");
+    }
+
+
 
     private HashSet<ClsLancamentoFinanceiro> LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
     void SelectedItemsChanged(HashSet<ClsLancamentoFinanceiro> items)
     {
         LancamentosSelecionados = items;
+
+        ContaMaisUsada = LancamentosSelecionados
+      .GroupBy(l => l.Conta)
+      .OrderByDescending(g => g.Count())
+      .Select(g => new ClsConta
+      {
+         NomeConta = g.Key.NomeConta
+      })
+      .FirstOrDefault();
     }
 
     private async Task AtualizarPeriodoRapido(int index)
@@ -909,3 +931,98 @@
     }
 
 }
+
+
+<div id="conteudoPdf" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
+    <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">
+        Relatório de Lançamentos Financeiros
+    </h2>
+
+    <!-- Cabeçalho de informações -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <span style="font-weight: bold;">Data de emissão:</span>
+        @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+    </div>
+
+    <table border="0" cellspacing="0" cellpadding="6" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color:#34495e; color:white; text-align:center;">
+                <th>Cod</th>
+                <th>Descrição</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Emissão</th>
+                <th>Vencimento</th>
+                <th>Método</th>
+                <th>Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var lancamento in LancamentosSelecionados)
+            {
+                <tr style="border-bottom: 1px solid #ddd; text-align:center;">
+                    <td>@lancamento.Id</td>
+                    <td style="text-align:left;">@lancamento.Descricao</td>
+                    <td>@lancamento.TipoDeLancamento.Descricao</td>
+                    <td style="text-align:right;">@lancamento.Valor.ToString("C")</td>
+                    <td>@lancamento.DataDeEmissao?.ToString("dd/MM/yyyy")</td>
+                    <td>@lancamento.DataDeVencimento?.ToString("dd/MM/yyyy")</td>
+                    <td>@lancamento.MetodoDePagamento.Descricao</td>
+                    <td style="color:@(lancamento.Pago ? "#27ae60" : "#c0392b"); font-weight: bold;">
+                        @(lancamento.Pago ? "SIM" : "NÃO")
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            @{
+                var totalReceitas = LancamentosSelecionados
+                .Where(l => l.TipoDeLancamento.Descricao.Equals("Receita", StringComparison.OrdinalIgnoreCase))
+                .Sum(l => l.Valor);
+
+                var totalDespesas = LancamentosSelecionados
+                .Where(l => l.TipoDeLancamento.Descricao.Equals("Despesa", StringComparison.OrdinalIgnoreCase))
+                .Sum(l => l.Valor);
+
+                var saldoFinal = totalReceitas - totalDespesas;
+            }
+
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Total Receitas:</td>
+                <td style="text-align:right; color:#27ae60;">
+                    @totalReceitas.ToString("C")
+                </td>
+                <td colspan="4"></td>
+            </tr>
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Total Despesas:</td>
+                <td style="text-align:right; color:#c0392b;">
+                    @totalDespesas.ToString("C")
+                </td>
+                <td colspan="4"></td>
+            </tr>
+            <tr style="background-color:#bdc3c7; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Saldo Final:</td>
+                <td style="text-align:right; color:@(saldoFinal >= 0 ? "#27ae60" : "#c0392b");">
+                    @saldoFinal.ToString("C")
+                </td>
+                <td colspan="4"></td>
+            </tr>
+            <tr style="background-color:#f8f9fa; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Conta mais usada:  </td>
+                <td colspan="5">
+                    @(ContaMaisUsada?.NomeConta ?? "Nenhuma")
+                </td>
+            </tr>
+
+        </tfoot>
+    </table>
+
+    <!-- Rodapé -->
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #777;">
+        <hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">
+        <p>Relatório gerado automaticamente pelo app SOPHOS</p>
+    </div>
+
+    <div style="page-break-after: always;"></div>
+</div>
