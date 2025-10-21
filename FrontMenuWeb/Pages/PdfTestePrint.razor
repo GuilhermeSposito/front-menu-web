@@ -1,0 +1,23 @@
+﻿@page "/pdf-teste"
+@inject IJSRuntime JS
+
+<h3>Exemplo de Geração de PDF</h3>
+
+<div id="conteudoPdf">
+    <h1>Relatório de Pedidos</h1>
+    <p>Pedido #12345</p>
+
+    <div style="page-break-after: always;"></div> <!-- 🔹 Força nova página -->
+
+    <h2>Página 2</h2>
+    <p>Detalhes adicionais do pedido...</p>
+</div>
+
+<button @onclick="GerarPdf">Gerar PDF</button>
+
+@code {
+    private async Task GerarPdf()
+    {
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdf", "RelatorioPedidos.pdf");
+    }
+}
