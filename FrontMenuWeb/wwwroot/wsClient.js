@@ -19,7 +19,7 @@ window.socketIO = {
  
         socket.on("connect", () => {
             console.log("✅ Conectado ao servidor Socket.IO");
-            DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
+           // DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
         });
 
        socket.emit("registrar-merchant");
@@ -27,13 +27,11 @@ window.socketIO = {
         // Quando o servidor envia algo para o cliente
        socket.on("registrado", (msg) => {
             console.log("📩 Mensagem recebida do servidor Registrado:", msg);
-            DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", msg);
         });
 
         // Quando o servidor envia algo para o cliente
       socket.on("pedido-recebido", (msg) => {
             console.log("📩 Mensagem recebida do servidor pedido-recebido:", msg);
-            DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", msg);
         });
 
        socket.on("disconnect", () => {
