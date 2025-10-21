@@ -51,4 +51,8 @@ window.socketIO = {
 window.playNotificationSound = () => {
     const audio = new Audio('/sounds/notify.mp3');
     audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
+
+    audio.addEventListener('ended', () => {
+        audio.src = ''; // limpa referência
+    });
 };
