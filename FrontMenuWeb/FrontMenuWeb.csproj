@@ -20,8 +20,4 @@
     <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\SophosSync\" />
-  </ItemGroup>
-
 </Project>
