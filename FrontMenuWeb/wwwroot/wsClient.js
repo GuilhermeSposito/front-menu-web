@@ -57,7 +57,7 @@ window.playNotificationSound = () => {
     });
 };
 
-function baixarJSON(dados, nomeArquivo = "dados.json") {
+window.baixarJSON(dados, nomeArquivo = "dados.json") {
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
