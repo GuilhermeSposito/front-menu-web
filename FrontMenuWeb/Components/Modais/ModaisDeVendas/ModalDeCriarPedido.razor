@@ -12,6 +12,7 @@
 @implements IAsyncDisposable
 @inject PessoasService PessoaService
 @inject PedidosService PedidosService
+@inject IJSRuntime JS
 
 <MudDialog OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background)">
     <TitleContent>
@@ -98,7 +99,7 @@
                                                             <!-- Informações -->
                                                             <MudItem xs="9" Class="d-flex flex-column justify-center">
                                                                 <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
-                                                                    @produto.Descricao
+                                                                    @produto.CodigoInterno - @produto.Descricao
                                                                 </MudText>
                                                                 <MudText Typo="Typo.body2">
                                                                     @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
@@ -161,7 +162,7 @@
                                 </MudStack>
 
                                 <MudStack>
-                                    <MudSelect Label="Tipo do Pedido" T="string" @bind-Value=@NovoPedido.TipoDePedido Variant="Variant.Outlined">
+                                    <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
                                         <MudSelectItem Value="@("BALCÃO")">
                                             <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
                                                 <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
@@ -354,10 +355,8 @@
 
     private async Task Submit()
     {
-        /*var json = System.Text.Json.JsonSerializer.Serialize(NovoPedido);
-        Console.WriteLine(json);*/
 
-        var ResponseAPi = await PedidosService.CreatePedido(NovoPedido);
+        ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido);
 
         string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
         Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
@@ -366,6 +365,9 @@
         {
             return;
         }
+
+        if (ResponseAPi.Data.Objeto is not null)
+            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
 
         MudDialog.Close(DialogResult.Ok(true));
     }
@@ -526,6 +528,28 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task SelecionarTipoDePedido(string TipoPedido)
+    {
+        //tipos pedido --> BALCÃO / DELIVERY
+
+        if (TipoPedido == "DELIVERY")
+        {
+            if (NovoPedido.Endereco is null)
+            {
+                if (NovoPedido.Cliente is not null)
+                {
+                    await AbreModalDeEnderecos(NovoPedido.Cliente);
+                }
+                else
+                {
+                    Snackbar.Add("Selecione um cliente para adicionar um endereço de entrega.", Severity.Warning);
+                }
+            }
+        }
+
+        NovoPedido.TipoDePedido = TipoPedido;
+    }
+
     private async Task AbreModalDeEnderecos(ClsPessoas Pessoa)
     {
         List<EnderecoPessoa> enderecos = await PessoaService.GetEnderecosPorPessoa(Pessoa.Id);
@@ -561,7 +585,42 @@
         }
         else if (enderecos.Count > 1)
         {
-            Snackbar.Add("Esta pessoa possui varios enderecos", Severity.Info);
+            EnderecoPessoa _enderecoSelecionado = new EnderecoPessoa();
+
+            var options = new DialogOptions { CloseOnEscapeKey = true };
+            var parameters = new DialogParameters
+             {
+             { "Enderecos", enderecos }
+              };
+
+            var dialogReference = await DialogService.ShowAsync<ModalDeVariosEnderecosDoCliente>("Varios endereços encontrado com essa chave de pesquisa.", parameters, options);
+
+
+            StateHasChanged();
+
+            var dialogResult = await dialogReference.Result;
+            if (dialogResult.Canceled)
+            {
+                Snackbar.Add("Nenhum endereço selecionado", Severity.Error);
+                _enderecoSelecionado = null;
+                StateHasChanged();
+            }
+            else
+            {
+                _enderecoSelecionado = dialogResult.Data as EnderecoPessoa;
+                if (_enderecoSelecionado is not null)
+                {
+                    NovoPedido.Endereco = _enderecoSelecionado;
+                    NovoPedido.EnderecoId = NovoPedido.Endereco.Id;
+                    StateHasChanged();
+                    Snackbar.Add("Endereço adicionado com sucesso", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Nenhum endereço selecionado", Severity.Error);
+                }
+            }
+
             return;
         }
     }

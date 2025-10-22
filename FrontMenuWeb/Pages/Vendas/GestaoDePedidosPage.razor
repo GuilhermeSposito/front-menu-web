@@ -93,9 +93,12 @@
                                                         {
                                                             <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                 <MudText>@($"{item.Quantidade}X {item.Descricao}")</MudText>
-                                                                <MudText>@($"{item.PrecoUnitario.ToString("C")}")</MudText>
+                                                                <MudText>UNIT: @($"{item.PrecoUnitario.ToString("C")}")</MudText>
                                                             </MudStack>
                                                             <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                                                            <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
+                                                                <MudText>TOTAL: @($"{item.PrecoTotal.ToString("C")}")</MudText>
+                                                            </MudStack>
                                                             if (item.Complementos.Count > 0)
                                                             {
                                                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -103,51 +106,50 @@
                                                                 </MudStack>
                                                                 foreach (var complemento in item.Complementos)
                                                                 {
-                                                                    <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.End">
+                                                                    <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
                                                                         <MudText Typo="Typo.caption">@($"{complemento.Quantidade}X {complemento.Descricao} - {complemento.PrecoUnitario.ToString("C")}")</MudText>
                                                                     </MudStack>
                                                                 }
                                                                 <MudDivider DividerType="DividerType.FullWidth" Light=true />
                                                             }
-
-                                                            <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
-                                                                <MudStack Spacing="2" Class="w-100">
-                                                                    <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
-                                                                    <MudDivider />
-                                                                    <MudCollapse Expanded="@pedido.Expandido">
-                                                                        <MudStack Class="w-100">
-                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
-                                                                                <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
-                                                                            </MudStack>
-                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.subtitle2">Desconto:</MudText>
-                                                                                <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
-                                                                            </MudStack>
-                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.subtitle2">Acrescimo:</MudText>
-                                                                                <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
-                                                                            </MudStack>
-                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.subtitle2">Taxa de entrega:</MudText>
-                                                                                <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
-                                                                            </MudStack>
-                                                                            <MudDivider />
-                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
-                                                                                <MudText Typo="Typo.h6" Style="font-weight: 600">@(0.ToString("C"))</MudText>
-                                                                            </MudStack>
-                                                                        </MudStack>
-                                                                    </MudCollapse>
-                                                                </MudStack>
-                                                            </MudStack>
                                                         }
+                                                        <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
+                                                            <MudStack Spacing="2" Class="w-100">
+                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
+                                                                <MudDivider />
+                                                                <MudCollapse Expanded="@pedido.Expandido">
+                                                                    <MudStack Class="w-100">
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                        </MudStack>
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.subtitle2">Desconto:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                        </MudStack>
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.subtitle2">Acrescimo:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                        </MudStack>
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.subtitle2">Taxa de entrega:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                        </MudStack>
+                                                                        <MudDivider />
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
+                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">@(0.ToString("C"))</MudText>
+                                                                        </MudStack>
+                                                                    </MudStack>
+                                                                </MudCollapse>
+                                                            </MudStack>
+                                                        </MudStack>
                                                     </MudCardContent>
                                                     <MudCardActions>
                                                         <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                             <MudStack Row=true>
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
+                                                                    <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido);}) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
@@ -389,7 +391,10 @@
     }
 
 
-
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+    }
 
 
     public class ClsDeSuporteParaVizualicacaoDePedidos

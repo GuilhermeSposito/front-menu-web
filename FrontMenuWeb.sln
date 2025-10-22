@@ -5,6 +5,8 @@ VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontMenuWeb", "FrontMenuWeb\FrontMenuWeb.csproj", "{9CE2FBE7-0CF2-49D6-9979-E6218E807EA3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SophosSyncDesktop", "SophosSyncDesktop\SophosSyncDesktop.csproj", "{0AA26B03-6054-4A1B-80F9-C95567429998}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{9CE2FBE7-0CF2-49D6-9979-E6218E807EA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9CE2FBE7-0CF2-49D6-9979-E6218E807EA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9CE2FBE7-0CF2-49D6-9979-E6218E807EA3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AA26B03-6054-4A1B-80F9-C95567429998}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AA26B03-6054-4A1B-80F9-C95567429998}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AA26B03-6054-4A1B-80F9-C95567429998}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AA26B03-6054-4A1B-80F9-C95567429998}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

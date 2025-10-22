@@ -16,35 +16,35 @@ window.socketIO = {
                 token: `${token}`
             }
         });
- 
+
         socket.on("connect", () => {
             console.log("✅ Conectado ao servidor Socket.IO");
-           // DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
+            // DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
         });
 
-       socket.emit("registrar-merchant");
+        socket.emit("registrar-merchant");
 
         // Quando o servidor envia algo para o cliente
-       socket.on("registrado", (msg) => {
+        socket.on("registrado", (msg) => {
             console.log("📩 Mensagem recebida do servidor Registrado:", msg);
         });
 
         // Quando o servidor envia algo para o cliente
-      socket.on("pedido-recebido", (msg) => {
-          // Avisando o Blazor
-          if (window.DotNet) {
-              DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
-                  .then(() => console.log("Blazor foi notificado!"))
-                  .catch(err => console.error("Erro ao notificar Blazor:", err));
-          }
+        socket.on("pedido-recebido", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
+                    .then(() => console.log("Blazor foi notificado!"))
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
         });
 
-       socket.on("disconnect", () => {
+        socket.on("disconnect", () => {
             console.log("❌ Desconectado do servidor Socket.IO");
         });
 
     },
-   
+
 };
 
 
@@ -56,3 +56,15 @@ window.playNotificationSound = () => {
         audio.src = ''; // limpa referência
     });
 };
+
+function baixarJSON(dados, nomeArquivo = "dados.json") {
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nomeArquivo;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}

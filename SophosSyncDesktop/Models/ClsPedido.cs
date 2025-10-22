@@ -1,11 +1,8 @@
-﻿using FrontMenuWeb.Models.Pessoas;
-using FrontMenuWeb.Models.Produtos;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace FrontMenuWeb.Models.Pedidos;
-
+namespace SophosSyncDesktop.Models;
 public enum TiposDePedido
 {
     [Display(Name = "BALCÃO")] BALCAO,
@@ -67,6 +64,7 @@ public class ClsPedido
     }
     [JsonPropertyName("ClienteId")] public int ClienteId { get; set; }
     private EnderecoPessoa? _endereco;
+
     [JsonPropertyName("endereco")]
     public EnderecoPessoa? Endereco
     {
