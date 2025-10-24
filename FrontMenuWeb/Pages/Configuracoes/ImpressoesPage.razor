@@ -1,0 +1,29 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/impressoes"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Services
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <MudPaper Class="d-flex align-items-center justify-content-between p-3">
+            <MudStack Row=true Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudStack>
+                    <MudText Typo="Typo.h4">Impressões</MudText>
+                </MudStack>
+                <MudStack class="d-flex">
+                    <MudLink Href="https://syslogica.com.br/SophosSync/setup.exe">Clique aqui para baixar o modulo de impressão</MudLink>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudLayout>
+</MudPaper>

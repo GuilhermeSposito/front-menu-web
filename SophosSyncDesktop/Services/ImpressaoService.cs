@@ -1,4 +1,5 @@
-﻿using SophosSyncDesktop.Models;
+﻿using SophosSyncDesktop.DataBase.Db;
+using SophosSyncDesktop.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -39,11 +40,21 @@ public class ImpressaoService
     {
         try
         {
-            List<ClsImpressaoDefinicoes> ConteudoParaImpressao = new List<ClsImpressaoDefinicoes>();
-            ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
-            await DefineCaracteristicasDePedido(ConteudoParaImpressao, Pedido, AppQueEnviou);
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
+                List<ClsImpressaoDefinicoes> ConteudoParaImpressao = await DefineCaracteristicasDePedido(Pedido, AppQueEnviou);
 
-            await ImprimirPagina(ConteudoParaImpressao, "MP-4200 TH", 19);
+                //primeiro imprime pedido
+                if(!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+                    await ImprimirPagina(ConteudoParaImpressao, Imps.ImpressoraCaixa, 19);
+
+                //imprime na impressora auxiliar se tiver
+                if(!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
+                    await ImprimirPagina(ConteudoParaImpressao, Imps.ImpressoraAux, 19);
+
+            }
         }
         catch (Exception ex)
         {
@@ -51,10 +62,16 @@ public class ImpressaoService
         }
     }
 
-    private async Task DefineCaracteristicasDePedido(List<ClsImpressaoDefinicoes> Conteudo, ClsPedido pedido, string AppQueEnviou)
+    private bool VerificaSeEstaSemImpressora(string impCadastrada)
     {
+        return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
+    }
 
-        AdicionaConteudo(Conteudo, "Sophos Menu Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
+    private async Task<List<ClsImpressaoDefinicoes>> DefineCaracteristicasDePedido( ClsPedido pedido, string AppQueEnviou)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        AdicionaConteudo(Conteudo, "Sophos Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
         //------------------------------------------------------------------------------------------
@@ -112,14 +129,13 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante);
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
                 }
             }
 
-
             if (!String.IsNullOrEmpty(item.Observacoes))
             {
-                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante);
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
             }
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -136,6 +152,8 @@ public class ImpressaoService
 
 
         AdicionaConteudo(Conteudo, AppQueEnviou, FonteNomeDoCliente, Alinhamentos.Centro);
+
+        return Conteudo;
     }
 
     public static void AdicionaConteudo(List<ClsImpressaoDefinicoes> Conteudo, string conteudoTexto, Font fonte, Alinhamentos alinhamento = Alinhamentos.Esquerda, bool eObs = false)
