@@ -3,6 +3,7 @@
 @page "/impressoes"
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Uteis
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -25,5 +26,87 @@
                 </MudStack>
             </MudStack>
         </MudPaper>
+
+        <MudPaper Class="mt-5 h-100" Elevation="4">
+            <MudGrid Class="w-100">
+
+                <MudItem xs="12" md="6" lg="6" xxl="6">
+                    <!-- Preview da comanda -->
+                    <MudPaper Elevation="1" Class="pa-3"
+                              Style="@($"width:{Config.LarguraPapel}mm; font-size:{Config.TamanhoFonte}px; font-family:monospace; margin:auto; border:1px dashed #ccc;")">
+
+                        <MudStack Spacing="1" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.subtitle1" Align="Align.Center" FontWeight="FontWeight.Bold">
+                                @Config.NomeLoja
+                            </MudText>
+                        </MudStack>
+
+                        <MudDivider Class="my-2" />
+
+                        <!-- Itens -->
+                        <MudStack Spacing="1" Class="font-mono">
+                            <MudText>1x Café Expresso <span style="float:right;">R$ 5,00</span></MudText>
+                            <MudText>2x Pão de Queijo <span style="float:right;">R$ 9,00</span></MudText>
+
+                            <MudDivider Class="my-1" />
+
+                            <MudText FontWeight="FontWeight.Bold">
+                                Total: <span style="float:right;">R$ 14,00</span>
+                            </MudText>
+                        </MudStack>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudStack AlignItems="AlignItems.Center" Spacing="0">
+                            <MudText Typo="Typo.body2">Obrigado pela preferência!</MudText>
+                            <MudText Typo="Typo.caption">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="6" lg="6" xxl="6">
+                    <MudPaper Class="p-4" Style="max-width:400px;margin:auto;">
+                        <MudText Typo="Typo.h5" Align="Align.Center">Visualização da Comanda</MudText>
+                        <MudDivider Class="my-2" />
+
+                        <!-- Configurações -->
+                        <MudStack Spacing="2">
+                            <MudTextField @bind-Value="Config.NomeLoja" Label="Nome da Loja" />
+                            <MudNumericField @bind-Value="Config.TamanhoFonte" Label="Tamanho da Fonte (px)" Min="8" Max="20" />
+                            <MudNumericField @bind-Value="Config.LarguraPapel" Label="Largura do Papel (mm)" Min="40" Max="80" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary">Imprimir</MudButton>
+                        </MudStack>
+
+                        <MudDivider Class="my-3" />
+
+
+
+                    </MudPaper>
+
+                </MudItem>
+
+
+
+            </MudGrid>
+        </MudPaper>
     </MudLayout>
 </MudPaper>
+
+@code {
+    private ComandaConfig Config = new()
+    {
+        NomeLoja = "Minha Cafeteria",
+        TamanhoFonte = 12,
+        LarguraPapel = 500,
+        MostrarLogo = true
+    };
+
+
+    public class ComandaConfig
+    {
+        public string NomeLoja { get; set; } = "";
+        public int TamanhoFonte { get; set; }
+        public int LarguraPapel { get; set; }
+        public bool MostrarLogo { get; set; }
+    }
+}

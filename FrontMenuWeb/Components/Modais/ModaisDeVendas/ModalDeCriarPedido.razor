@@ -14,7 +14,7 @@
 @inject PedidosService PedidosService
 @inject IJSRuntime JS
 
-<MudDialog OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background)">
+<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background);">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-surface); box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
             <MudText Class="ms-3" Typo="Typo.h6">Novo Pedido</MudText>
@@ -244,6 +244,7 @@
                 </MudItem>
             </MudGrid>
         </MudStack>
+
     </DialogContent>
 </MudDialog>
 
@@ -270,6 +271,8 @@
     private string PesquisaPessoa = string.Empty;
     private bool MostrarSugestoes = false;
 
+    //tentativa de teclas rapidas
+    private ElementReference _dialogContainer;
 
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
@@ -344,7 +347,29 @@
             return;
         }
 
-        await Submit();
+        var parameters = new DialogParameters
+         {
+             { "Pedido", NovoPedido }
+         };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = true,
+            MaxWidth = MaxWidth.False, // deixa o CSS controlar o tamanho
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            StateHasChanged();
+        }
+
+        //await Submit();
     }
 
     protected override async Task OnInitializedAsync()
@@ -366,7 +391,7 @@
             return;
         }
 
-        if (ResponseAPi.Data.Objeto is not null)
+        if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
             await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
 
         MudDialog.Close(DialogResult.Ok(true));

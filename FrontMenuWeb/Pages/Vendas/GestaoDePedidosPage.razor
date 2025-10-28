@@ -79,6 +79,7 @@
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                             }
+                                                            <MudText>Nmr: @pedido.Pedido.Id</MudText>                             
                                                             <MudText>@pedido.Pedido.CriadoEm</MudText>
                                                         </CardHeaderContent>
                                                         <CardHeaderActions>
@@ -121,25 +122,36 @@
                                                                     <MudStack Class="w-100">
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                             <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.ValorDosItens.ToString("C")</MudText>
                                                                         </MudStack>
+
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                             <MudText Typo="Typo.subtitle2">Desconto:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.DescontoValor.ToString("C")</MudText>
                                                                         </MudStack>
+
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Acrescimo:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
                                                                         </MudStack>
+
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Taxa de entrega:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@(0.ToString("C"))</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
                                                                         </MudStack>
+                                                                        
+                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                            <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
+                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
+                                                                        </MudStack>
+
                                                                         <MudDivider />
+
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                             <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
-                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">@(0.ToString("C"))</MudText>
+                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
                                                                         </MudStack>
+
                                                                     </MudStack>
                                                                 </MudCollapse>
                                                             </MudStack>
@@ -235,17 +247,33 @@
 
     private async Task AbrirCriacaoDePedido()
     {
-        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
-
-        var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", options);
-        var result = await dialog.Result;
-
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        if (AppState.CaixaAberto)
         {
-            Carregando = true;
-            await CarregarPedidos();
-            await InvokeAsync(StateHasChanged);
-            Carregando = false;
+            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
+
+            var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                Carregando = true;
+                await CarregarPedidos();
+                await InvokeAsync(StateHasChanged);
+                Carregando = false;
+            }
+
+        }
+        else
+        {
+            var parameters = new DialogParameters<ModalDeAcessoNegado>
+            {
+                  { x => x.ContentText, $"Caixa está fechado, não é possivel criar pedidos." },
+                  { x => x.ButtonText, "OK" },
+                  { x => x.Color, Color.Success}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
+            var result = await dialog.Result;
         }
     }
 

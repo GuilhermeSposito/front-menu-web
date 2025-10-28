@@ -16,7 +16,7 @@ public class FormasDeRecebimentoService
         HttpClient = http;
     }
 
-    public async Task<List<ClsFormaDeRecebimento>?> GetFormasDeRecebimentoAsync()
+    public async Task<List<ClsFormaDeRecebimento>> GetFormasDeRecebimentoAsync()
     {
         var response = await HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsFormaDeRecebimento>>("financeiro/formas-recebimento");
         return response?.Data.Lista ?? new List<ClsFormaDeRecebimento>();

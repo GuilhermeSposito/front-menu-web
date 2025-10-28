@@ -1,8 +1,11 @@
 ﻿@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
 @using MudBlazor;
 @using System.Text.Json
 
 @inherits LayoutComponentBase
+
+@inject CaixaEPagamentosService CaixaService
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -32,6 +35,24 @@
                          Icon="@Icons.Material.Filled.Info"
                          AnchorOrigin="Origin.TopRight"
                          TransformOrigin="Origin.TopRight">
+
+                    <!-- Caixa -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="@ColorStatusCaixa" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.PointOfSale" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Caixa</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                               @MensagemDeCaixa
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
 
                     <!-- Ifood -->
                     <MudMenuItem>
@@ -200,6 +221,10 @@
     private string ProgramName = "Sophos";
     private const string ThemePreferenceKey = "themePreference"; // chave no localStorage
 
+    private string MensagemDeCaixa = "Carregando status do caixa...";
+    private Color ColorStatusCaixa = Color.Error;
+
+
     private void ToggleDrawer()
     {
         _open = !_open;
@@ -259,6 +284,34 @@
                     AppState.MerchantLogado = merchant;
             }
             //AppState.MerchantLogado = await MerchantServices.GetMerchantAsync();
+        }
+
+        await AtualizaStatusDoCaixa();
+    }
+
+    private async Task AtualizaStatusDoCaixa()
+    {
+        try
+        {
+            ReturnApiRefatored<ClsPedido> returno = await CaixaService.VerificaSeHaCaixaAberto(AppState.MerchantLogado.FuncionarioLogado?.Id);
+
+            if (returno.Status == "error")
+            {
+                MensagemDeCaixa = string.Join(" - ", returno.Messages);
+                ColorStatusCaixa = Color.Error;
+                AppState.CaixaAberto = false;
+            }
+            else
+            {
+                MensagemDeCaixa = string.Join(" - ", returno.Data.Messages);
+                ColorStatusCaixa = Color.Success;
+                AppState.CaixaAberto = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            MensagemDeCaixa = $"Erro ao obter status do caixa: {ex.Message}";
+            ColorStatusCaixa = Color.Error;
         }
     }
 

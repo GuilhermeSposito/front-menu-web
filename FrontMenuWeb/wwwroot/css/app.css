@@ -1,5 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+/* para o diálogo de pagamento */
+.dialog-pagamento-responsivo {
+    width: 50vw; /* metade da tela em desktops */
+    height: 100vh; /* ocupa 80% da altura da tela */
+}
+
+/* em telas menores (tablets e celulares), ocupa tudo */
+@media (max-width: 960px) {
+    .dialog-pagamento-responsivo {
+        width: 100vw !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+}
+
 #conteudoPdf table tbody tr:nth-child(odd) {
     background-color: #ffffff;
 }

@@ -29,8 +29,15 @@ public class PedidosService
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)
     {
+        string QueryDeFiltros = "";
+
+        if (QueryDePedido.Status != null)
+        {
+            QueryDeFiltros += $"&Status={QueryDePedido.Status}";
+        }
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
-           $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}");
+           $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 
         return response!;
     }

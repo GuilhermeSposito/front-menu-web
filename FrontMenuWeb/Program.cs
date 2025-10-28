@@ -73,6 +73,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<ComplementosServices>())
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<FuncionariosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
 
 
 builder.Services.AddMudServices();

@@ -14,27 +14,28 @@ namespace SophosSyncDesktop.Services;
 
 public class ImpressaoService
 {
-    public static Font FonteGeral = new Font("DejaVu sans mono mono", 11, FontStyle.Bold);
-    public static Font FonteSeparadoresSimples = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-    public static Font FonteSeparadores = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public static Font FonteCódigoDeBarras = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
-    public static Font FonteNomeRestaurante = new Font("DejaVu sans mono", 15, FontStyle.Bold);
-    public static Font FonteEndereçoDoRestaurante = new Font("DejaVu sans mono", 9, FontStyle.Bold);
-    public static Font FonteNúmeroDoPedido = new Font("DejaVu sans mono", 17, FontStyle.Bold);
-    public static Font FonteDetalhesDoPedido = new Font("DejaVu sans mono", 9, FontStyle.Bold);
-    public static Font FonteDetalhesDoPedidoRegular = new Font("DejaVu sans mono", 9, FontStyle.Regular);
-    public static Font FonteNúmeroDoTelefone = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public static Font FonteNomeDoCliente = new Font("DejaVu sans mono", 15, FontStyle.Bold);
-    public static Font FonteEndereçoDoCliente = new Font("DejaVu sans mono", 10, FontStyle.Bold);
-    public static Font FonteItens = new Font("DejaVu sans mono", 12, FontStyle.Bold);
-    public static Font FonteItens2 = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public static Font FonteOpcionais = new Font("DejaVu sans mono", 11, FontStyle.Regular);
-    public static Font FonteObservaçõesItem = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public static Font FonteTotaisDoPedido = new Font("DejaVu sans mono", 10, FontStyle.Bold);
-    public static Font FonteCPF = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-    public static Font FontQtdDescVunitVTotal = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-    public static Font FonteTotaisNovo = new Font("DejaVu sans mono", 12, FontStyle.Regular);
-    public static Font FonteInfosPagamento = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    //Definir as fontes usadas na impressão
+    public Font FonteGeral { get; set; } = new Font("DejaVu sans mono mono", 11, FontStyle.Bold);
+    public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public Font FonteSeparadores { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
+    public Font FonteCódigoDeBarras { get; set; } = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
+    public Font FonteNomeRestaurante { get; set; } = new Font("DejaVu sans mono", 15, FontStyle.Bold);
+    public Font FonteEndereçoDoRestaurante { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
+    public Font FonteNúmeroDoPedido { get; set; } = new Font("DejaVu sans mono", 17, FontStyle.Bold);
+    public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
+    public Font FonteDetalhesDoPedidoRegular { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Regular);
+    public Font FonteNúmeroDoTelefone { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
+    public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 15, FontStyle.Bold);
+    public Font FonteEndereçoDoCliente { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    public Font FonteItens { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
+    public Font FonteItens2 { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
+    public Font FonteOpcionais { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Regular);
+    public Font FonteObservaçõesItem { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
+    public Font FonteTotaisDoPedido { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    public Font FonteCPF { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public Font FontQtdDescVunitVTotal { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
+    public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
 
     public async Task Imprimir(string jsonDoPedido, string AppQueEnviou)
     {
@@ -44,21 +45,26 @@ public class ImpressaoService
             {
                 ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
-                List<ClsImpressaoDefinicoes> ConteudoParaImpressao = await DefineCaracteristicasDePedido(Pedido, AppQueEnviou);
 
                 //primeiro imprime pedido
-                if(!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
-                    await ImprimirPagina(ConteudoParaImpressao, Imps.ImpressoraCaixa, 19);
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+                {
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = await DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                }
 
                 //imprime na impressora auxiliar se tiver
-                if(!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
-                    await ImprimirPagina(ConteudoParaImpressao, Imps.ImpressoraAux, 19);
+                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
+                {
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = await DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, 19);
+                }
 
             }
         }
         catch (Exception ex)
         {
-            Console.Write(ex.ToString()); //depois criar os logs
+            Console.Write(ex.ToString());
         }
     }
 
@@ -67,15 +73,13 @@ public class ImpressaoService
         return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
     }
 
-    private async Task<List<ClsImpressaoDefinicoes>> DefineCaracteristicasDePedido( ClsPedido pedido, string AppQueEnviou)
+    private async Task<List<ClsImpressaoDefinicoes>> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
         AdicionaConteudo(Conteudo, "Sophos Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        //------------------------------------------------------------------------------------------
-
+        //========================================================================================       
         AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido {pedido.CriadoPor} N°:  #{pedido.Id}", FonteDetalhesDoPedido);
@@ -83,7 +87,6 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-
         AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteItens);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
@@ -116,6 +119,7 @@ public class ImpressaoService
             }
         }
 
+        //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -139,18 +143,20 @@ public class ImpressaoService
             }
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            //------------------------------------------------------------------------------------------
         }
 
-        AdicionaConteudo(Conteudo, $"SUB TOTAL. . . .  : {0:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"TAXA DE ENTREGA . : {0:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"TAXA ADICIONAL .  : {0:F2} ", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"CORTESIA . . . .  : {0:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"INCENTIVOS . . .  : {0:F2}", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"SUB TOTAL. . . .  : {pedido.ValorDosItens:F2}", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"TAXA DE ENTREGA . : {pedido.TaxaEntregaValor:F2}", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"TAXAS ADICIONAIS  : {(pedido.AcrescimoValor + pedido.ServicoValor):F2} ", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"DESCONTOS. . . .  : {pedido.DescontoValor:F2}", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"INCENTIVOS . . .  : {pedido.IncentivosExternosValor:F2}", FonteTotaisNovo);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"TOTAL DA CONTA .  : {0:F2}", FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"TOTAL DA CONTA .  : {pedido.ValorTotal:F2}", FonteTotaisNovo);
 
 
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, AppQueEnviou, FonteNomeDoCliente, Alinhamentos.Centro);
 
         return Conteudo;

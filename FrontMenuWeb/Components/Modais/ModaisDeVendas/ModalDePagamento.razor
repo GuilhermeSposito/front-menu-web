@@ -1,0 +1,125 @@
+﻿@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services.FinanceroServices
+
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
+
+<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
+    <TitleContent>
+        <MudText Class="ms-3" Typo="Typo.h6">Pagamento Do Pedido</MudText>
+
+    </TitleContent>
+
+    <DialogContent>
+        <MudStack Class="w-100 h-100">
+            <MudGrid Class="w-100">
+                <MudItem xs="6" sm="6" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6">Valor dos Itens:</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorDosItens.ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="6" sm="6" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6">Desconto:</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorDoDesconto.ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="6" sm="6" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6">Taxa Adicional:</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Default">@TaxaAdicional.ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                @if (Pedido.TipoDePedido == "DELIVERY")
+                {
+                    <MudItem xs="6" sm="6" lg="6" xxl="6">
+                        <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                            <MudText Typo="Typo.h6">Taxa De Entrega</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Default">@TaxaDeEntrega.ToString("C")</MudText>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <MudItem xs="6" sm="6" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6">Total:</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorTotal.ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="6" sm="6" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudText Typo="Typo.h6">Total Pago</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Default">@Pedido.Pagamentos.Sum(x=> x.ValorTotal).ToString("C")</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                  Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+            <MudButton Variant="Variant.Filled" OnClick="ConcluirPagamento" Color="Color.Primary" Class="w-100">
+                Finalizar Pagamento (Ctrl + Alt)
+            </MudButton>
+        </MudPaper>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    private bool Carregando = true;
+    [Parameter] public ClsPedido Pedido { get; set; } = new ClsPedido();
+    List<ClsFormaDeRecebimento> Formas = new List<ClsFormaDeRecebimento>();
+
+    private float ValorDosItens = 0f;
+    private float ValorDoDesconto = 0f;
+    private float TaxaAdicional = 0f;
+    private float TaxaDeEntrega = 0f;
+    private float ValorTotal = 0f;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            foreach (var item in Pedido.Itens)
+            {
+                ValorDosItens += item.PrecoTotal;
+            }
+
+            await CarregarFormasDeRecebimento();
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    private async Task ConcluirPagamento()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private async Task CarregarFormasDeRecebimento()
+    {
+        List<ClsFormaDeRecebimento> formasDeRecebimento = await FormasDeRecebimentoService.GetFormasDeRecebimentoAsync();
+        Formas = formasDeRecebimento
+         .Where(x => x.Ativo)
+         .ToList();
+    }
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+            await ConcluirPagamento();
+        }
+
+    }
+
+}

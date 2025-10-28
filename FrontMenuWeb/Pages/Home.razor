@@ -2,20 +2,24 @@
 @attribute [Authorize]
 
 @page "/"
+@using FrontMenuWeb.Models.Pedidos
+
+@inject PedidosService PedidosService
+@inject CaixaEPagamentosService CaixaService
 
 <MudStack Class="pagina-home min-vh-100">
 
+    @if (AvisoDeCaixaFechado)
+    {
+        <MudAlert CloseIconClicked=@(() => { AvisoDeCaixaFechado = !AvisoDeCaixaFechado; }) Icon="@Icons.Material.Filled.Notifications" CloseIcon="@Icons.Material.Filled.Close" ShowCloseIcon=true Severity="@SeverityCaixa">
+            @MensagemDeCaixa
+        </MudAlert>
+    }
     <!-- Alertas e Notificações -->
     @if (AvisoDePedidosAguardando)
     {
-        <MudAlert CloseIconClicked=@(() => { AvisoDePedidosAguardando = !AvisoDePedidosAguardando; }) CloseIcon="@Icons.Material.Filled.Close" Icon="@Icons.Material.Filled.Notifications" ShowCloseIcon=true Severity="Severity.Info" Class="mb-4">
-            Você tem 0 pedidos aguardando confirmação
-        </MudAlert>
-    }
-    @if (AvisoDeCaixaFechado)
-    {
-        <MudAlert CloseIconClicked=@(() => { AvisoDeCaixaFechado = !AvisoDeCaixaFechado; }) Icon="@Icons.Material.Filled.Notifications" CloseIcon="@Icons.Material.Filled.Close" ShowCloseIcon=true Severity="Severity.Error" Class="mb-4">
-            Caixa Fechado, Abra o caixa para iniciar as vendas.
+        <MudAlert CloseIconClicked=@(() => { AvisoDePedidosAguardando = !AvisoDePedidosAguardando; }) CloseIcon="@Icons.Material.Filled.Close" Icon="@Icons.Material.Filled.Notifications" ShowCloseIcon=true Severity="Severity.Info">
+            Você tem @NumeroDePedidosAbertos Pedidos Abertos.
         </MudAlert>
     }
 
@@ -48,12 +52,12 @@
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="4" Style="cursor:pointer">
+        <MudItem xs="12" sm="4" Style="cursor:pointer" @onclick=ClickCardPedidos>
             <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #4CAF50, #2E7D32); color:white;">
                 <MudCardContent>
                     <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" />
                     <MudText Typo="Typo.h6">Total de Pedidos</MudText>
-                    <MudText Typo="Typo.h4" Class="font-weight-bold">0</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">@NumeroTotalDePedidos</MudText>
                     <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
                 </MudCardContent>
             </MudCard>
@@ -149,13 +153,13 @@
                     <MudTh>Ações</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>@context.NumeroPedido</MudTd>
-                    <MudTd>@context.Cliente</MudTd>
+                    <MudTd>@context.Id</MudTd>
+                    <MudTd>@context.Cliente?.Nome</MudTd>
                     <MudTd>
 
                     </MudTd>
-                    <MudTd>@context.Valor.ToString("C")</MudTd>
-                    <MudTd>@context.Hora.ToString("HH:mm")</MudTd>
+                    <MudTd>@(context.Pagamentos.Sum(p => p.ValorTotal).ToString("C"))</MudTd>
+                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>
                     <MudTd>
                         <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" />
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" Size="Size.Small" />
@@ -175,38 +179,24 @@
 
     private bool AvisoDePedidosAguardando = true;
     private bool AvisoDeCaixaFechado = true;
+    private string MensagemDeCaixa = "Carregando informações de caixa ...";
+    private Severity SeverityCaixa = Severity.Error;
 
     private bool UsuarioPermitidoAcessarDashboard = false;
 
-    // Dados para gráfico
-    private List<ChartSeries> vendasSeries = new List<ChartSeries>
-    {
-        new ChartSeries { Name = "Vendas", Data = new double[] { 1200, 1900, 3000, 5000, 2000, 3000, 4500, 3200, 2800, 3500, 4200, 3800 } }
-    };
 
-    private string[] horasLabels = { "8h", "9h", "10h", "11h", "12h", "13h", "14h", "15h", "16h", "17h", "18h", "19h" };
-
-    // Modelo de pedido
-    public class Pedido
-    {
-        public string NumeroPedido { get; set; }
-        public string Cliente { get; set; }
-        public string Status { get; set; }
-        public decimal Valor { get; set; }
-        public DateTime Hora { get; set; }
-    }
+    private int NumeroTotalDePedidos = 0;
+    private int NumeroDePedidosAbertos = 0;
 
     // Lista de pedidos
-    private List<Pedido> pedidos = new List<Pedido>
-    {
+    private List<ClsPedido> pedidos = new List<ClsPedido>();
+    private List<ClsPedido> pedidosFiltrados = new List<ClsPedido>();
 
-    };
 
-    private List<Pedido> pedidosFiltrados = new List<Pedido>();
 
     protected override void OnInitialized()
     {
-        pedidosFiltrados = new List<Pedido>(pedidos);
+        pedidosFiltrados = new List<ClsPedido>(pedidos);
     }
 
     private Color GetStatusColor(string status)
@@ -223,10 +213,6 @@
 
     private void FiltrarPedidos()
     {
-        pedidosFiltrados = pedidos.Where(p =>
-            (string.IsNullOrEmpty(filtroBusca) || p.Cliente.Contains(filtroBusca, StringComparison.OrdinalIgnoreCase) || p.NumeroPedido.Contains(filtroBusca)) &&
-            (statusSelecionado == "Todos" || p.Status == statusSelecionado)
-        ).ToList();
 
         StateHasChanged();
     }
@@ -258,11 +244,48 @@
                 UsuarioPermitidoAcessarDashboard = true;
             }
 
-            await Task.Delay(100);
+            await AtualizaInfosDosPedidos();
+
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
         }
+    }
+
+    public async Task AtualizaInfosDosPedidos()
+    {
+        ReturnApiRefatored<ClsPedido> returno = await CaixaService.VerificaSeHaCaixaAberto(AppState.MerchantLogado.FuncionarioLogado?.Id);
+
+        if (returno.Status == "error")
+        {
+            MensagemDeCaixa = string.Join(" - ", returno.Messages);
+            SeverityCaixa = Severity.Error;
+        }
+        else
+        {
+            MensagemDeCaixa = string.Join(" - ", returno.Data.Messages);
+            SeverityCaixa = Severity.Success;
+        }
+
+        var retornoPedidosTotal = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 5 });
+        if (retornoPedidosTotal.Total > 0)
+        {
+            NumeroTotalDePedidos = retornoPedidosTotal.Total;
+            pedidos = retornoPedidosTotal.Data;
+            pedidosFiltrados = pedidos;
+        }
+
+        var retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 1, Status = StatusPedidos.ABERTO });
+        if (retornoPedidosAbertos.Total > 0)
+        {
+            NumeroDePedidosAbertos = retornoPedidosAbertos.Total;
+        }
+
+    }
+
+    private void ClickCardPedidos()
+    {
+        Navigation.NavigateTo("/gestao-de-pedidos");
     }
 }

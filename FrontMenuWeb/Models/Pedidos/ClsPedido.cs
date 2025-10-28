@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Pessoas;
+﻿using FrontMenuWeb.Models.Financeiro;
+using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -25,12 +26,10 @@ public enum EtapasPedido
 
 public enum StatusPedidos
 {
-    ABERTO,
+    [Display(Name = "ABERTO")] ABERTO,
     FECHANDO,
     FECHADO,
     CANCELADO,
-    ENTREGUE,
-    DESPACHADO,
     FINALIZADO
 }
 
@@ -80,6 +79,15 @@ public class ClsPedido
 
     [JsonPropertyName("EnderecoId")]
     public int EnderecoId { get; set; }
+
+    [JsonPropertyName("Pagamentos")] public List<PagamentoDoPedido> Pagamentos { get; set; } = new List<PagamentoDoPedido>();
+    [JsonPropertyName("ValorDosItens")] public float ValorDosItens { get; set; }
+    [JsonPropertyName("TaxaEntregaValor")] public float TaxaEntregaValor { get; set; }
+    [JsonPropertyName("DescontoValor")] public float DescontoValor { get; set; }
+    [JsonPropertyName("AcrescimoValor")] public float AcrescimoValor { get; set; }
+    [JsonPropertyName("ServicoValor")] public float ServicoValor { get; set; }
+    [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
+    [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
 
 }
 
