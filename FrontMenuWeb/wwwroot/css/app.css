@@ -6,11 +6,22 @@
     height: 100vh; /* ocupa 80% da altura da tela */
 }
 
+.dialog-pagamento-responsivo-edicao-valor {
+    width: 30vw; /* metade da tela em desktops */
+    height: 30vh; /* ocupa 80% da altura da tela */
+}
+
 /* em telas menores (tablets e celulares), ocupa tudo */
 @media (max-width: 960px) {
     .dialog-pagamento-responsivo {
         width: 100vw !important;
         height: 100vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    .dialog-pagamento-responsivo-edicao-valor {
+        width: 100vw !important;
+        height: 50vh !important;
         margin: 0 !important;
         border-radius: 0 !important;
     }

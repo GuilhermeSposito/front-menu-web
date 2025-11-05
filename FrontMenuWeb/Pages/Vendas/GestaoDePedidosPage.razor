@@ -21,7 +21,7 @@
 @inject ComplementosServices ComplementosServices
 @inject PedidosService PedidosService
 
-<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
         <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
             <MudText Typo="Typo.h4" Style="font-weight: 300">Últimos pedidos</MudText>
@@ -32,7 +32,7 @@
                 <MudTextField Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
             </MudStack>
             <MudStack Justify="Justify.FlexStart">
-                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F2 / F3)</MudButton>
             </MudStack>
         </MudStack>
 
@@ -43,7 +43,8 @@
                     @foreach (var etapa in ListaDeEtapasDosPedidos)
                     {
                         <MudItem xs="12" md="6" xl="3">
-                            <MudCard Style="min-height: 520px">
+                            <MudCard Class="h-100 ma-1"
+                                     Style="min-height: 520px; max-height: 900px;  border: 2px dashed var(--mud-palette-primary);">
                                 <MudCardHeader>
                                     <CardHeaderContent>
                                         <MudText>@etapa.NomeDaEtapa</MudText>
@@ -52,14 +53,14 @@
                                         <MudCheckBox T="bool" />
                                     </CardHeaderActions>
                                 </MudCardHeader>
-                                <MudCardContent>
+                                <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth;">
                                     @{
                                         var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
                                         if (Pedidos.Count > 0)
                                         {
                                             foreach (var pedido in Pedidos)
                                             {
-                                                <MudCard Class="rouded-2 mb-3" Style="background-color: var(--mud-palette-background)">
+                                                <MudCard Class="rouded-2 mb-3 " Style="background-color: var(--mud-palette-background)">
                                                     <MudCardHeader>
                                                         <CardHeaderAvatar>
                                                             <MudAvatar Color="Color.Primary">
@@ -304,6 +305,33 @@
         }
     }
 
+    private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
+    {
+        try
+        {
+            if (e.CtrlKey && e.AltKey)
+            {
+
+            }
+
+            if (e.Key == "F2")
+            {
+               await AbrirCriacaoDePedido();
+            }
+            if (e.Key == "F3")
+            {
+               await AbrirCriacaoDePedido();
+            }
+
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
+        }
+
+
+    }
+
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
         await CarregarPedidos();
@@ -429,6 +457,14 @@
     {
         public string NomeDaEtapa = string.Empty;
         public string Selector { get; set; } = "1";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
+        }
     }
 
 

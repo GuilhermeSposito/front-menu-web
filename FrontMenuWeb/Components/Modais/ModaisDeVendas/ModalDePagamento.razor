@@ -1,63 +1,173 @@
 ﻿@using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services.FinanceroServices
-
+@using System.Linq.Expressions
+@using System.Reflection
+@inject IJSRuntime JS
 @inject FormasDeRecebimentoService FormasDeRecebimentoService
 
-<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
+<MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
         <MudText Class="ms-3" Typo="Typo.h6">Pagamento Do Pedido</MudText>
-
+        <MudDivider Class="w-100" Light=true />
     </TitleContent>
 
     <DialogContent>
-        <MudStack Class="w-100 h-100">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Class="w-100 h-100">
             <MudGrid Class="w-100">
-                <MudItem xs="6" sm="6" lg="6" xxl="6">
-                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                <MudItem xs="12" sm="12" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
                         <MudText Typo="Typo.h6">Valor dos Itens:</MudText>
-                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorDosItens.ToString("C")</MudText>
+                        <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Style="font-weight:100" Typo="Typo.h5" Color="Color.Default">@ValorDosItens.ToString("C")</MudText>
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
 
-                <MudItem xs="6" sm="6" lg="6" xxl="6">
-                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
-                        <MudText Typo="Typo.h6">Desconto:</MudText>
-                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorDoDesconto.ToString("C")</MudText>
+                <MudItem xs="12" sm="12" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudStack Row=true Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Desconto:</MudText>
+                            <MudText Typo="Typo.caption">(CTRL + D)</MudText>
+                        </MudStack>
+                        <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h5" Color="Color.Default">@ValorDoDesconto.ToString("C")</MudText>
+                            <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => ValorDoDesconto); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
 
-                <MudItem xs="6" sm="6" lg="6" xxl="6">
-                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
-                        <MudText Typo="Typo.h6">Taxa Adicional:</MudText>
-                        <MudText Typo="Typo.h5" Color="Color.Default">@TaxaAdicional.ToString("C")</MudText>
+                <MudItem xs="12" sm="12" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudStack Row=true Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.h6">Taxa Adicional:</MudText>
+                            <MudText Typo="Typo.caption">(CTRL + Q)</MudText>
+                        </MudStack>
+                        <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h5" Color="Color.Default">@TaxaAdicional.ToString("C")</MudText>
+                            <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => TaxaAdicional); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
 
                 @if (Pedido.TipoDePedido == "DELIVERY")
                 {
-                    <MudItem xs="6" sm="6" lg="6" xxl="6">
-                        <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
-                            <MudText Typo="Typo.h6">Taxa De Entrega</MudText>
-                            <MudText Typo="Typo.h5" Color="Color.Default">@TaxaDeEntrega.ToString("C")</MudText>
+                    <MudItem xs="12" sm="12" lg="6" xxl="6">
+                        <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                            <MudStack Row=true Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.h6">Taxa De Entrega</MudText>
+                                <MudText Typo="Typo.caption">(CTRL + E)</MudText>
+                            </MudStack>
+                            <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.h5" Color="Color.Default">@TaxaDeEntrega.ToString("C")</MudText>
+                                <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => TaxaDeEntrega); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                            </MudStack>
                         </MudPaper>
                     </MudItem>
                 }
 
-                <MudItem xs="6" sm="6" lg="6" xxl="6">
-                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                <MudItem xs="12" sm="12" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
                         <MudText Typo="Typo.h6">Total:</MudText>
-                        <MudText Typo="Typo.h5" Color="Color.Default">@ValorTotal.ToString("C")</MudText>
+                        <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h5" Color="Color.Default">@ValorTotal.ToString("C")</MudText>
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
 
-                <MudItem xs="6" sm="6" lg="6" xxl="6">
-                    <MudPaper Class="pa-4 ma-1 rounded-2" Style="border: 1px solid var(--mud-palette-divider);">
+                <MudItem xs="12" sm="12" lg="6" xxl="6">
+                    <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
                         <MudText Typo="Typo.h6">Total Pago</MudText>
-                        <MudText Typo="Typo.h5" Color="Color.Default">@Pedido.Pagamentos.Sum(x=> x.ValorTotal).ToString("C")</MudText>
+                        <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h5" Color="Color.Default">@Pedido.Pagamentos.Sum(x => x.ValorTotal).ToString("C")</MudText>
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
             </MudGrid>
+            <MudDivider Class="w-100" Light=true />
+            <MudStack Class="w-100 h-100 rounded p-2" Style="border: 3px dotted var(--mud-palette-primary);">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6" Align="Align.Center" GutterBottom="true">
+                        Formas de Recebimento
+                    </MudText>
+
+
+                    <MudStack Row="true"
+                              Wrap="Wrap.Wrap"
+                              AlignItems="AlignItems.Center"
+                              Justify="Justify.Center"
+                              Spacing="1">
+
+                        @for (int i = 0; i < Formas.Count; i++)
+                        {
+                            var forma = Formas[i];
+                            var numeroForma = i + 1;
+
+                            <MudChip T="string"
+                                     Variant="Variant.Filled"
+                                     Color="Color.Primary"
+                                     Class="pa-2"
+                                     Size="Size.Large"
+                                     Style="min-width: 160px; text-align:center; cursor:pointer;">
+                                <MudStack Row="true"
+                                          AlignItems="AlignItems.Center"
+                                          Justify="Justify.Center"
+                                          Spacing="1">
+
+                                    @foreach (var conta in forma.ListasDeContasDaForma)
+                                    {
+                                        <MudAvatar Size="Size.Small" Class="me-1">
+                                            <MudImage Src="@AppState.GetBancoIcon(conta.Conta.CodIconeDoBanco)"
+                                                      Alt="@conta.Conta.NomeConta"
+                                                      Width="24"
+                                                      Height="24" />
+                                        </MudAvatar>
+                                    }
+
+                                    <MudText Typo="Typo.body2" Class="fw-semibold">
+                                        @forma.Descricao
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="ms-1">
+                                        (F<span>@numeroForma</span>)
+                                    </MudText>
+                                </MudStack>
+                            </MudChip>
+                        }
+                    </MudStack>
+                </MudStack>
+
+                <MudText Align=Align.Center Typo="Typo.h6">Recebimentos Realizados</MudText>
+                <MudStack Style="background-color: var(--mud-palette-background); min-height: 100px; border: 2px dashed var(--mud-palette-primary);"
+                          Class="d-flex flex-wrap flex-grow-1 pa-2 rounded">
+                    @if (!Pedido.Pagamentos.Any())
+                    {
+                        <MudStack Class="w-100" Row="false" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.UploadFile" Size="Size.Large" Color="Color.Primary" />
+                            <MudText Typo="Typo.body1" Align="Align.Center">
+                                Selecione as formas de pagamento acima
+                            </MudText>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        foreach (var pagamentosRealizados in Pedido.Pagamentos)
+                        {
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => { Pedido.Pagamentos.Remove(pagamentosRealizados); })>
+                                <ChildContent>
+                                    <MudStack Row=true Spacing="-1">
+                                        <MudText>@pagamentosRealizados.FormaDePagamento.Descricao -> @pagamentosRealizados.ValorTotal.ToString("C")</MudText>
+                                    </MudStack>
+                                </ChildContent>
+                            </MudChip>
+                        }
+                    }
+                </MudStack>
+
+
+
+
+            </MudStack>
+
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -93,6 +203,7 @@
                 ValorDosItens += item.PrecoTotal;
             }
 
+            SomaValorTotal();
             await CarregarFormasDeRecebimento();
         }
         catch (Exception ex)
@@ -100,8 +211,35 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
+            await JS.InvokeVoidAsync("bloquearAtalhosDoNavegador");
+        }
+    }
+
+    private void SomaValorTotal()
+    {
+        ValorTotal = ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega;
+    }
+
     private async Task ConcluirPagamento()
     {
+        if (Pedido.Pagamentos.Sum(x => x.ValorTotal) < ValorTotal)
+        {
+            Snackbar.Add("O valor total do pedido não foi pago.", Severity.Error);
+            return;
+        }
+
+        Pedido.ValorDosItens = ValorDosItens;
+        Pedido.DescontoValor = ValorDoDesconto;
+        Pedido.AcrescimoValor = TaxaAdicional;
+        Pedido.TaxaEntregaValor = TaxaDeEntrega;
+        Pedido.ServicoValor = TaxaAdicional;
+
+
         MudDialog.Close(DialogResult.Ok(true));
     }
 
@@ -115,11 +253,149 @@
 
     private async Task HandleKeyDownDialog(KeyboardEventArgs e)
     {
-        if (e.CtrlKey && e.AltKey)
+        try
         {
-            await ConcluirPagamento();
+            if (e.CtrlKey && e.AltKey)
+            {
+                await ConcluirPagamento();
+            }
+            if (e.CtrlKey && e.Key == "d")
+            {
+                await AbreModalDeEditarValores(() => ValorDoDesconto);
+            }
+            if (e.CtrlKey && e.Key == "q")
+            {
+                await AbreModalDeEditarValores(() => TaxaAdicional);
+            }
+            if (e.CtrlKey && e.Key == "e")
+            {
+                await AbreModalDeEditarValores(() => TaxaDeEntrega);
+            }
+            if (e.Key == "F1")
+            {
+                AdicionaFormaAoPagamento(Formas[0]);
+            }
+            if (e.Key == "F2")
+            {
+                AdicionaFormaAoPagamento(Formas[1]);
+            }
+            if (e.Key == "F3")
+            {
+                AdicionaFormaAoPagamento(Formas[2]);
+
+            }
+            if (e.Key == "F4")
+            {
+                AdicionaFormaAoPagamento(Formas[3]);
+
+            }
+            if (e.Key == "F5")
+            {
+                AdicionaFormaAoPagamento(Formas[4]);
+
+            }
+            if (e.Key == "F6")
+            {
+                AdicionaFormaAoPagamento(Formas[5]);
+
+            }
+            if (e.Key == "F7")
+                AdicionaFormaAoPagamento(Formas[6]);
+            {
+
+            }
+            if (e.Key == "F8")
+            {
+                AdicionaFormaAoPagamento(Formas[7]);
+
+            }
+            if (e.Key == "F9")
+            {
+                AdicionaFormaAoPagamento(Formas[8]);
+
+            }
+            if (e.Key == "F10")
+            {
+                AdicionaFormaAoPagamento(Formas[9]);
+
+            }
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
         }
 
+
     }
+
+
+    private async void AdicionaFormaAoPagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
+    {
+        var ValorAtual = ValorTotal - Pedido.Pagamentos.Sum(x => x.ValorTotal);
+
+        var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Declarar Valor", new DialogParameters { { "ValorAtual", ValorAtual }, { "ValorTotalDoPedido", ValorTotal } });
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is float novoValor)
+        {
+            ValorAtual = novoValor;
+        }
+
+        if (Pedido.Pagamentos.Sum(x => x.ValorTotal) >= ValorTotal)
+        {
+            Snackbar.Add("O valor total do pedido já foi pago.", Severity.Warning);
+            return;
+        }
+
+        if ((Pedido.Pagamentos.Sum(x => x.ValorTotal) + ValorAtual) > ValorTotal)
+        {
+            Snackbar.Add("O valor declarado não pode ultrapassar o valor total do pedido.", Severity.Error);
+            return;
+        }
+
+        PagamentoDoPedido clsPagamentoDoPedido = new PagamentoDoPedido
+        {
+            ValorTotal = ValorAtual,
+            formaDeRecebimentoId = clsFormaDeRecebimento.Id,
+            FormaDePagamento = clsFormaDeRecebimento
+        };
+
+        Pedido.Pagamentos.Add(clsPagamentoDoPedido);
+
+        Snackbar.Add($"Forma de pagamento {clsFormaDeRecebimento.Descricao} adicionada ao pedido.", Severity.Success);
+        StateHasChanged();
+    }
+
+    private async Task AbreModalDeEditarValores(Expression<Func<float>> propriedadeExpr)
+    {
+        var getter = propriedadeExpr.Compile();
+        float valorAtual = getter();
+
+        var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Editar Valor", new DialogParameters { { "ValorAtual", valorAtual }, { "ValorTotalDoPedido", ValorTotal } });
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is float novoValor)
+        {
+            if (propriedadeExpr.Body is MemberExpression memberExp)
+            {
+                var targetExp = memberExp.Expression;
+                var target = targetExp != null ? Expression.Lambda(targetExp).Compile().DynamicInvoke() : null;
+
+                if (memberExp.Member is PropertyInfo pi)
+                {
+                    pi.SetValue(target, novoValor);
+                }
+                else if (memberExp.Member is FieldInfo fi)
+                {
+                    fi.SetValue(target, novoValor);
+                }
+
+                SomaValorTotal();
+                StateHasChanged();
+            }
+        }
+    }
+
+
 
 }

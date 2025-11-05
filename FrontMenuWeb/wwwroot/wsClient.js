@@ -1,10 +1,8 @@
-﻿
+﻿//Função para conectar com o WS
 window.socketIO = {
     socket: null,
 
     connectSocketIO: async (url) => {
-        console.log("🧠 Tentando conectar ao Socket.IO:", `https://syslogicadev.com/socket.io/`);
-
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
@@ -18,15 +16,13 @@ window.socketIO = {
         });
 
         socket.on("connect", () => {
-            console.log("✅ Conectado ao servidor Socket.IO");
-            // DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveMessage", "Conectado ao servidor");
+           
         });
 
         socket.emit("registrar-merchant");
 
         // Quando o servidor envia algo para o cliente
         socket.on("registrado", (msg) => {
-            console.log("📩 Mensagem recebida do servidor Registrado:", msg);
         });
 
         // Quando o servidor envia algo para o cliente
@@ -40,14 +36,14 @@ window.socketIO = {
         });
 
         socket.on("disconnect", () => {
-            console.log("❌ Desconectado do servidor Socket.IO");
+           
         });
 
     },
 
 };
 
-
+//Função para reproduzir som de notificação
 window.playNotificationSound = () => {
     const audio = new Audio('/sounds/notify.mp3');
     audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
@@ -57,6 +53,7 @@ window.playNotificationSound = () => {
     });
 };
 
+//Função para baixar JSON do pedido
 window.baixarJSON = (dados, nomeArquivo = "dados.json") => {
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -68,3 +65,33 @@ window.baixarJSON = (dados, nomeArquivo = "dados.json") => {
 
     URL.revokeObjectURL(url);
 }
+
+//Função para interceptar tecla F3
+window.interceptF3 = function (dotnetHelper) {
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'F3') {
+            e.preventDefault();
+        }
+    });
+};
+
+//função para bloquear todas as teclas de F na página de pagamento
+window.interceptFunctionKeys = function (dotnetHelper) {
+    document.addEventListener('keydown', function (e) {
+        // Lista de teclas a bloquear
+        const bloqueadas = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"];
+        if (bloqueadas.includes(e.key)) {
+            e.preventDefault(); // bloqueia comportamento padrão
+        }
+    });
+};
+
+//bloquear atalhos do navegador para a tela de pagamento
+window.bloquearAtalhosDoNavegador = function () {
+    document.addEventListener("keydown", function (e) {
+        // Bloquear atalhos específicos do navegador
+        if ((e.ctrlKey && ["d", "t", "e"].includes(e.key.toLowerCase()))) {
+            e.preventDefault(); // bloqueia o comportamento do navegador
+        }
+    });
+};

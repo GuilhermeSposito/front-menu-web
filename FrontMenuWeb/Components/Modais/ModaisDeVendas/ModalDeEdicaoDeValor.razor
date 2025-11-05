@@ -1,0 +1,93 @@
+﻿@using System.Globalization
+
+<MudDialog tabindex="0" OnKeyDown=HandleKeyDownDialog Class="dialog-pagamento-responsivo-edicao-valor" Style="background-color: var(--mud-palette-background);">
+    <DialogContent>
+        <MudStack Class="w-100 h-100">
+            <MudFocusTrap DefaultFocus="DefaultFocus.LastChild">
+                <MudGrid Class="w-100 h-100">
+                    <!-- Campo de porcentagem -->
+                    <MudItem xs="12" md="12" lg="6" xxl="6">
+                        <MudNumericField @ref="FildDePorcentagem"
+                                         @onfocus="OnPorcentagemFocus"
+                                         Value="ValorDePorcentagem"
+                                         T="float"
+                                         ValueChanged="OnPorcentagemChanged"
+                                         Label="Porcentagem"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.End"
+                                         AdornmentIcon="@Icons.Material.Filled.Percent"
+                                         Margin="Margin.Dense"
+                                         Style="border-radius:12px; font-size:1.5rem; height:70px; text-align:center;" />
+                    </MudItem>
+
+                    <!-- Campo de valor em reais -->
+                    <MudItem xs="12" md="12" lg="6" xxl="6">
+                        <MudNumericField @ref="FildDeValor"
+                                         @bind-Value="ValorAtual"
+                                         @onfocus="OnValorFocus"
+                                         Label="Valor"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$" 
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+                </MudGrid>
+            </MudFocusTrap>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="AtualizaValor" Color="Color.Primary" Variant="Variant.Filled">Salvar (CTRL + ALT)</MudButton>
+        <MudButton OnClick="() => MudDialog.Cancel()" Color="Color.Secondary" Variant="Variant.Outlined">Cancelar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    [Parameter] public float ValorAtual { get; set; }
+    [Parameter] public float ValorTotalDoPedido { get; set; }
+    private float ValorDePorcentagem = 0f;
+
+    //lógica de campos para soma
+    private MudNumericField<float> FildDePorcentagem = new MudNumericField<float>();
+    private MudNumericField<float> FildDeValor = new MudNumericField<float>();
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+            await AtualizaValor();
+        }
+
+    }
+
+    private async Task AtualizaValor()
+    {
+        MudDialog.Close(DialogResult.Ok(ValorAtual));
+    }
+
+    private async Task OnValorFocus(FocusEventArgs e)
+    {
+        await FildDeValor.SelectAsync();
+    }
+
+    private async Task OnPorcentagemFocus(FocusEventArgs e)
+    {
+        await FildDePorcentagem.SelectAsync();
+    }
+
+    private void OnPorcentagemChanged(float value)
+    {
+        ValorDePorcentagem = value;
+        float ValorEmReaisDaPorcentagemDada = (ValorTotalDoPedido / 100) * ValorDePorcentagem;
+        ValorAtual = ValorEmReaisDaPorcentagemDada;
+    }
+}

@@ -18,7 +18,6 @@
 
                         @if (!CarregandoForma)
                         {
-
                             <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
                                 <MudStack Class="w-100">
                                     <MudCard Class="w-100 p-2" style="background-color: var(--mud-palette-background);">
@@ -254,6 +253,7 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao carregar forma: {ex.Message}", Severity.Error);
+            Console.WriteLine(ex.ToString());
         }
         finally
         {

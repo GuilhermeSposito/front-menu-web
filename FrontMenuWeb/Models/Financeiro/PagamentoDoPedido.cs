@@ -13,5 +13,9 @@ public class PagamentoDoPedido
     [JsonPropertyName("Troco")] public float Troco { get; set; }
     [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
     [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
-    [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
+    [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; } = DateTime.Now;
+
+    [JsonPropertyName("FormaDePagamento")] public ClsFormaDeRecebimento FormaDePagamento { get; set; } = new();
+    [JsonPropertyName("FormaDeRecebimentoId")] public int formaDeRecebimentoId { get; set; }
+
 }
