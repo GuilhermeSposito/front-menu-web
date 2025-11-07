@@ -8,11 +8,13 @@ using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Hosting;
+using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Services;
 using System.Globalization;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.SignalR;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -28,6 +30,7 @@ builder.Services.AddScoped<AliquotaService>();
 builder.Services.AddScoped<MerchantServices>();
 builder.Services.AddScoped<PessoasService>();
 builder.Services.AddScoped<AppState>();
+
 
 builder.Services.AddScoped(sp =>
 {
@@ -79,9 +82,12 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 
+builder.Services.AddScoped<IErrorBoundaryLogger, GlobalErrorHandler>();
+
 var culture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = culture;
 CultureInfo.DefaultThreadCurrentUICulture = culture;
 builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
 await builder.Build().RunAsync();
+

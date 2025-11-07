@@ -43,24 +43,24 @@
                     @foreach (var etapa in ListaDeEtapasDosPedidos)
                     {
                         <MudItem xs="12" md="6" xl="3">
-                            <MudCard Class="h-100 ma-1"
-                                     Style="min-height: 520px; max-height: 900px;  border: 2px dashed var(--mud-palette-primary);">
-                                <MudCardHeader>
+                            <MudCard Class="h-100 ma-1 rounded-3"
+                                     Style="min-height: 520px; max-height: 900px;">
+                                <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
                                     <CardHeaderContent>
                                         <MudText>@etapa.NomeDaEtapa</MudText>
                                     </CardHeaderContent>
                                     <CardHeaderActions>
-                                        <MudCheckBox T="bool" />
+                                        <MudCheckBox T="bool" Disabled=@(etapa.Selector == "FINALIZADO") ValueChanged=@(() => { SelecionaPedidosParaProximaEtapaNoCabecalho(etapa); }) />
                                     </CardHeaderActions>
                                 </MudCardHeader>
-                                <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth;">
+                                <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px dashed var(--mud-palette-primary); ">
                                     @{
                                         var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
                                         if (Pedidos.Count > 0)
                                         {
                                             foreach (var pedido in Pedidos)
                                             {
-                                                <MudCard Class="rouded-2 mb-3 " Style="background-color: var(--mud-palette-background)">
+                                                <MudCard Class="rounded-3 mb-3" Style=@($"background-color: var(--mud-palette-background); border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
                                                     <MudCardHeader>
                                                         <CardHeaderAvatar>
                                                             <MudAvatar Color="Color.Primary">
@@ -80,7 +80,7 @@
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                             }
-                                                            <MudText>Nmr: @pedido.Pedido.Id</MudText>                             
+                                                            <MudText>Nmr: @pedido.Pedido.Id</MudText>
                                                             <MudText>@pedido.Pedido.CriadoEm</MudText>
                                                         </CardHeaderContent>
                                                         <CardHeaderActions>
@@ -140,7 +140,7 @@
                                                                             <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
                                                                             <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
                                                                         </MudStack>
-                                                                        
+
                                                                         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                             <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
                                                                             <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
@@ -162,10 +162,14 @@
                                                         <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                             <MudStack Row=true>
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                                                                    <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido);}) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
+                                                                    <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
+                                                                    @if (pedido.Pedido.StatusPedido != "FECHADO")
+                                                                    {
+                                                                        <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
+                                                                    }
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                                                 </MudMenu>
                                                             </MudStack>
@@ -245,14 +249,37 @@
 
     private string status = "Desconectado";
 
+    private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
+    {
+        var pedidosNaEtapa = _items.Where(p => p.Selector == etapa.Selector).ToList();
 
-    private async Task AbrirCriacaoDePedido()
+        foreach (var pedido in pedidosNaEtapa)
+        {
+            if (!ItensSelecionadosPArAProximaEtapa.Contains(pedido))
+            {
+                ItensSelecionadosPArAProximaEtapa.Add(pedido);
+                pedido.Selecionado = true;
+            }
+            else
+            {
+                ItensSelecionadosPArAProximaEtapa.Remove(pedido);
+                pedido.Selecionado = false;
+            }
+        }
+    }
+
+    private async Task AbrirCriacaoDePedido(TiposDePedido? tipoDePedido = TiposDePedido.BALCAO)
     {
         if (AppState.CaixaAberto)
         {
+            var parameters = new DialogParameters
+             {
+                 { "TiposDePedido", tipoDePedido }
+             };
+
             var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
 
-            var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", options);
+            var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", parameters, options);
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
@@ -316,11 +343,11 @@
 
             if (e.Key == "F2")
             {
-               await AbrirCriacaoDePedido();
+                await AbrirCriacaoDePedido(TiposDePedido.DELIVERY);
             }
             if (e.Key == "F3")
             {
-               await AbrirCriacaoDePedido();
+                await AbrirCriacaoDePedido(TiposDePedido.BALCAO);
             }
 
         }

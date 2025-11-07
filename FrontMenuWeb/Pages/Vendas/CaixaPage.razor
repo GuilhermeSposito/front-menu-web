@@ -1,0 +1,118 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/caixa"
+@inject IJSRuntime JS
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas.ModaisDeCaixa
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+@inject PedidosService PedidosService
+@inject CaixaEPagamentosService CaixaService
+
+<MudPaper tabindex="0" Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout Class="vh-100">
+        <div class="d-flex align-items-center justify-content-between p-2">
+            <div>
+                <MudText Typo="Typo.h4">Caixa</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de contas pagas no caixa.</MudText>
+            </div>
+            <div class="d-flex">
+                @if (!AppState.CaixaAberto)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="AbreCaixa">Abrir Caixa</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="false" OnClick="@(async () => { })">Fechar Caixa</MudButton>
+                }
+            </div>
+        </div>
+        <MudDivider Light=true Class="w-100" />
+
+        @if (PedidosFechados.Count > 0)
+        {
+            <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center">
+                <MudGrid Class="h-100 w-100">
+
+                    <MudItem Class="h-100" sm="12" md="10" xl="8" xxl="8">
+                        <MudStack Class="h-100 w-100" Style="border: 2px dashed var(--mud-palette-primary);">
+
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem sm="12" md="2" xl="4" xxl="4">
+                        <MudStack Class="h-100 w-100" Style="border: 2px dashed var(--mud-palette-primary);">
+
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center"
+                      Justify="Justify.Center"
+                      Style="width: 100%; height: 100%; opacity: 0.4;">
+                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                    Nenhum pedido fechado ainda.
+                </MudText>
+                <MudText Typo="Typo.caption" Align="Align.Center">
+                    Seus pedidos aparecerão aqui quando estiverem fechados e com o caixa aberto.
+                </MudText>
+            </MudStack>
+        }
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+    //Propriedades para mostrar os pedidos do caixa
+    private List<ClsPedido> PedidosFechados = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task AbreCaixa()
+    {
+
+        var dialog = await DialogService.ShowAsync<ModalDeAbrirCaixa>("Abrir Caixa");
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled)
+        {
+            Snackbar.Add("Ação de abrir caixa cancelada.", Severity.Info);
+            return;
+        }
+
+        if (!result.Canceled && result.Data is AbreCaixaDto abreCaixaDto)
+        {
+            var ResponseAPi = await CaixaService.AbreCaixa(abreCaixaDto);
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+            if (ResponseAPi.Status == "success")
+            {
+                AppState.CaixaAberto = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+}

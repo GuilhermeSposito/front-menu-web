@@ -108,7 +108,9 @@
                                      Color="Color.Primary"
                                      Class="pa-2"
                                      Size="Size.Large"
-                                     Style="min-width: 160px; text-align:center; cursor:pointer;">
+                                     Style="min-width: 160px; text-align:center; cursor:pointer;"
+                                     OnClick=@(()=> {AdicionaFormaAoPagamento(forma);})>
+
                                 <MudStack Row="true"
                                           AlignItems="AlignItems.Center"
                                           Justify="Justify.Center"
@@ -259,15 +261,15 @@
             {
                 await ConcluirPagamento();
             }
-            if (e.CtrlKey && e.Key == "d")
+            if (e.CtrlKey && e.Key == "d" || e.Key == "D")
             {
                 await AbreModalDeEditarValores(() => ValorDoDesconto);
             }
-            if (e.CtrlKey && e.Key == "q")
+            if (e.CtrlKey && e.Key == "q" || e.Key == "Q")
             {
                 await AbreModalDeEditarValores(() => TaxaAdicional);
             }
-            if (e.CtrlKey && e.Key == "e")
+            if (e.CtrlKey && e.Key == "e" || e.Key == "E")
             {
                 await AbreModalDeEditarValores(() => TaxaDeEntrega);
             }
@@ -335,6 +337,12 @@
 
         var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Declarar Valor", new DialogParameters { { "ValorAtual", ValorAtual }, { "ValorTotalDoPedido", ValorTotal } });
         var result = await dialog.Result;
+
+        if (result is null || result.Canceled)
+        {
+            Snackbar.Add("Ação de adicionar forma de pagamento cancelada.", Severity.Info);
+            return;
+        }
 
         if (!result.Canceled && result.Data is float novoValor)
         {

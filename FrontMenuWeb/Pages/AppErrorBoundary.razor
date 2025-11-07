@@ -1,0 +1,53 @@
+﻿@using MudBlazor
+@inject ISnackbar Snackbar
+
+<ErrorBoundary @ref="_boundary" ErrorContent="RenderErrorContent">
+    @ChildContent
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? _boundary;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private RenderFragment<Exception> RenderErrorContent => ex => @<div>
+@{
+    // 🔍 Define mensagem amigável
+    string userMessage = ex.Message.Contains("The JSON value could not be converted", StringComparison.OrdinalIgnoreCase)
+    ? "Houve um problema ao processar os dados. Verifique se os valores informados estão corretos."
+    : "Ocorreu um erro inesperado ao executar a operação.";
+
+    // 🔔 Mostra snackbar bonito e informativo
+    Snackbar.Add(userMessage, Severity.Error, config =>
+    {
+    config.RequireInteraction = false;
+    config.ShowCloseIcon = true;
+    config.SnackbarVariant = Variant.Filled;
+    config.VisibleStateDuration = 7000;
+    });
+
+// 🧱 Layout opcional para fallback visual (não costuma aparecer por causa do Recover)
+    <div class="d-flex justify-center align-center mt-10">
+        <MudPaper Class="pa-6 ma-auto" Elevation="3" Style="max-width:420px; text-align:center;">
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
+                <MudText Typo="Typo.h6" Class="mb-1">Erro inesperado 😢</MudText>
+                <MudText>@userMessage</MudText>
+            </MudAlert>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="() => _boundary?.Recover()">
+                Tentar novamente
+            </MudButton>
+        </MudPaper>
+    </div>
+
+// 🔁 Recupera automaticamente após 1 segundo (suave)
+_ = Task.Delay(1000).ContinueWith(_ =>
+{
+    _boundary?.Recover();
+});
+    }
+</div>;
+}

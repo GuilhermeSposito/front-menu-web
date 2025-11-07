@@ -16,11 +16,11 @@
 
 <MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background);">
     <TitleContent>
-        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-surface); box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
             <MudText Class="ms-3" Typo="Typo.h6">Novo Pedido</MudText>
             <MudStack Row="true" Spacing="2">
-                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" OnClick="Cancelar" />
-                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="Cancelar" />
+                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Secondary" OnClick="Cancelar" />
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Secondary" OnClick="Cancelar" />
             </MudStack>
         </MudStack>
     </TitleContent>
@@ -32,7 +32,7 @@
                 @if (!UsandoMobile)
                 {
                     <MudItem xs=12 sm="12" md="6" lg="2">
-                        <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface);" Elevation="4">
+                        <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);" Elevation="4">
                             <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
                                 <MudText Typo="Typo.h6">Grupos</MudText>
                             </MudStack>
@@ -62,7 +62,7 @@
 
                 @*MudItem De Produtos*@
                 <MudItem xs=12 sm="12" md="6" lg="7">
-                    <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface); overflow-y: auto" Elevation="4">
+                    <MudPaper Class="h-100 rounded-3 p-1" Style="background-color: var(--mud-palette-surface);border: 3px dashed var(--mud-palette-primary); overflow-y: auto" Elevation="4">
                         <MudStack Class="w-100 h-100">
                             <MudStack Class="w-100">
                                 <MudTextField @ref=TextFieldProd Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
@@ -135,7 +135,7 @@
 
                 @*MudItem De Carrinho*@
                 <MudItem xs=12 sm="12" md="12" lg="3">
-                    <MudPaper Class="h-100 rounded p-2" Style="background-color: var(--mud-palette-surface)" Elevation="4">
+                    <MudPaper Class="h-100 rounded p-2" Style="background-color: var(--mud-palette-surface);  border: 3px dashed var(--mud-palette-primary);" Elevation="4">
                         @*Informações do pedido*@
                         <MudStack Justify="Justify.SpaceBetween" Class="w-100 h-100 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background);">
                             <MudStack>
@@ -213,7 +213,7 @@
                                     <MudStack>
                                         @foreach (var produtoNoPedido in NovoPedido.Itens)
                                         {
-                                            <MudPaper Elevation="1" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background)">
+                                            <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
                                                 <MudStack>
                                                     <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
                                                     <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
@@ -276,6 +276,8 @@
 
     //tentativa de teclas rapidas
     private ElementReference _dialogContainer;
+
+    [Parameter] public TiposDePedido TiposDePedido { get; set; } = TiposDePedido.BALCAO;
 
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
@@ -377,6 +379,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if(TiposDePedido == TiposDePedido.BALCAO)
+        {
+            NovoPedido.TipoDePedido = "BALCÃO";
+        }
+        else if (TiposDePedido == TiposDePedido.DELIVERY)
+        {
+            NovoPedido.TipoDePedido = "DELIVERY";
+        }
+
         await CarregarGrupos();
         await CarregarProdutos();
     }
@@ -594,6 +605,8 @@
         }
 
         NovoPedido.TipoDePedido = TipoPedido;
+        await Task.Delay(50);
+        await TextFieldProd.FocusAsync();
     }
 
     private async Task AbreModalDeEnderecos(ClsPessoas Pessoa)
@@ -670,6 +683,8 @@
             return;
         }
     }
+
+
 
     //Lógica do Drawer de edição de produto
     private bool carregandoProdutoParaEdicao = true;

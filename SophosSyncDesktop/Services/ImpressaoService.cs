@@ -157,7 +157,8 @@ public class ImpressaoService
 
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, AppQueEnviou, FonteNomeDoCliente, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteNomeDoCliente, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
 
         return Conteudo;
     }

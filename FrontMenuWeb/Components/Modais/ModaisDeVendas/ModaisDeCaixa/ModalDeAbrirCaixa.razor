@@ -1,0 +1,86 @@
+﻿@using System.Globalization
+
+<MudDialog tabindex="0" OnKeyDown=HandleKeyDownDialog Class="dialog-pagamento-responsivo-edicao-valor" Style="background-color: var(--mud-palette-background);">
+    <DialogContent>
+        <MudStack Class="w-100 h-100">
+            <MudFocusTrap DefaultFocus="DefaultFocus.LastChild">
+                <MudGrid Class="w-100 h-100">
+                    <!-- Campo de data -->
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudDatePicker ImmediateText="true"
+                            Label="Data de Abertura"
+                            Variant="Variant.Filled" Editable="true"
+                            @bind-Date="DataDeAbertura"
+                            Placeholder="Selecione a Data de abertura" />
+                    </MudItem>
+
+                    <!-- Campo de valor em reais -->
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudNumericField @ref="FildDeValor"
+                                         @bind-Value="ValorAtual"
+                                         @onfocus="OnValorFocus"
+                                         Label="Valor"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$"
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+                </MudGrid>
+            </MudFocusTrap>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="AbreCaixa" Color="Color.Primary" Variant="Variant.Filled">ABRIR (CTRL + ALT)</MudButton>
+        <MudButton OnClick="Cancelar" Color="Color.Secondary" Variant="Variant.Outlined">Cancelar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    public float ValorAtual { get; set; }
+    private DateTime? DataDeAbertura { get; set; } = DateTime.Now;
+
+    private AbreCaixaDto abreCaixaDto = new AbreCaixaDto();
+
+    private MudNumericField<float> FildDeValor = new MudNumericField<float>();
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+            await AbreCaixa();
+        }
+
+    }
+
+    private async Task AbreCaixa()
+    {
+        abreCaixaDto.ValorInicial = ValorAtual;
+        abreCaixaDto.DataDeAbertura = DataDeAbertura ?? DateTime.Now;
+        if(AppState.MerchantLogado.FuncionarioLogado is not null)
+        {
+            abreCaixaDto.FuncionarioId = AppState.MerchantLogado.FuncionarioLogado.Id;
+        }
+
+        MudDialog.Close(DialogResult.Ok(abreCaixaDto));
+    }
+
+    private async Task OnValorFocus(FocusEventArgs e)
+    {
+        await FildDeValor.SelectAsync();
+    }
+
+   
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+}
