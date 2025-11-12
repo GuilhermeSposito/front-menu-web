@@ -3,6 +3,7 @@ using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using YamlDotNet.Core.Tokens;
 
 namespace FrontMenuWeb.Services;
@@ -36,6 +37,11 @@ public class PedidosService
             QueryDeFiltros += $"&Status={QueryDePedido.Status}";
         }
 
+        if (!String.IsNullOrEmpty(QueryDePedido.Pesquisa))
+        {
+            QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
+        }
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
            $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 
@@ -67,4 +73,6 @@ public class QuerysDePedidos
     public DateTime? DataCriadoEmFinal = null;
 
     public string CriadoPor = string.Empty;
+
+    [JsonPropertyName("pesquisa")] public string Pesquisa { get; set; } = string.Empty;
 }

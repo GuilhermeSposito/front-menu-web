@@ -75,6 +75,19 @@
                     </MudPaper>
                 </MudItem>
 
+                @if (ValorTroco > 0)
+                {
+                    <MudItem xs="12" sm="12" lg="6" xxl="6">
+                        <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                            <MudText Typo="Typo.h6">Troco:</MudText>
+                            <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.h5" Color="Color.Default">@ValorTroco.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+
                 <MudItem xs="12" sm="12" lg="6" xxl="6">
                     <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
                         <MudText Typo="Typo.h6">Total Pago</MudText>
@@ -195,6 +208,7 @@
     private float TaxaAdicional = 0f;
     private float TaxaDeEntrega = 0f;
     private float ValorTotal = 0f;
+    private float ValorTroco = 0f;
 
     protected override async Task OnInitializedAsync()
     {
@@ -330,7 +344,6 @@
 
     }
 
-
     private async void AdicionaFormaAoPagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
     {
         var ValorAtual = ValorTotal - Pedido.Pagamentos.Sum(x => x.ValorTotal);
@@ -355,20 +368,40 @@
             return;
         }
 
-        if ((Pedido.Pagamentos.Sum(x => x.ValorTotal) + ValorAtual) > ValorTotal)
+        if (((Pedido.Pagamentos.Sum(x => x.ValorTotal) + ValorAtual) > ValorTotal) && !clsFormaDeRecebimento.EDinheiro)
         {
             Snackbar.Add("O valor declarado não pode ultrapassar o valor total do pedido.", Severity.Error);
             return;
         }
 
+
         PagamentoDoPedido clsPagamentoDoPedido = new PagamentoDoPedido
         {
             ValorTotal = ValorAtual,
             formaDeRecebimentoId = clsFormaDeRecebimento.Id,
-            FormaDePagamento = clsFormaDeRecebimento
+            FormaDePagamento = clsFormaDeRecebimento         
         };
 
         Pedido.Pagamentos.Add(clsPagamentoDoPedido);
+
+        //somar o troco
+        if (clsFormaDeRecebimento.EDinheiro)
+        {
+            if (clsFormaDeRecebimento.EDinheiro)
+            {
+                float totalPagoEmDinheiro = Pedido.Pagamentos
+                    .Where(x => x.FormaDePagamento.EDinheiro)
+                    .Sum(x => x.ValorTotal);
+
+                ValorTroco = totalPagoEmDinheiro - ValorTotal;
+
+                // Evita troco negativo
+                if (ValorTroco < 0)
+                    ValorTroco = 0;
+
+                clsPagamentoDoPedido.Troco = ValorTroco;
+            }
+        }
 
         Snackbar.Add($"Forma de pagamento {clsFormaDeRecebimento.Descricao} adicionada ao pedido.", Severity.Success);
         StateHasChanged();

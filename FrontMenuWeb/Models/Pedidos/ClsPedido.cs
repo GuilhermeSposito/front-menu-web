@@ -50,6 +50,7 @@ public class ClsPedido
     [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = "SOPHOS";
     [JsonPropertyName("TipoPedido")] public string TipoDePedido { get; set; } = "BALCÃO";
     [JsonPropertyName("Etapa")] public string EtapaPedido { get; set; } = "NOVO";
+    [JsonPropertyName("DisplayId")] public string DisplayId { get; set; } = "0000";
     [JsonPropertyName("Status")] public string StatusPedido { get; set; } = "FECHADO";
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
     private ClsPessoas? _cliente;

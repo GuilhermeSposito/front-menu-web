@@ -46,8 +46,7 @@
                 <MudCardContent>
                     <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" />
                     <MudText Typo="Typo.h6">Vendas Hoje</MudText>
-                    <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0.00</MudText>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">@ValorTotalVendasHoje.ToString("C")</MudText>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -58,7 +57,6 @@
                     <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" />
                     <MudText Typo="Typo.h6">Total de Pedidos</MudText>
                     <MudText Typo="Typo.h4" Class="font-weight-bold">@NumeroTotalDePedidos</MudText>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -68,8 +66,7 @@
                 <MudCardContent>
                     <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" />
                     <MudText Typo="Typo.h6">Ticket Médio</MudText>
-                    <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 0,00</MudText>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Success">↑ 0% vs ontem</MudText>
+                    <MudText Typo="Typo.h4" Class="font-weight-bold">@TicketMedioHoje.ToString("C")</MudText>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -188,6 +185,9 @@
     private int NumeroTotalDePedidos = 0;
     private int NumeroDePedidosAbertos = 0;
 
+    private float ValorTotalVendasHoje = 0.0f;
+    private float TicketMedioHoje = 0.0f;
+
     // Lista de pedidos
     private List<ClsPedido> pedidos = new List<ClsPedido>();
     private List<ClsPedido> pedidosFiltrados = new List<ClsPedido>();
@@ -272,14 +272,19 @@
         if (retornoPedidosTotal.Total > 0)
         {
             NumeroTotalDePedidos = retornoPedidosTotal.Total;
+            TicketMedioHoje = retornoPedidosTotal.TiketMedio;
+            ValorTotalVendasHoje = retornoPedidosTotal.VendasHoje;
             pedidos = retornoPedidosTotal.Data;
             pedidosFiltrados = pedidos;
+
         }
 
         var retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 1, Status = StatusPedidos.ABERTO });
         if (retornoPedidosAbertos.Total > 0)
         {
             NumeroDePedidosAbertos = retornoPedidosAbertos.Total;
+            TicketMedioHoje = retornoPedidosTotal.TiketMedio;
+            ValorTotalVendasHoje = retornoPedidosTotal.VendasHoje;
         }
 
     }

@@ -29,7 +29,7 @@
         </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-50" Row=true>
-                <MudTextField Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
             </MudStack>
             <MudStack Justify="Justify.FlexStart">
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F2 / F3)</MudButton>
@@ -75,12 +75,11 @@
                                                             </MudAvatar>
                                                         </CardHeaderAvatar>
                                                         <CardHeaderContent>
-                                                            <MudText Color="Color.Primary" Typo="Typo.body1">@pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido</MudText>
+                                                            <MudText Color="Color.Primary" Typo="Typo.body1">@pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId</MudText>
                                                             @if (pedido.Pedido.Cliente is not null)
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                             }
-                                                            <MudText>Nmr: @pedido.Pedido.Id</MudText>
                                                             <MudText>@pedido.Pedido.CriadoEm</MudText>
                                                         </CardHeaderContent>
                                                         <CardHeaderActions>
@@ -249,6 +248,9 @@
 
     private string status = "Desconectado";
 
+    private MudTextField<string> pesquisaField; 
+    private string pesquisaTexto = string.Empty;
+
     private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
     {
         var pedidosNaEtapa = _items.Where(p => p.Selector == etapa.Selector).ToList();
@@ -382,7 +384,7 @@
     {
         try
         {
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos());
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() {Pesquisa = pesquisaTexto});
 
             if (result?.Data?.Any() == true)
             {
@@ -494,5 +496,14 @@
         }
     }
 
+    private async Task OnPesquisaChanged(string value)
+    {
+        pesquisaTexto = value;
+        await BuscarPedidos(); // atualiza a lista conforme digita
+    }
 
+    private async Task BuscarPedidos()
+    {
+        await CarregarPedidos();
+    }
 }
