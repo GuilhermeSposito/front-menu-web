@@ -41,7 +41,7 @@
 
 
         <!-- Cards de métricas -->
-        <MudItem xs="12" sm="4" Style="cursor:pointer">
+        <MudItem xs="12" sm="4" Style="cursor:pointer" @onclick=ClickTiketMedio>
             <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #FF9800, #F57C00); color:white;">
                 <MudCardContent>
                     <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" />
@@ -61,7 +61,7 @@
             </MudCard>
         </MudItem>
 
-        <MudItem xs="12" sm="4" Style="cursor:pointer">
+        <MudItem xs="12" sm="4" Style="cursor:pointer" @onclick=ClickTiketMedio>
             <MudCard Class="pa-4" Style="background: linear-gradient(135deg, #2196F3, #1565C0); color:white;">
                 <MudCardContent>
                     <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Large" />
@@ -179,7 +179,7 @@
     private string MensagemDeCaixa = "Carregando informações de caixa ...";
     private Severity SeverityCaixa = Severity.Error;
 
-    private bool UsuarioPermitidoAcessarDashboard = false;
+    private bool UsuarioPermitidoAcessarDashboard = true;
 
 
     private int NumeroTotalDePedidos = 0;
@@ -228,6 +228,8 @@
     {
         try
         {
+            await AtualizaInfosDosPedidos();
+
             if (AppState.MerchantLogado.FuncionarioLogado is not null)
             {
                 if (AppState.MerchantLogado.FuncionarioLogado.AcessoDashboard)
@@ -244,7 +246,6 @@
                 UsuarioPermitidoAcessarDashboard = true;
             }
 
-            await AtualizaInfosDosPedidos();
 
         }
         catch (Exception ex)
@@ -292,5 +293,10 @@
     private void ClickCardPedidos()
     {
         Navigation.NavigateTo("/gestao-de-pedidos");
+    }
+
+    private void ClickTiketMedio()
+    {
+        Navigation.NavigateTo("/caixa");
     }
 }
