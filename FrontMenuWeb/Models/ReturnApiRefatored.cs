@@ -12,8 +12,7 @@ public class ReturnApiRefatored<T>
     [JsonPropertyName("message")]
     public List<string> Messages { get; set; } = new List<string>();
 
-    [JsonPropertyName("data")]
-    public Data<T> Data { get; set; } = new Data<T>();
+    [JsonPropertyName("data")] public Data<T> Data { get; set; } = new Data<T>();
 }
 
 public class Data<T>

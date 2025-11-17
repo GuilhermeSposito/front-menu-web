@@ -1,6 +1,7 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Vendas;
 using SocketIO.Core;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -48,6 +49,20 @@ public class CaixaEPagamentosService
             Messages = ["Erro ao abrir caixa"]
         };
     }
+
+    public async Task<ReturnApiRefatored<ClsFechamentoDeCaixa>> FechaCaixa(FechaCaixaDto dto)
+    {
+        var response = await _HttpClient.PostAsJsonAsync("caixas/fechar", dto);
+        string json = await response.Content.ReadAsStringAsync();
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<ClsFechamentoDeCaixa>>(json);
+        return retorno ?? new ReturnApiRefatored<ClsFechamentoDeCaixa>
+        {
+            Status = "error",
+            Messages = ["Erro ao fechar caixa"]
+        };
+    }
+
+
 
 }
 

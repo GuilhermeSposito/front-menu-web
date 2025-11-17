@@ -48,6 +48,7 @@ public class ClsPedido
     [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = "SOPHOS";
     [JsonPropertyName("TipoPedido")] public string TipoDePedido { get; set; } = "BALCÃO";
     [JsonPropertyName("Etapa")] public string EtapaPedido { get; set; } = "NOVO";
+    [JsonPropertyName("DisplayId")] public string DisplayId { get; set; } = "0000";
     [JsonPropertyName("Status")] public string StatusPedido { get; set; } = "FECHADO";
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
     private ClsPessoas? _cliente;
@@ -151,5 +152,25 @@ public class PagamentoDoPedido
     [JsonPropertyName("Troco")] public float Troco { get; set; }
     [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
     [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
+    [JsonPropertyName("FormaDeRecebimento")] public ClsFormaDeRecebimento FormaDePagamento { get; set; } = new();
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
 }
+
+public class ClsFormaDeRecebimento
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("pagamentoOnline")] public bool PagamentoOnline { get; set; } = false;
+    [JsonPropertyName("convenio")] public bool Convenio { get; set; } = false;
+    [JsonPropertyName("qtd_dias_para_reembolso")] public int QtdDiasParaReembolso { get; set; } = 0;
+    [JsonPropertyName("taxa")] public float Taxa { get; set; } = 0.0f;
+    [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
+    [JsonPropertyName("ECredito")] public bool ECredito { get; set; } = false;
+    [JsonPropertyName("EDEbito")] public bool EDEbito { get; set; } = false;
+    [JsonPropertyName("EDinheiro")] public bool EDinheiro { get; set; } = false;
+    [JsonPropertyName("EPix")] public bool EPix { get; set; } = false;
+    [JsonPropertyName("chave_pix")] public string? ChavePix { get; set; }
+    [JsonPropertyName("contasIds")] public List<int> ContasIds { get; set; } = new List<int>();
+
+}
+

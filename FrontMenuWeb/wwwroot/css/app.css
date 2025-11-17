@@ -11,6 +11,11 @@
     height: 30vh; /* ocupa 80% da altura da tela */
 }
 
+.dialog-pagamento-responsivo-edicao-valor-fechamento {
+    width: 30vw; /* metade da tela em desktops */
+    height: 70vh; /* ocupa 80% da altura da tela */
+}
+
 /* em telas menores (tablets e celulares), ocupa tudo */
 @media (max-width: 960px) {
     .dialog-pagamento-responsivo {

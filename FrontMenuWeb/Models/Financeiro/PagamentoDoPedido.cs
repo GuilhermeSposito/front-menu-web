@@ -15,7 +15,7 @@ public class PagamentoDoPedido
     [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; } = DateTime.Now;
 
-    [JsonPropertyName("FormaDePagamento")] public ClsFormaDeRecebimento FormaDePagamento { get; set; } = new();
+    [JsonPropertyName("FormaDeRecebimento")] public ClsFormaDeRecebimento FormaDePagamento { get; set; } = new();
     [JsonPropertyName("FormaDeRecebimentoId")] public int formaDeRecebimentoId { get; set; }
 
 }

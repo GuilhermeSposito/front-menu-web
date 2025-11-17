@@ -42,6 +42,8 @@ public class PedidosService
             QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
         }
 
+        Console.WriteLine($"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
            $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 

@@ -10,6 +10,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas.ModaisDeCaixa
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Vendas
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -38,45 +39,69 @@
                 }
                 else
                 {
-                    <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="false" OnClick="@(async () => { })">Fechar Caixa</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="false" OnClick="FechaCaixa">Fechar Caixa</MudButton>
                 }
             </div>
         </div>
         <MudDivider Light=true Class="w-100" />
 
-        @if (PedidosFechados.Count > 0)
-        {
-            <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center">
-                <MudGrid Class="h-100 w-100">
+        <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center">
+            <MudGrid Class="h-100 w-100">
 
-                    <MudItem Class="h-100" sm="12" md="10" xl="8" xxl="8">
-                        <MudStack Class="h-100 w-100" Style="border: 2px dashed var(--mud-palette-primary);">
+                <MudItem Class="h-100" sm="12" md="10" xl="8" xxl="8">
+                    <MudStack Class="h-100 w-100 ma-1">
+                        <MudDataGrid T="ClsPedido"
+                                     @ref="dataGridRef"
+                                     EditTrigger="DataGridEditTrigger.Manual"
+                                     Class="rounded-3 custom-striped"
+                                     Loading="CarregandoPedidos"
+                                     Hover
+                                     HorizontalScrollbar="false"
+                                     ServerData="LoadServerData">
+                            <NoRecordsContent>
+                                <MudStack AlignItems="AlignItems.Center"
+                                          Justify="Justify.Center"
+                                          Style="width: 100%; height: 100%; opacity: 0.4;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                                        Nenhum pedido fechado ainda.
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Align="Align.Center">
+                                        Seus pedidos aparecerão aqui quando estiverem fechados e com o caixa aberto.
+                                    </MudText>
+                                </MudStack>
+                            </NoRecordsContent>
+                            <ToolBarContent>
 
-                        </MudStack>
-                    </MudItem>
+                            </ToolBarContent>
+                            <Columns>
+                                <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                                <PropertyColumn Property="x => x.DisplayId" Title="Código Externo"></PropertyColumn>
+                                <PropertyColumn Property="x => x.Cliente.Nome" Title="Cliente"></PropertyColumn>
+                                <TemplateColumn T="ClsPedido" Title="Valor">
+                                    <CellTemplate Context="context">
+                                        <MudText Style="font-weight:600" Color=Color.Success>@context.Item.ValorTotal.ToString("C")</MudText>
+                                    </CellTemplate>
+                                </TemplateColumn>
+                                <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
+                            </Columns>
+                            <PagerContent>
+                                <MudDataGridPager T="ClsPedido" RowsPerPageString="pedidos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 50, 100, 200, 500, 999 }) />
+                            </PagerContent>
+                        </MudDataGrid>
 
-                    <MudItem sm="12" md="2" xl="4" xxl="4">
-                        <MudStack Class="h-100 w-100" Style="border: 2px dashed var(--mud-palette-primary);">
+                    </MudStack>
+                </MudItem>
 
-                        </MudStack>
-                    </MudItem>
-                </MudGrid>
-            </MudStack>
-        }
-        else
-        {
-            <MudStack AlignItems="AlignItems.Center"
-                      Justify="Justify.Center"
-                      Style="width: 100%; height: 100%; opacity: 0.4;">
-                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
-                <MudText Typo="Typo.subtitle1" Align="Align.Center">
-                    Nenhum pedido fechado ainda.
-                </MudText>
-                <MudText Typo="Typo.caption" Align="Align.Center">
-                    Seus pedidos aparecerão aqui quando estiverem fechados e com o caixa aberto.
-                </MudText>
-            </MudStack>
-        }
+                <MudItem sm="12" md="2" xl="4" xxl="4">
+                    <MudStack Class="h-100 w-100 ma-1">
+                        <MudPaper Class="h-100 w-100" Style="background-color:var(--mud-palette-surface) ">
+
+                        </MudPaper>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
     </MudLayout>
 </MudPaper>
 
@@ -84,12 +109,62 @@
 @code {
     //Propriedades para mostrar os pedidos do caixa
     private List<ClsPedido> PedidosFechados = new();
+    private MudDataGrid<ClsPedido>? dataGridRef = new();
 
+    private bool CarregandoPedidos = true;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
+
+    private async Task<GridData<ClsPedido>> LoadServerData(GridState<ClsPedido> lancamentos)
+    {
+        try
+        {
+            CarregandoPedidos = true;
+
+            int page = lancamentos.Page + 1;
+            int pageSize = lancamentos.PageSize;
+
+
+            var result = await PedidosService
+                                            .GetPedidosPorPaginaAsync(
+                                               new QuerysDePedidos()
+                                               {
+                                                   Page = page,
+                                                   PageSize = pageSize,
+                                                   Status = StatusPedidos.FECHADO
+                                               }
+                                            );
+
+
+            StateHasChanged();
+
+            return new GridData<ClsPedido>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar lançamentos: {ex.Message}", Severity.Error);
+            return new GridData<ClsPedido>
+            {
+
+            };
+
+        }
+        finally
+        {
+            CarregandoPedidos = false;
+        }
+
+    }
+
+
 
     private async Task AbreCaixa()
     {
@@ -111,6 +186,30 @@
             if (ResponseAPi.Status == "success")
             {
                 AppState.CaixaAberto = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task FechaCaixa()
+    {
+
+        var dialog = await DialogService.ShowAsync<ModalDeFecharCaixa>("Fechar Caixa");
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled)
+        {
+            Snackbar.Add("Ação de fechar caixa cancelada.", Severity.Info);
+            return;
+        }
+
+        if (!result.Canceled && result.Data is FechaCaixaDto FechaCaixa)
+        {
+            ReturnApiRefatored<ClsFechamentoDeCaixa> ResponseAPi = await CaixaService.FechaCaixa(FechaCaixa);
+            if (ResponseAPi.Status == "success")
+            {
+                await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-WEB-FECHA.json");
+                AppState.CaixaAberto = false;
                 StateHasChanged();
             }
         }

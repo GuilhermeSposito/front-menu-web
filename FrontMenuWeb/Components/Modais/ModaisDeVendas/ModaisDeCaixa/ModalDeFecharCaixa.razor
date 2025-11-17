@@ -1,0 +1,144 @@
+﻿@using System.Globalization
+@using FrontMenuWeb.DTOS
+
+<MudDialog tabindex="0" OnKeyDown=HandleKeyDownDialog Class="dialog-pagamento-responsivo-edicao-valor-fechamento" Style="background-color: var(--mud-palette-background);">
+    <DialogContent>
+        <MudStack Class="w-100 h-100">
+            <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                <MudGrid Class="w-100 h-100">
+                    <!-- Campo de valor em reais -->
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudNumericField @ref="FildDeValorDeDebito"
+                                         @bind-Value="FechaCaixaDto.ValorRecebimentosDebito"
+                                         @onfocus="OnValorFocus"
+                                         Label="Total em Cartões de débito"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$"
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudNumericField @ref="FildDeValorDeCredito"
+                                         @bind-Value="FechaCaixaDto.ValorRecebimentosCredito"
+                                         @onfocus="OnValorCreditoFocus"
+                                         Label="Total em Cartões de crédito"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$"
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudNumericField @ref="FildDeValorDePix"
+                                         @bind-Value="FechaCaixaDto.ValorRecebimentosPix"
+                                         @onfocus="OnValorPixFocus"
+                                         Label="Total em PIX"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$"
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+
+                    <MudItem xs="12" md="12" lg="12" xxl="12">
+                        <MudNumericField @ref="FildDeValorDeDinheiro"
+                                         @bind-Value="FechaCaixaDto.ValorFinalEmDinheiro"
+                                         @onfocus="OnValorDinFocus"
+                                         Label="Total em Dinheiro"
+                                         Variant="Variant.Filled"
+                                         HideSpinButtons="true"
+                                         Class="mud-width-full mud-elevation-1"
+                                         Adornment="Adornment.Start"
+                                         AdornmentText="R$"
+                                         Margin="Margin.Dense"
+                                         Style="font-size:1.5rem; height:70px; text-align:center;"
+                                         Immediate=true />
+                    </MudItem>
+                </MudGrid>
+            </MudFocusTrap>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="FechaCaixa" Color="Color.Primary" Variant="Variant.Filled">ABRIR (CTRL + ALT)</MudButton>
+        <MudButton OnClick="Cancelar" Color="Color.Secondary" Variant="Variant.Outlined">Cancelar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    public float ValorAtual { get; set; }
+    private DateTime? DataDeAbertura { get; set; } = DateTime.Now;
+
+    private FechaCaixaDto FechaCaixaDto = new FechaCaixaDto();
+
+    private MudNumericField<float> FildDeValorDeDebito = new MudNumericField<float>();
+    private MudNumericField<float> FildDeValorDeCredito = new MudNumericField<float>();
+    private MudNumericField<float> FildDeValorDePix = new MudNumericField<float>();
+    private MudNumericField<float> FildDeValorDeDinheiro = new MudNumericField<float>();
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+            await FechaCaixa();
+        }
+
+        if (e.Key == "Enter")
+        {
+            await FechaCaixa();
+        }
+
+    }
+
+    private async Task FechaCaixa()
+    {
+
+        if(AppState.MerchantLogado.FuncionarioLogado is not null)
+        {
+            FechaCaixaDto.FuncionarioId = AppState.MerchantLogado.FuncionarioLogado.Id;
+        }
+
+        MudDialog.Close(DialogResult.Ok(FechaCaixaDto));
+    }
+
+    private async Task OnValorFocus(FocusEventArgs e)
+    {
+        await FildDeValorDeDebito.SelectAsync();
+    }
+
+    private async Task OnValorCreditoFocus(FocusEventArgs e)
+    {
+        await FildDeValorDeCredito.SelectAsync();
+    }
+
+    private async Task OnValorPixFocus(FocusEventArgs e)
+    {
+        await FildDeValorDePix.SelectAsync();
+    }
+    private async Task OnValorDinFocus(FocusEventArgs e)
+    {
+        await FildDeValorDeDinheiro.SelectAsync();
+    }
+
+   
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+}

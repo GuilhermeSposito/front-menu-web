@@ -23,6 +23,7 @@ public class ImpressaoService
     public Font FonteEndereçoDoRestaurante { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteNúmeroDoPedido { get; set; } = new Font("DejaVu sans mono", 17, FontStyle.Bold);
     public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
+    public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteDetalhesDoPedidoRegular { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Regular);
     public Font FonteNúmeroDoTelefone { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
     public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 15, FontStyle.Bold);
@@ -36,7 +37,7 @@ public class ImpressaoService
     public Font FontQtdDescVunitVTotal { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
     public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
-
+    public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
     public async Task Imprimir(string jsonDoPedido, string AppQueEnviou)
     {
         try
@@ -49,15 +50,39 @@ public class ImpressaoService
                 //primeiro imprime pedido
                 if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
                 {
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = await DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
                 }
 
                 //imprime na impressora auxiliar se tiver
                 if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
                 {
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = await DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, 19);
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    public async Task ImprimirFechamento(string jsonDoFechamento)
+    {
+        try
+        {
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                ClsFechamentoDeCaixa Fechamento = JsonSerializer.Deserialize<ClsFechamentoDeCaixa>(jsonDoFechamento) ?? throw new Exception("Erro ao desserializr fechamento");
+
+                //primeiro imprime pedido
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+                {
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDoFechamentoParaImpressao(Fechamento);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 14);
                 }
 
             }
@@ -73,7 +98,7 @@ public class ImpressaoService
         return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
     }
 
-    private async Task<List<ClsImpressaoDefinicoes>> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
@@ -82,13 +107,15 @@ public class ImpressaoService
         //========================================================================================       
         AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
-        AdicionaConteudo(Conteudo, $"Pedido {pedido.CriadoPor} N°:  #{pedido.Id}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"\n                     {pedido.DisplayId}", FonteItens);
+        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}   Conta Nº:", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteItens);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
         //------------------------------------------------------------------------------------------
 
         if (pedido.Cliente is not null)
@@ -157,9 +184,102 @@ public class ImpressaoService
 
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteNomeDoCliente, Alinhamentos.Centro);
+        //------------------------------------------------------------------------------------------
+
+
+        foreach (var pagamento in pedido.Pagamentos)
+        {
+            if (pagamento.FormaDePagamento is not null)
+            {
+                AdicionaConteudo(Conteudo, $"Pedido será pago com {pagamento.FormaDePagamento.Descricao} -- Valor: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
+                if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
+                {
+                    AdicionaConteudo(Conteudo, $"Leva Troco: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
+                }
+            }
+        }
+
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
 
+        return Conteudo;
+    }
+
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentoParaImpressao(ClsFechamentoDeCaixa Fechamento)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        AdicionaConteudo(Conteudo, "Sophos Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"FECHAMENTO DO CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, $"Realizado Por: . admin", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteFechamentoDeCaixa);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteFechamentoDeCaixa);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, $"TOTAL DAS VENDAS. . . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"ACRESCIMOS. . . . . . .: (+)   {Fechamento.TotalDeArescimos.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"CORTESIA/DESCONTOS. . .: (-)   {(Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos).ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"TAXAS DE ENTREGA. . . .: (+)   {Fechamento.TotalTaxaEntrega.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"FATURAMENTO BRUTO.. . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"CAIXA INICIAL . . . . .: (+)   {Fechamento.ValorDeAbertura.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"ENTRADAS DO CAIXA . . .: (+)   {Fechamento.Suprimentos.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"SAÍDAS DO CAIXA . . . .: (+)   {Fechamento.Sangrias.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"TOTAL DO CAIXA. . . . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"VALOR ESPERADO EM DIN. : (=)  {Fechamento.ValorEsperadoEmDinheiro.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"FALTOU . . . . . . . . : (=)  {Fechamento.Faltou.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"DISTRIBUIÇÃO DAS FORMAS DE", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, $"  RECEBIMENTO DO CAIXA   ", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        foreach (var pagamento in Fechamento.RecebimentosPorTipo ?? [])
+        {
+            AdicionaConteudo(Conteudo, $"{pagamento.Key} . . . . . . :   {pagamento.Value.ToString("C")}", FonteFechamentoDeCaixa);
+        }
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"TOTAL DOS RECEBIMENTOS : (=)  {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"VENDAS A VISTA . . . . : (=)  {Fechamento.TotalEmDinheiro.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"VENDAS EM CARTÃO . . . : (=)  {Fechamento.TotalEmCartoes.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"VENDAS COM PGTOS ONLINE: (=)  {0.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //------------------------------------------------------------------------------------------
+
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
         return Conteudo;
     }
 

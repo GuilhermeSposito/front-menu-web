@@ -165,12 +165,12 @@
                     }
                     else
                     {
-                        foreach (var pagamentosRealizados in Pedido.Pagamentos)
+                        foreach (var pagamentoRealizados in Pedido.Pagamentos)
                         {
-                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => { Pedido.Pagamentos.Remove(pagamentosRealizados); })>
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => {if(pagamentoRealizados.Troco > 0){ValorTroco -= pagamentoRealizados.Troco;} Pedido.Pagamentos.Remove(pagamentoRealizados); })>
                                 <ChildContent>
                                     <MudStack Row=true Spacing="-1">
-                                        <MudText>@pagamentosRealizados.FormaDePagamento.Descricao -> @pagamentosRealizados.ValorTotal.ToString("C")</MudText>
+                                        <MudText>@pagamentoRealizados.FormaDePagamento.Descricao -> @pagamentoRealizados.ValorTotal.ToString("C")</MudText>
                                     </MudStack>
                                 </ChildContent>
                             </MudChip>
@@ -209,6 +209,7 @@
     private float TaxaDeEntrega = 0f;
     private float ValorTotal = 0f;
     private float ValorTroco = 0f;
+    private float ValorRestante = 0f;
 
     protected override async Task OnInitializedAsync()
     {
@@ -347,6 +348,7 @@
     private async void AdicionaFormaAoPagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
     {
         var ValorAtual = ValorTotal - Pedido.Pagamentos.Sum(x => x.ValorTotal);
+        float valorRestante = ValorAtual;
 
         var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Declarar Valor", new DialogParameters { { "ValorAtual", ValorAtual }, { "ValorTotalDoPedido", ValorTotal } });
         var result = await dialog.Result;
@@ -384,22 +386,19 @@
 
         Pedido.Pagamentos.Add(clsPagamentoDoPedido);
 
-        //somar o troco
         if (clsFormaDeRecebimento.EDinheiro)
         {
             if (clsFormaDeRecebimento.EDinheiro)
             {
-                float totalPagoEmDinheiro = Pedido.Pagamentos
-                    .Where(x => x.FormaDePagamento.EDinheiro)
-                    .Sum(x => x.ValorTotal);
+                var troco = ValorAtual - valorRestante;
 
-                ValorTroco = totalPagoEmDinheiro - ValorTotal;
+                ValorTroco += troco;
+ 
+                if (troco < 0)
+                    troco = 0;
 
-                // Evita troco negativo
-                if (ValorTroco < 0)
-                    ValorTroco = 0;
+                clsPagamentoDoPedido.Troco = troco;
 
-                clsPagamentoDoPedido.Troco = ValorTroco;
             }
         }
 

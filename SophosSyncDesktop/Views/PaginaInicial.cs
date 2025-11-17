@@ -11,7 +11,8 @@ namespace SophosSyncDesktop;
 
 public partial class PaginaInicial : Form
 {
-    private FileSystemWatcher watcher;
+    private FileSystemWatcher watcherPedidos;
+    private FileSystemWatcher watcherFechamentos;
     private readonly ImpressaoService _impressaoService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     public PaginaInicial(ImpressaoService ImpressaoService)
@@ -41,6 +42,7 @@ public partial class PaginaInicial : Form
         SophosSync.DoubleClick += (s, e) => ShowWindow();
 
         IniciarMonitoramento();
+        IniciarMonitoramentoDeFechamentoDeCaixa();
     }
 
     protected override void OnLoad(EventArgs e)
@@ -81,13 +83,13 @@ public partial class PaginaInicial : Form
                "Downloads"
            );
 
-        watcher = new FileSystemWatcher(downloadsPath)
+        watcherPedidos = new FileSystemWatcher(downloadsPath)
         {
             Filter = "*.*", // todos os arquivos
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
         };
 
-        watcher.Renamed += async (s, e) =>
+        watcherPedidos.Renamed += async (s, e) =>
         {
             if (e.Name.Contains("SOPHOS-WEB", StringComparison.OrdinalIgnoreCase) &&
                 Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
@@ -106,7 +108,42 @@ public partial class PaginaInicial : Form
             }
         };
 
-        watcher.EnableRaisingEvents = true;
+        watcherPedidos.EnableRaisingEvents = true;
+    }
+
+    private void IniciarMonitoramentoDeFechamentoDeCaixa()
+    {
+        string downloadsPath = Path.Combine(
+               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+               "Downloads"
+           );
+
+        watcherFechamentos = new FileSystemWatcher(downloadsPath)
+        {
+            Filter = "*.*", // todos os arquivos
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+        };
+
+        watcherFechamentos.Renamed += async (s, e) =>
+        {
+            if (e.Name.Contains("SOPHOS-WEB-FECHA", StringComparison.OrdinalIgnoreCase) &&
+                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(500); // espera terminar o download
+                try
+                {
+                    string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                    await _impressaoService.ImprimirFechamento(conteudo);
+                    File.Delete(e.FullPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.Write(ex.ToString());
+                }
+            }
+        };
+
+        watcherFechamentos.EnableRaisingEvents = true;
     }
 
     private void pictureBox2_Click(object sender, EventArgs e)
