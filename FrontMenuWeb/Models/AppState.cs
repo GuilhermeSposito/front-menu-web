@@ -34,6 +34,20 @@ public class AppState
         }
     }
 
+    public string GetIconeDoApp(string CeriadoPor)
+    {
+        switch (CeriadoPor)
+        {
+            case "SOPHOS":
+                return "/images/SOPHOSLOGOLOGIN.jpg";
+            case "IFOOD":
+                return "/images/ifoodImagem.png";
+            default:
+                return "/images/SOPHOSLOGOLOGIN.jpg"; // Ícone padrão caso não haja correspondência
+
+        }
+    }
+
     public int DefineCodigoDoBancoDinamicamente(string NomeEscrito)
     {
         if (NomeEscrito.Contains("bradesco", StringComparison.OrdinalIgnoreCase))

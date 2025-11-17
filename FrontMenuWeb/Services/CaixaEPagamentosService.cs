@@ -62,6 +62,19 @@ public class CaixaEPagamentosService
         };
     }
 
+    public async Task<ReturnApiRefatored<ClsFechamentoDeCaixa>> GetStatusOperacional(FechaCaixaDto? dto = null)
+    {
+        var response = await _HttpClient.PostAsJsonAsync("caixas/status", dto);
+        string json = await response.Content.ReadAsStringAsync();
+
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<ClsFechamentoDeCaixa>>(json);
+        return retorno ?? new ReturnApiRefatored<ClsFechamentoDeCaixa>
+        {
+            Status = "error",
+            Messages = ["Erro ao fechar caixa"]
+        };
+    }
+
 
 
 }

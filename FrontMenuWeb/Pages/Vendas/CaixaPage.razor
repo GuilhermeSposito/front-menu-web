@@ -48,12 +48,12 @@
         <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center">
             <MudGrid Class="h-100 w-100">
 
-                <MudItem Class="h-100" sm="12" md="10" xl="8" xxl="8">
+                <MudItem Class="h-100" sm="12" md="8" xl="8" xxl="8">
                     <MudStack Class="h-100 w-100 ma-1">
                         <MudDataGrid T="ClsPedido"
                                      @ref="dataGridRef"
                                      EditTrigger="DataGridEditTrigger.Manual"
-                                     Class="rounded-3 custom-striped"
+                                     Class="rounded-3 custom-striped h-100 w-100 ma-1"
                                      Loading="CarregandoPedidos"
                                      Hover
                                      HorizontalScrollbar="false"
@@ -75,9 +75,27 @@
 
                             </ToolBarContent>
                             <Columns>
+                                <TemplateColumn T="ClsPedido" Title="Origem">
+                                    <CellTemplate Context="context">
+                                        <MudTooltip Color="Color.Primary" Text="@context.Item.CriadoPor">
+                                            <MudImage Style="width:32px;height:32px;" Src="@AppState.GetIconeDoApp(context.Item.CriadoPor)"></MudImage>
+                                        </MudTooltip>
+                                    </CellTemplate>
+                                </TemplateColumn>
                                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                                 <PropertyColumn Property="x => x.DisplayId" Title="Código Externo"></PropertyColumn>
-                                <PropertyColumn Property="x => x.Cliente.Nome" Title="Cliente"></PropertyColumn>
+                                <TemplateColumn T="ClsPedido" Title="Cliente">
+                                    <CellTemplate Context="context">
+                                        @if (context.Item.Cliente is null)
+                                        {
+                                            <MudText Style="font-weight:600" Color="Color.Warning">Cliente não informado</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Style="font-weight:600" Color="Color.Success">@context.Item.Cliente.Nome</MudText>
+                                        }
+                                    </CellTemplate>
+                                </TemplateColumn>
                                 <TemplateColumn T="ClsPedido" Title="Valor">
                                     <CellTemplate Context="context">
                                         <MudText Style="font-weight:600" Color=Color.Success>@context.Item.ValorTotal.ToString("C")</MudText>
@@ -93,10 +111,91 @@
                     </MudStack>
                 </MudItem>
 
-                <MudItem sm="12" md="2" xl="4" xxl="4">
+                <MudItem sm="12" md="4" xl="4" xxl="4">
                     <MudStack Class="h-100 w-100 ma-1">
-                        <MudPaper Class="h-100 w-100" Style="background-color:var(--mud-palette-surface) ">
+                        <MudPaper Class="h-100 w-100 p-2" Style="background-color:var(--mud-palette-surface) ">
+                            <MudStack>
+                                <MudText Typo="Typo.h5" Align="Align.Center">Status Operacional</MudText>
 
+                                @*RESUMO DO CAIXA*@
+                                <MudStack Class="rounded-2" Style="background-color:var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center">Resumo do Caixa:</MudText>
+
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Valor Total em Vendas (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.ValorTotalEmVendas.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Tiket Médio (=): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.TiketMedio.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Valor Caixa Inicial (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.ValorDeAbertura.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Valor de Acrescimos (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.TotalDeArescimos.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Valor de Taxas de entrega (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.TotalTaxaEntrega.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Valor de Incentivos Externos (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@StatusOperacional.TotalTaxaEntrega.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">Valor de Descontos (-): </MudText>
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">@StatusOperacional.TotalEmDescontos.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">Valor de Trocos (-): </MudText>
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">@StatusOperacional.Trocos.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">Valor de Retiradas do caixa (-): </MudText>
+                                        <MudText Color="Color.Error" Typo="Typo.subtitle2">@StatusOperacional.Sangrias.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Color="Color.Success" Typo="Typo.subtitle2">Valor de Suprimentos do caixa (+): </MudText>
+                                        <MudText Color="Color.Success" Typo="Typo.subtitle2">@StatusOperacional.Suprimentos.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Color="Color.Warning" Typo="Typo.subtitle2">Valor Esperado em Dinheiro (=): </MudText>
+                                        <MudText Color="Color.Warning" Typo="Typo.subtitle2">@StatusOperacional.ValorEsperadoEmDinheiro.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                </MudStack>
+
+                                @*DISTRIBUICAO DE PAGAMENTOS*@
+                                @if (StatusOperacional.RecebimentosPorTipo is not null)
+                                {
+                                    <MudStack Class="rounded-2" Style="background-color:var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                                        <MudText Typo="Typo.subtitle1" Align="Align.Center">Total Por Tipo de Pagamentos Recebidos:</MudText>
+
+                                        @foreach (var pagamento in StatusOperacional.RecebimentosPorTipo)
+                                        {
+                                            <MudStack Class="p-2" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                <MudText Typo="Typo.subtitle2">@pagamento.Key (+): </MudText>
+                                                <MudText Typo="Typo.subtitle2">@pagamento.Value.ToString("C")</MudText>
+                                            </MudStack>
+                                            <MudDivider Light=true Class="w-100" />
+                                        }
+
+                                    </MudStack>
+                                }
+                            </MudStack>
                         </MudPaper>
                     </MudStack>
                 </MudItem>
@@ -113,8 +212,11 @@
 
     private bool CarregandoPedidos = true;
 
+    private ClsFechamentoDeCaixa StatusOperacional = new();
+
     protected override async Task OnInitializedAsync()
     {
+        await GetStatusOperacional();
         await base.OnInitializedAsync();
     }
 
@@ -164,6 +266,25 @@
 
     }
 
+    private async Task GetStatusOperacional()
+    {
+        var returnApiRefatored = await CaixaService.GetStatusOperacional(new FechaCaixaDto()
+        {
+            ValorFinalEmDinheiro = 0,
+            ValorRecebimentosPix = 0,
+            ValorRecebimentosCredito = 0,
+            ValorRecebimentosDebito = 0
+        });
+
+        if (returnApiRefatored.Status == "success")
+        {
+            StatusOperacional = returnApiRefatored.Data.Objeto ?? new ClsFechamentoDeCaixa();
+        }
+        else
+        {
+            Snackbar.Add(string.Join(", ", returnApiRefatored.Messages), Severity.Error);
+        }
+    }
 
 
     private async Task AbreCaixa()
