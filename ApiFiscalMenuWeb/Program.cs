@@ -20,7 +20,7 @@ app.MapGet("/", () =>
         CertificadoDigital = CertificadoSelecionado
     };
 
-    return config.CertificadoDigital != null ? config.CertificadoDigital.Subject : "Falha ao carregar o certificado.";
+    return config.CertificadoDigital != null ? config.CertificadoDigital.Subject + "Testee" : "Falha ao carregar o certificado.";
 });
 
 app.Run();
