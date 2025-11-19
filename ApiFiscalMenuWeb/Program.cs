@@ -11,10 +11,7 @@ app.MapGet("/", () =>
     return "Chegou na api";
 });
 
-app.MapPost("/apifiscal", (InfosDoCertificadoDto infosDto) =>
-{
-    return NfService.VerificaStatusDoCertificadoDigital(infosDto);
-});
+app.MapPost("/verificar-status-do-certificado", (InfosDoCertificadoDto infosDto) => NfService.VerificaStatusDoCertificadoDigital(infosDto));
 
 app.Run();
 
