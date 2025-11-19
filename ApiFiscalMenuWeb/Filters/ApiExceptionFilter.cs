@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Text.Json.Serialization;
 
 namespace ApiFiscalMenuWeb.Filters;
 
@@ -24,10 +25,13 @@ public class ApiExceptionFilter : IExceptionFilter
             _ => StatusCodes.Status500InternalServerError
         };
 
-        context.Result = new ObjectResult(new
-        {
-            error = context.Exception.Message
-        })
+        context.Result = new ObjectResult(
+            new RetunApiRefatored
+            {
+                status = "error",
+                message = new List<string> { context.Exception.Message }
+            }
+            )
         {
             StatusCode = statusCode
         };
@@ -42,4 +46,17 @@ public class ApiExceptionFilter : IExceptionFilter
 
         context.Result = new ObjectResult(context.Exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
     }*/
+}
+
+public class RetunApiRefatored
+{
+    public string status { get; set; } = "success";
+    public List<string> message { get; set; } = new List<string>();
+
+    [JsonIgnore]public Data data { get; set; } = new Data();
+}
+
+public class Data
+{
+    public List<string> message { get; set; } = new List<string>();
 }

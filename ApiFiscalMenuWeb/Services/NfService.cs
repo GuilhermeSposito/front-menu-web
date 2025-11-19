@@ -45,7 +45,7 @@ public class NfService
         if (merchant is null ||  (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)) )
             throw new UnauthorizedAccessException("Certificado ou senha Não informados");
 
-        var CertificadoSelecionado = CarregaCertificadoDigital(merchant.CertificadoBase64, merchant.SenhaCertificado);
+        var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
 
         var xml = new ConsStatServ
         {
@@ -72,7 +72,7 @@ public class NfService
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    private X509Certificate2? CarregaCertificadoDigital(string CertificadoEmBase64, string SenhaCertificado)
+    private X509Certificate2? CarregaCertificadoDigitalBySophos(string CertificadoEmBase64, string SenhaCertificado)
     {
         byte[] CertificaodByttes = Convert.FromBase64String(CertificadoEmBase64);
 
