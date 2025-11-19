@@ -16,7 +16,7 @@ builder.Services.AddScoped<NfService>();
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
     client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/"); //new Uri("https://localhost:3030");//
-});
+});//teste
 
 builder.Services.AddControllers(option =>
 {
