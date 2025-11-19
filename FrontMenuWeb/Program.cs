@@ -4,6 +4,7 @@ using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services;
 using FrontMenuWeb.Services.FinanceroServices;
+using FrontMenuWeb.Services.Fiscal;
 using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -29,6 +30,7 @@ builder.Services.AddScoped<GrupoServices>();
 builder.Services.AddScoped<AliquotaService>();
 builder.Services.AddScoped<MerchantServices>();
 builder.Services.AddScoped<PessoasService>();
+builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 
 

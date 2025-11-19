@@ -3,6 +3,7 @@ using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using SophosSyncDesktop.Services;
 using SophosSyncDesktop.Utils;
+using SophosSyncDesktop.Views.TestesNfe;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -390,5 +391,11 @@ public partial class PaginaInicial : Form
 
             db.SaveChanges();
         }
+    }
+
+    private void btnConfig_Click(object sender, EventArgs e)
+    {
+        TesteComCertificado teste = new TesteComCertificado();
+        teste.Show();
     }
 }

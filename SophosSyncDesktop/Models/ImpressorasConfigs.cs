@@ -17,5 +17,6 @@ public class ImpressorasConfigs
     [Column("impressora_Cz2")] public string ImpressoraCz2 { get; set; } = "Sem Impressora";
     [Column("impressora_Cz3")] public string ImpressoraCz3 { get; set; } = "Sem Impressora";
     [Column("impressora_Bar")] public string ImpressoraBar { get; set; } = "Sem Impressora";
+    [Column("teste_base64")] public string base64Certificado { get; set; } = "";
 
 }

@@ -1,0 +1,38 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/fiscal"
+@using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services.Fiscal
+@using MudBlazor.Extensions.Services
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject NfService NFService
+
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+
+    protected override void OnInitialized()
+    {
+       // string Teste = NFService.TesteDeVerificacaoDeCertificado();
+
+       // Console.WriteLine(Teste);
+    }
+
+
+}

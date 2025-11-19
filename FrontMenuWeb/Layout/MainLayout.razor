@@ -134,6 +134,9 @@
                     <MudDivider Class="my-2" />
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
 
+                   @* <MudNavLink Href="fiscal" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Teste Fiscal</MudNavLink>
+                   *@
+
                     <MudNavLink Icon="@Icons.Material.Filled.ListAlt" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/gestao-de-pedidos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Gestão De Pedidos</MudNavLink>
                     <MudNavLink Icon="@Icons.Material.Filled.RoomService" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/pagemconst", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Mesas/Comandas</MudNavLink>
                     <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixa", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Caixa</MudNavLink>

@@ -4757,7 +4757,7 @@
   <data name="pictureBox2.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
   </data>
-  <data name="pictureBox1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+  <data name="btnConfig.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAo
         pwAAKKcBxTZ9fwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAFJnSURBVHhe7d15
@@ -5115,20 +5115,23 @@
         bPsb9rfsb9rftmuwa7Frsmtb31+3iLTp/wOuAgknee2xtAAAAABJRU5ErkJggg==
 </value>
   </data>
-  <data name="pictureBox1.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+  <data name="btnConfig.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
   </data>
-  <data name="pictureBox1.InitialImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+  <data name="btnConfig.InitialImage" type="System.Resources.ResXNullRef, System.Windows.Forms">
     <value />
   </data>
-  <data name="pictureBox1.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="btnConfig.Location" type="System.Drawing.Point, System.Drawing">
     <value>697, 3</value>
   </data>
-  <data name="pictureBox1.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="btnConfig.Size" type="System.Drawing.Size, System.Drawing">
     <value>32, 67</value>
   </data>
-  <data name="pictureBox1.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
+  <data name="btnConfig.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
     <value>Zoom</value>
+  </data>
+  <data name="btnConfig.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
   </data>
   <data name="LogoImageSophos.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -5805,6 +5808,15 @@
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>771, 73</value>
   </data>
+  <data name="panelDeSelects.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 19.800001pt</value>
+  </data>
+  <data name="panelDeSelects.Location" type="System.Drawing.Point, System.Drawing">
+    <value>14, 105</value>
+  </data>
+  <data name="panelDeSelects.Size" type="System.Drawing.Size, System.Drawing">
+    <value>772, 569</value>
+  </data>
   <data name="label9.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -6027,15 +6039,6 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
   </data>
   <data name="comboBox1.Text" xml:space="preserve">
     <value>Sem Impressora</value>
-  </data>
-  <data name="panelDeSelects.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Microsoft Sans Serif, 19.800001pt</value>
-  </data>
-  <data name="panelDeSelects.Location" type="System.Drawing.Point, System.Drawing">
-    <value>14, 105</value>
-  </data>
-  <data name="panelDeSelects.Size" type="System.Drawing.Size, System.Drawing">
-    <value>772, 569</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>9, 18</value>

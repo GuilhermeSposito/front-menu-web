@@ -14,7 +14,8 @@ namespace SophosSyncDesktop.Services;
 
 public class ImpressaoService
 {
-    //Definir as fontes usadas na impressão
+
+    #region Fontes utilizadas na impressão
     public Font FonteGeral { get; set; } = new Font("DejaVu sans mono mono", 11, FontStyle.Bold);
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteSeparadores { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
@@ -38,6 +39,9 @@ public class ImpressaoService
     public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
     public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
     public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
+    #endregion
+
+    #region Funções que chamam a impressão
     public async Task Imprimir(string jsonDoPedido, string AppQueEnviou)
     {
         try
@@ -93,11 +97,11 @@ public class ImpressaoService
         }
     }
 
-    private bool VerificaSeEstaSemImpressora(string impCadastrada)
-    {
-        return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
-    }
+    #endregion
 
+    #region Define as características da impressão
+
+    #region Definição do pedido para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
@@ -206,7 +210,9 @@ public class ImpressaoService
 
         return Conteudo;
     }
+    #endregion
 
+    #region Definição do fechamento de caixa para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentoParaImpressao(ClsFechamentoDeCaixa Fechamento)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
@@ -282,20 +288,14 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
         return Conteudo;
     }
+    #endregion
 
-    public static void AdicionaConteudo(List<ClsImpressaoDefinicoes> Conteudo, string conteudoTexto, Font fonte, Alinhamentos alinhamento = Alinhamentos.Esquerda, bool eObs = false)
-    {
-        Conteudo.Add(new ClsImpressaoDefinicoes() { Texto = conteudoTexto, Fonte = fonte, Alinhamento = alinhamento, eObs = eObs });
-    }
+    #region Definição das comandas para impressão
+    #endregion
 
-    public static string AdicionarSeparadorSimples()
-    {
-        return "---------------------------------------";
-    }
-    public static string AdicionarSeparadorDuplo()
-    {
-        return "=======================================";
-    }
+    #endregion
+
+    #region Funções de impressão
 
     public static async Task ImprimirPagina(List<ClsImpressaoDefinicoes> conteudo, string impressora1, int espacamento)
     {
@@ -452,9 +452,34 @@ public class ImpressaoService
 
         return Meio;
     }
+
+
+#endregion
+
+    #region Funções auxiliares de impressão
+    private bool VerificaSeEstaSemImpressora(string impCadastrada)
+    {
+        return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
+    }
+
+    public static void AdicionaConteudo(List<ClsImpressaoDefinicoes> Conteudo, string conteudoTexto, Font fonte, Alinhamentos alinhamento = Alinhamentos.Esquerda, bool eObs = false)
+    {
+        Conteudo.Add(new ClsImpressaoDefinicoes() { Texto = conteudoTexto, Fonte = fonte, Alinhamento = alinhamento, eObs = eObs });
+    }
+
+    public static string AdicionarSeparadorSimples()
+    {
+        return "---------------------------------------";
+    }
+    public static string AdicionarSeparadorDuplo()
+    {
+        return "=======================================";
+    }
+
+    #endregion
 }
 
-
+#region Classes de definição de impressão
 public enum Alinhamentos
 {
     Esquerda,
@@ -472,3 +497,4 @@ public class ClsImpressaoDefinicoes
 
     public ClsImpressaoDefinicoes() { }
 }
+#endregion

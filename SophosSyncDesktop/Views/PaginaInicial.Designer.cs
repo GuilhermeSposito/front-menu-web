@@ -33,7 +33,7 @@
             SophosSync = new NotifyIcon(components);
             panel1 = new Panel();
             pictureBox2 = new PictureBox();
-            pictureBox1 = new PictureBox();
+            btnConfig = new PictureBox();
             LogoImageSophos = new PictureBox();
             label1 = new Label();
             label2 = new Label();
@@ -53,7 +53,7 @@
             comboBox1 = new ComboBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)btnConfig).BeginInit();
             ((System.ComponentModel.ISupportInitialize)LogoImageSophos).BeginInit();
             panelDeSelects.SuspendLayout();
             SuspendLayout();
@@ -67,7 +67,7 @@
             resources.ApplyResources(panel1, "panel1");
             panel1.BackColor = Color.FromArgb(248, 129, 19);
             panel1.Controls.Add(pictureBox2);
-            panel1.Controls.Add(pictureBox1);
+            panel1.Controls.Add(btnConfig);
             panel1.Controls.Add(LogoImageSophos);
             panel1.Controls.Add(label1);
             panel1.Controls.Add(label2);
@@ -82,13 +82,14 @@
             pictureBox2.TabStop = false;
             pictureBox2.Click += pictureBox2_Click;
             // 
-            // pictureBox1
+            // btnConfig
             // 
-            resources.ApplyResources(pictureBox1, "pictureBox1");
-            pictureBox1.BackColor = Color.Transparent;
-            pictureBox1.Cursor = Cursors.Hand;
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.TabStop = false;
+            resources.ApplyResources(btnConfig, "btnConfig");
+            btnConfig.BackColor = Color.Transparent;
+            btnConfig.Cursor = Cursors.Hand;
+            btnConfig.Name = "btnConfig";
+            btnConfig.TabStop = false;
+            btnConfig.Click += btnConfig_Click;
             // 
             // LogoImageSophos
             // 
@@ -239,7 +240,7 @@
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)btnConfig).EndInit();
             ((System.ComponentModel.ISupportInitialize)LogoImageSophos).EndInit();
             panelDeSelects.ResumeLayout(false);
             panelDeSelects.PerformLayout();
@@ -253,7 +254,7 @@
         private Label label2;
         private Label label1;
         private PictureBox LogoImageSophos;
-        private PictureBox pictureBox1;
+        private PictureBox btnConfig;
         private PictureBox pictureBox2;
         private Panel panelDeSelects;
         private ComboBox comboBox1;
