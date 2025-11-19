@@ -3,6 +3,7 @@ using ApiFiscalMenuWeb.Models.Dtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Unimake.Business.DFe.Servicos;
 using Unimake.Business.DFe.Servicos.NFe;
@@ -42,14 +43,9 @@ public class NfService
         Merchant? merchant = await GetMerchantFromNestApi(token);
 
         if (merchant is null ||  (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)) )
-            throw new HttpRequestException("Certificado ou senha Não informados");
+            throw new UnauthorizedAccessException("Certificado ou senha Não informados");
 
-        string CertificadoEmBase64 = merchant.CertificadoBase64;
-        string SenhaCertificado = merchant.SenhaCertificado;
-        byte[] CertificaodByttes = Convert.FromBase64String(CertificadoEmBase64);
-
-        var certificadoService = new CertificadoDigital();
-        var CertificadoSelecionado = certificadoService.CarregarCertificadoDigitalA1(CertificaodByttes, SenhaCertificado);
+        var CertificadoSelecionado = CarregaCertificadoDigital(merchant.CertificadoBase64, merchant.SenhaCertificado);
 
         var xml = new ConsStatServ
         {
@@ -75,5 +71,15 @@ public class NfService
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
+
+    private X509Certificate2? CarregaCertificadoDigital(string CertificadoEmBase64, string SenhaCertificado)
+    {
+        byte[] CertificaodByttes = Convert.FromBase64String(CertificadoEmBase64);
+
+        var certificadoService = new CertificadoDigital();
+        var CertificadoSelecionado = certificadoService.CarregarCertificadoDigitalA1(CertificaodByttes, SenhaCertificado);
+
+        return CertificadoSelecionado;
+    }   
 
 }

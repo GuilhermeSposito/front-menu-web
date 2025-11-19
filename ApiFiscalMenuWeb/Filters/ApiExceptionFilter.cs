@@ -31,6 +31,9 @@ public class ApiExceptionFilter : IExceptionFilter
         {
             StatusCode = statusCode
         };
+
+        context.ExceptionHandled = true;
+
     }
 
     /*public void OnException(ExceptionContext context)
