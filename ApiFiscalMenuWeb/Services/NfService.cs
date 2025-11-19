@@ -3,7 +3,6 @@ using ApiFiscalMenuWeb.Models.Dtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using Unimake.Business.DFe.Servicos;
 using Unimake.Business.DFe.Servicos.NFe;
