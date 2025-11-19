@@ -22,3 +22,10 @@ jobs:
                 dotnet restore
                 dotnet build
                 dotnet publish -c Release -o publish
+                cd .. 
+                cd ApiFiscalMenuWeb
+                rm -rf publish
+                dotnet publish -c Release -o ./publish
+                cd publish
+                pm2 restart api-fiscal
+                
