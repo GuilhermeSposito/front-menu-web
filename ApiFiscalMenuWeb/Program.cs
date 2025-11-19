@@ -1,3 +1,4 @@
+using ApiFiscalMenuWeb.Models.Dtos;
 using ApiFiscalMenuWeb.Services;
 using Unimake.Business.DFe.Servicos;
 using Unimake.Business.Security;
@@ -5,9 +6,16 @@ using Unimake.Business.Security;
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
-app.MapPost("/", () =>
+app.MapGet("/", () =>
 {
-    return NfService.VerificaStatusDoCertificadoDigital();
+    return "Chegou na api";
+});
+
+app.MapPost("/apifiscal", (InfosDoCertificadoDto infosDto) =>
+{
+    return NfService.VerificaStatusDoCertificadoDigital(infosDto);
 });
 
 app.Run();
+
+//https://syslogicadev.com/apifiscal
