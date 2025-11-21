@@ -16,13 +16,13 @@ public class NfControllers : ControllerBase
     }
 
 
-    [HttpPost("status")]
+    [HttpPost("status-nfe")]
     public async Task<ActionResult> VerificarStatus()
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
         var token = authHeader.Replace("Bearer ", "");
 
-        var result = await _nfService.VerificaStatusDoCertificadoDigital(token);
+        var result = await _nfService.VerificaStatusDaNFe(token);
         return Ok(result);
     }
 }

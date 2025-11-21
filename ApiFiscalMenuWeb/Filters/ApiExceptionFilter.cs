@@ -1,4 +1,6 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text.Json.Serialization;
@@ -27,10 +29,10 @@ public class ApiExceptionFilter : IExceptionFilter
         };
 
         context.Result = new ObjectResult(
-            new RetunApiRefatored
+            new ReturnApiRefatored<object>
             {
-                status = "error",
-                message = new List<string> { context.Exception.Message }
+                Status = "error",
+                Messages = new List<string> { context.Exception.Message }
             }
             )
         {

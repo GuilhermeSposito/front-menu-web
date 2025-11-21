@@ -1,5 +1,6 @@
 ﻿using ApiFiscalMenuWeb.Models;
 using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +45,7 @@ public class NfService
 
     #region Funções de Verificação do Certificado Digital
     /// Verifica o status do certificado digital
-    public async Task<RetunApiRefatored> VerificaStatusDoCertificadoDigital(string token)
+    public async Task<ReturnApiRefatored<ClsPedido>> VerificaStatusDaNFe(string token)
     {
         Merchant? merchant = await GetMerchantFromNestApi(token);
 
@@ -67,20 +68,14 @@ public class NfService
             CertificadoDigital = CertificadoSelecionado
         };
 
-        ClsPedido Pedido = new ClsPedido
-        {
-            Id = 1,
-            DisplayId = "0001",
-        };
-
         var StatusServico = new StatusServico(xml, config);
         StatusServico.Executar();
 
-        return new RetunApiRefatored
+        return new ReturnApiRefatored<ClsPedido>
         {
-            message = new List<string>
+            Data = new Data<ClsPedido>
             {
-                $"{StatusServico.Result.CStat} {StatusServico.Result.XMotivo} - {Pedido.DisplayId}"
+                Messages = new List<string> { $"{StatusServico.Result.CStat} - {StatusServico.Result.XMotivo}"}
             },
         };
     }
