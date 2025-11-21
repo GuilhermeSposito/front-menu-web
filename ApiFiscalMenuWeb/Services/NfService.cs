@@ -45,7 +45,7 @@ public class NfService
 
     #region Funções de Verificação do Certificado Digital
     /// Verifica o status do certificado digital
-    public async Task<ReturnApiRefatored<ClsPedido>> VerificaStatusDaNFe(string token)
+    public async Task<ReturnApiRefatored<object>> VerificaStatusDaNFe(string token)
     {
         Merchant? merchant = await GetMerchantFromNestApi(token);
 
@@ -71,9 +71,10 @@ public class NfService
         var StatusServico = new StatusServico(xml, config);
         StatusServico.Executar();
 
-        return new ReturnApiRefatored<ClsPedido>
+        return new ReturnApiRefatored<object>
         {
-            Data = new Data<ClsPedido>
+            Status = "success",
+            Data = new Data<object>
             {
                 Messages = new List<string> { $"{StatusServico.Result.CStat} - {StatusServico.Result.XMotivo}"}
             },
