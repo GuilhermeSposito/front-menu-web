@@ -80,7 +80,7 @@ public class NfService
         {
             message = new List<string>
             {
-                $"{StatusServico.Result.CStat} {StatusServico.Result.XMotivo}"
+                $"{StatusServico.Result.CStat} {StatusServico.Result.XMotivo} - {Pedido.DisplayId}"
             },
         };
     }
