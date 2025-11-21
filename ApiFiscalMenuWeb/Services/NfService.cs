@@ -1,5 +1,6 @@
 ﻿using ApiFiscalMenuWeb.Models;
 using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
@@ -14,13 +15,16 @@ namespace ApiFiscalMenuWeb.Services;
 
 public class NfService
 {
+    #region Props
     private readonly IHttpClientFactory _factory;
     public NfService(IHttpClientFactory factory)
     {
         _factory = factory;
     }
+    #endregion
 
-
+    #region Funções de conexão com a Nest API
+    /// Recupera os dados do Merchant na Nest API
     public async Task<Merchant?> GetMerchantFromNestApi(string token)
     {
         var client = _factory.CreateClient("ApiAutorizada");
@@ -36,13 +40,15 @@ public class NfService
 
         return merchant;
     }
+    #endregion
 
-
-    public async Task<string> VerificaStatusDoCertificadoDigital(string token)
+    #region Funções de Verificação do Certificado Digital
+    /// Verifica o status do certificado digital
+    public async Task<RetunApiRefatored> VerificaStatusDoCertificadoDigital(string token)
     {
         Merchant? merchant = await GetMerchantFromNestApi(token);
 
-        if (merchant is null ||  (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)) )
+        if (merchant is null || (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)))
             throw new UnauthorizedAccessException("Certificado ou senha Não informados");
 
         var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
@@ -51,7 +57,7 @@ public class NfService
         {
             Versao = "4.00",
             CUF = UFBrasil.SP,
-            TpAmb = TipoAmbiente.Homologacao,   
+            TpAmb = TipoAmbiente.Homologacao,
         };
 
         var config = new Configuracao
@@ -61,12 +67,26 @@ public class NfService
             CertificadoDigital = CertificadoSelecionado
         };
 
+        ClsPedido Pedido = new ClsPedido
+        {
+            Id = 1,
+            DisplayId = "0001",
+        };
+
         var StatusServico = new StatusServico(xml, config);
         StatusServico.Executar();
 
-        return $"{StatusServico.Result.CStat} {StatusServico.Result.XMotivo}";
+        return new RetunApiRefatored
+        {
+            message = new List<string>
+            {
+                $"{StatusServico.Result.CStat} {StatusServico.Result.XMotivo}"
+            },
+        };
     }
+    #endregion
 
+    #region Funções Auxiliares
     private void AdicionaTokenNaRequisicao(HttpClient client, string token)
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -80,6 +100,6 @@ public class NfService
         var CertificadoSelecionado = certificadoService.CarregarCertificadoDigitalA1(CertificaodByttes, SenhaCertificado);
 
         return CertificadoSelecionado;
-    }   
-
+    }
+    #endregion
 }

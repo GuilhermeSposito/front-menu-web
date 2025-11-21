@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text.Json.Serialization;
 
@@ -48,15 +49,3 @@ public class ApiExceptionFilter : IExceptionFilter
     }*/
 }
 
-public class RetunApiRefatored
-{
-    public string status { get; set; } = "success";
-    public List<string> message { get; set; } = new List<string>();
-
-    [JsonIgnore]public Data data { get; set; } = new Data();
-}
-
-public class Data
-{
-    public List<string> message { get; set; } = new List<string>();
-}

@@ -8,6 +8,8 @@ using Unimake.Business.DFe.Servicos;
 using Unimake.Business.Security;
 
 var builder = WebApplication.CreateBuilder(args);
+
+#region Injeções de dependências
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -25,6 +27,7 @@ builder.Services.AddControllers(option =>
 {
     option.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
+#endregion
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -36,5 +39,3 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 app.Run();
-
-//https://syslogicadev.com/apifiscal
