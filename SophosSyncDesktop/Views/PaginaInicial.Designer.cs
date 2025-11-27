@@ -38,6 +38,7 @@
             label1 = new Label();
             label2 = new Label();
             panelDeSelects = new Panel();
+            labeLogin = new Label();
             label9 = new Label();
             comboBox6 = new ComboBox();
             label8 = new Label();
@@ -66,6 +67,7 @@
             // 
             resources.ApplyResources(panel1, "panel1");
             panel1.BackColor = Color.FromArgb(248, 129, 19);
+            panel1.Controls.Add(labeLogin);
             panel1.Controls.Add(pictureBox2);
             panel1.Controls.Add(btnConfig);
             panel1.Controls.Add(LogoImageSophos);
@@ -127,6 +129,13 @@
             panelDeSelects.Controls.Add(comboBox2);
             panelDeSelects.Controls.Add(comboBox1);
             panelDeSelects.Name = "panelDeSelects";
+            // 
+            // labeLogin
+            // 
+            resources.ApplyResources(labeLogin, "labeLogin");
+            labeLogin.Cursor = Cursors.Hand;
+            labeLogin.Name = "labeLogin";
+            labeLogin.Click += labeLogin_Click;
             // 
             // label9
             // 
@@ -270,5 +279,6 @@
         private Label label4;
         private Label label9;
         private ComboBox comboBox6;
+        private Label labeLogin;
     }
 }

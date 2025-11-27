@@ -1,11 +1,14 @@
+using FrontMenuWeb.Models.Merchant;
 using Microsoft.Win32;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using SophosSyncDesktop.Services;
 using SophosSyncDesktop.Utils;
+using SophosSyncDesktop.Views;
 using SophosSyncDesktop.Views.TestesNfe;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace SophosSyncDesktop;
@@ -46,16 +49,28 @@ public partial class PaginaInicial : Form
         IniciarMonitoramentoDeFechamentoDeCaixa();
     }
 
-    protected override void OnLoad(EventArgs e)
+    protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
 
         AdicionarInicializacao();
 
+        using (AppDbContext db = new AppDbContext())
+        {
+            var infos = db.InfosDeLogin.FirstOrDefault();
+
+            if (infos is not null)
+            {
+                string? token = await AppState.Login(infos.Email, infos.Senha);
+                await AppState.GetMerchantAsync();
+            }
+        }
+
+
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
         SophosSync.BalloonTipIcon = ToolTipIcon.Info;
-        SophosSync.ShowBalloonTip(3000); // 3 segundos
+        SophosSync.ShowBalloonTip(1000); // 1 segundos
 
         this.Hide();
     }
@@ -134,7 +149,10 @@ public partial class PaginaInicial : Form
                 try
                 {
                     string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
-                    await _impressaoService.ImprimirFechamento(conteudo);
+
+                    if (!String.IsNullOrEmpty(conteudo))
+                        await _impressaoService.ImprimirFechamento(conteudo);
+
                     File.Delete(e.FullPath);
                 }
                 catch (Exception ex)
@@ -397,5 +415,11 @@ public partial class PaginaInicial : Form
     {
         TesteComCertificado teste = new TesteComCertificado();
         teste.Show();
+    }
+
+    private void labeLogin_Click(object sender, EventArgs e)
+    {
+        LoginForm loginForm = new LoginForm();
+        loginForm.ShowDialog();
     }
 }

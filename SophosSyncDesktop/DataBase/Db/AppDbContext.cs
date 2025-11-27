@@ -11,6 +11,7 @@ namespace SophosSyncDesktop.DataBase.Db;
 public class AppDbContext: DbContext
 {
     public DbSet<ImpressorasConfigs> Impressoras { get; set; }
+    public DbSet<InfosDeLogin> InfosDeLogin { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs.db");

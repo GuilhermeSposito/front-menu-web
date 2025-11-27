@@ -1630,7 +1630,7 @@
 
                                                 @foreach (var CST in ListaDeCSTS)
                                                 {
-                                                    <MudSelectItem Value="@CST">@CST.Descricao</MudSelectItem>
+                                                    <MudSelectItem Value="@CST">@CST.Id -- @CST.Descricao</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudPaper>
@@ -1656,7 +1656,7 @@
                                                 @foreach (var CSOSN in ListaDeCSOSN)
                                                 {
 
-                                                    <MudSelectItem Value="@CSOSN">@CSOSN.Descricao</MudSelectItem>
+                                                    <MudSelectItem Value="@CSOSN">@CSOSN.Id -- @CSOSN.Descricao</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudPaper>
@@ -1700,7 +1700,7 @@
 
                                                 @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
                                                 {
-                                                    <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Descricao</MudSelectItem>
+                                                    <MudSelectItem Value="@tibPisCOnfins">@tibPisCOnfins.Id -- @tibPisCOnfins.Descricao</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudPaper>
@@ -1724,7 +1724,7 @@
 
                                                 @foreach (var origemProd in ListaDeOrigemDoProdutos)
                                                 {
-                                                    <MudSelectItem Value="@origemProd">@origemProd.Descricao</MudSelectItem>
+                                                    <MudSelectItem Value="@origemProd">@origemProd.Id -- @origemProd.Descricao</MudSelectItem>
                                                 }
                                             </MudSelect>
                                         </MudPaper>

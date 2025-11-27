@@ -52,6 +52,9 @@ public class Data<T>
             return default;
         }
     }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public T? ObjetoWhenWriting { get; set; }
 }
 
 

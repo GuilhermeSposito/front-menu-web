@@ -1,4 +1,6 @@
-﻿using SophosSyncDesktop.DataBase.Db;
+﻿using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Vendas;
+using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using System;
 using System.Collections.Generic;
@@ -106,7 +108,9 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
-        AdicionaConteudo(Conteudo, "Sophos Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
         AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
@@ -454,7 +458,7 @@ public class ImpressaoService
     }
 
 
-#endregion
+    #endregion
 
     #region Funções auxiliares de impressão
     private bool VerificaSeEstaSemImpressora(string impCadastrada)

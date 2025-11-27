@@ -13,12 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
     client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/"); //new Uri("https://localhost:3030");//
-});//teste
+});
+
+builder.Services.AddHttpClient("ApiIBPT", client =>
+{
+    client.BaseAddress = new Uri("https://apidoni.ibpt.org.br/api/v1/produtos"); //new Uri("https://localhost:3030");//
+});
 
 builder.Services.AddControllers(option =>
 {

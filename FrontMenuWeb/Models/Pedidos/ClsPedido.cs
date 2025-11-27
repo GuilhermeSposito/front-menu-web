@@ -113,7 +113,7 @@ public class ItensPedido
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; } = 0;
     [JsonPropertyName("Preco")] public Preco Preco { get; set; } = new Preco();
     [JsonPropertyName("PrecoId")] public int PrecoId { get; set; }
-    [JsonPropertyName("Observacoes")] public string Observacoes { get; set; } = string.Empty;
+    [JsonPropertyName("Observacoes")] public string? Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
 }
 

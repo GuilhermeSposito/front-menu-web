@@ -42,12 +42,7 @@ public class ApiExceptionFilter : IExceptionFilter
         context.ExceptionHandled = true;
 
     }
-
-    /*public void OnException(ExceptionContext context)
-    {
-        _logger.LogError(context.Exception.ToString());
-
-        context.Result = new ObjectResult(context.Exception.Message) { StatusCode = StatusCodes.Status500InternalServerError };
-    }*/
 }
+
+   
 
