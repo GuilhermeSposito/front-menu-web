@@ -9,6 +9,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
 @using MudBlazor.Extensions
@@ -20,6 +21,7 @@
 @inject AliquotaService AliquotaService
 @inject ComplementosServices ComplementosServices
 @inject PedidosService PedidosService
+@inject NfService NFService
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -162,7 +164,7 @@
                                                             <MudStack Row=true>
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                                                                     <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                    <MudMenuItem OnClick="VerificaStatusDeNFCe" Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
@@ -505,5 +507,21 @@
     private async Task BuscarPedidos()
     {
         await CarregarPedidos();
+    }
+
+    private async Task VerificaStatusDeNFCe()
+    {
+       try
+        {
+            var response = await NFService.VerificaStatusServicoNFCe();
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
     }
 }

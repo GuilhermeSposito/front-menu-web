@@ -46,6 +46,23 @@ builder.Services.AddHttpClient("ApiAutorizada", client =>
     client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
 })
 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+
+
+builder.Services.AddHttpClient("ApiFiscalSophos", client =>
+{
+    client.BaseAddress = new Uri("https://syslogicadev.com/apifiscal/");
+})
+.AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+
+void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
+{
+    builder.ConfigureHttpClient(client =>
+    {
+        client.BaseAddress = new Uri("https://syslogicadev.com/apifiscal/");
+    }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+}
+
+
 void ConfigureSyslogicaClient(IHttpClientBuilder builder)
 {
     builder.ConfigureHttpClient(client =>
@@ -79,6 +96,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<FuncionariosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
+ConfigureApiFiscalSoophosClient(builder.Services.AddHttpClient<NfService>());
 
 
 builder.Services.AddMudServices();

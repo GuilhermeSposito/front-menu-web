@@ -19,7 +19,7 @@ public class NfControllers : ControllerBase
 
     #region Verificação de status da NFe e NFCe
 
-    [HttpPost("status-nfe")]
+    [HttpGet("status-nfe")]
     public async Task<ActionResult> VerificarStatusNFe()
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
@@ -29,7 +29,7 @@ public class NfControllers : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("status-nfce")]
+    [HttpGet("status-nfce")]
     public async Task<ActionResult> VerificarStatusNFCe()
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
