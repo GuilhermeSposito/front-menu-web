@@ -7,6 +7,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.Fiscal
@@ -23,7 +24,7 @@
 @inject PedidosService PedidosService
 @inject NfService NFService
 
-<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
         <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
             <MudText Typo="Typo.h4" Style="font-weight: 300">Últimos pedidos</MudText>
@@ -164,7 +165,7 @@
                                                             <MudStack Row=true>
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                                                                     <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
-                                                                    <MudMenuItem OnClick="VerificaStatusDeNFCe" Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                    <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
@@ -238,6 +239,7 @@
 
 @code {
     public bool Carregando { get; set; } = true;
+    public bool CarregandoParteFiscal { get; set; } = false;
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
     public List<ClsDeSuporteParaVizualicacaoDePedidos> ListaDeEtapasDosPedidos = new List<ClsDeSuporteParaVizualicacaoDePedidos>
     {
@@ -250,7 +252,7 @@
 
     private string status = "Desconectado";
 
-    private MudTextField<string> pesquisaField; 
+    private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
 
     private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
@@ -386,7 +388,7 @@
     {
         try
         {
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() {Pesquisa = pesquisaTexto});
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto });
 
             if (result?.Data?.Any() == true)
             {
@@ -480,7 +482,12 @@
 
     private async Task ImprimirPedido(ClsPedido pedido)
     {
-        await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else 
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }
 
 
@@ -511,8 +518,10 @@
 
     private async Task VerificaStatusDeNFCe()
     {
-       try
+        try
         {
+            CarregandoParteFiscal = true;
+
             var response = await NFService.VerificaStatusServicoNFCe();
             var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
             var severity = response.Status == "error" ? Severity.Error : Severity.Success;
@@ -522,6 +531,54 @@
         catch (Exception ex)
         {
             Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
+    }
+
+    private async Task EmiteNFCe(ClsPedido Pedido)
+    {
+        CarregandoParteFiscal = true;
+        try
+        {
+            var EnvNFCeDto = new EnNfCeDto
+            {
+                Pedido = Pedido
+            };
+
+            var response = await NFService.GeraNFCe(EnvNFCeDto);
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+
+            //baixar o xml e o pdf se sucesso
+            if (response.Status != "error")
+            {
+                bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+                if (!ImpressaoDesabilita)
+                {
+                    if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
+                        await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+                }
+                else
+                {
+                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
         }
     }
 }

@@ -17,6 +17,8 @@ public partial class PaginaInicial : Form
 {
     private FileSystemWatcher watcherPedidos;
     private FileSystemWatcher watcherFechamentos;
+    private FileSystemWatcher WatcherNFs;
+
     private readonly ImpressaoService _impressaoService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     public PaginaInicial(ImpressaoService ImpressaoService)
@@ -47,6 +49,7 @@ public partial class PaginaInicial : Form
 
         IniciarMonitoramento();
         IniciarMonitoramentoDeFechamentoDeCaixa();
+        IniciarMonitoramentoDeNfs();
     }
 
     protected override async void OnLoad(EventArgs e)
@@ -163,6 +166,51 @@ public partial class PaginaInicial : Form
         };
 
         watcherFechamentos.EnableRaisingEvents = true;
+    }
+    private void IniciarMonitoramentoDeNfs()
+    {
+        string downloadsPath = Path.Combine(
+               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+               "Downloads"
+           );
+
+        string mesAno = DateTime.Now.ToString("MM-yyyy");
+        string destino = @$"C:\SophosCompany\Triburatios\Autorizadas-{mesAno}";
+
+        // cria a pasta caso não exista
+        if (!Directory.Exists(destino))
+            Directory.CreateDirectory(destino);
+
+        WatcherNFs = new FileSystemWatcher(downloadsPath)
+        {
+            Filter = "*.*", // todos os arquivos
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+        };
+
+        WatcherNFs.Renamed += async (s, e) =>
+        {
+            if (e.Name.Contains("-procnfe", StringComparison.OrdinalIgnoreCase) &&
+                Path.GetExtension(e.FullPath).Equals(".xml", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(500);
+                try
+                {
+                    string destinoArquivo = Path.Combine(destino, e.Name);
+
+                    // Se já existir um arquivo com o mesmo nome, sobrescreve
+                    if (File.Exists(destinoArquivo))
+                        File.Delete(destinoArquivo);
+
+                    File.Move(e.FullPath, destinoArquivo);
+                }
+                catch (Exception ex)
+                {
+                    Console.Write(ex.ToString());
+                }
+            }
+        };
+
+        WatcherNFs.EnableRaisingEvents = true;
     }
 
     private void pictureBox2_Click(object sender, EventArgs e)

@@ -66,6 +66,18 @@ window.baixarJSON = (dados, nomeArquivo = "dados.json") => {
     URL.revokeObjectURL(url);
 }
 
+window.baixarXMLNF = (dados, nomeArquivo = "proc-nfe.xml") => {
+    const blob = new Blob([dados], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nomeArquivo;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
 //Função para interceptar tecla F3
 window.interceptF3 = function (dotnetHelper) {
     document.addEventListener('keydown', function (e) {

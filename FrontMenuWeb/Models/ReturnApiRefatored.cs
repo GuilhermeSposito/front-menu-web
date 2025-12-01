@@ -54,7 +54,7 @@ public class Data<T>
     }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public T? ObjetoWhenWriting { get; set; }
+    [JsonPropertyName("objetoWhenWriting")]public T? ObjetoWhenWriting { get; set; }
 }
 
 

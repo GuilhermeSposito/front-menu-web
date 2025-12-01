@@ -1,6 +1,7 @@
 ﻿using Blazored.LocalStorage;
 using FrontMenuWeb.Dtos;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Fiscal;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Headers;
@@ -23,16 +24,11 @@ public class NfService
         _http = http;
     }
 
+    #region Verificações de Serviço
+
     public async Task<ReturnApiRefatored<EnNfCeDto>> VerificaStatusServicoNFCe()
     {
-        //var token = await _localStorage.GetItemAsStringAsync("token");
-
-       // _http.DefaultRequestHeaders.Authorization =
-            //new AuthenticationHeaderValue("Bearer", token);
-
         var httpResponse = await _http.GetAsync("nf/status-nfce");
-
-        Console.WriteLine(httpResponse.StatusCode);
 
         if (!httpResponse.IsSuccessStatusCode)
             return new ReturnApiRefatored<EnNfCeDto>() { Status = "error", Messages = new List<string> { "Erro ao consultar status NFC-e"} } ;
@@ -43,4 +39,18 @@ public class NfService
 
         return result ?? new ReturnApiRefatored<EnNfCeDto>();
     }
+    #endregion
+
+    #region Emissões de NF-e e NFC-e
+    public async Task<ReturnApiRefatored<NfeReturnDto>> GeraNFCe(EnNfCeDto envNFCeDto)
+    {
+        var httpResponse = await _http.PostAsJsonAsync("nf/enviar-nfce", envNFCeDto);
+        if (!httpResponse.IsSuccessStatusCode)
+            return new ReturnApiRefatored<NfeReturnDto>() { Status = "error", Messages = new List<string> { "Erro ao enviar NFC-e"} } ;
+
+        var content = await httpResponse.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<ReturnApiRefatored<NfeReturnDto>>(content);
+        return result ?? new ReturnApiRefatored<NfeReturnDto>();
+    }
+    #endregion
 }

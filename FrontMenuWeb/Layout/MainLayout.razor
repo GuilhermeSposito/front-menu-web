@@ -28,6 +28,9 @@
                 }
 
                 <MudSpacer />
+                <MudTooltip Text="Ativar/Desativar a impressão" Color="Color.Primary">
+                    <MudIconButton Icon="@(ImpressaoDesabilita? @Icons.Material.Filled.PrintDisabled : @Icons.Material.Filled.Print)" Color="@(ImpressaoDesabilita? Color.Error: Color.Success)" OnClick="@AlteraImpressaoDesabilita" />
+                </MudTooltip>            
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
                 <MudMenu Variant="Variant.Text"
                          Size="Size.Medium"
@@ -225,6 +228,15 @@
     private Color ColorStatusCaixa = Color.Error;
 
 
+    private bool ImpressaoDesabilita = false;
+
+    private async Task AlteraImpressaoDesabilita()
+    {
+        ImpressaoDesabilita = !ImpressaoDesabilita;
+        await LocalStorage.SetItemAsync("ImpressaoDesabilita", ImpressaoDesabilita);
+    }
+
+
     private void ToggleDrawer()
     {
         _open = !_open;
@@ -252,6 +264,8 @@
             bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
             _isDarkMode = isDarkMode;
         }
+
+        ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
 
         _theme = new()
