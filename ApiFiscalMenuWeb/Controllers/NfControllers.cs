@@ -17,6 +17,7 @@ public class NfControllers : ControllerBase
         _nfService = nfService;
     }
 
+    #region Verificação de status da NFe e NFCe
 
     [HttpPost("status-nfe")]
     public async Task<ActionResult> VerificarStatusNFe()
@@ -37,7 +38,9 @@ public class NfControllers : ControllerBase
         var result = await _nfService.VerificaStatusDaNFCe(token);
         return Ok(result);
     }
+    #endregion
 
+    #region Envio de NFCe e NFe
     [HttpPost("enviar-nfe")]
     public async Task<ActionResult> EnviarNFe([FromBody] ClsPedido Pedido)
     {
@@ -47,6 +50,15 @@ public class NfControllers : ControllerBase
         var result = await _nfService.EmissaoDeNFe(token, Pedido);
         return Ok(result);
     }
-}
 
-//https://syslogicadev.com/apifiscal/nf/status
+    [HttpPost("enviar-nfce")]
+    public async Task<ActionResult> EnviarNFCe([FromBody] EnNfCeDto EnvNFCeDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = authHeader.Replace("Bearer ", "");
+
+        var result = await _nfService.EmissaoDeNFCe(token, EnvNFCeDto);
+        return Ok(result);
+    }
+    #endregion
+}

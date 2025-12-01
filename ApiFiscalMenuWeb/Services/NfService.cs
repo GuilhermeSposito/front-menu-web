@@ -12,10 +12,13 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Unimake.Business.DFe;
 using Unimake.Business.DFe.Servicos;
 using Unimake.Business.DFe.Servicos.NFe;
+using Unimake.Business.DFe.Xml.EFDReinf;
 using Unimake.Business.DFe.Xml.ESocial;
 using Unimake.Business.DFe.Xml.NFe;
 using Unimake.Business.Security;
@@ -79,14 +82,36 @@ public class NfService
 
         try
         {
-            //var jsonContent = JsonSerializer.Serialize(UpdatedMerchant);
-            //Console.WriteLine(jsonContent);
-
             response = await client.PatchAsJsonAsync($"merchants/update/{UpdatedMerchant.Id}", UpdatedMerchant, cts.Token);
+            Console.WriteLine(await response.Content.ReadAsStringAsync());
         }
         catch (OperationCanceledException)
         {
             throw new TimeoutException("A requisição para 'atualizar o estabelecimento' excedeu o tempo limite.");
+        }
+
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        return true;
+    }
+
+    public async Task<bool> CreateRegistroDaNFInNestApi(string token, NfeReturnDto returnDto)
+    {
+        var client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, token);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await client.PostAsJsonAsync($"nfs", returnDto, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException("A requisição para 'Registrar a NF EMITIDA' excedeu o tempo limite.");
         }
 
         if (!response.IsSuccessStatusCode)
@@ -175,7 +200,7 @@ public class NfService
 
     #endregion
 
-    #region Funções de Criação do XML da NFe/NFCe
+    #region Funções de Criação da NFe/NFCe
     public async Task<ReturnApiRefatored<NfeReturnDto>> EmissaoDeNFe(string token, ClsPedido Pedido)
     {
         ClsMerchant? merchant = await GetMerchantFromNestApi(token);
@@ -221,7 +246,6 @@ public class NfService
             throw new Exception("Erro na emissão da NFe: Protocolo não retornado");
 
         var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
-        bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
 
         //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta
 
@@ -242,26 +266,290 @@ public class NfService
                 break;
         }
 
+        var NmrProtocolo = autorizacao.Result.ProtNFe.InfProt.NProt;
+        bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
+
+        var DataToReturn = new NfeReturnDto
+        {
+            PedidoCaixaId = Pedido.Id,
+            NFTipo = 65,
+            ChaveNf = autorizacao.Result.ProtNFe.InfProt.ChNFe,
+            Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
+            Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
+            NmrProtocolo = NmrProtocolo,
+            NmrDaNf = ProxNmrNfe,
+            XmlStringField = XmlDeDistribuicao
+        };
+
+        await CreateRegistroDaNFInNestApi(token, DataToReturn);
+
         return new ReturnApiRefatored<NfeReturnDto>
         {
             Status = "success",
             Data = new Data<NfeReturnDto>
             {
                 Messages = new List<string> { $"{ReturnMessage}" },
-                ObjetoWhenWriting = new NfeReturnDto
-                {
-                    NFTipo = 65,
-                    ChaveNf = autorizacao.Result.ProtNFe.InfProt.ChNFe,
-                    Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
-                    Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
-                    XmlStringField = XmlDeDistribuicao
-                }
+                ObjetoWhenWriting = DataToReturn
+            }
+        };
+    }
+
+    public async Task<ReturnApiRefatored<NfeReturnDto>> EmissaoDeNFCe(string token, EnNfCeDto EnvNfceDTO)
+    {
+        ClsMerchant? merchant = await GetMerchantFromNestApi(token);
+        if (merchant is null)
+            throw new UnauthorizedAccessException("Não permitido a emissão NFCe");
+
+        _merchantAtual = merchant;
+        #region Verificações
+        ClsPedido Pedido = EnvNfceDTO.Pedido;
+
+        EnderecoMerchant? enderecoMerchant = merchant.EnderecosMerchant.FirstOrDefault();
+        if (enderecoMerchant is null)
+            throw new BadHttpRequestException("Nenhum endereço foi fornecido para emissão da NFe");
+
+        DocumentosMerchant? DocumentoMerchant = merchant.Documentos.FirstOrDefault();
+        if (DocumentoMerchant is null)
+            throw new BadHttpRequestException("Nenhum documento foi fornecido para emissão da NFe");
+
+        int ProxNmrNFCe = merchant.UltimoNmrSerieNFCe + 1;
+        merchant.UltimoNmrSerieNFCe = ProxNmrNFCe; //atrubuir novo valor para atualizarmos o banco de dados
+
+        ClsPessoas? Destinatario = Pedido.Cliente;
+        #endregion
+        CnpjMerchantAtual = LimparCnpj(DocumentoMerchant.Cnpj);
+        #region Incrementação do numero da NFCe
+        int ProxNmrNfe = merchant.UltimoNmrSerieNFCe + 1;
+        merchant.UltimoNmrSerieNFCe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
+        #endregion
+
+        var xml = CriaXmlDeNFCeSN(merchant, enderecoMerchant, DocumentoMerchant, EnvNfceDTO, ProxNmrNFCe);
+
+        Console.WriteLine(xml.Result.GerarXML());
+
+        var configuracao = new Configuracao
+        {
+            TipoDFe = TipoDFe.NFCe,
+            TipoAmbiente = TipoAmbiente.Homologacao,
+            CertificadoDigital = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64!, merchant.SenhaCertificado!),
+            CSC = "b3aedaf9-8544-4664-a391-e4b360b58b72",
+            CSCIDToken = 1
+        };
+
+        var autorizacao = new Unimake.Business.DFe.Servicos.NFCe.Autorizacao(xml.Result, configuracao);
+        autorizacao.Executar();
+
+        if (autorizacao.Result.ProtNFe is null)
+            throw new Exception("Erro na emissão da NFCe: Protocolo não retornado");
+
+        var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
+
+       //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta 
+
+        string? XmlDeDistribuicao = null;
+        switch (autorizacao.Result.ProtNFe.InfProt.CStat)
+        {
+            case 100: //Autorizado o uso da NFe
+            case 110: //Uso Denegado //quando o destinatário está na lista de bloqueio
+            case 150: //Autorizado o uso da NFe fora de prazo
+            case 250: //NFC-e esta denegada na base do sefaz
+            case 301: //Uso Denegado: irreguralirade fiscal do emitente
+            case 302: //Uso denegado> irreguralirade fiscal do destinatario
+            case 303: //Uso denegado> destinatario na lista de bloqueio
+                var ProcNfe = autorizacao.NfeProcResult.GerarXML();
+                XmlDeDistribuicao = ProcNfe.OuterXml;
+                break;
+            default:
+                break;
+        }
+
+        var NmrProtocolo = autorizacao.Result.ProtNFe.InfProt.NProt;
+        bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
+
+        var DataToReturn = new NfeReturnDto
+        {
+            PedidoCaixaId = Pedido.Id,
+            NFTipo = 55,
+            ChaveNf = autorizacao.Result.ProtNFe.InfProt.ChNFe,
+            Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
+            Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
+            NmrProtocolo = NmrProtocolo,
+            NmrDaNf = ProxNmrNfe,
+            XmlStringField = XmlDeDistribuicao
+        };
+
+        await CreateRegistroDaNFInNestApi(token, DataToReturn);
+
+        return new ReturnApiRefatored<NfeReturnDto>
+        {
+            Status = "success",
+            Data = new Data<NfeReturnDto>
+            {
+                Messages = new List<string> { $"{ReturnMessage}" },
+                ObjetoWhenWriting = DataToReturn
             }
         };
     }
     #endregion
 
     #region Funções Auxiliares
+
+    private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe)
+    {
+        return new EnviNFe
+        {
+            Versao = "4.00",
+            IdLote = "000000000000001",
+            IndSinc = SimNao.Sim,
+            NFe = new List<NFe>
+            {
+                new NFe
+                {
+                    InfNFe =  new List<InfNFe> //Lista de InfNFe --> Porém só tem 1 NFe por vez
+                    {
+                        new InfNFe
+                        {
+                            Versao = "4.00",
+                            Ide = new Ide
+                            {
+                                CUF = UFBrasil.SP,
+                                NatOp = "VENDA DE MERCADORIA",
+                                Mod = ModeloDFe.NFCe,
+                                Serie = 1,
+                                NNF = ProxNumeroNFCe,
+                                DhEmi = DateTime.Now,
+                                DhSaiEnt = DateTime.Now,
+                                TpNF = TipoOperacao.Saida,
+                                IdDest = DestinoOperacao.OperacaoInterna,
+                                CMunFG = enderecoMerchant.Cidade.NumCidade,
+                                TpImp = FormatoImpressaoDANFE.NFCe,
+                                TpEmis = TipoEmissao.Normal,
+                                TpAmb = TipoAmbiente.Homologacao,
+                                FinNFe = FinalidadeNFe.Normal,
+                                IndFinal = SimNao.Sim,
+                                IndPres = IndicadorPresenca.OperacaoPresencial,
+                                ProcEmi = ProcessoEmissao.AplicativoContribuinte,
+                                VerProc = $"Teste"
+                            },
+                            Emit = new Emit //Tag de Emitente
+                            {
+                                CNPJ = LimparCnpj(DocumentoMerchant.Cnpj),
+                                XNome = merchant.RazaoSocial,
+                                XFant = merchant.NomeFantasia,
+                                EnderEmit = new EnderEmit
+                                {
+                                    XLgr = enderecoMerchant.Rua,
+                                    Nro = enderecoMerchant.Numero,
+                                    XBairro = enderecoMerchant.Bairro,
+                                    CMun = enderecoMerchant.Cidade.NumCidade,
+                                    XMun = enderecoMerchant.Cidade.Descricao,
+                                    UF = UFBrasil.SP,
+                                    CEP = enderecoMerchant.Cep,
+                                },
+                                IE = DocumentoMerchant.IncricaoEstadual,
+                                IM = DocumentoMerchant.InscricaoMunicipal,
+                                CNAE = DocumentoMerchant.Cnae,
+                                CRT = CRT.SimplesNacional
+                            },
+                            Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente),
+                            Det =  await RetornaDetsDosProdutosNoPedido(ItensDoPedido:enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe), //Itens do pedido
+                            Total = new Total
+                            {
+                               ICMSTot = new ICMSTot
+                               {
+                                    VBC = 0.00,
+                                    VICMS = 0.00,
+                                    VICMSDeson = 0.00,
+                                    VFCP = 0.00,
+                                    VFCPST = 0.00,
+                                    VFCPSTRet = 0.00,
+                                    VBCST = 0.00,
+                                    VProd = Convert.ToDouble(enNfCeDto.Pedido.ValorDosItens),
+                                    VFrete = 0.00,
+                                    VSeg = 0.00,
+                                    VDesc = 0.00,
+                                    VII = 0.00,
+                                    VIPI = 0.00,
+                                    VIPIDevol = 0.00,
+                                    VPIS = 0.00,
+                                    VCOFINS = 0.00,
+                                    VOutro = Convert.ToDouble(enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor), 
+                                    VNF = Convert.ToDouble(enNfCeDto.Pedido.ValorTotal),
+                                    VTotTrib = ValorTotalTribNfAtual
+                               }
+                            },         
+                            Transp = RetornaTransportedaNF(enNfCeDto.Pedido, merchant, DocumentoMerchant, enderecoMerchant, TipoDFe.NFCe),
+                            Pag = new Pag
+                            {
+                                DetPag = ReturnInfosDePags(Pedido: enNfCeDto.Pedido)
+                            },
+                            InfAdic = new InfAdic
+                            {
+                                InfCpl = "NFCE emitida para teste"
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    private Transp RetornaTransportedaNF(ClsPedido Pedido, ClsMerchant merchant, DocumentosMerchant DocumentoMerchant, EnderecoMerchant enderecoMerchant, TipoDFe? tipoNFE = TipoDFe.NFe)
+    {
+        if (Pedido.TipoDePedido == "DELIVERY" && tipoNFE != TipoDFe.NFCe)
+        {
+            return new Transp
+            {
+                ModFrete = ModalidadeFrete.ContratacaoFretePorContaRemetente_CIF,
+                Transporta = new Transporta
+                {
+                    CNPJ = LimparCnpj(DocumentoMerchant.Cnpj),
+                    XNome = merchant.RazaoSocial,
+                    IE = DocumentoMerchant.IncricaoEstadual,
+                    XEnder = enderecoMerchant.Rua,
+                    XMun = enderecoMerchant.Cidade.Descricao,
+                    UF = UFBrasil.SP
+                },
+                Vol = new List<Vol>
+                {
+                     new Vol
+                     {
+                        QVol = 1,
+                        Esp = "Caixa",
+                        Marca = "Marca Teste",
+                        NVol = "0",
+                     }
+                }
+            };
+        }
+        else
+        {
+            return new Transp
+            {
+                ModFrete = ModalidadeFrete.SemOcorrenciaTransporte
+            };
+        }
+    }
+
+    private Dest? RetornaDestinatarioDeNFCe(EnNfCeDto enNfCeDto, ClsPessoas? Cliente)
+    {
+        if (enNfCeDto.CPF is not null)
+        {
+            return new Dest
+            {
+                CPF = LimparCnpj(enNfCeDto.CPF),
+                XNome = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",//enNfCeDto.NomeCliente ?? "CONSUMIDOR FINAL",
+                IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
+            };
+        }
+        else
+        {
+            //implementar o resto depois;
+        }
+
+        return null;
+    }
+
     private async Task<EnviNFe> CriaXmlDeNfeSN(ClsPedido Pedido, ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, ClsPessoas Destinatario, int ProxNmrNfe)
     {
         return new EnviNFe
@@ -326,9 +614,9 @@ public class NfService
                                 XNome = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",// Destinatario.Nome,
                                 EnderDest = new EnderDest
                                 {
-                                    XLgr = Destinatario.Endereco?.Rua, 
-                                    Nro = Destinatario.Endereco?.Numero, 
-                                    XBairro = Destinatario.Endereco?.Bairro, 
+                                    XLgr = Destinatario.Endereco?.Rua,
+                                    Nro = Destinatario.Endereco?.Numero,
+                                    XBairro = Destinatario.Endereco?.Bairro,
                                     CMun = enderecoMerchant.Cidade.NumCidade,
                                     XMun = enderecoMerchant.Cidade.Descricao,
                                     UF = UFBrasil.SP,
@@ -460,11 +748,19 @@ public class NfService
         return MeioPagamento.Outros;
     }
 
-    private async Task<List<Det>> RetornaDetsDosProdutosNoPedido(List<ItensPedido> ItensDoPedido, ClsPedido Pedido)
+    private async Task<List<Det>> RetornaDetsDosProdutosNoPedido(List<ItensPedido> ItensDoPedido, ClsPedido Pedido, TipoDFe? tipoNFE = TipoDFe.NFe)
     {
+
         var Dets = new List<Det>();
 
         double ValorFreteDiluidoPorItem = Pedido.TaxaEntregaValor / ItensDoPedido.Count;
+        double ValorOutrosDiluidoPorItem = (Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
+
+        if (tipoNFE == TipoDFe.NFCe)
+        {
+            ValorFreteDiluidoPorItem = 0.00; //NFC-e não aceita frete
+            ValorOutrosDiluidoPorItem = (Pedido.TaxaEntregaValor + Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
+        }
 
         int ContadorItem = 1;
         foreach (var item in ItensDoPedido)
@@ -487,14 +783,15 @@ public class NfService
                 {
                     CProd = item.Produto.CodigoInterno,
                     CEAN = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
-                    XProd = item.Descricao,
+                    XProd = "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL", //item.Descricao,
                     NCM = item.Produto.NCM,
-                    CFOP = "5102",
+                    CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
                     QCom = Convert.ToDecimal(item.Quantidade),
                     VUnCom = Convert.ToDecimal(item.PrecoUnitario),
                     VProd = Convert.ToDouble(item.PrecoTotal),
                     VFrete = ValorFreteDiluidoPorItem,
+                    VOutro =  ValorOutrosDiluidoPorItem,
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     UTrib = "UN",
                     QTrib = Convert.ToDecimal(item.Quantidade),

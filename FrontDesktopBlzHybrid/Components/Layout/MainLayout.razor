@@ -1,0 +1,242 @@
+﻿@inherits LayoutComponentBase
+@using FrontDesktopBlzHybrid.DesktopServices
+@using MudBlazor
+@inject AppNativeFunctions _AppNativeFunctions
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode"/> 
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudLayout>
+            <MudAppBar Color="Color.Primary" Elevation="1">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+                <MudText id="ProgramName" Typo="Typo.h5" Class="ml-3">@ProgramName</MudText>
+                <MudSpacer />
+
+                <MudSpacer />
+                <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+                <MudMenu Variant="Variant.Text"
+                         Size="Size.Medium"
+                         Color="Color.Inherit"
+                         Icon="@Icons.Material.Filled.Info"
+                         AnchorOrigin="Origin.TopRight"
+                         TransformOrigin="Origin.TopRight">
+
+                    <!-- Caixa -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="@ColorStatusCaixa" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.PointOfSale" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Caixa</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                               @MensagemDeCaixa
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+
+                    <!-- Ifood -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.Fastfood" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Ifood</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Seu ifood está ativo/online e esperando por pedidos!
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+
+                    <!-- App do Garçom -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.Sync" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">App do Garçom</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Seu app de Garçom está ativo/online e esperando por pedidos!
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+
+                    <!-- Entregas -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Entregas</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Sua integração com as plataformas de entregas estão ativas
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+
+                    <!-- Cardápio Digital -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Error" Size="Size.Medium">
+                                        <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" />
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Cardápio Digital</MudText>
+                                </MudStack>
+                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                Sua integração com seu cardápio digital está ativa, mas seu cardápio está offline
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+                </MudMenu>
+
+            </MudAppBar>
+
+            <MudDrawer Style="background-color: var(--mud-palette-surface);" id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                <MudNavMenu>
+                    <MudDivider Class="my-2" />
+                    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
+
+
+            <MudNavLink OnClick=FecharApp  Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ExitToApp">Sair</MudNavLink>
+                </MudNavMenu>
+            </MudDrawer>
+    <MudMainContent Class="pt-16 pa-4 mud-theme-background min-vh-100" Style="background-color: var(--mud-palette-background)">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocorreu um erro. Por favor recarregue a página.
+    <a href="." class="reload">Clique aqui para recarregar!</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudTheme? _theme = null;
+    private bool _open = false;
+    private string ProgramName = "Sophos";
+    private const string ThemePreferenceKey = "themePreference"; // chave no localStorage
+
+    private string MensagemDeCaixa = "Carregando status do caixa...";
+    private Color ColorStatusCaixa = Color.Error;
+
+    protected override void OnInitialized()
+    {
+        _theme = new()
+        {
+            PaletteLight = _lightPalette,
+            PaletteDark = _darkPalette,
+            LayoutProperties = new LayoutProperties()
+        };
+     
+    } 
+
+    private void FecharApp()
+    {
+        _AppNativeFunctions.CloseApp();
+    }
+
+    private void ToggleDrawer()
+    {
+        _open = !_open;
+
+    }
+
+    private  void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+    }
+
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+
+    private readonly PaletteLight _lightPalette = new()
+    {
+        Primary = "#F88113",
+        Secondary = "#192436",
+        Black = "#110e2d",
+        Background = "#FAFBFC",
+        AppbarText = "#424242",
+        AppbarBackground = "rgba(255,255,255,0.8)",
+        DrawerBackground = "#ffffff",
+        GrayLight = "#e8e8e8",
+        GrayLighter = "#f9f9f9",
+        Surface = "#FFFFFF",
+        TextPrimary = "#000000",
+    };
+
+    private readonly PaletteDark _darkPalette = new()
+    {
+        Primary = "#F88113",
+        Surface = "#101628",
+        Background = "#192436",
+        BackgroundGray = "#151521",
+        AppbarText = "#92929f",
+        AppbarBackground = "rgba(26,26,39,0.8)",
+        DrawerBackground = "#1a1a27",
+        ActionDefault = "#74718e",
+        ActionDisabled = "#9999994d",
+        ActionDisabledBackground = "#605f6d4d",
+        TextPrimary = "#ffffff",
+        TextSecondary = "#92929f",
+        TextDisabled = "#ffffff33",
+        DrawerIcon = "#92929f",
+        DrawerText = "#92929f",
+        GrayLight = "#2a2833",
+        GrayLighter = "#1e1e2d80", //"#1e1e2d",
+        Info = "#4a86ff",
+        Success = "#3dcb6c",
+        Warning = "#ffb545",
+        Error = "#ff3f5f",
+        LinesDefault = "#33323e",
+        TableLines = "#33323e",
+        Divider = "#292838",
+        OverlayLight = "#1e1e2d80", //#404553
+        Secondary = "#192436"
+    };
+
+    //#404553
+
+    public string DarkLightModeButtonIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Rounded.AutoMode,
+        false => Icons.Material.Outlined.DarkMode,
+    };
+
+
+  
+}
+
+
