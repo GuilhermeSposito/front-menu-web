@@ -35,12 +35,26 @@ builder.Services.AddControllers(option =>
 });
 #endregion
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsLiberado", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
+app.UseCors("CorsLiberado");
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.MapControllers();
 

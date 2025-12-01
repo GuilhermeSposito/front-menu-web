@@ -25,12 +25,14 @@ public class NfService
 
     public async Task<ReturnApiRefatored<EnNfCeDto>> VerificaStatusServicoNFCe()
     {
-        var token = await _localStorage.GetItemAsStringAsync("token");
+        //var token = await _localStorage.GetItemAsStringAsync("token");
 
-        _http.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", token);
+       // _http.DefaultRequestHeaders.Authorization =
+            //new AuthenticationHeaderValue("Bearer", token);
 
-        var httpResponse = await _http.PostAsJsonAsync("nf/status-nfce", new EnNfCeDto());
+        var httpResponse = await _http.GetAsync("nf/status-nfce");
+
+        Console.WriteLine(httpResponse.StatusCode);
 
         if (!httpResponse.IsSuccessStatusCode)
             return new ReturnApiRefatored<EnNfCeDto>() { Status = "error", Messages = new List<string> { "Erro ao consultar status NFC-e"} } ;
