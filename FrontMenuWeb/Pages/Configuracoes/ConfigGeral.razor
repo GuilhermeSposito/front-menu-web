@@ -1,0 +1,185 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/config-geral"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Services
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+
+        @*Informações da loja*@
+        <MudPaper Class="rounded-5 p-2" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
+            <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
+
+                <MudAvatar Size=Size.Large Color="Color.Primary">S</MudAvatar>
+                <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background); border: 1px solid var(--mud-palette-primary)" Elevation="2">
+                    <MudText Align="Align.Center" Typo="Typo.h4">Informações da Loja</MudText>
+                </MudPaper>
+                <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+            </MudStack>
+
+            <MudGrid Class="mt-2 p-2 mb-1">
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="Nome da Loja" AdornmentColor=Color.Primary Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="Razão Social" Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="Email" Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="U/NFCE" Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="CTR" Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+                <MudItem xs="12" md="4" lg="4">
+                    <MudTextField T="string" Label="U/NFE" Variant="Variant.Outlined" FullWidth="true" />
+                </MudItem>
+
+            </MudGrid>
+
+
+        </MudPaper>
+
+
+        @*Parametros Gerais*@
+        <MudPaper Class="rounded-5 p-2 mt-4" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
+            <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
+                <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background); border: 1px solid var(--mud-palette-primary)" Elevation="2">
+                    <MudText Align="Align.Center" Typo="Typo.h4">Parametros Gerais</MudText>
+                </MudPaper>
+                <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+            </MudStack>
+
+            @*Impressões*@
+            <MudStack Class="m-5">
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.h5">Impressões</MudText>
+                    <MudLink Href="https://syslogica.com.br/SophosSync/setup.exe">Clique aqui para baixar o modulo de impressão</MudLink>
+                </MudStack>
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+
+                <MudStack Class="rounded-2 p-1" style="background-color: var(--mud-palette-background);" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudGrid Class="w-100">
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Comanda no Delivery</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Comanda no Balcão</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Comanda das Mesas</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Comanda separada por produtos</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Destaca Obs na Comanda</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Nome na Comanda</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Endereço na Comanda</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox T=bool Color="Color.Primary">Imprime Horario na comanda</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudStack AlignItems=AlignItems.Center Row=true>
+                                <MudNumericField Min=0 Class="w-25" T="int" Variant="Variant.Filled" />
+                                <MudText Class="w-75">Nmr de Vias da Comanda</MudText>
+                            </MudStack>
+                        </MudItem>
+
+                    </MudGrid>
+
+                </MudStack>
+
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                <MudText Typo="Typo.h5">Fiscal</MudText>
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+
+                <MudGrid Class=" p-2 mb-1">
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Posicao De Credito" AdornmentColor=Color.Primary Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Aliquota IRPJ" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Alquota ICMS" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Aliquota PIS" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Aliquota COFINS" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Aliquota ISSQN" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Aliquota CSLL" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                </MudGrid>
+
+
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                <MudText Typo="Typo.h5">TEMPOS</MudText>
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
+
+                <MudGrid Class=" p-2 mb-1">
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Tempo em Min (ENTREGA)" AdornmentColor=Color.Primary Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Tempo em Min (RETIRADA)" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                    <MudItem xs="12" md="4" lg="4">
+                        <MudTextField T="string" Label="Tempo em Min (PREPARO)" Variant="Variant.Outlined" FullWidth="true" />
+                    </MudItem>
+                </MudGrid>
+
+            </MudStack>
+        </MudPaper>
+
+        @*Enderecos das Loja*@
+        <MudPaper Class="rounded-5 p-2 mt-4" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
+            <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
+                <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background); border: 1px solid var(--mud-palette-primary)" Elevation="2">
+                    <MudText Align="Align.Center" Typo="Typo.h4">Enderecos da Loja</MudText>
+                </MudPaper>
+                <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+            </MudStack>
+        </MudPaper>
+
+        @*Documentos das Loja*@
+        <MudPaper Class="rounded-5 p-2 mt-4" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
+            <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
+                <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background); border: 1px solid var(--mud-palette-primary)" Elevation="2">
+                    <MudText Align="Align.Center" Typo="Typo.h4">Documentos da Loja</MudText>
+                </MudPaper>
+                <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+            </MudStack>
+        </MudPaper>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+
+}

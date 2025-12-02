@@ -20,8 +20,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Unimake.DFe" Version="20251117.2020.2" />
+    <PackageReference Include="Unimake.DFe" Version="20251201.1732.8" />
     <PackageReference Include="Unimake.Security.Platform" Version="20230706.1027.33" />
+    <PackageReference Include="Unimake.Unidanfe" Version="20251029.1843.31" />
   </ItemGroup>
 
   <ItemGroup>

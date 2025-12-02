@@ -32,13 +32,15 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PaginaInicial));
             SophosSync = new NotifyIcon(components);
             panel1 = new Panel();
+            labeLogin = new Label();
             pictureBox2 = new PictureBox();
             btnConfig = new PictureBox();
             LogoImageSophos = new PictureBox();
             label1 = new Label();
             label2 = new Label();
             panelDeSelects = new Panel();
-            labeLogin = new Label();
+            label10 = new Label();
+            comboBoxImpressoraDanfe = new ComboBox();
             label9 = new Label();
             comboBox6 = new ComboBox();
             label8 = new Label();
@@ -74,6 +76,13 @@
             panel1.Controls.Add(label1);
             panel1.Controls.Add(label2);
             panel1.Name = "panel1";
+            // 
+            // labeLogin
+            // 
+            resources.ApplyResources(labeLogin, "labeLogin");
+            labeLogin.Cursor = Cursors.Hand;
+            labeLogin.Name = "labeLogin";
+            labeLogin.Click += labeLogin_Click;
             // 
             // pictureBox2
             // 
@@ -115,6 +124,8 @@
             // 
             resources.ApplyResources(panelDeSelects, "panelDeSelects");
             panelDeSelects.BackColor = Color.FromArgb(16, 22, 40);
+            panelDeSelects.Controls.Add(label10);
+            panelDeSelects.Controls.Add(comboBoxImpressoraDanfe);
             panelDeSelects.Controls.Add(label9);
             panelDeSelects.Controls.Add(comboBox6);
             panelDeSelects.Controls.Add(label8);
@@ -130,12 +141,20 @@
             panelDeSelects.Controls.Add(comboBox1);
             panelDeSelects.Name = "panelDeSelects";
             // 
-            // labeLogin
+            // label10
             // 
-            resources.ApplyResources(labeLogin, "labeLogin");
-            labeLogin.Cursor = Cursors.Hand;
-            labeLogin.Name = "labeLogin";
-            labeLogin.Click += labeLogin_Click;
+            resources.ApplyResources(label10, "label10");
+            label10.Name = "label10";
+            // 
+            // comboBoxImpressoraDanfe
+            // 
+            resources.ApplyResources(comboBoxImpressoraDanfe, "comboBoxImpressoraDanfe");
+            comboBoxImpressoraDanfe.BackColor = Color.FromArgb(25, 36, 54);
+            comboBoxImpressoraDanfe.ForeColor = Color.White;
+            comboBoxImpressoraDanfe.FormattingEnabled = true;
+            comboBoxImpressoraDanfe.Items.AddRange(new object[] { resources.GetString("comboBoxImpressoraDanfe.Items") });
+            comboBoxImpressoraDanfe.Name = "comboBoxImpressoraDanfe";
+            comboBoxImpressoraDanfe.SelectedIndexChanged += comboBoxImpressoraDanfe_SelectedIndexChanged;
             // 
             // label9
             // 
@@ -280,5 +299,7 @@
         private Label label9;
         private ComboBox comboBox6;
         private Label labeLogin;
+        private Label label10;
+        private ComboBox comboBoxImpressoraDanfe;
     }
 }

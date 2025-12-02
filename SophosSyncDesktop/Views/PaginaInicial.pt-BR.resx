@@ -5820,6 +5820,39 @@
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>771, 73</value>
   </data>
+  <data name="label10.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label10.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt</value>
+  </data>
+  <data name="label10.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label10.Location" type="System.Drawing.Point, System.Drawing">
+    <value>69, 507</value>
+  </data>
+  <data name="label10.Size" type="System.Drawing.Size, System.Drawing">
+    <value>181, 25</value>
+  </data>
+  <data name="label10.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
+  </data>
+  <data name="label10.Text" xml:space="preserve">
+    <value>Impressora DANFE</value>
+  </data>
+  <data name="comboBoxImpressoraDanfe.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="comboBoxImpressoraDanfe.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBoxImpressoraDanfe.Size" type="System.Drawing.Size, System.Drawing">
+    <value>620, 37</value>
+  </data>
+  <data name="comboBoxImpressoraDanfe.Text" xml:space="preserve">
+    <value>Sem Impressora</value>
+  </data>
   <data name="label9.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -5857,7 +5890,7 @@
     <value>NoControl</value>
   </data>
   <data name="label8.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 502</value>
+    <value>69, 589</value>
   </data>
   <data name="label8.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 50</value>
@@ -6050,13 +6083,13 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>14, 105</value>
   </data>
   <data name="panelDeSelects.Size" type="System.Drawing.Size, System.Drawing">
-    <value>772, 569</value>
+    <value>772, 650</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>9, 18</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 686</value>
+    <value>798, 767</value>
   </data>
   <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 9pt</value>

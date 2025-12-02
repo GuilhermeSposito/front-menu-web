@@ -51,13 +51,8 @@ public partial class PaginaInicial : Form
         IniciarMonitoramento();
         IniciarMonitoramentoDeFechamentoDeCaixa();
         IniciarMonitoramentoDeNfs();
-    }
 
-    public void AtivaImpresaoAutUniDANFE()
-    {
-        
     }
-
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -83,14 +78,12 @@ public partial class PaginaInicial : Form
 
         this.Hide();
     }
-
     private void ShowWindow()
     {
         this.Show();
         this.WindowState = FormWindowState.Normal;
         this.ShowInTaskbar = true;
     }
-
     private void PaginaInicial_FormClosing(object sender, FormClosingEventArgs e)
     {
         if (e.CloseReason == CloseReason.UserClosing)
@@ -100,7 +93,6 @@ public partial class PaginaInicial : Form
             // Não precisa mudar WindowState ou ShowInTaskbar aqui
         }
     }
-
     private void IniciarMonitoramento()
     {
         string downloadsPath = Path.Combine(
@@ -135,7 +127,6 @@ public partial class PaginaInicial : Form
 
         watcherPedidos.EnableRaisingEvents = true;
     }
-
     private void IniciarMonitoramentoDeFechamentoDeCaixa()
     {
         string downloadsPath = Path.Combine(
@@ -208,6 +199,8 @@ public partial class PaginaInicial : Form
                         File.Delete(destinoArquivo);
 
                     File.Move(e.FullPath, destinoArquivo);
+
+                    _impressaoService.ImprimeDANFE(destinoArquivo);
                 }
                 catch (Exception ex)
                 {
@@ -218,12 +211,10 @@ public partial class PaginaInicial : Form
 
         WatcherNFs.EnableRaisingEvents = true;
     }
-
     private void pictureBox2_Click(object sender, EventArgs e)
     {
         this.Hide();
     }
-
     public void AlimentaComboBoxsDeImpressoras(PaginaInicial instancia)
     {
         try
@@ -238,6 +229,7 @@ public partial class PaginaInicial : Form
                 instancia.comboBox3.Text = Imps.ImpressoraCz2;
                 instancia.comboBox4.Text = Imps.ImpressoraCz3;
                 instancia.comboBox5.Text = Imps.ImpressoraBar;
+                instancia.comboBoxImpressoraDanfe.Text = Imps.ImpressoraDanfe;
             }
         }
         catch (Exception ex)
@@ -246,7 +238,6 @@ public partial class PaginaInicial : Form
         }
 
     }
-
     public void AlimentaComboBoxDeImpressorasEmAdicionarNovaImpressora(PaginaInicial instancia)
     {
         List<string> listaDeImpressoras = _clsEstiloComponentes.ListaImpressoras();
@@ -259,11 +250,9 @@ public partial class PaginaInicial : Form
             instancia.comboBox4.Items.Add(imp);
             instancia.comboBox5.Items.Add(imp);
             instancia.comboBox6.Items.Add(imp);
+            instancia.comboBoxImpressoraDanfe.Items.Add(imp);
         }
     }
-
-
-
     private void AdicionarInicializacao()
     {
         try
@@ -296,7 +285,6 @@ public partial class PaginaInicial : Form
             MessageBox.Show("Erro ao adicionar à inicialização: " + ex.Message);
         }
     }
-
     private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox1.SelectedItem?.ToString();
@@ -324,7 +312,6 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox6.SelectedItem?.ToString();
@@ -352,7 +339,6 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox3.SelectedItem?.ToString();
@@ -380,7 +366,6 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox2.SelectedItem?.ToString();
@@ -408,7 +393,6 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox3.SelectedItem?.ToString();
@@ -436,7 +420,6 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void comboBox5_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox5.SelectedItem?.ToString();
@@ -464,16 +447,42 @@ public partial class PaginaInicial : Form
             db.SaveChanges();
         }
     }
-
     private void btnConfig_Click(object sender, EventArgs e)
     {
         TesteComCertificado teste = new TesteComCertificado();
         teste.Show();
     }
-
     private void labeLogin_Click(object sender, EventArgs e)
     {
         LoginForm loginForm = new LoginForm();
         loginForm.ShowDialog();
+    }
+
+    private void comboBoxImpressoraDanfe_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string? valorSelecionado = comboBoxImpressoraDanfe.SelectedItem?.ToString();
+
+        if (string.IsNullOrEmpty(valorSelecionado))
+            return;
+
+        using (AppDbContext db = new AppDbContext())
+        {
+            // Verifica se já existe uma configuração salva
+            var config = db.Impressoras.FirstOrDefault();
+            if (config == null)
+            {
+                // Se não existir, cria uma nova
+                config = new ImpressorasConfigs { ImpressoraDanfe = valorSelecionado };
+                db.Impressoras.Add(config);
+            }
+            else
+            {
+                // Atualiza a existente
+                config.ImpressoraDanfe = valorSelecionado;
+                db.Impressoras.Update(config);
+            }
+
+            db.SaveChanges();
+        }
     }
 }

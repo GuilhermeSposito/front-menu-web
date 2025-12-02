@@ -1,5 +1,6 @@
 ﻿using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
+using Org.BouncyCastle.Crypto;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using System;
@@ -11,6 +12,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using DANFe = Unimake.Unidanfe;
 
 namespace SophosSyncDesktop.Services;
 
@@ -480,6 +483,82 @@ public class ImpressaoService
         return "=======================================";
     }
 
+    #endregion
+
+    #region funções de impressão de NFs
+    public async void ImprimeDANFE(string CaminhoDeArquivo = @"C:\SophosCompany\Triburatios\Autorizadas-12-2025\35251262538536000112650010000000451311844160-procnfe.xml")
+    {
+        using (AppDbContext db = new AppDbContext())
+        {
+            string? ImpressoraCaixa = null;
+            string? ImpressoraDanfe = null;
+            ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+
+            if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+            {
+                ImpressoraCaixa = Imps.ImpressoraCaixa;
+            }
+            if (!string.IsNullOrEmpty(Imps.ImpressoraDanfe) && VerificaSeEstaSemImpressora(Imps.ImpressoraDanfe))
+            {
+                ImpressoraDanfe = Imps.ImpressoraDanfe;
+            }
+
+            var tipo = ObterTipoDeNota(CaminhoDeArquivo);
+
+            if (tipo == "NFe")
+            {
+                var config = new DANFe.Configurations.UnidanfeConfiguration
+                {
+                    Arquivo = CaminhoDeArquivo,
+                    Copias = 1,
+                    Visualizar = true,
+                    Imprimir = false,
+                    LarguraBobina = 210,
+                    Impressora = ImpressoraDanfe,
+                    Logotipo = "C:\\SophosCompany\\Sem título.png",                   
+                };
+
+                if (!string.IsNullOrEmpty(ImpressoraDanfe))
+                    DANFe.UnidanfeServices.Execute(config);
+            }
+            else if (tipo == "NFCe")
+            {
+                var config = new DANFe.Configurations.UnidanfeConfiguration
+                {
+                    Arquivo = CaminhoDeArquivo,
+                    Copias = 1,
+                    Visualizar = false,
+                    Imprimir = true,
+                    LarguraBobina = 79,
+                    Impressora = ImpressoraCaixa,
+                    Logotipo = "C:\\SophosCompany\\Sem título.png"
+                };
+
+                if (!string.IsNullOrEmpty(ImpressoraCaixa))
+                    DANFe.UnidanfeServices.Execute(config);
+            }
+
+        }
+    }
+
+    public string ObterTipoDeNota(string caminhoXml)
+    {
+        XDocument xml = XDocument.Load(caminhoXml);
+
+        XNamespace ns = "http://www.portalfiscal.inf.br/nfe";
+
+        var modelo = xml
+            .Descendants(ns + "ide")
+            .Elements(ns + "mod")
+            .FirstOrDefault()?.Value;
+
+        return modelo switch
+        {
+            "55" => "NFe",
+            "65" => "NFCe",
+            _ => "Modelo desconhecido"
+        };
+    }
     #endregion
 }
 
