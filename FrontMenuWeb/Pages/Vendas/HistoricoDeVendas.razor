@@ -1,0 +1,672 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/vendas/historico-de-vendas"
+@inject IJSRuntime JS
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+@inject PedidosService PedidosService
+@inject NfService NFService
+@inject PessoasService PessoasService
+
+
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownHistoricoDePedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+        <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.h4" Style="font-weight: 300">Histórico de Pedidos</MudText>
+            <MudDivider DividerType="DividerType.FullWidth" Light=true />
+        </MudStack>
+        <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudStack Class="w-50" Row=true>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+            </MudStack>
+            <MudStack Justify="Justify.FlexStart">
+            </MudStack>
+        </MudStack>
+
+        <MudPaper Class="mb-3 p-3 mt-3 w-100">
+            <MudStack Class="p-2 w-100" Breakpoint="Breakpoint.Sm">
+
+                <MudStack AlignItems=AlignItems.Start Justify="Justify.FlexStart">
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudStack Class="w-25" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                            <MudText>Seleção de Pedidos</MudText>
+                            <MudSwitch T="bool" Value=@MultiSelecao Color="Color.Success" ValueChanged="@(async valor => { MultiSelecao = valor; PedidosSelecionados.Clear(); })" />
+                        </MudStack>
+                        <MudStack Class="w-75" AlignItems="AlignItems.End" Justify="Justify.Center">
+                            @if (MultiSelecao)
+                            {
+                                <MudStack>
+                                    <MudText Color="Color.Success" Typo="Typo.h6">Valor: @PedidosSelecionados.Sum(x => x.ValorTotal).ToString("C")</MudText>
+                                </MudStack>
+                            }
+                        </MudStack>
+                    </MudStack>
+                    <MudStack Wrap="Wrap.Wrap" Row=true AlignItems="AlignItems.Center">
+                        @foreach (var pedido in PedidosSelecionados)
+                        {
+                            <MudChip Value=@pedido OnClose="Closed" T="ClsPedido" Color="Color.Info" Variant="Variant.Text" Class="m-1">@pedido.Id - @pedido.DisplayId</MudChip>
+                        }
+                    </MudStack>
+                </MudStack>
+                @if (PedidosSelecionados.Count > 0)
+                {
+                    <MudStack Row=true>
+                        <MudButton Color="Color.Primary" OnClick=@(async p => { await GerarPdf(); }) Variant="Variant.Filled">Gerar Relatório</MudButton>
+                        <MudButton Color="Color.Primary" OnClick=@(async p => { await GerarNFeParaPedidosSelecionados(); }) Variant="Variant.Filled">Gerar NF-e</MudButton>
+                    </MudStack>
+                }
+            </MudStack>
+        </MudPaper>
+
+
+        <MudDataGrid T="ClsPedido"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection=@MultiSelecao
+                     SelectOnRowClick=@MultiSelecao
+                     Class="rounded-3 custom-striped"
+                     Loading="Carregando"
+                     Hover
+                     HorizontalScrollbar="false"
+                     ServerData="LoadServerData"
+                     SelectedItems="PedidosSelecionados"
+                     SelectedItemsChanged="SelectedItemsChanged">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Pedidos" />
+            </NoRecordsContent>
+            <ToolBarContent>
+
+            </ToolBarContent>
+            <Columns>
+                <HierarchyColumn T="ClsPedido"/>
+                @if (MultiSelecao)
+                {
+                    <SelectColumn T="ClsPedido" />
+                }
+                <TemplateColumn T="ClsPedido" Title="Origem">
+                    <CellTemplate Context="context">
+                        <MudTooltip Color="Color.Primary" Text="@context.Item.CriadoPor">
+                            <MudImage Style="width:32px;height:32px;" Src="@AppState.GetIconeDoApp(context.Item.CriadoPor)"></MudImage>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                <PropertyColumn Property="x => x.DisplayId" Title="Display Id"></PropertyColumn>
+                <TemplateColumn T="ClsPedido" Title="Cliente">
+                    <CellTemplate Context="context">
+                        @if (context.Item.Cliente is null)
+                        {
+                            <MudText Style="font-weight:600" Color="Color.Warning">Cliente não informado</MudText>
+                        }
+                        else
+                        {
+                            <MudText Style="font-weight:600" Color="Color.Success">@context.Item.Cliente.Nome</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsPedido" Title="Valor">
+                    <CellTemplate Context="context">
+                        <MudText Style="font-weight:600" Color=Color.Success>@context.Item.ValorTotal.ToString("C")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
+                <PropertyColumn Property="x => x.EtapaPedido" Title="Etapa"></PropertyColumn>
+                <TemplateColumn T="ClsPedido" Title="Formas de pag">
+                    <CellTemplate Context="context">
+                        <MudText Style="font-weight:600" Color=Color.Success>@string.Join(", ", context.Item.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+            <ChildRowContent>
+                <MudCard Style="background-color: var(--mud-palette-background);">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Class="w-100 p-1" Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+                                <MudText Align=Align.Center Typo="Typo.h6">Produtos no Pedido: @context.Item.Itens.Count() --> @context.Item.Itens.Sum(x=> x.PrecoTotal).ToString("C")</MudText>
+                                <MudText Align=Align.Center Typo="Typo.h6">Taxa Entrega do Pedido: @context.Item.TaxaEntregaValor.ToString("C")</MudText>
+                                <MudText Align=Align.Center Typo="Typo.h6">Desconto do Pedido: @context.Item.DescontoValor.ToString("C")</MudText>
+                                <MudText Align=Align.Center Typo="Typo.h6">Acrescimos do Pedido: @context.Item.AcrescimoValor.ToString("C")</MudText>
+                                <MudText Align=Align.Center Typo="Typo.h6">Incentivos do Pedido: @context.Item.IncentivosExternosValor.ToString("C")</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudDataGrid T="ItensPedido" Items="@context.Item.Itens">
+                            <Columns>
+                                <PropertyColumn Property="x => x.Produto!.CodigoInterno" Title="Código" />
+                                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                                <PropertyColumn Property="x => x.PrecoUnitario" Title="Preco Unitário" />
+                                <PropertyColumn Property="x => x.PrecoTotal" Title="Preco Total" />
+                            </Columns>
+                        </MudDataGrid>
+                    </MudCardContent>
+
+                    <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item);})>Emitir Cupom Fiscal</MudButton>
+                    </MudStack>
+
+                </MudCard>
+            </ChildRowContent>
+            <PagerContent>
+
+                <MudDataGridPager T="ClsPedido" RowsPerPageString="Pedidos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 100, 20, 500, 1000, 2000, 5000, 6000, 7000, 10000000 }) />
+
+            </PagerContent>
+        </MudDataGrid>
+
+        <MudGrid Class="w-100 mt-4" GutterSize="3">
+            <!-- Total Pagos -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total em vendas</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@ValorTotalEmVendas.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Total Não Pagos -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Tiket Médio</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TiketMedio.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+           
+        </MudGrid>
+
+    </MudLayout>
+</MudPaper>
+
+
+
+@code {
+    #region Props
+    public bool Carregando { get; set; } = true;
+    public bool CarregandoParteFiscal { get; set; } = false;
+    private string status = "Desconectado";
+    private MudTextField<string> pesquisaField;
+    private string pesquisaTexto = string.Empty;
+    private MudDataGrid<ClsPedido>? dataGridRef = new();
+
+    //Multi Selecao
+    private bool MultiSelecao = false;
+    private HashSet<ClsPedido> PedidosSelecionados = new HashSet<ClsPedido>();
+
+    //Estastisticas
+    private float ValorTotalEmVendas = 0.0f;
+    private float TiketMedio = 0.0f;
+    #endregion
+
+    #region Função de loadServerData
+    private async Task<GridData<ClsPedido>> LoadServerData(GridState<ClsPedido> lancamentos)
+    {
+        try
+        {
+            Carregando = true;
+
+            int page = lancamentos.Page + 1;
+            int pageSize = lancamentos.PageSize;
+
+
+            var result = await PedidosService.
+                                            GetHistoricoDePedidosPorPaginaAsync(new QuerysDePedidos()
+                                            {
+                                                Page = page,
+                                                PageSize = pageSize,
+                                                Pesquisa = pesquisaTexto
+                                            });
+
+
+            ValorTotalEmVendas = result.VendasHoje;
+            TiketMedio = result.TiketMedio;
+
+            StateHasChanged();
+
+            return new GridData<ClsPedido>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar lançamentos: {ex.Message}", Severity.Error);
+            return new GridData<ClsPedido>
+            {
+
+            };
+
+        }
+        finally
+        {
+            Carregando = false;
+        }
+
+    }
+    #endregion
+
+    #region Funcções Auxiliares
+    private async Task GerarPdf()
+    {
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioPedidos", "RelatorioPedidos.pdf");
+    }
+
+    void Closed(MudChip<ClsPedido> chip)
+    {
+        if (chip.Value is not null)
+        {
+            PedidosSelecionados.Remove(chip.Value);
+            StateHasChanged();
+        }
+    }
+
+
+    void SelectedItemsChanged(HashSet<ClsPedido> items)
+    {
+        PedidosSelecionados = items;
+    }
+
+    private async Task OnPesquisaChanged(string value)
+    {
+        pesquisaTexto = value;
+        await BuscarPedidos(); // atualiza a lista conforme digita
+    }
+
+    private async Task BuscarPedidos()
+    {
+        await dataGridRef!.ReloadServerData();
+    }
+
+    private async Task HandleKeyDownHistoricoDePedidos(KeyboardEventArgs e)
+    {
+        try
+        {
+            if (e.CtrlKey && e.AltKey)
+            {
+
+            }
+
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
+        }
+
+
+    }
+
+    #endregion
+
+    #region Função de Geração de NF-e e de validações
+    private async Task GerarNFeParaPedidosSelecionados()
+    {
+        try
+        {
+            CarregandoParteFiscal = true;
+
+            #region Validações iniciais
+            bool clientesDiferentes = PedidosSelecionados
+                                        .Select(p => p.Cliente?.Id)   // ou p.Cliente.Id
+                                        .Distinct()
+                                        .Count() > 1;
+
+            #region Verificação de cupom fiscal já emitido
+            bool AlgumTemCupom = PedidosSelecionados
+            .Any(p => p.Pagamentos != null &&
+                      p.Pagamentos.Any(pg => !string.IsNullOrWhiteSpace(pg.CupomFiscalChave)));
+
+            if (AlgumTemCupom)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você já tem NF emitida para um dos pedidos inserido na lista, deseja prosseguir ?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+                var result = await dialog.Result;
+
+                if (result!.Canceled && result.Data is bool sucesso && !sucesso)
+                {
+                    throw new Exception("Operação de emissão de NF-e cancelada pelo usuário.");
+                }
+            }
+            #endregion
+
+
+            if (clientesDiferentes)
+            {
+                throw new Exception("Não é possível gerar NF-e para pedidos de clientes diferentes. Selecione apenas pedidos do mesmo cliente.");
+            }
+
+            ClsPessoas? Pessoa = PedidosSelecionados.First().Cliente;
+            if (Pessoa is null)
+            {
+                throw new Exception("O cliente do pedido selecionado não foi encontrado. Verifique o cadastro do cliente.");
+            }
+
+            List<EnderecoPessoa> enderecos = Pessoa?.Enderecos ?? new List<EnderecoPessoa>();
+            EnderecoPessoa? enderecoSelecionado = null;
+            if (enderecos.Count == 0)
+            {
+                Snackbar.Add("O cliente selecionado não possui endereços cadastrados. Verifique o cadastro do cliente.", Severity.Warning);
+                return;
+            }
+            else if (enderecos.Count == 1)
+            {
+                enderecoSelecionado = enderecos.First();
+            }
+            else
+            {
+                var parameters = new DialogParameters
+                {
+                    { "Enderecos", enderecos }
+                };
+
+                var options = new DialogOptions { CloseOnEscapeKey = true };
+
+                var dialog = await DialogService.ShowAsync<ModalDeVariosEnderecosDoCliente>("Selecionar Endereco", parameters, options);
+                var result = await dialog.Result;
+
+                if (!result!.Canceled && result.Data is EnderecoPessoa enderecoSelected)
+                {
+                    enderecoSelecionado = enderecoSelected;
+                    Snackbar.Add("Endereço adicionado com sucesso", Severity.Success);
+                    StateHasChanged();
+                }
+                else if (result!.Canceled)
+                {
+                    throw new Exception("Operação de seleção de endereço cancelada pelo usuário.");
+                }
+            }
+
+            Pessoa!.Endereco = enderecoSelecionado;
+            #endregion
+
+            #region Validações de dados fiscais do cliente
+            if (string.IsNullOrEmpty(Pessoa?.Cnpj) || string.IsNullOrEmpty(Pessoa?.InscricaoEstadual)
+            )
+            {
+                throw new Exception("O cliente selecionado não possui dados fiscais completos para emissão de NF-e. Verifique o cadastro do cliente.");
+            }
+            #endregion
+
+            ClsPedido Pedido = MontarPedidoParaNFe(PedidosSelecionados, Pessoa);
+            var response = await NFService.GeraNFe(Pedido);
+
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+
+            //baixar o xml e o pdf se sucesso
+
+            bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+            if (response.Status != "error")
+            {
+                if (!ImpressaoDesabilita)
+                {
+                    if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
+                        await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+                }
+                else
+                {
+                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
+                }
+                MultiSelecao = false; PedidosSelecionados.Clear();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao gerar NF-e: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
+    }
+
+    public ClsPedido MontarPedidoParaNFe(HashSet<ClsPedido> pedidos, ClsPessoas cliente)
+    {
+        ClsPedido novoPedido = new ClsPedido
+        {
+            Id = 0,
+            CriadoEm = DateTime.Now,
+            ModificadoEm = DateTime.Now,
+            CriadoPor = "Sistema",
+            Cliente = cliente,
+        };
+
+        float ValorTotal = pedidos.Sum(p => p.ValorTotal);
+        float ValorItens = pedidos.Sum(p => p.ValorDosItens);
+        float ValorDescontos = pedidos.Sum(p => p.DescontoValor);
+        float ValorAcrescimos = pedidos.Sum(p => p.AcrescimoValor);
+        float ValorTaxasEntregas = pedidos.Sum(p => p.TaxaEntregaValor);
+        foreach (var pedido in pedidos)
+        {
+            novoPedido.Itens.AddRange(pedido.Itens);
+            novoPedido.Pagamentos.AddRange(pedido.Pagamentos);
+        }
+
+        novoPedido.ValorTotal = ValorTotal;
+        novoPedido.ValorDosItens = ValorItens;
+        novoPedido.DescontoValor = ValorDescontos;
+        novoPedido.AcrescimoValor = ValorAcrescimos;
+        novoPedido.TaxaEntregaValor = ValorTaxasEntregas;
+        return novoPedido;
+    }
+    #endregion
+
+    #region Função para emitir NFC-e individual
+    private async Task EmiteNFCe(ClsPedido Pedido)
+    {
+        CarregandoParteFiscal = true;
+        try
+        {
+            #region Verificação de cupom fiscal já emitido
+            bool AlgumTemCupom = Pedido.Pagamentos.Any(p => p.CupomFiscalChave is not null);
+
+            if (AlgumTemCupom)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você já tem um cupom emitido para o pedido, deseja prosseguir ?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+                var result = await dialog.Result;
+
+                if (result!.Canceled && result.Data is bool sucesso && !sucesso)
+                {
+                    throw new Exception("Operação de emissão de NF-e cancelada pelo usuário.");
+                }
+            }
+            #endregion
+
+            var EnvNFCeDto = new EnNfCeDto
+            {
+                Pedido = Pedido
+            };
+
+            var response = await NFService.GeraNFCe(EnvNFCeDto);
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+
+            //baixar o xml e o pdf se sucesso
+            if (response.Status != "error")
+            {
+                bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+                if (!ImpressaoDesabilita)
+                {
+                    if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
+                        await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+                }
+                else
+                {
+                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
+    }
+    #endregion
+}
+
+
+#<!-- #region RELATORIO -->
+@*Relatório dos lançamentos selecionados*@
+<div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
+    <div class="d-flex flex-column">
+        <img src="/images/SOPHOS.png" alt="Logo SOPHOS" style="display: block; margin: 20px auto; width: 150px;" />
+
+        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">
+            Relatório de pedidos selecionados.
+        </h2>
+
+        <p style="text-align: center; font-size: 14px; margin: 0;">
+            @AppState.MerchantLogado.NomeFantasia
+        </p>
+
+        @if (AppState.MerchantLogado.FuncionarioLogado is not null)
+        {
+            <p style="text-align: center; font-size: 14px; margin: 0;">
+                Colaborador: @AppState.MerchantLogado.FuncionarioLogado.Nome
+            </p>
+
+        }
+    </div>
+
+
+    <!-- Cabeçalho de informações -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <span style="font-weight: bold;">Data de emissão:</span>
+        @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+    </div>
+
+    <table border="0" cellspacing="0" cellpadding="6" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color:#34495e; color:white; text-align:center;">
+                <th>Cod</th>
+                <th>Cliente</th>
+                <th>Valor</th>
+                <th>Tipo</th>
+                <th>Dia Emissão</th>
+                <th>Formas</th>
+                <th>Pago</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pedidos in PedidosSelecionados)
+            {
+                <!-- Linha principal do pedido -->
+                <tr style="border-bottom: 1px solid #ddd; text-align:center;">
+                    <td>@pedidos.DisplayId</td>
+                    <td style="text-align:left;">@pedidos.Cliente.Nome</td>
+                    <td>@pedidos.ValorTotal.ToString("C")</td>
+                    <td style="text-align:right;">@pedidos.TipoDePedido</td>
+                    <td>@pedidos.CriadoEm.ToString("dd/MM/yyyy")</td>
+                    <td>@string.Join(", ", pedidos.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</td>
+                    <td style="color:@(pedidos.Pagamentos.Sum(x => x.ValorTotal) == pedidos.ValorTotal ? "#27ae60" : "#c0392b"); font-weight: bold;">
+                        @(pedidos.Pagamentos.Sum(x => x.ValorTotal) == pedidos.ValorTotal ? "SIM" : "NÃO")
+                    </td>
+                </tr>
+
+                <!-- Linha dos itens -->
+                <tr style="background:#f9f9f9;">
+                    <td colspan="7" style="padding-left:20px;">
+                        <table style="width:100%; border-collapse: collapse; margin-top:5px;">
+                            <thead>
+                                <tr style="background:#ddd;">
+                                    <th style="text-align:left;">Item</th>
+                                    <th>Qtd</th>
+                                    <th>Preço</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in pedidos.Itens)
+                                {
+                                    <tr>
+                                        <td style="text-align:left;">@item.Descricao</td>
+                                        <td>@item.Quantidade</td>
+                                        <td>@item.PrecoUnitario.ToString("C")</td>
+                                        <td>@item.PrecoTotal.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            @{
+                var totalReceitas = PedidosSelecionados
+                                        .Sum(l => l.ValorTotal);
+            }
+
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Total Em Pedidos:</td>
+                <td style="text-align:right; color:#27ae60;">
+                    @totalReceitas.ToString("C")
+                </td>
+                <td colspan="4"></td>
+            </tr>
+
+        </tfoot>
+    </table>
+
+    <!-- Rodapé -->
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #777;">
+        <hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">
+        <p>Relatório gerado automaticamente SOPHOS - Sistema de Gestão Financeira</p>
+    </div>
+
+    <div style="page-break-after: always;"></div>
+</div>
+
+<!-- #endregion -->

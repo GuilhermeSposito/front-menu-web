@@ -6,6 +6,7 @@ using SophosSyncDesktop.Services;
 using SophosSyncDesktop.Utils;
 using SophosSyncDesktop.Views;
 using SophosSyncDesktop.Views.TestesNfe;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -50,6 +51,11 @@ public partial class PaginaInicial : Form
         IniciarMonitoramento();
         IniciarMonitoramentoDeFechamentoDeCaixa();
         IniciarMonitoramentoDeNfs();
+    }
+
+    public void AtivaImpresaoAutUniDANFE()
+    {
+        
     }
 
     protected override async void OnLoad(EventArgs e)

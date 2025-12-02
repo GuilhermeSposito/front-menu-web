@@ -17,5 +17,6 @@ public class PagamentoDoPedido
 
     [JsonPropertyName("FormaDeRecebimento")] public ClsFormaDeRecebimento FormaDePagamento { get; set; } = new();
     [JsonPropertyName("FormaDeRecebimentoId")] public int formaDeRecebimentoId { get; set; }
+    [JsonPropertyName("CupomFiscalChave")] public string? CupomFiscalChave { get; set; }
 
 }

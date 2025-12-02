@@ -48,9 +48,53 @@ public class PedidosService
         return response!;
     }
 
+    public async Task<PaginatedResponse<ClsPedido>> GetHistoricoDePedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)
+    {
+        string QueryDeFiltros = "";
+
+        if (QueryDePedido.Status != null)
+        {
+            QueryDeFiltros += $"&Status={QueryDePedido.Status}";
+        }
+
+        if (!String.IsNullOrEmpty(QueryDePedido.Pesquisa))
+        {
+            QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
+        }
+
+        var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
+           $"pedidos/finalizados?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
+
+        return response!;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido)
     {
-        var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+         var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido)
+    {
+        var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoDespachadoEPronto(ClsPedido Pedido)
+    {
+        var response = await _http.PutAsJsonAsync($"pedidos/despachado/{Pedido.Id}", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoFinalizadoo(ClsPedido Pedido)
+    {
+        var response = await _http.PutAsJsonAsync($"pedidos/finalizado/{Pedido.Id}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;

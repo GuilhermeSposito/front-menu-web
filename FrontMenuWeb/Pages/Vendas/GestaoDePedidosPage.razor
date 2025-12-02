@@ -417,66 +417,78 @@
 
     private async Task MudaEtapaDoPedido(ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
-        if (Supor is not null)
+        try
         {
-            Snackbar.Add($"Pedido atualizado com sucesso!", Severity.Success);
+            CarregandoParteFiscal = true;
 
-            if (Supor.Selector == "NOVO")
+            Console.WriteLine(Supor is null);
+
+            List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos = new List<ClsDeSuporteParaMostrarPedidos>();
+            if (Supor is not null)
             {
-                Supor.Selector = "PREPARANDO";
-                await InvokeAsync(StateHasChanged);
-                return;
+                ListaDePedidos.Add(Supor);
+            }
+            else if(ItensSelecionadosPArAProximaEtapa.Count > 0)
+            {
+                ListaDePedidos.AddRange(ItensSelecionadosPArAProximaEtapa);
+                ItensSelecionadosPArAProximaEtapa.Clear();
             }
 
-            if (Supor.Selector == "PREPARANDO")
-            {
-                Supor.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-
-            if (Supor.Selector == "DESPACHADO")
-            {
-                Supor.Selector = "FINALIZADO";
-                Supor.UltimaEtapa = true;
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
+            await AtualizaPedidosEtapa(ListaDePedidos, Supor);
         }
-        else if (ItensSelecionadosPArAProximaEtapa.Count > 0)
+        catch (Exception ex)
         {
-            foreach (var item in ItensSelecionadosPArAProximaEtapa)
+            Snackbar.Add($"Erro ao atualizar etapa do pedido", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+
+        }
+
+    }
+
+    private async Task AtualizaPedidosEtapa(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
+    {
+        foreach (var item in ListaDePedidos)
+        {
+            if (item.Selector == "NOVO")
             {
-                if (item.Selector == "NOVO")
-                {
-                    item.Selector = "PREPARANDO";
-                    item.Selecionado = false;
-                    await InvokeAsync(StateHasChanged);
-                    continue;
-                }
-
-                if (item.Selector == "PREPARANDO")
-                {
-                    item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
-                    item.Selecionado = false;
-                    await InvokeAsync(StateHasChanged);
-                    continue;
-                }
-
-                if (item.Selector == "DESPACHADO")
-                {
-                    item.Selector = "FINALIZADO";
-                    item.UltimaEtapa = true;
-                    item.Selecionado = false;
-                    await InvokeAsync(StateHasChanged);
-                    continue;
-                }
+                item.Selector = "PREPARANDO";
+                var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
             }
 
-            ItensSelecionadosPArAProximaEtapa.Clear();
+            if (item.Selector == "PREPARANDO")
+            {
+                item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
+                var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (item.Selector == "DESPACHADO")
+            {
+                item.Selector = "FINALIZADO";
+                item.UltimaEtapa = true;
+                var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
             await InvokeAsync(StateHasChanged);
         }
+    }
 
+    private void MostraMensagemDeUpdateDoPedido(ReturnApiRefatored<ClsPedido> Response)
+    {
+        var message = Response.Status == "error" ? string.Join(", ", Response.Messages) : string.Join(",", Response.Data.Messages);
+        var severity = Response.Status == "error" ? Severity.Error : Severity.Success;
+        Snackbar.Add($"{message}", severity);
     }
 
 
@@ -486,7 +498,7 @@
 
         if (!ImpressaoDesabilita)
             await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
-        else 
+        else
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }
 

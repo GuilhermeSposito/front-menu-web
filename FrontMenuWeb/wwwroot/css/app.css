@@ -36,6 +36,10 @@
     cursor: wait !important;
 }
 
+#conteudoPdfRelatorioPedidos table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
 #conteudoPdf table tbody tr:nth-child(odd) {
     background-color: #ffffff;
 }
