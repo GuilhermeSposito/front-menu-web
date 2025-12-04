@@ -14,6 +14,7 @@ public class ClsMerchant
     [JsonPropertyName("marcaDepartamento")] public string? MarcaDepartamento { get; set; } = string.Empty;
     [JsonPropertyName("legendaDoVoluma")] public string? LegendaDoVolume { get; set; } = string.Empty;
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonPropertyName("EmitindoNfeProd")] public bool EmitindoNfeProd { get; set; }
     [JsonPropertyName("FuncionarioLogado")] public ClsFuncionario? FuncionarioLogado { get; set; }
     [JsonPropertyName("CertificadoBase64")] public string? CertificadoBase64 { get; set; }
     [JsonPropertyName("SenhaCertificado")] public string? SenhaCertificado { get; set; }
@@ -33,6 +34,7 @@ public class ClsMerchant
     [JsonPropertyName("NcmDeServico")] public string? NcmDeServico { get; set; }
     [JsonPropertyName("CfopDeServico")] public string? CfopDeServico { get; set; }
     [JsonPropertyName("ImprimeComandasDelivery")] public bool ImprimeComandasDelivery { get; set; }
+    [JsonPropertyName("ImprimeComandasBalcao")] public bool ImprimeComandasBalcao { get; set; }
     [JsonPropertyName("ImprimeComandasMesas")] public bool ImprimeComandasMesas { get; set; }
     [JsonPropertyName("ImprimeComandasSeparadaPorProdutos")] public bool ImprimeComandasSeparadaPorProdutos { get; set; }
     [JsonPropertyName("DestacaObsNaImpressao")] public bool DestacaObsNaImpressao { get; set; }

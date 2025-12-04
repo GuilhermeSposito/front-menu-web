@@ -230,13 +230,16 @@ public class NfService
         int ProxNmrNfe = merchant.UltimoNmrSerieNFe + 1;
         merchant.UltimoNmrSerieNFe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
 
+        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+
         #region Criação do XML da NFe
-        EnviNFe xml = await CriaXmlDeNfeSN(Pedido: Pedido, merchant: merchant, enderecoMerchant: enderecoMerchant, DocumentoMerchant: DocumentoMerchant, Destinatario: Destinatario, ProxNmrNfe: ProxNmrNfe); //CriaXmlDeExemplo();
+        EnviNFe xml = await CriaXmlDeNfeSN(Pedido: Pedido, merchant: merchant, enderecoMerchant: enderecoMerchant, DocumentoMerchant: DocumentoMerchant, Destinatario: Destinatario, ProxNmrNfe: ProxNmrNfe, TipoHambiente); //CriaXmlDeExemplo();
         #endregion
+
         var configuracao = new Configuracao
         {
             TipoDFe = TipoDFe.NFe,
-            TipoAmbiente = TipoAmbiente.Homologacao,
+            TipoAmbiente = TipoHambiente,
             CertificadoDigital = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64!, merchant.SenhaCertificado!)
         };
         var autorizacao = new Autorizacao(xml, configuracao);
@@ -323,7 +326,9 @@ public class NfService
         merchant.UltimoNmrSerieNFCe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
         #endregion
 
-        var xml = CriaXmlDeNFCeSN(merchant, enderecoMerchant, DocumentoMerchant, EnvNfceDTO, ProxNmrNFCe);
+        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+
+        var xml = CriaXmlDeNFCeSN(merchant, enderecoMerchant, DocumentoMerchant, EnvNfceDTO, ProxNmrNFCe, TipoHambiente);
 
         Console.WriteLine(xml.Result.GerarXML());
 
@@ -394,7 +399,7 @@ public class NfService
 
     #region Funções Auxiliares
 
-    private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe)
+    private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
         return new EnviNFe
         {
@@ -424,7 +429,7 @@ public class NfService
                                 CMunFG = enderecoMerchant.Cidade.NumCidade,
                                 TpImp = FormatoImpressaoDANFE.NFCe,
                                 TpEmis = TipoEmissao.Normal,
-                                TpAmb = TipoAmbiente.Homologacao,
+                                TpAmb = tipoAmbiente,
                                 FinNFe = FinalidadeNFe.Normal,
                                 IndFinal = SimNao.Sim,
                                 IndPres = IndicadorPresenca.OperacaoPresencial,
@@ -550,7 +555,7 @@ public class NfService
         return null;
     }
 
-    private async Task<EnviNFe> CriaXmlDeNfeSN(ClsPedido Pedido, ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, ClsPessoas Destinatario, int ProxNmrNfe)
+    private async Task<EnviNFe> CriaXmlDeNfeSN(ClsPedido Pedido, ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, ClsPessoas Destinatario, int ProxNmrNfe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
         return new EnviNFe
         {
@@ -581,7 +586,7 @@ public class NfService
                                 CMunFG = enderecoMerchant.Cidade.NumCidade,
                                 TpImp = FormatoImpressaoDANFE.NormalRetrato,
                                 TpEmis = TipoEmissao.Normal,
-                                TpAmb = TipoAmbiente.Homologacao,
+                                TpAmb = tipoAmbiente,
                                 FinNFe = FinalidadeNFe.Normal,
                                 IndFinal = SimNao.Sim,
                                 IndPres = IndicadorPresenca.OperacaoPresencial,
