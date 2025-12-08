@@ -16,7 +16,8 @@
         <Authorized>
             <MudAppBar Color="Color.Primary" Elevation="1">
                 <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-                <MudText id="ProgramName" Typo="Typo.h5" Class="ml-3">@ProgramName</MudText>
+                <MudText id="ProgramName" Typo="Typo.h5" Class="ml-2 cursor-pointer">@ProgramName</MudText>
+                <MudImage Src="/images/CEREBRO-VETOR.svg" Width="30" Class="ml-2 cursor-pointer" />
                 <MudSpacer />
                 @if (AppState.MerchantLogado is not null)
                 {

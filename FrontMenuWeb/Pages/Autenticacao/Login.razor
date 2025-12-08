@@ -13,11 +13,11 @@
                 <img class="w-100 h-100 rounded-circle" src="/images/SOPHOSLOGOLOGIN.jpg" alt="Sophos" />
             </div>
             <h1 class="company-title">SOPHOS</h1>
-            <p class="company-subtitle">Soluções Tecnológicas</p>
+            <p class="company-subtitle">Aplicativos e Tecnologia</p>
         </div>
 
         <!-- Card de Login -->
-        <div class="card login-card mx-auto">
+        <div class="card login-card mx-auto rounded-4" style="background-color: var(--mud-palette-surface); box-shadow: 0 1px 60px rgba(248,129,19,0.1);">
             <div class="card-header text-center">
                 <h2 class="card-title">Bem-vindo de volta</h2>
                 <p class="card-description">Faça login para acessar sua conta</p>
@@ -62,13 +62,8 @@
                     </div>
 
                     <!-- Lembrar de mim e Esqueci a senha -->
-                    <div class="remember-forgot">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="remember">
-                            <label class="form-check-label" for="remember">
-                                Lembrar de mim
-                            </label>
-                        </div>                
+                    <div class="remember-forgot" style="color: white;">
+                        <MudCheckBox Value="LembrarDeMim" ValueChanged=LembreDeMimClick Color=Color.Primary T="bool" Label="Lembrar de mim" Class="mud-checkbox-primary" />
                     </div>
 
                     <!-- Botão de Login -->
@@ -94,10 +89,38 @@
     private string MensagemDeErro = string.Empty;
     private string Password { get; set; } = string.Empty;
     private bool ShowPassword { get; set; } = false;
+    private bool LembrarDeMim { get; set; } = false;
 
     private void TogglePasswordVisibility()
     {
         ShowPassword = !ShowPassword;
+    }
+
+    private async Task LembreDeMimClick(bool select)
+    {
+        LembrarDeMim = select;
+
+        if (LembrarDeMim)
+        {
+            await LocalStorage.SetItemAsync("LembrarDeMim", "true");
+            await LocalStorage.SetItemAsync("emailSalvo", loginModel.Email ?? "");
+        }
+        else
+        {
+            await LocalStorage.RemoveItemAsync("LembrarDeMim");
+            await LocalStorage.RemoveItemAsync("emailSalvo");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var lembrar = await LocalStorage.GetItemAsync<string>("LembrarDeMim");
+        if (lembrar == "true")
+        {
+            LembrarDeMim = true;
+            var emailSalvo = await LocalStorage.GetItemAsync<string>("emailSalvo");
+            loginModel.Email = emailSalvo ?? "";
+        }
     }
 
     private async Task HandleLogin()

@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFrameworks>net9.0-maccatalyst</TargetFrameworks>
+		<TargetFrameworks>
+			net9.0-windows10.0.26100.0;
+		</TargetFrameworks>
 		
 		
         <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
@@ -14,6 +16,7 @@
             either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
         <!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
 
+		
         <OutputType>Exe</OutputType>
         <RootNamespace>FrontDesktopBlzHybrid</RootNamespace>
         <UseMaui>true</UseMaui>
