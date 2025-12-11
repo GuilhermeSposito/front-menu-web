@@ -1,0 +1,188 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/gestao-de-mesas"
+@inject IJSRuntime JS
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+@inject PedidosService PedidosService
+@inject NfService NFService
+@inject MesasServices MesasServices
+
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidosMesa Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+        <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.h4" Style="font-weight: 300">Gestão de Mesas</MudText>
+            <MudDivider DividerType="DividerType.FullWidth" Light=true />
+        </MudStack>
+        <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudStack Class="w-50" Row=true>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente ou número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+            </MudStack>
+            <MudStack Justify="Justify.FlexStart">
+                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
+            </MudStack>
+        </MudStack>
+
+
+        @if (!CarregandoPagina)
+        {
+            <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudGrid Spacing="2">
+                    @foreach (var mesa in MesasOuComandaList)
+                    {
+                        <MudItem xs="6" sm="4" md="3" lg="2">
+                            <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa.CodigoExterno); }) Class="rounded-3 text-center cursor-pointer" Style="@(mesa.Reservado ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
+                                <MudCardContent>
+                                    <MudStack>
+                                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">MESA</MudText>
+                                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@mesa.CodigoExterno.ToString().PadLeft(2, '0')</MudText>
+                                    </MudStack>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudStack>
+        }
+        else
+        {
+
+        }
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+
+    #region Propriedades
+    private bool CarregandoParteFiscal { get; set; } = false;
+    private bool CarregandoPagina { get; set; } = true;
+    private string pesquisaTexto { get; set; } = string.Empty;
+
+    //props de mesas
+    private List<ClsMesasEComandas> MesasOuComandaList { get; set; } = new();
+    #endregion
+
+    #region Funções de Inicialização da página
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await CarregarMesasEComandas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar a página: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoPagina = false;
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task CarregarMesasEComandas()
+    {
+        var response = await MesasServices.GetMesaPorPaginaAsync(1, 1000);
+        if (response.Data is not null)
+        {
+            MesasOuComandaList = response.Data;
+        }
+        else
+        {
+            Snackbar.Add("Erro ao carregar mesas/comandas.", Severity.Error);
+        }
+    }
+    #endregion
+
+    #region Funções Auxiliares
+    //Função de Abrir modal de pedido
+    private async Task AbreModalDePedido(int NumeroDaMesaOuComanda = 0)
+    {
+        if (!AppState.CaixaAberto)
+        {
+            MostraMensagemDeCaixaFechado();
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "TiposDePedido", TiposDePedido.MESA },
+            { "NumeroDaMesa", NumeroDaMesaOuComanda }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
+
+        var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            CarregandoPagina = true;
+            await InvokeAsync(StateHasChanged);
+            CarregandoPagina = false;
+        }
+
+    }
+
+    private async void MostraMensagemDeCaixaFechado()
+    {
+        var parameters = new DialogParameters<ModalDeAcessoNegado>
+            {
+                  { x => x.ContentText, $"Caixa está fechado, não é possivel criar pedidos." },
+                  { x => x.ButtonText, "OK" },
+                  { x => x.Color, Color.Success}
+             };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
+        var result = await dialog.Result;
+    }
+
+
+    private async Task HandleKeyDownGestaoPedidosMesa(KeyboardEventArgs e)
+    {
+        try
+        {
+            if (e.CtrlKey && e.AltKey)
+            {
+
+            }
+
+            if (e.Key == "F2")
+            {
+
+            }
+            if (e.Key == "F3")
+            {
+
+            }
+
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
+        }
+    }
+    #endregion
+
+}

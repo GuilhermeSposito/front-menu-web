@@ -32,35 +32,11 @@
 
 
         <div class="loading-progress-text" id="load-text"></div>
-        <div class="teste></div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-    <script>
-        // Assim que o Blazor começar a carregar…
-        window.addEventListener("DOMContentLoaded", () => {
-            const progressText = document.querySelector(".loading-progress-text");
-
-            const teste = document.getElementsByClassName("teste");
-
-            teste.textContent = "teste";
-
-            // O Blazor dispara eventos de progresso neste objeto
-            Blazor.start({
-                loadBootResource: function (type, name, defaultUri, integrity) {
-                    return defaultUri;
-                },
-                configureLoadingIndicator: (pct) => {
-                    // pct = porcentagem de 0 a 100
-                    progressText.textContent = pct.toFixed(0) + "%";
-                }
-            });
-        });
-    </script>
-   
 
     <script src="WsPrintPdf.js"></script>
     <script src="wsClient.js"></script>
