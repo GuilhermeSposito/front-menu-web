@@ -449,24 +449,6 @@
         }
     }
 
-    private async void Cancelar()
-    {
-        var parameters = new DialogParameters<ModalDeExcluir>
-          {
-              { x => x.ContentText, $"Ao sair da página, este pedido não será criado. Ele e as informações inseridas serão perdidas." },
-              { x => x.ButtonText, "Sim" },
-              { x => x.Color, Color.Error}
-          };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Sair da página", parameters, options);
-        var result = await dialog.Result;
-
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-        {
-            MudDialog.Cancel();
-        }
-
-    }
 
     private async Task ValueDeAutoCompleteMudou(string? value)
     {
@@ -671,6 +653,25 @@
     #endregion
 
     #region Funções da Página
+    private async void Cancelar()
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+          {
+              { x => x.ContentText, $"Ao sair da página, este pedido não será criado. Ele e as informações inseridas serão perdidas." },
+              { x => x.ButtonText, "Sim" },
+              { x => x.Color, Color.Error}
+          };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Sair da página", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            MudDialog.Cancel();
+        }
+
+    }
+
     protected override async Task OnInitializedAsync()
     {
         if (TiposDePedido == TiposDePedido.BALCAO)

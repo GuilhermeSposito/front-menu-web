@@ -253,6 +253,8 @@
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }
     #endregion
+
+
     protected override async Task OnInitializedAsync()
     {
         if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
@@ -381,8 +383,6 @@
     {
         _drawerOpen = !_drawerOpen;
     }
-
-
 
     private readonly PaletteLight _lightPalette = new()
     {

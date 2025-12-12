@@ -1,0 +1,254 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@inject PedidosService AliquotaService
+@inject ProdutoService ProdutoService
+@inject GrupoServices GrupoService
+@inject PessoasService PessoaService
+@inject PedidosService PedidosService
+@inject IJSRuntime JS
+
+<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background);">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
+            <MudText Class="ms-3" Typo="Typo.h6">Itens da Mesa @MesaOuComanda.CodigoExterno</MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Secondary" OnClick="Cancelar" />
+            </MudStack>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudDataGrid T="ItensPedido"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection=true
+                     Class="rounded-3 custom-striped"
+                     Loading="Carregando"
+                     Hover
+                     HorizontalScrollbar="false"
+                     ServerData="LoadServerData"
+                     SelectedItems="ItensSelecionados"
+                     SelectedItemsChanged="ItensSelecionadosChenged">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Itens da mesa" />
+            </NoRecordsContent>
+            <ToolBarContent>
+                <MudStack Row=true>
+                    <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
+                    <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Itens Selecionado</MudButton>
+                    <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
+                </MudStack>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="ItensPedido" />
+                <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
+                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade do Item"></PropertyColumn>
+                <PropertyColumn Property="x => x.PrecoUnitario" Title="Valor Unit"></PropertyColumn>
+                <PropertyColumn Property="x => x.PrecoTotal" Title="Valor Total"></PropertyColumn>
+            </Columns>
+        </MudDataGrid>
+
+    </DialogContent>
+</MudDialog>
+
+
+
+@code {
+    #region Propriedades
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ClsMesasEComandas MesaOuComanda { get; set; } = new ClsMesasEComandas() { CodigoExterno = 0 };
+
+    private PedidoMesaDto PedidoMesa { get; set; } = new PedidoMesaDto();
+    private MudDataGrid<ItensPedido>? dataGridRef = new();
+
+    private bool Carregando { get; set; } = true;
+    #endregion
+
+    #region Funções de Inicialização
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            PedidosService.PedidoMesaRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoMesaRecebido(pedido));
+            };
+
+            await CarregaMesaOuComanda();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task CarregaMesaOuComanda()
+    {
+        if (MesaOuComanda.CodigoExterno != 0)
+        {
+            var mesa = await PedidosService.GetMesaOcupada(MesaOuComanda.Id);
+
+            if (mesa.Status == "success")
+            {
+                PedidoMesa = mesa.Data.Objeto ?? throw new Exception("Pedido não encontrado");
+            }
+        }
+    }
+    #endregion
+
+    #region Funções da Página
+    private async void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+
+        }
+
+    }
+
+    private async Task OnPedidoMesaRecebido(PedidoMesaDto novoPedido)
+    {
+        if (dataGridRef is not null)
+            await dataGridRef.ReloadServerData();
+    }
+    #endregion
+
+    #region Funções DataGrid
+    private async Task<GridData<ItensPedido>> LoadServerData(GridState<ItensPedido> itens)
+    {
+        try
+        {
+            Carregando = true;
+
+            int page = itens.Page + 1;
+            int pageSize = itens.PageSize;
+
+
+            var result = await PedidosService
+                                            .GetMesaOcupada(MesaOuComanda.Id);
+
+            StateHasChanged();
+
+            return new GridData<ItensPedido>
+            {
+                Items = result.Data.Objeto?.Itens!,
+                TotalItems = result.Data.Objeto?.Itens.Count() ?? 0
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar lançamentos: {ex.Message}", Severity.Error);
+            return new GridData<ItensPedido>
+            {
+
+            };
+
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private HashSet<ItensPedido> ItensSelecionados = new HashSet<ItensPedido>();
+    void ItensSelecionadosChenged(HashSet<ItensPedido> items)
+    {
+        ItensSelecionados = items;
+    }
+
+    #endregion
+
+    #region Funções de Impressão
+    private async Task ReimprimirPedido()
+    {
+        await ImprimirPedido(PedidoMesa);
+    }
+
+    private async Task ImprimirItensSelecionados()
+    {
+        PedidoMesaDto pedidoItensSelecionados = new PedidoMesaDto
+        {
+            IdentificacaoMesaOuComanda = PedidoMesa.IdentificacaoMesaOuComanda,
+            NomeCliente = PedidoMesa.NomeCliente,
+            Itens = ItensSelecionados.ToList()
+        };
+        await ImprimirPedido(pedidoItensSelecionados);
+    }
+
+    private async Task ImprimirPedido(PedidoMesaDto pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+    #endregion
+
+    #region Funções de fechar o pedido
+    private async Task PagarPedido()
+    {
+        ClsPedido NovoPedido = new ClsPedido
+        {
+            TipoDePedido = "MESA",
+            MesaComandaId = MesaOuComanda.Id,
+            Itens = PedidoMesa.Itens,
+        };
+
+        var parameters = new DialogParameters
+         {
+             { "Pedido", NovoPedido }
+         };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = true,
+            MaxWidth = MaxWidth.False,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await PedidosService.FechaMesa(NovoPedido);
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Pedido fechado com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao fechar pedido: {string.Join(",", response.Messages)}", Severity.Error);
+            }
+
+            StateHasChanged();
+        }
+
+    }
+    #endregion
+}
