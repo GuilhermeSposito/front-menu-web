@@ -89,6 +89,7 @@ public class ClsPedido
     [JsonPropertyName("ServicoValor")] public float ServicoValor { get; set; }
     [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
     [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
+    [JsonPropertyName("MesaComandaId")] public int MesaComandaId { get; set; }
 
 }
 

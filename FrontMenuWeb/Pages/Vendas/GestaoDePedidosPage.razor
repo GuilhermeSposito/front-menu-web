@@ -238,6 +238,7 @@
 </MudPaper>
 
 @code {
+    #region Propriedades
     public bool Carregando { get; set; } = true;
     public bool CarregandoParteFiscal { get; set; } = false;
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
@@ -254,6 +255,84 @@
 
     private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
+    #endregion
+
+    #region Funções de Enventos de Página
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            PedidosService.PedidoRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoRecebido(pedido));
+            };
+
+            await CarregarPedidos();
+
+            try
+            {
+                await Connect();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
+        }
+    }
+
+
+    private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
+    {
+        try
+        {
+            if (e.CtrlKey && e.AltKey)
+            {
+
+            }
+
+            if (e.Key == "F2")
+            {
+                await AbrirCriacaoDePedido(TiposDePedido.DELIVERY);
+            }
+            if (e.Key == "F3")
+            {
+                await AbrirCriacaoDePedido(TiposDePedido.BALCAO);
+            }
+
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
+        }
+
+
+    }
+
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
+        await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add("Novo pedido recebido!", Severity.Info);
+        await JS.InvokeVoidAsync("playNotificationSound");
+    }
+
+    private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
+    {
+        sup.Expandido = !sup.Expandido;
+    }
+
 
     private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
     {
@@ -311,79 +390,9 @@
         }
     }
 
+    #endregion
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            PedidosService.PedidoRecebido += async pedido =>
-            {
-                await InvokeAsync(() => OnPedidoRecebido(pedido));
-            };
-
-            await CarregarPedidos();
-
-            try
-            {
-                await Connect();
-            }
-            catch (Exception)
-            {
-                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
-        }
-    }
-
-    private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
-    {
-        try
-        {
-            if (e.CtrlKey && e.AltKey)
-            {
-
-            }
-
-            if (e.Key == "F2")
-            {
-                await AbrirCriacaoDePedido(TiposDePedido.DELIVERY);
-            }
-            if (e.Key == "F3")
-            {
-                await AbrirCriacaoDePedido(TiposDePedido.BALCAO);
-            }
-
-        }
-        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
-        {
-            Snackbar.Add("Forma de pagamento não encontrada para a tecla pressionada.", Severity.Error);
-        }
-
-
-    }
-
-    private async Task OnPedidoRecebido(ClsPedido novoPedido)
-    {
-        await CarregarPedidos();
-        await InvokeAsync(StateHasChanged);
-        Snackbar.Add("Novo pedido recebido!", Severity.Info);
-        await JS.InvokeVoidAsync("playNotificationSound");
-    }
-
-    private async Task Connect()
-    {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "https://syslogicadev.com/api/v1/");
-        status = "Conectado";
-    }
-
-    private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
-    {
-        sup.Expandido = !sup.Expandido;
-    }
-
+    #region Funções Auxiliares
     public async Task CarregarPedidos()
     {
         try
@@ -428,7 +437,7 @@
             {
                 ListaDePedidos.Add(Supor);
             }
-            else if(ItensSelecionadosPArAProximaEtapa.Count > 0)
+            else if (ItensSelecionadosPArAProximaEtapa.Count > 0)
             {
                 ListaDePedidos.AddRange(ItensSelecionadosPArAProximaEtapa);
                 ItensSelecionadosPArAProximaEtapa.Clear();
@@ -491,31 +500,12 @@
         Snackbar.Add($"{message}", severity);
     }
 
-
-    private async Task ImprimirPedido(ClsPedido pedido)
-    {
-        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
-
-        if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
-        else
-            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
-    }
-
-
     public class ClsDeSuporteParaVizualicacaoDePedidos
     {
         public string NomeDaEtapa = string.Empty;
         public string Selector { get; set; } = "1";
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
-        }
-    }
 
     private async Task OnPesquisaChanged(string value)
     {
@@ -593,4 +583,23 @@
             CarregandoParteFiscal = false;
         }
     }
+    #endregion
+
+    #region Funções de Impressão e WebSocket
+    private async Task Connect()
+    {
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "https://syslogicadev.com/api/v1/");
+        status = "Conectado";
+    }
+
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+    #endregion
 }

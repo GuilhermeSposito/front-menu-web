@@ -1,4 +1,6 @@
-﻿using FrontMenuWeb.Models;
+﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.JSInterop;
@@ -17,6 +19,7 @@ public class PedidosService
     }
 
     public static event Action<ClsPedido>? PedidoRecebido;
+    public static event Action<PedidoMesaDto>? PedidoMesaRecebido;
 
 
     [JSInvokable]
@@ -25,6 +28,15 @@ public class PedidosService
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
         PedidoRecebido?.Invoke(pedido);
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public static Task ReceivePedidoMesa(string msg)
+    {
+        PedidoMesaDto pedido = System.Text.Json.JsonSerializer.Deserialize<PedidoMesaDto>(msg)!;
+
+        PedidoMesaRecebido?.Invoke(pedido);
         return Task.CompletedTask;
     }
 
@@ -72,6 +84,14 @@ public class PedidosService
     {
          var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesa(ClsPedido Pedido)
+    {
+         var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<PedidoMesaDto>>();
 
         return retorno!;
     }

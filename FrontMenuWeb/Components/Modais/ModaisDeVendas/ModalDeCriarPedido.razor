@@ -2,6 +2,8 @@
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -208,7 +210,7 @@
                                 @if (TiposDePedido == TiposDePedido.MESA)
                                 {
                                     <MudStack>
-                                        <MudNumericField @ref=TextFieldDeNumeroDeMesa T="int" Label="Número da Mesa" Variant="Variant.Outlined" Value=@NumeroDaMesa Disabled="false" Class="w-100 mb-2" />
+                                        <MudNumericField @ref=TextFieldDeNumeroDeMesa T="int" Label="Número da Mesa" Variant="Variant.Outlined" Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
                                     </MudStack>
                                 }
 
@@ -257,7 +259,7 @@
                             {
                                 <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
                                           Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-                                    <MudButton Variant="Variant.Filled" OnClick="PagarPedido" Color="Color.Primary" Class="w-100">
+                                    <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
                                         Enviar Itens Para a Mesa (F3)
                                     </MudButton>
                                 </MudPaper>
@@ -275,6 +277,7 @@
 
 
 @code {
+    #region Propriedades e Injeções
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     private MudTextField<string> _descricaoRef;
@@ -302,8 +305,10 @@
 
     //parametros
     [Parameter] public TiposDePedido TiposDePedido { get; set; } = TiposDePedido.BALCAO;
-    [Parameter] public int NumeroDaMesa { get; set; }
+    [Parameter] public ClsMesasEComandas Mesa { get; set; }
+    #endregion
 
+    #region Funções Auxiliares
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
 
@@ -367,129 +372,6 @@
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
         await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task PagarPedido()
-    {
-        @if (NovoPedido.Itens.Count == 0)
-        {
-            Snackbar.Add("Adicione ao menos um item ao pedido para continuar.", Severity.Error);
-            return;
-        }
-
-        var parameters = new DialogParameters
-         {
-             { "Pedido", NovoPedido }
-         };
-
-        var options = new DialogOptions
-        {
-            Position = DialogPosition.Center,
-            CloseButton = true,
-            MaxWidth = MaxWidth.False,
-            FullWidth = true,
-            CloseOnEscapeKey = true
-        };
-
-        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
-        var result = await dialog.Result;
-
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-        {
-            await Submit();
-            StateHasChanged();
-        }
-
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (TiposDePedido == TiposDePedido.BALCAO)
-        {
-            NovoPedido.TipoDePedido = "BALCÃO";
-        }
-        else if (TiposDePedido == TiposDePedido.DELIVERY)
-        {
-            NovoPedido.TipoDePedido = "DELIVERY";
-        }
-        else if (TiposDePedido == TiposDePedido.MESA)
-        {
-            NovoPedido.TipoDePedido = "MESA";
-
-        }
-
-        await CarregarGrupos();
-        await CarregarProdutos();
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
-
-            //bloqueia a busca do navegador ao apertar F3
-            await JS.InvokeVoidAsync("interceptF3", DotNetObjectReference.Create(this));
-
-            if (TiposDePedido == TiposDePedido.MESA)
-            {
-                if (NumeroDaMesa == 0)
-                {
-                    if (TextFieldDeNumeroDeMesa is not null)
-                    {
-                        await TextFieldDeNumeroDeMesa.FocusAsync();
-                        await TextFieldDeNumeroDeMesa.SelectAsync();
-                    }
-                }
-            }
-        }
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    private async Task Submit()
-    {
-
-        ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido);
-
-        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
-        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
-
-        if (ResponseAPi.Status != "success")
-        {
-            return;
-        }
-
-        if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
-            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
-
-        MudDialog.Close(DialogResult.Ok(true));
-    }
-
-    private async Task HandleKeyDown(KeyboardEventArgs e, ClsPessoas pessoa)
-    {
-        if (e.Key == "Enter")
-        {
-            await SelecionarPessoa(pessoa);
-        }
-    }
-
-    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
-    {
-        if (e.CtrlKey && e.AltKey)
-        {
-            await PagarPedido();
-        }
-
-        if (e.CtrlKey && e.Key == "i")
-        {
-            await TextFieldProd.FocusAsync();
-        }
-
-        if (e.Key == "F3")
-        {
-            await JS.InvokeVoidAsync("event.preventDefault");
-            await PagarPedido();
-        }
     }
 
     private async void AbreModalDeAdicionarPessoa()
@@ -586,17 +468,6 @@
 
     }
 
-    private async void OnFocusAutoCompleteManual(FocusEventArgs args)
-    {
-        MostrarSugestoes = true;
-        await ValueDeAutoCompleteMudou(PesquisaPessoa);
-    }
-    private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
-    {
-
-        //  MostrarSugestoes = false;
-    }
-
     private async Task ValueDeAutoCompleteMudou(string? value)
     {
         PesquisaPessoa = value ?? string.Empty;
@@ -611,20 +482,6 @@
             Snackbar.Add($"Erro ao procurar pessoas: {ex.Message}", Severity.Error);
 
         }
-    }
-
-    private async Task SelecionarPessoa(ClsPessoas pessoa)
-    {
-        PessoaSelecionada = pessoa;
-        NovoPedido.Cliente = pessoa;
-        PesquisaPessoa = pessoa.Nome;
-        MostrarSugestoes = false;
-        NovoPedido.Endereco = null;
-
-        //abri o modal de enderecose for delivery
-        await AbreModalDeEnderecos(pessoa);
-
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SelecionarTipoDePedido(string TipoPedido)
@@ -726,8 +583,178 @@
         }
     }
 
+    private async Task SelecionarPessoa(ClsPessoas pessoa)
+    {
+        PessoaSelecionada = pessoa;
+        NovoPedido.Cliente = pessoa;
+        PesquisaPessoa = pessoa.Nome;
+        MostrarSugestoes = false;
+        NovoPedido.Endereco = null;
 
+        //abri o modal de enderecose for delivery
+        await AbreModalDeEnderecos(pessoa);
 
+        await InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
+    #region Funções de Terminar o pedido
+    private async Task PagarPedido()
+    {
+        @if (NovoPedido.Itens.Count == 0)
+        {
+            Snackbar.Add("Adicione ao menos um item ao pedido para continuar.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+         {
+             { "Pedido", NovoPedido }
+         };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = true,
+            MaxWidth = MaxWidth.False,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await Submit();
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task Submit()
+    {
+
+        ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido);
+
+        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+        if (ResponseAPi.Status != "success")
+        {
+            return;
+        }
+
+        if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
+            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private async Task EnviarItensParaMesa()
+    {
+        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);
+
+        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+        if (ResponseAPi.Status != "success")
+        {
+            return;
+        }
+
+        if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
+            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto}-MESA-SOPHOS-WEB.json");
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    #endregion
+
+    #region Funções da Página
+    protected override async Task OnInitializedAsync()
+    {
+        if (TiposDePedido == TiposDePedido.BALCAO)
+        {
+            NovoPedido.TipoDePedido = "BALCÃO";
+        }
+        else if (TiposDePedido == TiposDePedido.DELIVERY)
+        {
+            NovoPedido.TipoDePedido = "DELIVERY";
+        }
+        else if (TiposDePedido == TiposDePedido.MESA)
+        {
+            NovoPedido.TipoDePedido = "MESA";
+            NovoPedido.MesaComandaId = Mesa.Id;
+        }
+
+        await CarregarGrupos();
+        await CarregarProdutos();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+            //bloqueia a busca do navegador ao apertar F3
+            await JS.InvokeVoidAsync("interceptF3", DotNetObjectReference.Create(this));
+
+            if (TiposDePedido == TiposDePedido.MESA)
+            {
+                if (Mesa.CodigoExterno == 0)
+                {
+                    if (TextFieldDeNumeroDeMesa is not null)
+                    {
+                        await TextFieldDeNumeroDeMesa.FocusAsync();
+                        await TextFieldDeNumeroDeMesa.SelectAsync();
+                    }
+                }
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e, ClsPessoas pessoa)
+    {
+        if (e.Key == "Enter")
+        {
+            await SelecionarPessoa(pessoa);
+        }
+    }
+
+    private async Task HandleKeyDownDialog(KeyboardEventArgs e)
+    {
+        if (e.CtrlKey && e.AltKey)
+        {
+            await PagarPedido();
+        }
+
+        if (e.CtrlKey && e.Key == "i")
+        {
+            await TextFieldProd.FocusAsync();
+        }
+
+        if (e.Key == "F3")
+        {
+            await JS.InvokeVoidAsync("event.preventDefault");
+            await PagarPedido();
+        }
+    }
+
+    private async void OnFocusAutoCompleteManual(FocusEventArgs args)
+    {
+        MostrarSugestoes = true;
+        await ValueDeAutoCompleteMudou(PesquisaPessoa);
+    }
+    private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
+    {
+
+        //  MostrarSugestoes = false;
+    }
+    #endregion
+
+    #region Lógica do drawer (Não esta sendo ultizado ainda)
     //Lógica do Drawer de edição de produto
     private bool carregandoProdutoParaEdicao = true;
     private ClsProduto? ProdutoSelecionadoParaEdicao = null!;
@@ -771,4 +798,5 @@
 
         return InvokeAsync(StateHasChanged);
     }
+    #endregion
 }

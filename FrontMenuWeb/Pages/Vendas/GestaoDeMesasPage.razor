@@ -7,6 +7,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
@@ -49,7 +50,7 @@
                     @foreach (var mesa in MesasOuComandaList)
                     {
                         <MudItem xs="6" sm="4" md="3" lg="2">
-                            <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa.CodigoExterno); }) Class="rounded-3 text-center cursor-pointer" Style="@(mesa.Reservado ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
+                            <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa); }) Class="rounded-3 text-center cursor-pointer" Style="@(mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
                                 <MudCardContent>
                                     <MudStack>
                                         <MudText Typo="Typo.subtitle1" Class="font-weight-bold">MESA</MudText>
@@ -80,6 +81,9 @@
 
     //props de mesas
     private List<ClsMesasEComandas> MesasOuComandaList { get; set; } = new();
+
+    //prop de status do websocket
+    private string status = "Desconectado";
     #endregion
 
     #region Funções de Inicialização da página
@@ -87,6 +91,20 @@
     {
         try
         {
+            PedidosService.PedidoMesaRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoRecebido(pedido));
+            };
+
+            try
+            {
+                await Connect();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+            }
+
             await CarregarMesasEComandas();
         }
         catch (Exception ex)
@@ -116,8 +134,10 @@
     #endregion
 
     #region Funções Auxiliares
+  
+
     //Função de Abrir modal de pedido
-    private async Task AbreModalDePedido(int NumeroDaMesaOuComanda = 0)
+    private async Task AbreModalDePedido(ClsMesasEComandas? Mesa = null)
     {
         if (!AppState.CaixaAberto)
         {
@@ -125,10 +145,17 @@
             return;
         }
 
+        if (Mesa is null)
+            Mesa = new ClsMesasEComandas
+            {
+                Id = 0,
+                CodigoExterno = 0
+            };
+
         var parameters = new DialogParameters
         {
             { "TiposDePedido", TiposDePedido.MESA },
-            { "NumeroDaMesa", NumeroDaMesaOuComanda }
+            { "Mesa", Mesa }
         };
 
         var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
@@ -185,4 +212,29 @@
     }
     #endregion
 
+    #region Funções de Impressão e WebSocket
+    private async Task Connect()
+    {
+        await JS.InvokeVoidAsync("socketIO.connectSocketIOMesa", "https://syslogicadev.com/api/v1/");
+        status = "Conectado";
+    }
+
+    private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
+    {
+        await CarregarMesasEComandas();
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
+        await JS.InvokeVoidAsync("playNotificationSound");
+    }
+
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+    #endregion
 }

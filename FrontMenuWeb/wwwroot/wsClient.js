@@ -41,6 +41,45 @@ window.socketIO = {
 
     },
 
+    connectSocketIOMesa: async (url) => {
+        const rawToken = localStorage.getItem("authToken");
+        const token = rawToken ? rawToken.replaceAll('"', '') : null;
+
+        const socket = io("https://syslogicadev.com", {
+            path: "/socket.io/",
+            transports: ["websocket"],
+            query:
+            {
+                token: `${token}`
+            }
+        });
+
+        socket.on("connect", () => {
+
+        });
+
+        socket.emit("registrar-merchant");
+
+        // Quando o servidor envia algo para o cliente
+        socket.on("registrado", (msg) => {
+        });
+
+        // Quando o servidor envia algo para o cliente
+        socket.on("pedido-recebido-mesa", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesa", JSON.stringify(msg))
+                    .then(() => console.log("Blazor foi notificado!"))
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
+        socket.on("disconnect", () => {
+
+        });
+
+    },
+
 };
 
 //Função para reproduzir som de notificação
