@@ -1,7 +1,9 @@
-﻿@using FrontMenuWeb.Models.Merchant
+﻿@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using MudBlazor;
 @using System.Text.Json
+@inject IJSRuntime JS
 
 @inherits LayoutComponentBase
 
@@ -225,36 +227,32 @@
     private string MensagemDeCaixa = "Carregando status do caixa...";
     private Color ColorStatusCaixa = Color.Error;
 
-
     private bool ImpressaoDesabilita = false;
 
-    private async Task AlteraImpressaoDesabilita()
+    #region Funções de WebSocket
+    private async Task Connect()
     {
-        ImpressaoDesabilita = !ImpressaoDesabilita;
-        await LocalStorage.SetItemAsync("ImpressaoDesabilita", ImpressaoDesabilita);
+        await JS.InvokeVoidAsync("socketIO.connectSocketIOMesa", "https://syslogicadev.com/api/v1/");
     }
 
-
-    private void ToggleDrawer()
+    private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
-        _open = !_open;
-
+        await ImprimirPedido(novoPedido); // por enquanto todos
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
+        await JS.InvokeVoidAsync("playNotificationSound");
     }
 
-    private async void DarkModeToggle()
+    private async Task ImprimirPedido(PedidoMesaDto pedido)
     {
-        _isDarkMode = !_isDarkMode;
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
-        await SetThemeAsync(_isDarkMode);
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }
-
-    private async Task SetThemeAsync(bool isDarkMode)
-    {
-        await LocalStorage.SetItemAsync(ThemePreferenceKey, isDarkMode);
-
-    }
-
-
+    #endregion
     protected override async Task OnInitializedAsync()
     {
         if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
@@ -265,6 +263,20 @@
 
         ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
+        try
+        {
+
+            PedidosService.PedidoMesaRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoRecebido(pedido));
+            };
+
+            await Connect();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+        }
 
         _theme = new()
         {
@@ -299,6 +311,31 @@
         }
 
         await AtualizaStatusDoCaixa();
+    }
+
+    private async Task AlteraImpressaoDesabilita()
+    {
+        ImpressaoDesabilita = !ImpressaoDesabilita;
+        await LocalStorage.SetItemAsync("ImpressaoDesabilita", ImpressaoDesabilita);
+    }
+
+    private void ToggleDrawer()
+    {
+        _open = !_open;
+
+    }
+
+    private async void DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+
+        await SetThemeAsync(_isDarkMode);
+    }
+
+    private async Task SetThemeAsync(bool isDarkMode)
+    {
+        await LocalStorage.SetItemAsync(ThemePreferenceKey, isDarkMode);
+
     }
 
     private async Task AtualizaStatusDoCaixa()

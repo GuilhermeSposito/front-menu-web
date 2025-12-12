@@ -1,5 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+
+.mesa-card {
+    position: relative;
+}
+
+.menu-icone {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    z-index: 10;
+    padding: 4px;
+}
+
 /* para o diálogo de pagamento */
 .dialog-pagamento-responsivo {
     width: 50vw; /* metade da tela em desktops */

@@ -16,7 +16,7 @@ window.socketIO = {
         });
 
         socket.on("connect", () => {
-           
+
         });
 
         socket.emit("registrar-merchant");
@@ -36,7 +36,7 @@ window.socketIO = {
         });
 
         socket.on("disconnect", () => {
-           
+
         });
 
     },
@@ -146,3 +146,6 @@ window.bloquearAtalhosDoNavegador = function () {
         }
     });
 };
+
+
+

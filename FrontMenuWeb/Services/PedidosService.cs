@@ -80,6 +80,15 @@ public class PedidosService
         return response!;
     }
 
+    public async Task<ReturnApiRefatored<PedidoMesaDto>> GetMesaOcupada(int idDaMesa)
+    {
+        
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<PedidoMesaDto>>(
+           $"pedidos/mesas/{idDaMesa}");
+
+        return response!;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido)
     {
          var response = await _http.PostAsJsonAsync($"pedidos", Pedido);

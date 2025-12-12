@@ -19,6 +19,7 @@ public partial class PaginaInicial : Form
     private FileSystemWatcher watcherPedidos;
     private FileSystemWatcher watcherFechamentos;
     private FileSystemWatcher WatcherNFs;
+    private FileSystemWatcher WatcherMesas;
 
     private readonly ImpressaoService _impressaoService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
@@ -49,6 +50,7 @@ public partial class PaginaInicial : Form
         SophosSync.DoubleClick += (s, e) => ShowWindow();
 
         IniciarMonitoramento();
+        IniciarMonitoramentoMesa();
         IniciarMonitoramentoDeFechamentoDeCaixa();
         IniciarMonitoramentoDeNfs();
 
@@ -127,6 +129,42 @@ public partial class PaginaInicial : Form
 
         watcherPedidos.EnableRaisingEvents = true;
     }
+
+    private void IniciarMonitoramentoMesa()
+    {
+        string downloadsPath = Path.Combine(
+               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+               "Downloads"
+           );
+
+        WatcherMesas = new FileSystemWatcher(downloadsPath)
+        {
+            Filter = "*.*", // todos os arquivos
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+        };
+
+        WatcherMesas.Renamed += async (s, e) =>
+        {
+            if (e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
+                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                await Task.Delay(500); // espera terminar o download
+                try
+                {
+                    string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                    await _impressaoService.ImprimirComanda(conteudo, "SOPHOS");
+                    File.Delete(e.FullPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.Write(ex.ToString());
+                }
+            }
+        };
+
+        WatcherMesas.EnableRaisingEvents = true;
+    }
+
     private void IniciarMonitoramentoDeFechamentoDeCaixa()
     {
         string downloadsPath = Path.Combine(

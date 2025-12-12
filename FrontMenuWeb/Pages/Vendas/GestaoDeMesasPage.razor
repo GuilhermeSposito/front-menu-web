@@ -40,6 +40,9 @@
             <MudStack Justify="Justify.FlexStart">
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
             </MudStack>
+            <MudStack>
+                <MudText>*Para ações de uma mesa, clique nos três pontos dela.</MudText>
+            </MudStack>
         </MudStack>
 
 
@@ -50,13 +53,27 @@
                     @foreach (var mesa in MesasOuComandaList)
                     {
                         <MudItem xs="6" sm="4" md="3" lg="2">
-                            <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa); }) Class="rounded-3 text-center cursor-pointer" Style="@(mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
+                            <MudCard Class="rounded-3 text-center cursor-pointer mesa-card"
+                                     Style="@(mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;": "background-color: #DAE1E7; color: #000000;")">
+
                                 <MudCardContent>
                                     <MudStack>
                                         <MudText Typo="Typo.subtitle1" Class="font-weight-bold">MESA</MudText>
-                                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@mesa.CodigoExterno.ToString().PadLeft(2, '0')</MudText>
+                                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">
+                                            @mesa.CodigoExterno.ToString().PadLeft(2, '0')
+                                        </MudText>
                                     </MudStack>
                                 </MudCardContent>
+
+                                @if (mesa.Ocupada)
+                                {
+                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Class="menu-icone" Color="Color.Inherit">
+                                        <MudMenuItem OnClick=@(async () => { await ChamaImpressaoDeItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.Print" Label="Reimprimir Itens" />
+                                        <MudMenuItem OnClick=@(async () => { }) Icon="@Icons.Material.Filled.ClosedCaptionDisabled" Label="Fechar Conta" />
+                                        <MudMenuItem Icon="@Icons.Material.Filled.RemoveRedEye" Label="Ver Itens" />
+                                        <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
+                                    </MudMenu>
+                                }
                             </MudCard>
                         </MudItem>
                     }
@@ -85,6 +102,8 @@
     //prop de status do websocket
     private string status = "Desconectado";
     #endregion
+
+
 
     #region Funções de Inicialização da página
     protected override async Task OnInitializedAsync()
@@ -134,7 +153,7 @@
     #endregion
 
     #region Funções Auxiliares
-  
+
 
     //Função de Abrir modal de pedido
     private async Task AbreModalDePedido(ClsMesasEComandas? Mesa = null)
@@ -222,17 +241,47 @@
     private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
         await CarregarMesasEComandas();
+        await ImprimirPedido(novoPedido); // por enquanto todos
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
         await JS.InvokeVoidAsync("playNotificationSound");
     }
 
-    private async Task ImprimirPedido(ClsPedido pedido)
+    private async Task ChamaImpressaoDeItensDaMesa(ClsMesasEComandas mesaEnviada)
+    {
+        try
+        {
+            var mesa = await PedidosService.GetMesaOcupada(mesaEnviada.Id);
+
+            if (mesa.Status == "success")
+            {
+                var pedido = mesa.Data.Objeto;
+                if (pedido is not null)
+                {
+                    await ImprimirPedido(pedido);
+                }
+                else
+                {
+                    Snackbar.Add("Mesa não possui pedido ativo para impressão.", Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add("Erro ao buscar pedido da mesa para impressão.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao imprimir itens da mesa: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ImprimirPedido(PedidoMesaDto pedido)
     {
         bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
         if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
         else
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }

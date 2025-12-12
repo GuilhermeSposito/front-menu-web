@@ -54,6 +54,7 @@
             </ToolBarContent>
             <Columns>
                 <SelectColumn T="ClsMesasEComandas" />
+                <PropertyColumn Property="x => x.Id" Title="ID"></PropertyColumn>
                 <PropertyColumn Property="x => x.CodigoExterno" Title="Número"></PropertyColumn>
                 <TemplateColumn T="ClsMesasEComandas" Title="Bloquado">
                     <CellTemplate Context="context">

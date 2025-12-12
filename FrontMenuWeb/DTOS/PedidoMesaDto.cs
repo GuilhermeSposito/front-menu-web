@@ -1,10 +1,11 @@
 ﻿using FrontMenuWeb.Models.Pedidos;
+using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.DTOS;
 
 public class PedidoMesaDto
 {
-    public int IdentificacaoMesaOuComanda { get; set; }
-    public string? NomeCliente { get; set; }
-    public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
+    [JsonPropertyName("IdentificacaoMesaOuComanda")] public int IdentificacaoMesaOuComanda { get; set; }
+    [JsonPropertyName("NomeCliente")]public string? NomeCliente { get; set; }
+    [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
 }

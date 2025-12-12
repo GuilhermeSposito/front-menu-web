@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Pedidos;
+﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
 using Org.BouncyCastle.Crypto;
 using SophosSyncDesktop.DataBase.Db;
@@ -77,6 +78,24 @@ public class ImpressaoService
             Console.Write(ex.ToString());
         }
     }
+    public async Task ImprimirComanda(string jsonDoPedido, string AppQueEnviou)
+    {
+        try
+        {
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
+
+                List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressao(Pedido, AppQueEnviou);
+                await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
 
     public async Task ImprimirFechamento(string jsonDoFechamento)
     {
@@ -105,6 +124,53 @@ public class ImpressaoService
     #endregion
 
     #region Define as características da impressão
+
+    #region Define Características das comandas para impressão
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressao(PedidoMesaDto pedido, string AppQueEnviou)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================       
+        AdicionaConteudo(Conteudo, $"MESA: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+
+        //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        foreach (var item in pedido.Itens)
+        {
+            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+
+            if (item.Complementos.Count > 0)
+            {
+                AdicionaConteudo(Conteudo, $"\n", FonteCPF);
+                foreach (var complemento in item.Complementos)
+                {
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(item.Observacoes))
+            {
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
+            }
+
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            //------------------------------------------------------------------------------------------
+        }
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+
+        return Conteudo;
+    }
+    #endregion
 
     #region Definição do pedido para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
@@ -515,7 +581,7 @@ public class ImpressaoService
                     Imprimir = false,
                     LarguraBobina = 210,
                     Impressora = ImpressoraDanfe,
-                    Logotipo = "C:\\SophosCompany\\Sem título.png",                   
+                    Logotipo = "C:\\SophosCompany\\Sem título.png",
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraDanfe))
