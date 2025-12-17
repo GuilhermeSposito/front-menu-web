@@ -1,9 +1,16 @@
 ﻿@page "/qrmesa"
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
 @layout CardapioDigitalLayout
 @inject MesasServices MesasServices
 @inject MerchantServices MerchantService
 @inject ProdutoService ProdutoService
+@inject PedidosService PedidosService
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
 
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px">
@@ -36,11 +43,11 @@
             }
             else
             {
-               <MudGrid Class="mt-2">
-                    @foreach(var produto in Produtos)
+                <MudGrid Class="mt-2">
+                    @foreach (var produto in Produtos)
                     {
                         <MudItem xs="12" md="4" lg="3">
-                            <MudPaper Elevation="6"Class="d-flex align-center pa-2 transition-all product-card"Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                            <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
                                 <MudGrid Class="h-100">
                                     <!-- Avatar -->
                                     <MudItem xs="3" Class="d-flex justify-center align-center">
@@ -65,9 +72,14 @@
                             </MudPaper>
                         </MudItem>
                     }
-               </MudGrid>
+                </MudGrid>
             }
         </MudPaper>
+
+        @if (NovoPedido.Itens.Count > 0 && !_open)
+        {
+            <MudFab Class="floating-green-dot" OnClick=@(()=> {OpenDrawer();}) Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ShoppingCart" DropShadow="false" />
+        }
 
     </MudLayout>
 </MudPaper>
@@ -87,6 +99,8 @@
     private ClsMesasEComandas Mesa = new ClsMesasEComandas();
     private ClsMerchant Merchant = new ClsMerchant();
     private List<ClsProduto> Produtos = new List<ClsProduto>();
+
+    private ClsPedido NovoPedido = new();
     #endregion
 
     #region Funções de Inicialização
@@ -172,7 +186,7 @@
         {
             var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, null, null);
             Produtos = PaginatedResponse.Data ?? new List<ClsProduto>();
-        
+
         }
         catch (Exception ex)
         {
@@ -181,4 +195,194 @@
     }
     #endregion
 
+    #region Funções de interação com item
+    public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
+    {
+        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+        {
+            var parameters = new DialogParameters
+            {
+               { "AtualizandoItem",AtualizandoItem},
+               { "Produto", produto}
+            };
+
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is ItensPedido itemPedido)
+            {
+                //Verifica se já existe o produto no pedido
+                if (NovoPedido.Itens.Any(x => x.Produto?.Id == produto.Id &&
+                    x.Complementos.SequenceEqual(itemPedido.Complementos) &&
+                    x.Preco.Id == itemPedido.Preco.Id &&
+                    x.Observacoes == itemPedido.Observacoes))
+                {
+                    var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
+                    itemExistente.Quantidade += 1;
+                    itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+
+                NovoPedido.Itens.Add(itemPedido);
+                Snackbar.Add($"Item adicionado {itemPedido.Descricao} ao pedido com sucesso", Severity.Success);
+                return;
+            }
+            else
+            {
+                Snackbar.Add("Produtos com informações obrigatórias não informadas", Severity.Error);
+                return;
+            }
+
+        }
+
+        //Verifica se já existe o produto no pedido
+        if (NovoPedido.Itens.Any(x => x.Produto == produto))
+        {
+            var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
+            itemExistente.Quantidade += 1;
+            itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        ItensPedido ItemParaAdicionarNoPedido = new()
+        {
+            Descricao = produto.Descricao,
+            Produto = produto,
+            Quantidade = 1,
+            PrecoUnitario = produto.Precos.Min(p => p.Valor),
+            PrecoTotal = produto.Precos.Min(p => p.Valor)
+        };
+
+        NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
+        Snackbar.Add($"Item adicionado {ItemParaAdicionarNoPedido.Descricao} ao pedido com sucesso", Severity.Success);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EnviarItensParaMesa()
+    {
+        NovoPedido.MesaComandaId = Mesa.Id;
+        NovoPedido.TipoDePedido = "MESA";
+        NovoPedido.EtapaPedido = "PREPARANDO";
+
+        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);
+
+        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+        if (ResponseAPi.Status != "success")
+        {
+            return;
+        }
+
+        NovoPedido.Itens.Clear();
+        Snackbar.Add("Pedido enviado para a mesa com sucesso!", Severity.Success);
+        _open = false;
+
+    }
+    #endregion
+
+    #region Logica do Drawer
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "40%";
+    private bool CarregandoPessoaParaEdicao = false;
+    //*****************************************************************************/
+
+    private void OpenDrawer(Anchor anchor = Anchor.Right)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "80%" : "45%";
+
+        return InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
 }
+
+
+@**************************************************DRAWER NOP FRONTEND********************************************************************************@
+<MudDrawer Style="background-color: var(--mud-palette-background);" @bind-Open="@_open" Width="@_drawerWidth" Height="@_height" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudStack Class="w-100" Justify="Justify.SpaceBetween" Row=true>
+            <MudText Typo="Typo.h6">Carrinho</MudText>
+
+            <MudTooltip Text="Fechar" Color="Color.Primary">
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _open = false)" Color="Color.Primary" />
+            </MudTooltip>
+        </MudStack>
+    </MudDrawerHeader>
+    <MudDrawerContainer>
+        <MudStack Class="w-100 h-100">
+            @*Carrinho*@
+            <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
+                <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar</MudButton>
+            </MudStack>
+
+            @*itens*@
+            <MudStack>
+                @foreach (var produtoNoPedido in NovoPedido.Itens)
+                {
+                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                        <MudStack>
+                            <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                            <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
+                            @if (produtoNoPedido.Complementos.Count > 0)
+                            {
+                                <MudDivider Light=true Class="w-100" />
+                                @foreach (var complemento in produtoNoPedido.Complementos)
+                                {
+                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                        <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                    </MudStack>
+                                }
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        </MudStack>
+        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                  Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+            <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
+                Enviar Itens Para a Mesa (F3)
+            </MudButton>
+        </MudPaper>
+    </MudDrawerContainer>
+</MudDrawer>
+@**************************************************DRAWER NOP FRONTEND********************************************************************************@

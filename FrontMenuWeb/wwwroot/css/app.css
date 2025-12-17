@@ -1,5 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+.floating-green-dot {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 9999;
+    min-height: 16px;
+    border-radius: 50%;
+    padding: 0;
+}
 
 .product-card:focus,
 .product-card:focus-visible {

@@ -380,6 +380,7 @@
         };
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
+        await Task.Delay(50);
         await InvokeAsync(StateHasChanged);
     }
 
