@@ -2,6 +2,7 @@
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
+using Microsoft.AspNetCore.Http;
 using MudBlazor.Extensions.Components.ObjectEdit;
 using Nextended.Core.Extensions;
 using System.Net.Http;
@@ -43,6 +44,7 @@ public class ProdutoService
 
     public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaAsync(int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
     {
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsProduto>>(
            $"produtos/pagination?page={page}&limit={pageSize}&descricao={pesquisaNome}&grupo={pesquisaDeGrupo}");
 

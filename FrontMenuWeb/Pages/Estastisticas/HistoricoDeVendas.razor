@@ -36,10 +36,19 @@
         </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-50" Row=true>
-                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" Clearable=true ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
             </MudStack>
             <MudStack Justify="Justify.FlexStart">
             </MudStack>
+        </MudStack>
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
+            <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
+            @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
+            }
         </MudStack>
 
         <MudPaper Class="mb-3 p-3 mt-3 w-100">
@@ -111,6 +120,7 @@
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                 <PropertyColumn Property="x => x.DisplayId" Title="Display Id"></PropertyColumn>
+                <PropertyColumn Property="x => x.CriadoEm" Title="Realizado Em" Format="dd/MM/yyyy"></PropertyColumn>
                 <TemplateColumn T="ClsPedido" Title="Cliente">
                     <CellTemplate Context="context">
                         @if (context.Item.Cliente is null)
@@ -221,6 +231,10 @@
     //Estastisticas
     private float ValorTotalEmVendas = 0.0f;
     private float TiketMedio = 0.0f;
+
+    //lógica do filtros
+    private DateTime? FiltroDateTimeInicial = null;
+    private DateTime? FiltroDateTimeFinal = null;
     #endregion
 
     #region Função de loadServerData
@@ -239,7 +253,9 @@
                                             {
                                                 Page = page,
                                                 PageSize = pageSize,
-                                                Pesquisa = pesquisaTexto
+                                                Pesquisa = pesquisaTexto,
+                                                DataCriadoEmInicio = FiltroDateTimeInicial,
+                                                DataCriadoEmFinal = FiltroDateTimeFinal
                                             });
 
 
@@ -270,6 +286,28 @@
         }
 
     }
+    #endregion
+
+    #region Funções de Ações da Página
+    private async Task AplicarFiltros()
+    {
+        if (dataGridRef != null)
+        {
+            await dataGridRef.ReloadServerData();
+        }
+    }
+
+    private async Task LimparFiltros()
+    {
+        FiltroDateTimeInicial = null;
+        FiltroDateTimeFinal = null;
+
+        if (dataGridRef != null)
+        {
+            await dataGridRef.ReloadServerData();
+        }
+    }
+ 
     #endregion
 
     #region Funcções Auxiliares

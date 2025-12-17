@@ -16,7 +16,7 @@
 @inject PedidosService PedidosService
 @inject IJSRuntime JS
 
-<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background);">
+<MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background); overflow:hidden">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
             <MudText Class="ms-3" Typo="Typo.h6">Novo Pedido</MudText>
@@ -27,7 +27,7 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Style="overflow-y:hidden">
 
             <MudGrid Class="w-100 h-100">
                 @*MudItemDeGrupos*@
@@ -67,9 +67,9 @@
                     <MudPaper Class="h-100 rounded-3 p-1" Style="background-color: var(--mud-palette-surface);border: 3px dashed var(--mud-palette-primary); overflow-y: auto" Elevation="4">
                         <MudStack Class="w-100 h-100">
                             <MudStack Class="w-100">
-                                <MudTextField @ref=TextFieldProd Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                                <MudTextField @ref=TextFieldProd Value=PesquisaDeProduto @onkeydown="OnKeyDownProdutos" ValueChanged=OnPesquisaChanged Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
                             </MudStack>
-                            <MudStack Class="w-100 h-100">
+                            <MudStack Class="w-100 h-100" Style="overflow-y:auto">
                                 @if (CarregandoProduto)
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -79,14 +79,18 @@
                                 }
                                 else if (Produtos.Count > 0)
                                 {
-                                    <MudStack Class="w-100 h-100 p-3" AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
+                                    <MudStack Class="w-100 h-100 p-3"
+                                              @onkeydown="OnKeyDownProdutos"
+                                              tabindex="0"
+                                              Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);"
+                                              AlignItems="AlignItems.Start" Justify="Justify.FlexStart" id="MudStackDeProduto">
                                         <MudGrid GutterSize="2">
-                                            @foreach (var produto in Produtos)
+                                            @foreach (var item in Produtos.Select((produto, index) => new { produto, index }))
                                             {
                                                 <MudItem xs="12" sm="6" md="4" lg="3">
-                                                    <MudPaper @onclick="async () => await AdicionarProdutoNoPedido(produto)"
+                                                    <MudPaper @onclick="async () => await AdicionarProdutoNoPedido(item.produto)"
                                                               Elevation="6"
-                                                              Class="d-flex align-center pa-2 transition-all product-card"
+                                                              Class=@($"d-flex align-center pa-2 transition-all product-card {(item.index == ProdutoSelecionadoIndex ? "produto-selecionado" : "")}")
                                                               Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
                                                         <MudGrid Class="h-100">
                                                             <!-- Avatar -->
@@ -95,17 +99,17 @@
                                                                            Color="Color.Primary"
                                                                            Square="true"
                                                                            Class="fw-bold text-white">
-                                                                    @produto.Descricao.Substring(0, 1)
+                                                                    @item.produto.Descricao.Substring(0, 1)
                                                                 </MudAvatar>
                                                             </MudItem>
 
                                                             <!-- Informações -->
                                                             <MudItem xs="9" Class="d-flex flex-column justify-center">
                                                                 <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
-                                                                    @produto.CodigoInterno - @produto.Descricao
+                                                                    @item.produto.CodigoInterno - @item.produto.Descricao
                                                                 </MudText>
                                                                 <MudText Typo="Typo.body2">
-                                                                    @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
+                                                                    @($"A Partir de: {item.produto.Precos.Min(p => p.Valor):C}")
                                                                 </MudText>
                                                             </MudItem>
                                                         </MudGrid>
@@ -140,7 +144,7 @@
                     <MudPaper Class="h-100 rounded p-2" Style="background-color: var(--mud-palette-surface);  border: 3px dashed var(--mud-palette-primary);" Elevation="4">
                         @*Informações do pedido*@
                         <MudStack Justify="Justify.SpaceBetween" Class="w-100 h-100 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background);">
-                            <MudStack>
+                            <MudStack Style="overflow-y: auto;">
                                 @if (NovoPedido.TipoDePedido != "MESA")
                                 {
                                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
@@ -290,6 +294,7 @@
     //props das visualizações
     private List<ClsGrupo> Grupos = new();
     private List<ClsProduto> Produtos = new();
+    private MudStack MudStackDeProdutos = new MudStack();
 
     //Lógica do pedido
     private ClsPedido NovoPedido = new();
@@ -306,6 +311,10 @@
     //parametros
     [Parameter] public TiposDePedido TiposDePedido { get; set; } = TiposDePedido.BALCAO;
     [Parameter] public ClsMesasEComandas Mesa { get; set; }
+
+    //Funções de pesquisas
+    private string? PesquisaDeProduto = string.Empty;
+    private int ProdutoSelecionadoIndex = 0;
     #endregion
 
     #region Funções Auxiliares
@@ -413,7 +422,7 @@
         {
             CarregandoProduto = true;
 
-            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, null, null);
+            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, PesquisaDeProduto, null);
 
             Produtos = response.Data;
 
@@ -449,6 +458,12 @@
         }
     }
 
+    private async void OnPesquisaChanged(string valor)
+    {
+        PesquisaDeProduto = valor;
+        await CarregarProdutos();
+        ProdutoSelecionadoIndex = 0;
+    }
 
     private async Task ValueDeAutoCompleteMudou(string? value)
     {
@@ -574,8 +589,10 @@
         NovoPedido.Endereco = null;
 
         //abri o modal de enderecose for delivery
-        await AbreModalDeEnderecos(pessoa);
+        if (NovoPedido.TipoDePedido == "DELIVERY")
+            await AbreModalDeEnderecos(pessoa);
 
+        await TextFieldProd.FocusAsync();
         await InvokeAsync(StateHasChanged);
     }
     #endregion
@@ -711,6 +728,8 @@
                         await TextFieldDeNumeroDeMesa.SelectAsync();
                     }
                 }
+
+                await TextFieldProd.FocusAsync();
             }
         }
         await base.OnAfterRenderAsync(firstRender);
@@ -723,6 +742,7 @@
             await SelecionarPessoa(pessoa);
         }
     }
+
 
     private async Task HandleKeyDownDialog(KeyboardEventArgs e)
     {
@@ -739,19 +759,68 @@
         if (e.Key == "F3")
         {
             await JS.InvokeVoidAsync("event.preventDefault");
-            await PagarPedido();
+            if (NovoPedido.TipoDePedido != "MESA")
+            {
+                await PagarPedido();
+            }
+            else
+            {
+                await EnviarItensParaMesa();
+            }
         }
+        StateHasChanged();
     }
+
+    private async Task OnKeyDownProdutos(KeyboardEventArgs e)
+    {
+        if (Produtos == null || Produtos.Count == 0)
+            return;
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                ProdutoSelecionadoIndex++;
+                if (ProdutoSelecionadoIndex >= Produtos.Count)
+                    ProdutoSelecionadoIndex = 0;
+                break;
+
+            case "ArrowUp":
+                ProdutoSelecionadoIndex--;
+                if (ProdutoSelecionadoIndex < 0)
+                    ProdutoSelecionadoIndex = Produtos.Count - 1;
+                break;
+
+            case "Enter":
+                var produto = Produtos[ProdutoSelecionadoIndex];
+                await AdicionarProdutoNoPedido(produto);
+                break;
+        }
+
+        StateHasChanged();
+    }
+
 
     private async void OnFocusAutoCompleteManual(FocusEventArgs args)
     {
         MostrarSugestoes = true;
         await ValueDeAutoCompleteMudou(PesquisaPessoa);
     }
+
     private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
     {
 
         //  MostrarSugestoes = false;
+    }
+
+    private async Task OnKeyDownPesquisa(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            if (Produtos.Any())
+                await JS.InvokeVoidAsync("focusElementById", "MudStackDeProduto");
+            else
+                Snackbar.Add("Nenhum produto encontrado para adicionar.", Severity.Warning);
+        }
     }
     #endregion
 

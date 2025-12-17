@@ -65,3 +65,8 @@ window.generatePdfFromLancamentos = async (htmlContent, filename) => {
     html2pdf().set(opt).from(element).output('dataurlnewwindow'); //codigo para abrir em nova aba
 };
 
+window.gerarQrCode = (elementId, text) => {
+    const el = document.getElementById(elementId);
+    el.innerHTML = "";
+    QRCode.toCanvas(el, text, { width: 200 });
+};

@@ -327,12 +327,18 @@
         if (!result.Canceled && result.Data is FechaCaixaDto FechaCaixa)
         {
             ReturnApiRefatored<ClsFechamentoDeCaixa> ResponseAPi = await CaixaService.FechaCaixa(FechaCaixa);
+            var message = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+
             if (ResponseAPi.Status == "success")
             {
                 await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-WEB-FECHA.json");
                 AppState.CaixaAberto = false;
+
+                dataGridRef?.ReloadServerData();
                 StateHasChanged();
             }
+
+            Snackbar.Add(message, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
         }
     }
 

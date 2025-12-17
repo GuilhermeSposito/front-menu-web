@@ -33,22 +33,19 @@
             <MudText Typo="Typo.h4" Style="font-weight: 300">Gestão de Mesas</MudText>
             <MudDivider DividerType="DividerType.FullWidth" Light=true />
         </MudStack>
-        <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-            <MudStack Class="w-50" Row=true>
+        <MudStack Class="w-100 p-3 rounded-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudStack Class="w-100" Row=true>
                 <MudTextField DebounceInterval="500" Value="pesquisaTexto" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente ou número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
-            </MudStack>
-            <MudStack Justify="Justify.FlexStart">
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
             </MudStack>
-            <MudStack>
-                <MudText>*Para ações de uma mesa, clique nos três pontos dela.</MudText>
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudText Color="Color.Error">*Para ações de uma mesa, clique nos três pontos dela.</MudText>
             </MudStack>
         </MudStack>
 
-
         @if (!CarregandoPagina)
         {
-            <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+            <MudStack Class="w-100 h-100 mt-3" AlignItems="AlignItems.Center" Justify="Justify.Center">
                 <MudGrid Spacing="2">
                     @foreach (var mesa in MesasOuComandaList)
                     {
@@ -69,7 +66,7 @@
                                 {
                                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" Class="menu-icone" Color="Color.Inherit">
                                         <MudMenuItem OnClick=@(async () => { await ChamaImpressaoDeItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.Print" Label="Reimprimir Itens" />
-                                        <MudMenuItem OnClick=@(async () => { }) Icon="@Icons.Material.Filled.ClosedCaptionDisabled" Label="Fechar Conta" />
+                                        <MudMenuItem OnClick=@(async () => { await FecharPedido(mesa); }) Icon="@Icons.Material.Filled.ClosedCaptionDisabled" Label="Fechar Conta" />
                                         <MudMenuItem OnClick=@(async () => { await AbreModalDeVerItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.RemoveRedEye" Label="Ver Itens" />
                                         <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                     </MudMenu>
@@ -82,7 +79,17 @@
         }
         else
         {
-
+            @*CARREGANDO PÁGINA*@
+            <MudStack Class="w-100 h-100 mt-3" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudGrid Spacing="2">
+                    @for (var i = 0; i < TotalDeMesasCarregando; i++)
+                    {
+                        <MudItem xs="6" sm="4" md="3" lg="2">
+                            <MudSkeleton Animation="Animation.Wave" Width="100%" Height="250px" Class="rounded-3" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudStack>
         }
 
     </MudLayout>
@@ -101,6 +108,8 @@
 
     //prop de status do websocket
     private string status = "Desconectado";
+
+    private int TotalDeMesasCarregando = 12;
     #endregion
 
     #region Funções de Inicialização da página
@@ -151,8 +160,6 @@
     #endregion
 
     #region Funções Auxiliares
-
-
     //Função de Abrir modal de pedido
     private async Task AbreModalDePedido(ClsMesasEComandas? Mesa = null)
     {
@@ -199,7 +206,7 @@
 
         if (Mesa is null)
         {
-            Snackbar.Add("Erro ao abrir mesa", severity: Severity.Error);
+            Snackbar.Add("Erro ao ver itens da mesa", severity: Severity.Error);
             return;
         }
 
@@ -274,8 +281,10 @@
 
     private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
+        Console.WriteLine("Chegou pedido");
+
         await CarregarMesasEComandas();
-        await ImprimirPedido(novoPedido); // por enquanto todos
+        // await ImprimirPedido(novoPedido); // por enquanto todos
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
         await JS.InvokeVoidAsync("playNotificationSound");
@@ -319,5 +328,76 @@
         else
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
     }
+    #endregion
+
+    #region Função de Fechar Conta
+    private async Task FecharPedido(ClsMesasEComandas MesaOuComanda)
+    {
+        var PedidoMesADto = await CarregaMesaOuComanda(MesaOuComanda);
+        if (PedidoMesADto is null)
+        {
+            Snackbar.Add("Erro ao carregar mesa para fechamento.", Severity.Error);
+            return;
+        }
+
+        var ItensDaMesa = PedidoMesADto.Itens;
+
+        ClsPedido NovoPedido = new ClsPedido
+        {
+            TipoDePedido = "MESA",
+            MesaComandaId = MesaOuComanda.Id,
+            Itens = ItensDaMesa
+        };
+
+        var parameters = new DialogParameters
+         {
+             { "Pedido", NovoPedido }
+         };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = true,
+            MaxWidth = MaxWidth.False,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await PedidosService.FechaMesa(NovoPedido);
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Pedido fechado com sucesso!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao fechar pedido: {string.Join(",", response.Messages)}", Severity.Error);
+            }
+
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task<PedidoMesaDto>? CarregaMesaOuComanda(ClsMesasEComandas MesaOuComanda)
+    {
+        if (MesaOuComanda.CodigoExterno != 0)
+        {
+            var mesa = await PedidosService.GetMesaOcupada(MesaOuComanda.Id);
+
+            if (mesa.Status == "success")
+            {
+                return mesa.Data.Objeto ?? throw new Exception("Pedido não encontrado");
+            }
+
+        }
+        return null!;
+    }
+
     #endregion
 }

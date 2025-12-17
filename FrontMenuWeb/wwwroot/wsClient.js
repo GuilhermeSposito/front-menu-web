@@ -30,7 +30,7 @@ window.socketIO = {
             // Avisando o Blazor
             if (window.DotNet) {
                 DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
-                    .then(() => console.log("Blazor foi notificado!"))
+                    .then(() => console.log(""))
                     .catch(err => console.error("Erro ao notificar Blazor:", err));
             }
         });
@@ -69,7 +69,7 @@ window.socketIO = {
             // Avisando o Blazor
             if (window.DotNet) {
                 DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesa", JSON.stringify(msg))
-                    .then(() => console.log("Blazor foi notificado!"))
+                    .then(() => console.log(""))
                     .catch(err => console.error("Erro ao notificar Blazor:", err));
             }
         });
@@ -146,6 +146,5 @@ window.bloquearAtalhosDoNavegador = function () {
         }
     });
 };
-
 
 

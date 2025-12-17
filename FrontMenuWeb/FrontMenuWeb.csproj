@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
     <PackageReference Include="MudBlazor" Version="8.7.0" />
     <PackageReference Include="MudBlazor.Extensions" Version="8.7.0" />
+    <PackageReference Include="QRCoder" Version="1.7.0" />
     <PackageReference Include="SocketIOClient" Version="3.1.2" />
     <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
     <PackageReference Include="Unimake.DFe" Version="20251117.2020.2" />

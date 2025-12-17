@@ -122,6 +122,11 @@
 
         }
 
+        if (e.Key == "F3")
+        {
+            await JS.InvokeVoidAsync("event.preventDefault");
+            await PagarPedido();
+        }
     }
 
     private async Task OnPedidoMesaRecebido(PedidoMesaDto novoPedido)

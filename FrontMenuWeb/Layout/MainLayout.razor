@@ -33,7 +33,7 @@
                 <MudSpacer />
                 <MudTooltip Text="Ativar/Desativar a impressão" Color="Color.Primary">
                     <MudIconButton Icon="@(ImpressaoDesabilita? @Icons.Material.Filled.PrintDisabled : @Icons.Material.Filled.Print)" Color="@(ImpressaoDesabilita? Color.Error: Color.Success)" OnClick="@AlteraImpressaoDesabilita" />
-                </MudTooltip>            
+                </MudTooltip>
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
                 <MudMenu Variant="Variant.Text"
                          Size="Size.Medium"
@@ -55,7 +55,7 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
                             </MudStack>
                             <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
-                               @MensagemDeCaixa
+                                @MensagemDeCaixa
                             </MudText>
                         </MudPaper>
                     </MudMenuItem>
@@ -166,22 +166,19 @@
 
                     @*Financeiro*@
                     <MudNavGroup Title="Financeiro" Icon="@Icons.Material.Filled.CurrencyExchange" Expanded="false">
-
-                        <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
-                            <MudNavLink Icon="@Icons.Material.Filled.AccountBalance" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/contas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeContas); })">Contas</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.Category" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/categorias", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeCategoriasFinanceiro); })">Categorias</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/formas-de-recebimento", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroFormasDeRecebimento); })">Forma de Recebimento</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/metodos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraFormaDePagamento); })">Método de Pagamentos</MudNavLink>
-                        </MudNavGroup>
-
-                        <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AccountBalance" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/contas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeContas); })">Contas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Category" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/categorias", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeCategoriasFinanceiro); })">Categorias</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/formas-de-recebimento", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroFormasDeRecebimento); })">Forma de Recebimento</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/metodos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraFormaDePagamento); })">Método de Pagamentos</MudNavLink>
+                       <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                         @*<MudNavLink Icon="@Icons.Material.Filled.Sell" Href="/pagemconst">Tiket Médio</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Performance dos Garçons</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/pagemconst">Posição Fiscal</MudNavLink>*@
-                        <MudNavLink Icon="@Icons.Material.Filled.Sell" Href="/vendas/historico-de-vendas">Vendas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" Href="/nfs-estatisticas">NF-e NFC-e Emitidas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/vendas/historico-de-vendas">Vendas Realizadas</MudNavLink>
                         @*<MudNavLink Icon="@Icons.Material.Filled.AddBusiness" Href="/pagemconst">Compras</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.BusinessCenter" Href="/pagemconst">Operações de Caixa</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.NetworkCheck" Href="/pagemconst">Vendas Pela Internet</MudNavLink>
@@ -230,28 +227,7 @@
     private bool ImpressaoDesabilita = false;
 
     #region Funções de WebSocket
-    private async Task Connect()
-    {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIOMesa", "https://syslogicadev.com/api/v1/");
-    }
 
-    private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
-    {
-        await ImprimirPedido(novoPedido); // por enquanto todos
-        await InvokeAsync(StateHasChanged);
-        Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
-        await JS.InvokeVoidAsync("playNotificationSound");
-    }
-
-    private async Task ImprimirPedido(PedidoMesaDto pedido)
-    {
-        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
-
-        if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
-        else
-            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
-    }
     #endregion
 
 
@@ -265,20 +241,20 @@
 
         ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
-        try
-        {
+        /*  try
+          {
 
-            PedidosService.PedidoMesaRecebido += async pedido =>
-            {
-                await InvokeAsync(() => OnPedidoRecebido(pedido));
-            };
+              PedidosService.PedidoMesaRecebido += async pedido =>
+              {
+                  await InvokeAsync(() => OnPedidoRecebido(pedido));
+              };
 
-            await Connect();
-        }
-        catch (Exception)
-        {
-            Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-        }
+              await Connect();
+          }
+          catch (Exception)
+          {
+              Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+          }*/
 
         _theme = new()
         {

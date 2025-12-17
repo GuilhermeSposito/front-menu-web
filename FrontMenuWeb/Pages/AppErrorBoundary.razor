@@ -11,9 +11,10 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
+    //Função para ter uma mensagem mais amigável ao usuário
     private RenderFragment<Exception> RenderErrorContent => ex => @<div>
 @{
-    // 🔍 Define mensagem amigável
+    
     string userMessage = ex.Message.Contains("The JSON value could not be converted", StringComparison.OrdinalIgnoreCase)
     ? "Houve um problema ao processar os dados. Verifique se os valores informados estão corretos."
     : "Ocorreu um erro inesperado ao executar a operação.";

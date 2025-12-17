@@ -3,6 +3,7 @@ using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
+using FrontMenuWeb.Services.Fiscal;
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -74,6 +75,9 @@ public class PedidosService
             QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
         }
 
+        if(QueryDePedido.DataCriadoEmInicio is not null && QueryDePedido.DataCriadoEmFinal is not null)
+            QueryDeFiltros += $"&DataCriadoEmInicio={QueryDePedido.DataCriadoEmInicio?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataCriadoEmFinal={QueryDePedido.DataCriadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
            $"pedidos/finalizados?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 
@@ -136,6 +140,28 @@ public class PedidosService
 
         return retorno!;
     }
+
+    //Tivemos que colocar aqui por causa do problema de não ter o token certo no NFservice, e sim o token da api fiscal
+    public async Task<PaginatedResponse<NFEmitidasDto>> ConsultaNFeEmitidas(DateTime? DataCriadoEmInicio, DateTime? DataCriadoEmFinal, int page = 1, int limit = 10)
+    {
+        var QueryDeFiltros = "";
+
+        if(DataCriadoEmInicio is not null && DataCriadoEmFinal is not null)
+            QueryDeFiltros += $"&DataCriadoEmInicio={DataCriadoEmInicio?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataCriadoEmFinal={DataCriadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
+
+        var httpResponse = await _http.GetAsync($"nfs?page={page}&limit={limit}{QueryDeFiltros}");
+
+        var retorno = await httpResponse.Content.ReadFromJsonAsync<PaginatedResponse<NFEmitidasDto>>();
+        return retorno ?? new PaginatedResponse<NFEmitidasDto>();
+    }
+
+    public async Task<ReturnApiRefatored<NFEmitidasDto>> DeleteRegistroDaNF(int id)
+    {
+        var httpResponse = await _http.DeleteAsync($"nfs/{id}");
+        var retorno = await httpResponse.Content.ReadFromJsonAsync<ReturnApiRefatored<NFEmitidasDto>>();
+        return retorno ?? new ReturnApiRefatored<NFEmitidasDto>();
+    }
+
 }
 
 

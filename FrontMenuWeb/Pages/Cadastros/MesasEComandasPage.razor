@@ -15,7 +15,9 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject FuncionariosService FuncionariosService
 @using MudBlazor.Extensions.Services
+@using QRCoder
 @inject MesasServices MesasServices
+@inject IJSRuntime JS
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -46,9 +48,14 @@
                 <AvisoDeDadosVazios ReferenciaDados="Mesas Ou Comandas" />
             </NoRecordsContent>
             <ToolBarContent>
-                @if(MesasSelecionadas.Count > 0)
+                @if (MesasSelecionadas.Count > 0)
                 {
                     <MudButton Class="m-3" OnClick=DeletarMesaOuComanda Variant="Variant.Filled" Color="Color.Error">Excluir Selecionados</MudButton>
+                    <MudButton Class="m-3" OnClick=GerarQr Variant="Variant.Filled" Color="Color.Primary">Criar QrCode</MudButton>
+
+
+
+
                 }
 
             </ToolBarContent>
@@ -77,9 +84,9 @@
                                      Icon="@Icons.Material.TwoTone.MoreVert">
 
                                 <MudMenuItem OnClick=@(async p => { await AbreEdicaoOuCriacaoDeMesaOuComanda(false, context.Item); })
-                                                 Icon="@Icons.Material.TwoTone.Edit"
-                                                 IconColor="Color.Primary"
-                                                 Label="Editar" ></MudMenuItem>   
+                                             Icon="@Icons.Material.TwoTone.Edit"
+                                             IconColor="Color.Primary"
+                                             Label="Editar"></MudMenuItem>
 
                             </MudMenu>
                         </MudTooltip>
@@ -203,7 +210,47 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao excluir mesa(s) / comanda(s): {ex.Message}", Severity.Error);
-        } 
+        }
+    }
+
+    private MarkupString qrCodeMarkup;
+    private List<MarkupString> ListaDeQrsCodeMesa = new List<MarkupString>();
+    private async void GerarQr() // Pode ser void se não houver await
+    {
+        foreach(var mesa in MesasSelecionadas)
+        {
+            using var generator = new QRCodeGenerator();
+            using var qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?merchant={AppState.MerchantLogado.Id}&mesa={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
+            var qrCode = new SvgQRCode(qrCodeData);
+            string svgText = qrCode.GetGraphic(5);
+
+            qrCodeMarkup = new MarkupString(svgText);
+
+            ListaDeQrsCodeMesa.Add(qrCodeMarkup);
+        }
+        StateHasChanged();
+        await Task.Delay(100);
+
+        await GerarPdf();
+    }
+    private async Task GerarPdf()
+    {
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioPedidos", "RelatorioPedidos.pdf");
     }
 
 }
+
+
+<div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
+    <div class="d-flex flex-column align-items-center justify-content-center">
+        <!-- INSERÇÃO DO QR CODE AQUI -->
+
+        @foreach(var qr in ListaDeQrsCodeMesa)
+        {
+            <div id="qrcode" style="width:400px;height:400px;">
+                @qr
+            </div>
+        }
+      
+    </div>
+</div>
