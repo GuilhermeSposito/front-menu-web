@@ -268,7 +268,7 @@
         NovoPedido.TipoDePedido = "MESA";
         NovoPedido.EtapaPedido = "PREPARANDO";
 
-        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);
+        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesaPublic(MerchantId!,NovoPedido);
 
         string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
         Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
