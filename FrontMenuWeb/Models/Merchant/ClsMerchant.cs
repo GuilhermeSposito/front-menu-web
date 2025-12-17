@@ -8,7 +8,7 @@ public class ClsMerchant
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("email")] public string Email { get; set; } = string.Empty;
     [JsonPropertyName("razaoSocial")] public string RazaoSocial { get; set; } = string.Empty;
-    [JsonPropertyName("ImagemLogo")] public string ImagemLogo { get; set; } = string.Empty;
+    [JsonPropertyName("ImagemLogo")] public string? ImagemLogo { get; set; }
     [JsonPropertyName("NomeFantasia")] public string NomeFantasia { get; set; } = string.Empty;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Grupos")] public List<ClsGrupo> Grupos { get; set; } = new List<ClsGrupo>();
     [JsonPropertyName("marcaDepartamento")] public string? MarcaDepartamento { get; set; } = string.Empty;

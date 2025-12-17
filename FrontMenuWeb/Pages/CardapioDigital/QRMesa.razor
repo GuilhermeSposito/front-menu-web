@@ -2,10 +2,76 @@
 @using FrontMenuWeb.Models.Merchant
 @layout CardapioDigitalLayout
 @inject MesasServices MesasServices
+@inject MerchantServices MerchantService
+@inject ProdutoService ProdutoService
 
-Mesa: @MesaId
-<br />
-MerchantId: @MerchantId
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px">
+    <MudLayout>
+
+        <MudPaper Class="w-100 rounded-2 mt-2" Style="background-color: var(--mud-palette-primary);">
+            <MudGrid Class="mt-1">
+                <MudItem xs="12" md="4" lg="4">
+                    <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudImage Src="@(string.IsNullOrEmpty(Merchant.ImagemLogo) ? "images/SOPHOSLOGOLOGIN.jpg" : Merchant.ImagemLogo)" Alt="Logo" Width="200" Height="200" Class="m-4 rounded-circle" />
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="8" lg="8" Class="d-flex align-items-center">
+                    <MudStack Class="w-100 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudText Typo="Typo.h3" Class="text-white mt-2">@Merchant.NomeFantasia</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="text-white">Mesa: @Mesa.CodigoExterno.ToString().PadLeft(2, '0')</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-white">*Tempo de preparo em até @Merchant.TempoDePreparacaoEmMin Minutos</MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <MudPaper Class="w-100 rounded-2 mt-2" Style="background-color: var(--mud-palette-background);">
+            @if (Carregando)
+            {
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 300px;">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+                </MudStack>
+            }
+            else
+            {
+               <MudGrid Class="mt-2">
+                    @foreach(var produto in Produtos)
+                    {
+                        <MudItem xs="12" md="4" lg="3">
+                            <MudPaper Elevation="6"Class="d-flex align-center pa-2 transition-all product-card"Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                                <MudGrid Class="h-100">
+                                    <!-- Avatar -->
+                                    <MudItem xs="3" Class="d-flex justify-center align-center">
+                                        <MudAvatar Size="Size.Large"
+                                                   Color="Color.Primary"
+                                                   Square="true"
+                                                   Class="fw-bold text-white">
+                                            <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
+                                        </MudAvatar>
+                                    </MudItem>
+
+                                    <!-- Informações -->
+                                    <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                        <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
+                                            @produto.CodigoInterno - @produto.Descricao
+                                        </MudText>
+                                        <MudText Typo="Typo.body2">
+                                            @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
+                                        </MudText>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+                        </MudItem>
+                    }
+               </MudGrid>
+            }
+        </MudPaper>
+
+    </MudLayout>
+</MudPaper>
+
 
 @code {
 
@@ -19,12 +85,16 @@ MerchantId: @MerchantId
 
     //Propriedades de dados
     private ClsMesasEComandas Mesa = new ClsMesasEComandas();
+    private ClsMerchant Merchant = new ClsMerchant();
+    private List<ClsProduto> Produtos = new List<ClsProduto>();
     #endregion
 
     #region Funções de Inicialização
     protected override async Task OnInitializedAsync()
     {
         await CarregaMesa();
+        await CarregaMerchant();
+        await CarregaProdutos();
     }
 
     private async Task CarregaMesa()
@@ -48,7 +118,6 @@ MerchantId: @MerchantId
             {
                 Mesa = Response.Data.Objeto ?? new ClsMesasEComandas() { CodigoExterno = 0 };
                 Snackbar.Add($"Mesa carregada com sucesso", Severity.Success);
-                Carregando = false;
             }
             else
             {
@@ -59,6 +128,55 @@ MerchantId: @MerchantId
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao carregar mesa", Severity.Error);
+        }
+    }
+
+    private async Task CarregaMerchant()
+    {
+        try
+        {
+            if (MesaId is null)
+            {
+                Snackbar.Add("MesaId não informada.", Severity.Error);
+                return;
+            }
+
+            if (MerchantId is null)
+            {
+                Snackbar.Add("Estabelecimento não informado.", Severity.Error);
+                return;
+            }
+
+            var Response = await MerchantService.GetMerchantPublicAsync(MerchantId);
+            if (Response.Status == "success")
+            {
+                Merchant = Response.Data.Objeto ?? new ClsMerchant();
+                Snackbar.Add($"Merchant {Merchant.NomeFantasia} carregado com sucesso", Severity.Success);
+                Carregando = false;
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao carregar Estabelecimento: {string.Join(",", Response.Messages)}", Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Estabelecimento", Severity.Error);
+        }
+    }
+
+    private async Task CarregaProdutos()
+    {
+        try
+        {
+            var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, null, null);
+            Produtos = PaginatedResponse.Data ?? new List<ClsProduto>();
+        
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar produtos", Severity.Error);
         }
     }
     #endregion
