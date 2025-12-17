@@ -12,15 +12,7 @@
                 <MudSpacer />
                 <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
             </MudAppBar>
-            <MudDrawer @bind-Open="@_open" ClipMode="_clipMode" Breakpoint="@_breakpoint" Elevation="1" Variant="@DrawerVariant.Mini">
-                <MudNavMenu>
-                    <MudText Typo="Typo.h6" Class="px-4">@ProgramName</MudText>
-                    <MudDivider Class="my-2" />
-                    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-                    <MudNavLink Href="counter" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Countertops">Counter</MudNavLink>
-                    <MudNavLink Href="claims" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Claims</MudNavLink>
-                    <MudNavLink @onclick="Logout" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Logout</MudNavLink>
-                </MudNavMenu>
+            <MudDrawer @bind-Open="@_open" ClipMode="_clipMode" Breakpoint="@_breakpoint" Elevation="1" Variant="@DrawerVariant.Mini">          
             </MudDrawer>
         </Authorized>
 
@@ -51,7 +43,7 @@
         _open = !_open;
 
         if (_open)
-            ProgramName = "Sophos Menu";
+            ProgramName = "Sophos";
         else
             ProgramName = "";
 

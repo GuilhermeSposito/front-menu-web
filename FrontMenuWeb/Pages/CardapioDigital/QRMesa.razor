@@ -1,0 +1,66 @@
+﻿@page "/qrmesa"
+@using FrontMenuWeb.Models.Merchant
+@layout CardapioDigitalLayout
+@inject MesasServices MesasServices
+
+Mesa: @MesaId
+<br />
+MerchantId: @MerchantId
+
+@code {
+
+    #region Propriedades da Página
+    //Query Strings de entrada
+    [SupplyParameterFromQuery] public string? MesaId { get; set; }
+    [SupplyParameterFromQuery] public string? MerchantId { get; set; }
+
+    //props de inicialização
+    private bool Carregando { get; set; } = true;
+
+    //Propriedades de dados
+    private ClsMesasEComandas Mesa = new ClsMesasEComandas();
+    #endregion
+
+    #region Funções de Inicialização
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregaMesa();
+    }
+
+    private async Task CarregaMesa()
+    {
+        try
+        {
+            if (MesaId is null)
+            {
+                Snackbar.Add("MesaId não informada.", Severity.Error);
+                return;
+            }
+
+            if (MerchantId is null)
+            {
+                Snackbar.Add("Estabelecimento não informado.", Severity.Error);
+                return;
+            }
+
+            var Response = await MesasServices.GetMesaPublic(MerchantId, MesaId);
+            if (Response.Status == "success")
+            {
+                Mesa = Response.Data.Objeto ?? new ClsMesasEComandas() { CodigoExterno = 0 };
+                Snackbar.Add($"Mesa carregada com sucesso", Severity.Success);
+                Carregando = false;
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao carregar mesa: {string.Join(",", Response.Messages)}", Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar mesa", Severity.Error);
+        }
+    }
+    #endregion
+
+}

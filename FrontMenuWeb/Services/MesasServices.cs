@@ -47,4 +47,11 @@ public class MesasServices
         var deletedMesa = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMesasEComandas>>();
         return deletedMesa ?? new ReturnApiRefatored<ClsMesasEComandas>();
     }
+
+    public async Task<ReturnApiRefatored<ClsMesasEComandas>> GetMesaPublic(string IdDoMerchant, string IdDaMEsa)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsMesasEComandas>>($"mesas-comandas/qr/{IdDoMerchant}/{IdDaMEsa}");
+        return response ?? new ReturnApiRefatored<ClsMesasEComandas>();
+    }
+
 }

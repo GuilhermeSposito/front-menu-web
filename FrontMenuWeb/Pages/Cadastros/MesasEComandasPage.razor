@@ -108,7 +108,7 @@
     private bool CarregandoMesas = false;
     private MudDataGrid<ClsMesasEComandas>? dataGridRef;
 
-
+    private List<MarkupString> ListaDeQrsCodeMesa = new List<MarkupString>();
 
     private HashSet<ClsMesasEComandas> MesasSelecionadas = new HashSet<ClsMesasEComandas>();
     void SelectedItemsChanged(HashSet<ClsMesasEComandas> items)
@@ -213,14 +213,14 @@
         }
     }
 
-    private MarkupString qrCodeMarkup;
-    private List<MarkupString> ListaDeQrsCodeMesa = new List<MarkupString>();
+
     private async void GerarQr() // Pode ser void se não houver await
     {
-        foreach(var mesa in MesasSelecionadas)
+        MarkupString qrCodeMarkup;
+        foreach (var mesa in MesasSelecionadas)
         {
             using var generator = new QRCodeGenerator();
-            using var qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?merchant={AppState.MerchantLogado.Id}&mesa={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
+            using var qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
             var qrCode = new SvgQRCode(qrCodeData);
             string svgText = qrCode.GetGraphic(5);
 
@@ -243,14 +243,11 @@
 
 <div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
     <div class="d-flex flex-column align-items-center justify-content-center">
-        <!-- INSERÇÃO DO QR CODE AQUI -->
-
-        @foreach(var qr in ListaDeQrsCodeMesa)
+        @foreach (var qr in ListaDeQrsCodeMesa)
         {
             <div id="qrcode" style="width:400px;height:400px;">
                 @qr
             </div>
         }
-      
     </div>
 </div>
