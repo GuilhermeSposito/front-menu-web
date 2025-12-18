@@ -8,13 +8,14 @@
 @inject MerchantServices MerchantService
 @inject ProdutoService ProdutoService
 @inject PedidosService PedidosService
+@inject GrupoServices GrupoServices
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
 
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px">
-    <MudLayout>
+    <MudLayout Class="h-100">
 
         <MudPaper Class="w-100 rounded-2 mt-2" Style="background-color: var(--mud-palette-primary);">
             <MudGrid Class="mt-1">
@@ -32,9 +33,21 @@
                     </MudStack>
                 </MudItem>
             </MudGrid>
+            <MudTabs Centered=true SliderAnimation=true>
+                <MudTabPanel OnClick=@(async () => { await FiltrarProdutosPorGrupo(null); }) Text=@(Carregando ? "" : "Todos") />
+                @foreach (var grupo in Grupos)
+                {
+                    <MudTabPanel OnClick=@(async () => { await FiltrarProdutosPorGrupo(grupo.Id); }) Text="@grupo.Descricao" />
+                }
+            </MudTabs>
+            <MudStack Class="p-2" Style="background-color: var(--mud-palette-surface);">
+                <MudTextField Value=FiltroDeBusca ValueChanged=OnPesquisaChanged @ref=TextFieldProd Clearable=true ClearIcon="@Icons.Material.Filled.Close" Class="w-100 rounded-2 mt-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto" Variant="Variant.Outlined" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true DebounceInterval="500"></MudTextField>
+            </MudStack>
         </MudPaper>
 
-        <MudPaper Class="w-100 rounded-2 mt-2" Style="background-color: var(--mud-palette-background);">
+
+
+        <MudPaper Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-background);">
             @if (Carregando)
             {
                 <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 300px;">
@@ -43,42 +56,57 @@
             }
             else
             {
-                <MudGrid Class="mt-2">
-                    @foreach (var produto in Produtos)
-                    {
-                        <MudItem xs="12" md="4" lg="3">
-                            <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
-                                <MudGrid Class="h-100">
-                                    <!-- Avatar -->
-                                    <MudItem xs="3" Class="d-flex justify-center align-center">
-                                        <MudAvatar Size="Size.Large"
-                                                   Color="Color.Primary"
-                                                   Square="true"
-                                                   Class="fw-bold text-white">
-                                            <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
-                                        </MudAvatar>
-                                    </MudItem>
+                if (Produtos.Count > 0)
+                {
+                    <MudGrid Class="mt-2">
+                        @foreach (var produto in Produtos)
+                        {
+                            <MudItem xs="12" md="4" lg="3">
+                                <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                                    <MudGrid Class="h-100">
+                                        <MudItem xs="3" Class="d-flex justify-center align-center">
+                                            <MudAvatar Size="Size.Large"
+                                                       Color="Color.Primary"
+                                                       Square="true"
+                                                       Class="fw-bold text-white">
+                                                <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
+                                            </MudAvatar>
+                                        </MudItem>
 
-                                    <!-- Informações -->
-                                    <MudItem xs="9" Class="d-flex flex-column justify-center">
-                                        <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
-                                            @produto.CodigoInterno - @produto.Descricao
-                                        </MudText>
-                                        <MudText Typo="Typo.body2">
-                                            @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
-                                        </MudText>
-                                    </MudItem>
-                                </MudGrid>
-                            </MudPaper>
-                        </MudItem>
-                    }
-                </MudGrid>
+                                        <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                            <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
+                                                @produto.Descricao
+                                            </MudText>
+                                            <MudText Typo="Typo.body2">
+                                                @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudStack AlignItems="AlignItems.Center"
+                              Justify="Justify.Center"
+                              Style="width: 100%; height: 450px; opacity: 0.4;">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                            Nenhum item
+                        </MudText>
+                        <MudText Typo="Typo.caption" Align="Align.Center">
+                            Os produtos aparecerão aqui quando existirem.
+                        </MudText>
+                    </MudStack>
+                }
             }
         </MudPaper>
 
         @if (NovoPedido.Itens.Count > 0 && !_open)
         {
-            <MudFab Class="floating-green-dot" OnClick=@(()=> {OpenDrawer();}) Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ShoppingCart" DropShadow="false" />
+            <MudFab Class="floating-green-dot" OnClick=@(() => { OpenDrawer(); }) Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ShoppingCart" DropShadow="false" />
         }
 
     </MudLayout>
@@ -99,8 +127,13 @@
     private ClsMesasEComandas Mesa = new ClsMesasEComandas();
     private ClsMerchant Merchant = new ClsMerchant();
     private List<ClsProduto> Produtos = new List<ClsProduto>();
-
+    private List<ClsGrupo> Grupos = new List<ClsGrupo>();
     private ClsPedido NovoPedido = new();
+
+    //Propriedades de Filtro
+    private MudTextField<string> TextFieldProd = new MudTextField<string>();
+    private string? FiltroDeBusca { get; set; } = null;
+    private int? GrupoSelecionadoId { get; set; } = null;
     #endregion
 
     #region Funções de Inicialização
@@ -109,6 +142,7 @@
         await CarregaMesa();
         await CarregaMerchant();
         await CarregaProdutos();
+        await CarregaGrupos();
     }
 
     private async Task CarregaMesa()
@@ -131,7 +165,6 @@
             if (Response.Status == "success")
             {
                 Mesa = Response.Data.Objeto ?? new ClsMesasEComandas() { CodigoExterno = 0 };
-                Snackbar.Add($"Mesa carregada com sucesso", Severity.Success);
             }
             else
             {
@@ -165,7 +198,6 @@
             if (Response.Status == "success")
             {
                 Merchant = Response.Data.Objeto ?? new ClsMerchant();
-                Snackbar.Add($"Merchant {Merchant.NomeFantasia} carregado com sucesso", Severity.Success);
                 Carregando = false;
             }
             else
@@ -184,13 +216,25 @@
     {
         try
         {
-            var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, null, null);
+            var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, FiltroDeBusca, GrupoSelecionadoId);
             Produtos = PaginatedResponse.Data ?? new List<ClsProduto>();
-
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao carregar produtos", Severity.Error);
+        }
+    }
+
+    private async Task CarregaGrupos()
+    {
+        try
+        {
+            Grupos = await GrupoServices.GetGruposPublicAsync(MerchantId!);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar grupos", Severity.Error);
         }
     }
     #endregion
@@ -268,7 +312,7 @@
         NovoPedido.TipoDePedido = "MESA";
         NovoPedido.EtapaPedido = "PREPARANDO";
 
-        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesaPublic(MerchantId!,NovoPedido);
+        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesaPublic(MerchantId!, NovoPedido);
 
         string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
         Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
@@ -283,6 +327,27 @@
         _open = false;
 
     }
+    #endregion
+
+    #region Funções de Filtro
+    private async Task FiltrarProdutosPorGrupo(int? grupoId)
+    {
+        Carregando = true;
+        GrupoSelecionadoId = grupoId;
+        await CarregaProdutos();
+        Carregando = false;
+    }
+
+    private async void OnPesquisaChanged(string valor)
+    {
+        FiltroDeBusca = valor;
+
+        Carregando = true;
+        await CarregaProdutos();
+        Carregando = false;
+        StateHasChanged();
+    }
+
     #endregion
 
     #region Logica do Drawer
@@ -346,12 +411,11 @@
             </MudTooltip>
         </MudStack>
     </MudDrawerHeader>
-    <MudDrawerContainer>
+    <MudDrawerContainer Class="h-100">
         <MudStack Class="w-100 h-100">
             @*Carrinho*@
-            <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
-                <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
-                <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar</MudButton>
+            <MudStack class="p-1" Row=true Justify="Justify.FlexEnd">
+                <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar Carrinho</MudButton>
             </MudStack>
 
             @*itens*@
@@ -360,7 +424,10 @@
                 {
                     <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
                         <MudStack>
-                            <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="@(async () => { NovoPedido.Itens.Remove(produtoNoPedido); })" />
+                            </MudStack>
                             <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
                             @if (produtoNoPedido.Complementos.Count > 0)
                             {
@@ -378,9 +445,13 @@
             </MudStack>
         </MudStack>
         <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
-                  Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+                  Style="position: sticky; bottom: 0; z-index: 9999; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+            <MudStack AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Total dos Itens: @NovoPedido.Itens.Sum(i => i.PrecoTotal).ToString("C")</MudText>
+            </MudStack>
+            
             <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
-                Enviar Itens Para a Mesa (F3)
+                Enviar Itens Para a Mesa
             </MudButton>
         </MudPaper>
     </MudDrawerContainer>

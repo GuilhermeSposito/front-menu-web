@@ -17,6 +17,12 @@ public class GrupoServices
         return response ?? new List<ClsGrupo>();
     }
 
+    public async Task<List<ClsGrupo>> GetGruposPublicAsync(string IdMerchant)
+    {
+        var response = await _HttpClient.GetFromJsonAsync<List<ClsGrupo>>($"grupos/public/{IdMerchant}");
+        return response ?? new List<ClsGrupo>();
+    }
+
     public async Task<HttpResponseMessage> AdicionaGrupo(ClsGrupo NovoGrupo)
     {
         var response = await _HttpClient.PostAsJsonAsync("grupos/create", NovoGrupo);
