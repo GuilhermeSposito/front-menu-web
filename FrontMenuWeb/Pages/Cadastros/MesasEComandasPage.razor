@@ -4,6 +4,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Mesas
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -108,7 +109,7 @@
     private bool CarregandoMesas = false;
     private MudDataGrid<ClsMesasEComandas>? dataGridRef;
 
-    private List<MarkupString> ListaDeQrsCodeMesa = new List<MarkupString>();
+    private List<SuporteDeImpressaoDeQrCode> SuporteDeImpressaoDeQrCodes = new List<SuporteDeImpressaoDeQrCode>();
 
     private HashSet<ClsMesasEComandas> MesasSelecionadas = new HashSet<ClsMesasEComandas>();
     void SelectedItemsChanged(HashSet<ClsMesasEComandas> items)
@@ -216,17 +217,23 @@
 
     private async void GerarQr() // Pode ser void se não houver await
     {
+
         MarkupString qrCodeMarkup;
         foreach (var mesa in MesasSelecionadas)
         {
             using var generator = new QRCodeGenerator();
-            using var qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
-            var qrCode = new SvgQRCode(qrCodeData);
+            using QRCodeData qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
+            SvgQRCode qrCode = new SvgQRCode(qrCodeData);
             string svgText = qrCode.GetGraphic(5);
-
             qrCodeMarkup = new MarkupString(svgText);
 
-            ListaDeQrsCodeMesa.Add(qrCodeMarkup);
+            var suporteQr = new SuporteDeImpressaoDeQrCode
+            {
+                IdMesa = mesa.CodigoExterno,
+                CodigoExternoMesa = mesa.CodigoExterno.ToString().PadLeft(2,'0'),
+                QrCodeSvg = qrCodeMarkup
+            };
+            SuporteDeImpressaoDeQrCodes.Add(suporteQr);
         }
         StateHasChanged();
         await Task.Delay(100);
@@ -238,15 +245,20 @@
         await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioPedidos", "RelatorioPedidos.pdf");
     }
 
+
+
 }
 
 
 <div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
     <div class="d-flex flex-column align-items-center justify-content-center">
-        @foreach (var qr in ListaDeQrsCodeMesa)
+        @foreach (var qr in SuporteDeImpressaoDeQrCodes)
         {
-            <div id="qrcode" style="width:400px;height:400px;">
-                @qr
+            <div id="qrcode" class="w-100 d-flex flex-column align-items-center justify-content-center" style="width:400px;height:400px;">
+                @qr.QrCodeSvg
+                <div style="text-align:center; margin-top:10px;">
+                    <strong>Mesa: @qr.CodigoExternoMesa</strong>
+                </div>
             </div>
         }
     </div>
