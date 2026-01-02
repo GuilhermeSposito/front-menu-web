@@ -32,6 +32,7 @@ builder.Services.AddScoped<MerchantServices>();
 builder.Services.AddScoped<PessoasService>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
+builder.Services.AddScoped<EntregasMachineService>();
 
 
 builder.Services.AddScoped(sp =>
@@ -102,6 +103,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<FuncionariosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasMachineService>());
 ConfigureApiFiscalSoophosClient(builder.Services.AddHttpClient<NfService>());
 
 
