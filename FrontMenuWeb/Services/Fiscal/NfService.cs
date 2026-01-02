@@ -61,8 +61,10 @@ public class NfService : INfService
     public async Task<ReturnApiRefatored<NfeReturnDto>> GeraNFe(ClsPedido Pedido)
     {
         var httpResponse = await _http.PostAsJsonAsync("nf/enviar-nfe", Pedido);
+
+        var resposta = await httpResponse.Content.ReadAsStringAsync();
         if (!httpResponse.IsSuccessStatusCode)
-            return new ReturnApiRefatored<NfeReturnDto>() { Status = "error", Messages = new List<string> { "Erro ao enviar NF-e"} } ;
+            return new ReturnApiRefatored<NfeReturnDto>() { Status = "error", Messages = new List<string> { "Erro ao enviar NF-e", $"Motivo da rejeição {resposta}" } } ;
 
         var content = await httpResponse.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<ReturnApiRefatored<NfeReturnDto>>(content);

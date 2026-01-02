@@ -170,7 +170,7 @@
                         <MudNavLink Icon="@Icons.Material.Filled.Category" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/categorias", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeCategoriasFinanceiro); })">Categorias</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/formas-de-recebimento", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroFormasDeRecebimento); })">Forma de Recebimento</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.MoneyOffCsred" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/metodos", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraFormaDePagamento); })">Método de Pagamentos</MudNavLink>
-                       <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
@@ -241,21 +241,6 @@
 
         ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
-        /*  try
-          {
-
-              PedidosService.PedidoMesaRecebido += async pedido =>
-              {
-                  await InvokeAsync(() => OnPedidoRecebido(pedido));
-              };
-
-              await Connect();
-          }
-          catch (Exception)
-          {
-              Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-          }*/
-
         _theme = new()
         {
             PaletteLight = _lightPalette,
@@ -283,9 +268,18 @@
                 );
 
                 if (merchant is not null)
+                {
                     AppState.MerchantLogado = merchant;
+
+                    Console.WriteLine($"Token Api Entregas ==> {merchant.TokenApiEntrega}");
+
+                    if (!(await LocalStorage.ContainKeyAsync("authEntregaToken")))
+                    {
+                        if (!string.IsNullOrEmpty(merchant.TokenApiEntrega))
+                            await LocalStorage.SetItemAsync("authEntregaToken", merchant.TokenApiEntrega);
+                    }
+                }
             }
-            //AppState.MerchantLogado = await MerchantServices.GetMerchantAsync();
         }
 
         await AtualizaStatusDoCaixa();

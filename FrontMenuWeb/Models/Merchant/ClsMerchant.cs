@@ -48,6 +48,7 @@ public class ClsMerchant
     [JsonPropertyName("TempoDeRetiradaEMmin")] public int TempoDeRetiradaEMmin { get; set; }
     [JsonPropertyName("TempoDePreparacaoEmMin")] public int TempoDePreparacaoEmMin { get; set; }
     [JsonPropertyName("QtdViasDaComanda")] public int QtdViasDaComanda { get; set; }
+    [JsonPropertyName("TokenApiEntrega")] public string? TokenApiEntrega { get; set; }
 
 }
 

@@ -453,7 +453,7 @@
             if (string.IsNullOrEmpty(Pessoa?.Cnpj) || string.IsNullOrEmpty(Pessoa?.InscricaoEstadual)
             )
             {
-                throw new Exception("O cliente selecionado não possui dados fiscais completos para emissão de NF-e. Verifique o cadastro do cliente.");
+                throw new Exception("O cliente selecionado não possui dados fiscais incompletos para emissão de NF-e. Verifique o cadastro do cliente.");
             }
             #endregion
 

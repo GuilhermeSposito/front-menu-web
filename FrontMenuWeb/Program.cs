@@ -54,6 +54,12 @@ builder.Services.AddHttpClient("ApiFiscalSophos", client =>
 })
 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 
+builder.Services.AddHttpClient("ApiEntregasSophos", client =>
+{
+    client.BaseAddress = new Uri("https://syslogicadev.com/api-entregas-sophos/v1/");
+})
+.AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+
 void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
 {
     builder.ConfigureHttpClient(client =>

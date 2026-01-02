@@ -150,15 +150,25 @@
                         <MudStack Style="background-color: var(--mud-palette-background);" Class="w-100 p-2">
 
                             <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                <MudStack>
-                                    <MudText>Parcelado</MudText>
-                                    <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { if(ECriacao){ Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } }})" />
-                                </MudStack>
+                                @if (ECriacao)
+                                {
+                                    <MudStack>
+                                        <MudText>Parcelado</MudText>
+                                        <MudSwitch T="bool" Value=@Lancamento.Parcelado Color="Color.Success" ValueChanged="@(async valor => { if (ECriacao) { Lancamento.Parcelado = valor; if (valor) { Lancamento.EDespesaFixa = !valor; } } })" />
+                                    </MudStack>
 
-                                <MudStack>
-                                    <MudText>Despesa Fixa</MudText>
-                                    <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => {if(ECriacao){ Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; }}})" />
-                                </MudStack>
+                                    <MudStack>
+                                        <MudText>Despesa Fixa</MudText>
+                                        <MudSwitch T="bool" Value=@Lancamento.EDespesaFixa Color="Color.Success" ValueChanged="@(async valor => { if (ECriacao) { Lancamento.EDespesaFixa = valor; if (valor) { Lancamento.Parcelado = !valor; } } })" />
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    @if (Lancamento.EDespesaFixa)
+                                    {
+                                        <MudText Color="Color.Error">***Despesa Fixa***</MudText>
+                                    }
+                                }
                             </MudStack>
 
                             @if ((Lancamento.Parcelado || Lancamento.EDespesaFixa) && ECriacao)
@@ -187,7 +197,7 @@
                                         @if (TipoDeDespesaFixa is not null && TipoDeDespesaFixa == 1)
                                         {
                                             <MudStack Class="w-100" Row=true Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value=@Lancamento.Segunda >Segunda-feira</MudCheckBox>
+                                                <MudCheckBox Color="Color.Primary" T="bool" @bind-Value=@Lancamento.Segunda>Segunda-feira</MudCheckBox>
                                                 <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Terca">Terça-feira</MudCheckBox>
                                                 <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Quarta">Quarta-feira</MudCheckBox>
                                                 <MudCheckBox Color="Color.Primary" T="bool" @bind-Value="Lancamento.Quinta">Quinta-feira</MudCheckBox>
@@ -342,7 +352,8 @@
         new ClsTipoDeLancamento() { Id = 1, Descricao = "Receita", fator = 1 },
         new ClsTipoDeLancamento() { Id = 2, Descricao = "Despesa", fator = -1  }
     };
-    private ClsLancamentoFinanceiro Lancamento { get; set; } = new ClsLancamentoFinanceiro();
+
+    [Parameter] public ClsLancamentoFinanceiro Lancamento { get; set; } = new ClsLancamentoFinanceiro();
     private List<ClsMetodosDePagMerchant> MetodosDePagamento = new List<ClsMetodosDePagMerchant>();
     private List<ClsCategoria> Categorias { get; set; } = new List<ClsCategoria>();
     private List<ClsSubCategoria> SubsCategorias { get; set; } = new List<ClsSubCategoria>();
@@ -368,16 +379,14 @@
                 new ClsTipoDeLancamento() { Id = 2, Descricao = "Despesa", fator = -1 }
              };
 
-            Lancamento = new ClsLancamentoFinanceiro()
-            {
-                TipoDeLancamento = clsTipoDeLancamentos[1] // "Despesa" como default
-            };
+            if (ECriacao)
+                Lancamento = new ClsLancamentoFinanceiro()
+                {
+                    TipoDeLancamento = clsTipoDeLancamentos[1] // "Despesa" como default
+                };
 
             if (!ECriacao)
             {
-                Lancamento = await LancamentoFinanceiroService.GetLancamentoAsync(IdDoLancamento) ?? throw new Exception("Lançamento não encontrado");
-
-                //carregar pessoa selecionada
                 if (Lancamento.Pessoa is not null)
                 {
                     PesquisaPessoa = Lancamento.Pessoa.Nome ?? Lancamento.Pessoa.NomeFantasia;

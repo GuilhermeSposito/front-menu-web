@@ -568,10 +568,12 @@
             IdDoLancamento = LancamentoParaEditar.Id;
         }
 
+        
         var parameters = new DialogParameters
         {
            { "IdDoLancamento", IdDoLancamento},
-           { "ECriacao", CriandoLancamento}
+           { "ECriacao", CriandoLancamento},
+           { "Lancamento", LancamentoParaEditar ?? new ClsLancamentoFinanceiro()}
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
@@ -581,7 +583,9 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            await dataGridRef.ReloadServerData();
+            if (CriandoLancamento)
+                await dataGridRef?.ReloadServerData()!;
+
             StateHasChanged();
         }
     }
@@ -709,8 +713,6 @@
 
         string MensagemDeRetorno = string.Join(", ", ResponsaApi.Status == "success" ? ResponsaApi.Data.Messages : ResponsaApi.Messages);
         Snackbar.Add(MensagemDeRetorno, ResponsaApi.Status == "success" ? Severity.Success : Severity.Error);
-        if (ResponsaApi.Status == "success")
-            await dataGridRef!.ReloadServerData();
     }
 
     private async Task DeclaraPagos()
