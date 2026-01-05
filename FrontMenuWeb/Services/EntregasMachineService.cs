@@ -19,5 +19,28 @@ public class EntregasMachineService
         
         return response?.Data.Lista ??  new List<EmpresaMachine>();
     }
+
+    public async Task<ReturnApiRefatored<EmpresaMachine>> CreateEmpresa(EmpresaMachine empresa)
+    {
+        var response = await _http.PostAsJsonAsync($"empresas-machine-integradas", empresa);
+        var responseContent = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<EmpresaMachine>>();
+
+        return responseContent ?? new ReturnApiRefatored<EmpresaMachine>();
+    }
+
+    public async Task<ReturnApiRefatored<EmpresaMachine>> EditEmpresa(EmpresaMachine empresa)
+    {
+        var response = await _http.PatchAsJsonAsync($"empresas-machine-integradas/update/{empresa.Id}", empresa);
+        var responseContent = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<EmpresaMachine>>();
+
+        return responseContent ?? new ReturnApiRefatored<EmpresaMachine>();
+    }
+
+    public async Task<ReturnApiRefatored<EmpresaMachine>> DeleteEmpresa(int id)
+    {
+        var response = await _http.DeleteAsync($"empresas-machine-integradas/delete/{id}");
+        var responseContent = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<EmpresaMachine>>();
+        return responseContent ?? new ReturnApiRefatored<EmpresaMachine>();
+    }
 }
 

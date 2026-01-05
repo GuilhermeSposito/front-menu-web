@@ -11,6 +11,6 @@ public class EmpresaMachine
     [JsonPropertyName("TipoPagamento")] public string TipoPagamento { get; set; } = string.Empty;
     [JsonPropertyName("RetornAutomatico")] public bool RetornAutomatico { get; set; }
     [JsonPropertyName("CodEmpresa")] public int CodEmpresa { get; set; } = 3;
-    [JsonPropertyName("SenhaEmpresaIntegrada")] public string SenhaEmpresaIntegrada { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("SenhaEmpresaIntegrada")] public string? SenhaEmpresaIntegrada { get; set; }
 
 }

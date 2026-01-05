@@ -33,6 +33,7 @@ builder.Services.AddScoped<PessoasService>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
+builder.Services.AddScoped<DistanciasService>();
 
 
 builder.Services.AddScoped(sp =>
@@ -69,7 +70,6 @@ void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
     }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 }
 
-
 void ConfigureSyslogicaClient(IHttpClientBuilder builder)
 {
     builder.ConfigureHttpClient(client =>
@@ -88,6 +88,7 @@ builder.Services.AddHttpClient<CnpjPesquisaService>(client =>
     client.BaseAddress = new Uri("https://brasilapi.com.br/api/cnpj/v1/");
 });
 
+
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<AliquotaService>());
@@ -104,6 +105,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasMachineService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<DistanciasService>());
 ConfigureApiFiscalSoophosClient(builder.Services.AddHttpClient<NfService>());
 
 

@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/empresas-entrega-integradas"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresasDeEntrega
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Models.EntregaMachine
@@ -16,7 +17,6 @@
 @inject EntregasMachineService EntregasMachineService
 @using MudBlazor.Extensions.Services
 
-
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
         <div class="d-flex align-items-center justify-content-between">
@@ -25,7 +25,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de empresas de entregas Integradas.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { })">Nova Empresa</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { await AbrirModalCriacaoEdicao(new EmpresaMachine()); })">Nova Empresa</MudButton>
             </div>
         </div>
 
@@ -41,24 +41,45 @@
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Empresa de Entregas" />
             </NoRecordsContent>
-            <ToolBarContent> 
+            <ToolBarContent>
             </ToolBarContent>
             <Columns>
                 <PropertyColumn Property="x => x.Nome" Title="Nome"></PropertyColumn>
                 <PropertyColumn Property="x => x.EmailEmpresaIntegrada" Title="Email"></PropertyColumn>
                 <PropertyColumn Property="x => x.TipoPagamento" Title="Tipo de Pagamento"></PropertyColumn>
+                <TemplateColumn T="EmpresaMachine" Title="Token">
+                    <CellTemplate Context="context">
+                        @{
+                            if (context.Item.TokenApiEntrega is not null)
+                            {
+                                <MudText>@context.Item.TokenApiEntrega.Substring(0, 10)...</MudText>
+                            }
+                            else
+                            {
+                                <MudText Color="Color.Error">Token Inválido ...</MudText>
+                            }
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="EmpresaMachine" Title="Ações">
+                    <CellTemplate Context="context">
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                            <MudMenuItem OnClick=@(async()=> {await AbrirModalCriacaoEdicao(context.Item,false);}) Icon="@Icons.Material.Filled.Edit" Label="Editar" />
+                            <MudMenuItem OnClick=@(async()=> {await DeletarEmpresa(context.Item);}) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Deletar" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
             </Columns>
         </MudDataGrid>
     </MudLayout>
-   
 </MudPaper>
 
 @code {
+    #region Propiedades e Injeções
     public EmpresaMachine Empresas { get; set; } = new EmpresaMachine();
     public bool Carregando { get; set; } = false;
     private MudDataGrid<EmpresaMachine> dataGridRef;
-
-
+    #endregion
 
     #region Função de inicialização do grid
     private async Task<GridData<EmpresaMachine>> LoadServerData(GridState<EmpresaMachine> state)
@@ -92,4 +113,41 @@
 
     }
     #endregion
+
+    #region função de abrir modal de criação/edição
+    private async Task AbrirModalCriacaoEdicao(EmpresaMachine empresa, bool eCriacao = true)
+    {
+        var parameters = new DialogParameters
+        {
+           { "ECriacao", eCriacao},
+           { "Empresa", empresa}
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<AddEdiitEmpresaEntrega>(eCriacao ? "Adicionar Empresa" : "Editar Empresa", parameters, options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await dataGridRef.ReloadServerData();
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Funções de Ações
+    private async Task DeletarEmpresa(EmpresaMachine empresa)
+    {
+        var Response = await EntregasMachineService.DeleteEmpresa(empresa.Id);
+        var sucesso = Response.Status == "success";
+        var Mensagem = sucesso ? "Empresa deletada com sucesso!" : $"Erro ao deletar empresa";
+
+        Snackbar.Add(Mensagem, sucesso ? Severity.Success : Severity.Error);
+
+        await dataGridRef!.ReloadServerData();
+
+    }
+    #endregion
+
 }

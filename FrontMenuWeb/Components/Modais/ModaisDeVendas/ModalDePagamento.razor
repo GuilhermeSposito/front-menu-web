@@ -3,8 +3,10 @@
 @using FrontMenuWeb.Services.FinanceroServices
 @using System.Linq.Expressions
 @using System.Reflection
+@using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject IJSRuntime JS
 @inject FormasDeRecebimentoService FormasDeRecebimentoService
+@inject DistanciasService DistanciaService
 
 <MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
@@ -60,6 +62,7 @@
                             </MudStack>
                             <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudText Typo="Typo.h5" Color="Color.Default">@TaxaDeEntrega.ToString("C")</MudText>
+                                <MudText Typo="Typo.subtitle2" Color="Color.Default">(@TotalKms kms)</MudText>
                                 <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => TaxaDeEntrega); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
                             </MudStack>
                         </MudPaper>
@@ -167,7 +170,7 @@
                     {
                         foreach (var pagamentoRealizados in Pedido.Pagamentos)
                         {
-                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => {if(pagamentoRealizados.Troco > 0){ValorTroco -= pagamentoRealizados.Troco;} Pedido.Pagamentos.Remove(pagamentoRealizados); })>
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => { if (pagamentoRealizados.Troco > 0) { ValorTroco -= pagamentoRealizados.Troco; } Pedido.Pagamentos.Remove(pagamentoRealizados); })>
                                 <ChildContent>
                                     <MudStack Row=true Spacing="-1">
                                         <MudText>@pagamentoRealizados.FormaDePagamento.Descricao -> @pagamentoRealizados.ValorTotal.ToString("C")</MudText>
@@ -210,11 +213,41 @@
     private float ValorTotal = 0f;
     private float ValorTroco = 0f;
     private float ValorRestante = 0f;
+    private float TotalKms = 0f;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            if (Pedido.TipoDePedido == "DELIVERY")
+            {
+                var EnderecoInicial = AppState.MerchantLogado.EnderecosMerchant.FirstOrDefault();
+
+                if (EnderecoInicial is not null)
+                {
+                    var EnderecoFormatadoDeOrigem = $"{EnderecoInicial.Rua}, {EnderecoInicial.Numero} - {EnderecoInicial.Cidade?.Descricao}";
+                    var EnderecoFormatadoDeDestino = $"{Pedido.Endereco?.Rua}, {Pedido.Endereco?.Numero} - {Pedido.Endereco?.Cidade}";
+
+                    ReturnApiRefatored<ClsRetornoDeSomaDaDistancia> ValoresRetornados = await DistanciaService
+                                                       .ConsultarDistanciaAsync(EnderecoFormatadoDeOrigem, EnderecoFormatadoDeDestino);
+
+                    if (ValoresRetornados.Data.Objeto is not null && ValoresRetornados.Status == "success")
+                    {
+                        TotalKms = ValoresRetornados.Data.Objeto.DistanciaTotalEmKm;
+                        TaxaDeEntrega = ValoresRetornados.Data.Objeto.ValorTotal;
+                    }
+                    else
+                    {
+                        string Mensagem = string.Join(",", ValoresRetornados.Status != "success" ? ValoresRetornados.Messages : ValoresRetornados.Data.Messages);
+                        Snackbar.Add(Mensagem, Severity.Error);
+                    }
+                }
+                else
+                {
+                    Snackbar.Add("Nenhum endereço de destino cadastrado para o estabelecimento!", Severity.Error);
+                }
+            }
+
             foreach (var item in Pedido.Itens)
             {
                 ValorDosItens += item.PrecoTotal;
@@ -381,7 +414,7 @@
         {
             ValorTotal = ValorAtual,
             formaDeRecebimentoId = clsFormaDeRecebimento.Id,
-            FormaDePagamento = clsFormaDeRecebimento         
+            FormaDePagamento = clsFormaDeRecebimento
         };
 
         Pedido.Pagamentos.Add(clsPagamentoDoPedido);
@@ -393,7 +426,7 @@
                 var troco = ValorAtual - valorRestante;
 
                 ValorTroco += troco;
- 
+
                 if (troco < 0)
                     troco = 0;
 

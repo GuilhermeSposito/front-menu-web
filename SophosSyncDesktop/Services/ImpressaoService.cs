@@ -69,7 +69,20 @@ public class ImpressaoService
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, 19);
+                }   
+
+                if(AppState.MerchantLogado is not null)
+                {
+                    if (AppState.MerchantLogado.ImprimeComandasSeparadaPorProdutos)
+                    {
+                        await ImprimirComanda(jsonDoPedido, Pedido.CriadoPor, false); 
+                    }
+                    else
+                    {
+
+                    }
                 }
+
 
             }
         }
@@ -78,17 +91,28 @@ public class ImpressaoService
             Console.Write(ex.ToString());
         }
     }
-    public async Task ImprimirComanda(string jsonDoPedido, string AppQueEnviou)
+    public async Task ImprimirComanda(string jsonDoPedido, string AppQueEnviou, bool EMesa = true, bool TemSeparacaoPorItem = false)
     {
         try
         {
             using (AppDbContext db = new AppDbContext())
             {
-                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
-                PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
+                if (EMesa)
+                {
+                    ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                    PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressao(Pedido, AppQueEnviou);
-                await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoMesa(Pedido, AppQueEnviou);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                }
+                else
+                {
+                    ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                    ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
+
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(Pedido, AppQueEnviou);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                }
             }
         }
         catch (Exception ex)
@@ -126,7 +150,7 @@ public class ImpressaoService
     #region Define as características da impressão
 
     #region Define Características das comandas para impressão
-    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressao(PedidoMesaDto pedido, string AppQueEnviou)
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoMesaDto pedido, string AppQueEnviou)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
@@ -138,6 +162,53 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"MESA: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
 
         //------------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        foreach (var item in pedido.Itens)
+        {
+            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+
+            if (item.Complementos.Count > 0)
+            {
+                AdicionaConteudo(Conteudo, $"\n", FonteCPF);
+                foreach (var complemento in item.Complementos)
+                {
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
+                }
+            }
+
+            if (!String.IsNullOrEmpty(item.Observacoes))
+            {
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
+            }
+
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            //------------------------------------------------------------------------------------------
+        }
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+
+        return Conteudo;
+    }
+
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(ClsPedido pedido, string AppQueEnviou)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================       
+        AdicionaConteudo(Conteudo, $"Pedido {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Entregar em até {AppState.MerchantLogado?.TempoDeRetiradaEMmin} Minutos", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================       
+
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);

@@ -212,7 +212,7 @@
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
                     <MudGrid Class=" p-2 mb-1">
                         <MudItem xs="12" md="12" lg="12">
-                            <MudNumericField Disabled=EditandoInfosEntregaBloq Value="1" T="float" Immediate=true Label="Valor por km" Variant="Variant.Outlined" FullWidth="true" AdornmentText="R$" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                            <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.ValorPorKm @onfocusout=SalvarInfosLojaAsync T="float" Immediate=true Label="Valor por km" Variant="Variant.Outlined" FullWidth="true" AdornmentText="R$" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
                         </MudItem>
                     </MudGrid>
                 </MudStack>
