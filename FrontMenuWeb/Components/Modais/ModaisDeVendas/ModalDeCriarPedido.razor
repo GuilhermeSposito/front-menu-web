@@ -161,8 +161,8 @@
                                                             </MudListItem>
                                                         }
                                                         <MudListItem OnClick="AbreModalDeAdicionarPessoa">
-                                                            <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                                <MudIcon Icon="@Icons.Material.Filled.Add" />
+                                                            <MudStack @onkeydown=@(async (e) => { await HandleKeyDownAdd(e); }) Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                                <MudIcon  Icon="@Icons.Material.Filled.Add" />
                                                                 <span>Adicionar Cliente</span>
                                                             </MudStack>
                                                         </MudListItem>
@@ -388,7 +388,20 @@
     {
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
-        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", options);
+        string? NumeroDeTelefoneValido = null;
+        if (long.TryParse(PesquisaPessoa, out long resultNumber))
+        {
+            NumeroDeTelefoneValido = PesquisaPessoa;
+             Console.WriteLine("é numero válido");
+        }
+
+
+        var parameters = new DialogParameters
+        {
+            { "TelefoneEnviado", NumeroDeTelefoneValido}
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", parameters, options);
         var result = await dialog.Result;
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
@@ -472,7 +485,7 @@
 
         try
         {
-            var ResponseAPi = await PessoaService.GetPessoasPaginado(PesquisaPessoa);
+            var ResponseAPi = await PessoaService.GetPessoasPaginado(PesquisaPessoa, true);
             PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
         }
         catch (Exception ex)
@@ -741,6 +754,14 @@
         if (e.Key == "Enter")
         {
             await SelecionarPessoa(pessoa);
+        }
+    }
+
+    private async Task HandleKeyDownAdd(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AbreModalDeAdicionarPessoa();
         }
     }
 

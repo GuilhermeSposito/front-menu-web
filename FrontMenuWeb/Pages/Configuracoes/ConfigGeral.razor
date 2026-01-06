@@ -222,10 +222,99 @@
             <MudPaper Class="rounded-5 p-2 mt-4" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
                 <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
                     <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background);" Elevation="2">
-                        <MudText Align="Align.Center" Typo="Typo.h4">Enderecos da Empresa</MudText>
+                        <MudText Align="Align.Center" Typo="Typo.h4">Endereços da Empresa</MudText>
                     </MudPaper>
-                    <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    <MudButton OnClick=@(() => { EditandoEnderecosBloq = !EditandoEnderecosBloq; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    <MudButton OnClick=@(() => { AdicionandoNovoEndereco = !AdicionandoNovoEndereco; if (AdicionandoNovoEndereco) { NovoEndereco = new EnderecoMerchant() { AdicionandoEsseEndereco = true }; } else { NovoEndereco = null; } }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Add"></MudButton>
                 </MudStack>
+                @{
+                    foreach (var end in Merchant.EnderecosMerchant)
+                    {
+                        <MudStack>
+                            <MudText Class="m-2" Typo="Typo.subtitle1">Endereço:</MudText>
+                            <MudGrid Class="p-2 mb-1">
+                                <MudItem xs="8" md="8" lg="8" xxl="8">
+                                    <MudTextField Disabled=EditandoEnderecosBloq @onfocusout=@(async () => { await AtualizarEnderecoEnderecoAsync(end); }) T="string" @bind-Value=@end.Rua Immediate=true Label="Rua" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField Disabled=EditandoEnderecosBloq @onfocusout=@(async () => { await AtualizarEnderecoEnderecoAsync(end); }) T="string" @bind-Value=@end.Numero Immediate=true Label="Numero" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField Disabled=EditandoEnderecosBloq @onfocusout=@(async () => { await AtualizarEnderecoEnderecoAsync(end); }) T="string" @bind-Value=@end.Bairro Immediate=true Label="Bairro" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudSelect T="string"
+                                               Label="UF"
+                                               Variant="Variant.Outlined"
+                                               FullWidth="true"
+                                               Disabled="EditandoEnderecosBloq"
+                                               @bind-Value="end.Uf"
+                                               @onfocusout=@(async () => { await AtualizarEnderecoEnderecoAsync(end); })>
+                                        @foreach (var uf in Ufs)
+                                        {
+                                            <MudSelectItem Value="@uf">@uf</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField @onfocusout=@(async () => { await AtualizarEnderecoEnderecoAsync(end); }) Disabled=EditandoEnderecosBloq T="string" @bind-Value=@end.Cep Immediate=true Label="CEP" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                @if (end.Cidade is not null)
+                                {
+                                    <MudItem xs="8" md="8" lg="8" xxl="8">
+                                        <MudTextField Disabled=true T="string" @bind-Value=@end.Cidade.Descricao Immediate=true Label="Cidade" Variant="Variant.Outlined" FullWidth="true" />
+                                    </MudItem>
+                                    <MudItem xs="4" md="4" lg="4" xxl="4">
+                                        <MudTextField Disabled=true T="int" @bind-Value=@end.Cidade.NumCidade Immediate=true Label="Cidade" Variant="Variant.Outlined" FullWidth="true" />
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                            <MudStack Class="p-3" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                                <MudButton Disabled=EditandoEnderecosBloq OnClick=@(async () => { await DeletarEnderecoEnderecoAsync(end); }) Color="Color.Error" Variant="Variant.Filled">Deletar</MudButton>
+                            </MudStack>
+                        </MudStack>
+                    }
+
+                    @*Aba para adicionar um novo endereço*@
+                    @if (NovoEndereco is not null)
+                    {
+
+                        <MudStack>
+                            <MudText Class="m-2" Typo="Typo.subtitle1">Novo Endereço:</MudText>
+                            <MudGrid Class="p-2 mb-1">
+                                <MudItem xs="8" md="8" lg="8" xxl="8">
+                                    <MudTextField Disabled=false T="string" @bind-Value=@NovoEndereco.Rua Immediate=true Label="Rua" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField Disabled=false T="string" @bind-Value=@NovoEndereco.Numero Immediate=true Label="Numero" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField Disabled=false T="string" @bind-Value=@NovoEndereco.Bairro Immediate=true Label="Bairro" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudSelect T="string"
+                                               Label="UF"
+                                               Variant="Variant.Outlined"
+                                               FullWidth="true"
+                                               Disabled="false"
+                                               @bind-Value="NovoEndereco.Uf">
+                                        @foreach (var uf in Ufs)
+                                        {
+                                            <MudSelectItem Value="@uf">@uf</MudSelectItem>
+                                        }
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="4" md="4" lg="4" xxl="4">
+                                    <MudTextField T="string" @bind-Value=@NovoEndereco.Cep Immediate=true Label="CEP" Variant="Variant.Outlined" FullWidth="true" />
+                                </MudItem>
+                            </MudGrid>
+                            <MudStack Class="p-3" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                                <MudButton OnClick=@(async () => { await AdicionarNovoEnderecoAsync(); }) Color="Color.Primary" Variant="Variant.Filled">Adicionar</MudButton>
+                            </MudStack>
+                        </MudStack>
+
+                    }
+                }
             </MudPaper>
 
             @*Documentos das Empresa*@
@@ -234,8 +323,58 @@
                     <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background);" Elevation="2">
                         <MudText Align="Align.Center" Typo="Typo.h4">Documentos da Empresa</MudText>
                     </MudPaper>
-                    <MudButton Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    <MudButton OnClick=@(() => { EditandoDocumentosBloq = !EditandoDocumentosBloq; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    <MudIconButton OnClick=@(() => { AdicionandoNovoDocumento = !AdicionandoNovoDocumento; if (AdicionandoNovoDocumento) { NovoDocumentoMerchant = new DocumentosMerchant() { }; } else { NovoDocumentoMerchant = null; } }) Color=Color.Primary Size=Size.Large Icon="@Icons.Material.Filled.Add" />
                 </MudStack>
+                @foreach (var doc in Merchant.Documentos)
+                {
+                    <MudStack>
+                        <MudText Class="m-2" Typo="Typo.subtitle1">Documento:</MudText>
+                        <MudGrid Class="p-2 mb-1">
+                            <MudItem xs="8" md="8" lg="8" xxl="8">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.Cnpj Immediate=true Label="CNPJ" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.InscricaoMunicipal Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="8" md="8" lg="8" xxl="8">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.IncricaoEstadual Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.Cnae Immediate=true Label="CNAE" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+
+                        </MudGrid>
+                        <MudStack Class="p-3" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                            <MudButton Disabled=EditandoDocumentosBloq OnClick=@(async () => { await DeletarEEditarDocumentoAsync(doc); }) Color="Color.Error" Variant="Variant.Filled">Deletar</MudButton>
+                        </MudStack>
+                    </MudStack>
+                }
+
+                @if (NovoDocumentoMerchant is not null && AdicionandoNovoDocumento)
+                {
+                    <MudStack>
+                        <MudText Class="m-2" Typo="Typo.subtitle1">Documento:</MudText>
+                        <MudGrid Class="p-2 mb-1">
+                            <MudItem xs="8" md="8" lg="8" xxl="8">
+                                <MudTextField T="string" @bind-Value=@NovoDocumentoMerchant.Cnpj Immediate=true Label="CNPJ" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField T="string" @bind-Value=@NovoDocumentoMerchant.InscricaoMunicipal Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="8" md="8" lg="8" xxl="8">
+                                <MudTextField T="string" @bind-Value=@NovoDocumentoMerchant.IncricaoEstadual Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField T="string" @bind-Value=@NovoDocumentoMerchant.Cnae Immediate=true Label="CNAE" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+
+                        </MudGrid>
+                        <MudStack Class="p-3" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                            <MudButton OnClick=@(async () => { await AdicionarNovoDocumentoAsync(); }) Color="Color.Primary" Variant="Variant.Filled">Adicionar</MudButton>
+                        </MudStack>
+                    </MudStack>
+                }
             </MudPaper>
         }
         else
@@ -258,6 +397,25 @@
     private bool EditandoInfosFiscaisBloq = true;
     private bool EditandoInfosEntregaBloq = true;
     private bool CarregouNovoCertificado = false;
+    private bool EditandoEnderecosBloq = true;
+    private bool EditandoDocumentosBloq = true;
+
+    //props para ajudar a adicionar um novo endereco
+    private EnderecoMerchant? NovoEndereco = null;
+    private bool AdicionandoNovoEndereco = false;
+
+    //props para ajudar a adicionar um novo documento
+    private DocumentosMerchant? NovoDocumentoMerchant = null;
+    private bool AdicionandoNovoDocumento = false;
+
+    #region Ufs
+    private readonly string[] Ufs =
+    {
+        "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
+        "MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN",
+        "RS","RO","RR","SC","SP","SE","TO"
+    };
+    #endregion
     #endregion
 
 
@@ -336,6 +494,139 @@
     }
     #endregion
 
+    private async Task AdicionarNovoEnderecoAsync()
+    {
+        try
+        {
+            if (Merchant is not null && NovoEndereco is not null)
+            {
+                var resultado = await MerchantServices.CreateEnderecoParaMerchant(NovoEndereco);
+
+                var sucesso = resultado.Status == "success" ? true : false;
+                string mensagem = sucesso ? string.Join(",", resultado.Data.Messages) : string.Join(",", resultado.Messages);
+                Snackbar.Add(mensagem, sucesso ? Severity.Success : Severity.Error);
+
+                if (sucesso)
+                {
+                    Merchant.EnderecosMerchant.Add(NovoEndereco);
+                    AdicionandoNovoEndereco = false;
+                    NovoEndereco = null;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar dados da loja: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeletarEnderecoEnderecoAsync(EnderecoMerchant Endereco)
+    {
+        try
+        {
+            var resultado = await MerchantServices.DeleteEndereco(Endereco);
+
+            var sucesso = resultado.Status == "success" ? true : false;
+            string mensagem = sucesso ? string.Join(",", resultado.Data.Messages) : string.Join(",", resultado.Messages);
+            Snackbar.Add(mensagem, sucesso ? Severity.Success : Severity.Error);
+
+            if (sucesso && Merchant is not null)
+            {
+                Merchant.EnderecosMerchant.Remove(Endereco);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar dados da loja: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AtualizarEnderecoEnderecoAsync(EnderecoMerchant Endereco)
+    {
+        try
+        {
+            var resultado = await MerchantServices.UpdateEndereco(Endereco);
+
+            var sucesso = resultado.Status == "success" ? true : false;
+            string mensagem = sucesso ? string.Join(",", resultado.Data.Messages) : string.Join(",", resultado.Messages);
+            Snackbar.Add(mensagem, sucesso ? Severity.Success : Severity.Error);
+
+            if (sucesso && Merchant is not null)
+            {
+                EditandoEnderecosBloq = true;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar dados da loja: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AdicionarNovoDocumentoAsync()
+    {
+        try
+        {
+            if (Merchant is not null && NovoDocumentoMerchant is not null)
+            {
+                var resultado = await MerchantServices.CreateDocumentoParaMerchant(NovoDocumentoMerchant);
+
+                var sucesso = resultado.Status == "success" ? true : false;
+                string mensagem = sucesso ? string.Join(",", resultado.Data.Messages) : string.Join(",", resultado.Messages);
+                Snackbar.Add(mensagem, sucesso ? Severity.Success : Severity.Error);
+
+                if (sucesso)
+                {
+                    Merchant.Documentos.Add(NovoDocumentoMerchant);
+                    AdicionandoNovoDocumento = false;
+                    NovoDocumentoMerchant = null;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar dados da loja: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeletarEEditarDocumentoAsync(DocumentosMerchant Documento, bool editandoDocumento = false)
+    {
+        try
+        {
+            if (Merchant is null)
+                return;
+
+            ReturnApiRefatored<DocumentosMerchant> resultado;
+
+            if (!editandoDocumento)
+            {
+                resultado = await MerchantServices.DeleteDocumento(Documento);
+            }
+            else
+            {
+                resultado = await MerchantServices.UpdateDocumento(Documento);
+            }
+
+            var sucesso = resultado.Status == "success" ? true : false;
+            string mensagem = sucesso ? string.Join(",", resultado.Data.Messages) : string.Join(",", resultado.Messages);
+            Snackbar.Add(mensagem, sucesso ? Severity.Success : Severity.Error);
+
+            if (sucesso && !editandoDocumento)
+            {
+                Merchant.Documentos.Remove(Documento);
+            }
+
+            StateHasChanged();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar dados da loja: {ex.Message}", Severity.Error);
+        }
+    }
 
 
     #endregion

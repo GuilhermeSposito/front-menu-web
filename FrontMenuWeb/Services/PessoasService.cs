@@ -40,9 +40,11 @@ public class PessoasService
         return response.Data.Pessoa; 
     }
 
-    public async Task<ReturnApiRefatored<ClsPessoas>> GetPessoasPaginado(string? queryName)
+    public async Task<ReturnApiRefatored<ClsPessoas>> GetPessoasPaginado(string? queryName, bool ApenasClientes = false)
     {
-        ReturnApiRefatored<ClsPessoas>? response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsPessoas>>($"pessoas/find/auto-complete?queryName={queryName}");
+        var queryDeApenasClientes = ApenasClientes ? "&apenasClientes=true" : "&apenasClientes=false";
+
+        ReturnApiRefatored<ClsPessoas>? response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsPessoas>>($"pessoas/find/auto-complete?queryName={queryName}{queryDeApenasClientes}");
         return response ?? new ReturnApiRefatored<ClsPessoas>();
     }
 

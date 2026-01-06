@@ -272,8 +272,6 @@
                 {
                     AppState.MerchantLogado = merchant;
 
-                    Console.WriteLine($"Token Api Entregas ==> {merchant.TokenApiEntrega}");
-
                     if (!(await LocalStorage.ContainKeyAsync("authEntregaToken")))
                     {
                         if (!string.IsNullOrEmpty(merchant.TokenApiEntrega))

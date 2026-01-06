@@ -250,6 +250,8 @@
     private string MensagemErro = string.Empty;
     private bool CarregandoRespostaDaApi = false;
 
+    [Parameter] public string? TelefoneEnviado { get; set; } = null;
+
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
     {
         MaskChars = new[] { new MaskChar('#', @"[0-9]") }
@@ -259,7 +261,6 @@
     {
         MaskChars = new[] { new MaskChar('#', @"[0-9]") }
     };
-
 
 
     [Parameter]
@@ -298,6 +299,15 @@
         maskedPhone2 = value;
         NovaPessoa.Telefone1 = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
         await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(TelefoneEnviado))
+        {
+            maskedPhone = TelefoneEnviado;
+            NovaPessoa.Telefone = new string(TelefoneEnviado?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        }
     }
 
     private async Task ArrumaNomePrimeiraLetraMAiuscula(string input)

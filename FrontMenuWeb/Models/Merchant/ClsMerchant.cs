@@ -73,6 +73,9 @@ public class EnderecoMerchant
     [JsonPropertyName("bairro")] public string Bairro { get; set; } = string.Empty;
     [JsonPropertyName("cep")] public string Cep { get; set; } = string.Empty;
     [JsonPropertyName("uf")] public string Uf { get; set; } = string.Empty;
+    [JsonPropertyName("cidade_id")] public int CidadeId { get; set; } = 1; //São Carlos
+
+    [JsonIgnore] public bool AdicionandoEsseEndereco { get; set; } = false;
 
 }
 
