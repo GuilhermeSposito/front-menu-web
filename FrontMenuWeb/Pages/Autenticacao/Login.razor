@@ -135,8 +135,8 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResult>();
-                await LocalStorage.SetItemAsync("authToken", result.Token);
-                Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Token);
+               // await LocalStorage.SetItemAsync("authToken", result.Token);
+               // Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.Token);
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else
