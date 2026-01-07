@@ -45,22 +45,10 @@ builder.Services.AddScoped(sp =>
     return clientFactory.CreateClient("ApiAutorizada");
 });
 
-builder.Services.AddHttpClient("ApiAutorizada", client =>
+builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
 {
-    client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
-})
-.AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
-
-
-builder.Services.AddHttpClient("ApiFiscalSophos", client =>
-{
-    client.BaseAddress = new Uri("https://syslogicadev.com/apifiscal/");
-})
-.AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
-
-builder.Services.AddHttpClient("ApiEntregasSophos", client =>
-{
-    client.BaseAddress = new Uri("https://syslogicadev.com/api-entregas-sophos/v1/");
+    var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
 })
 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 
@@ -77,8 +65,6 @@ void ConfigureSyslogicaClient(IHttpClientBuilder builder)
     builder.ConfigureHttpClient((sp, client) =>
     {
         var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
-
-        Console.WriteLine($"[HTTP CLIENT] BaseUrl = {settings.BaseUrl}");
 
         client.BaseAddress = new Uri(settings.BaseUrl);
     })
