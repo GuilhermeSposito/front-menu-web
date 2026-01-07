@@ -337,14 +337,25 @@
 
     public async Task Logout()
     {
-        await LocalStorage.RemoveItemAsync("authToken");
+        var response = await Http.PostAsJsonAsync("auth/logout", new { });
 
-        if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
+        if (response.IsSuccessStatusCode)
         {
-            customAuthProvider.NotifyAuthenticationStateChanged();
-        }
+            var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMerchant>>();
+            if(result is not null)
+            {
+                var mensagem = result.Status == "success" ? "Logout realizado com sucesso." : string.Join(", ", result.Messages);
+                Snackbar.Add(mensagem, result.Status == "success" ? Severity.Success : Severity.Error);
+            }
 
-        Navigation.NavigateTo("/login", forceLoad: true);
+            if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
+            {
+                customAuthProvider.NotifyAuthenticationStateChanged();
+            }
+
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+       
     }
 
 

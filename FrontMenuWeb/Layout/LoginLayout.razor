@@ -5,18 +5,6 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudLayout>
-    <AuthorizeView>
-        <Authorized>
-            <MudAppBar Elevation="1" Dense="@_dense">
-                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-                <MudSpacer />
-                <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-            </MudAppBar>
-            <MudDrawer @bind-Open="@_open" ClipMode="_clipMode" Breakpoint="@_breakpoint" Elevation="1" Variant="@DrawerVariant.Mini">          
-            </MudDrawer>
-        </Authorized>
-
-    </AuthorizeView>
 
         @Body
 </MudLayout>
