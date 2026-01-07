@@ -9,10 +9,11 @@ using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
+using Microsoft.Extensions.Options;
 using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Services;
@@ -35,18 +36,14 @@ builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<DistanciasService>();
+builder.Services.Configure<ApiSettings>(
+    builder.Configuration.GetSection("Api"));
 
 builder.Services.AddScoped(sp =>
 {
     var clientFactory = sp.GetRequiredService<IHttpClientFactory>();
     return clientFactory.CreateClient("ApiAutorizada");
 });
-
-if (builder.HostEnvironment.IsProduction())
-{
-    Console.WriteLine("Estou em PRODUÇÃO");
-}
-
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
@@ -77,10 +74,15 @@ void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
 
 void ConfigureSyslogicaClient(IHttpClientBuilder builder)
 {
-    builder.ConfigureHttpClient(client =>
+    builder.ConfigureHttpClient((sp, client) =>
     {
-        client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/");
-    }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
+        var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
+
+        Console.WriteLine($"[HTTP CLIENT] BaseUrl = {settings.BaseUrl}");
+
+        client.BaseAddress = new Uri(settings.BaseUrl);
+    })
+    .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 }
 
 builder.Services.AddHttpClient<CEPService>(client =>
