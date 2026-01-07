@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Services;
@@ -34,7 +35,6 @@ builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<DistanciasService>();
-
 
 builder.Services.AddScoped(sp =>
 {

@@ -21,7 +21,7 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
         var token = await _localStorage.GetItemAsync<string>("authToken");
         if (!string.IsNullOrEmpty(token))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }
         return await base.SendAsync(request, cancellationToken);
     }

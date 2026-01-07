@@ -49,7 +49,11 @@ public class NfService : INfService
     #region Emissões de NF-e e NFC-e
     public async Task<ReturnApiRefatored<NfeReturnDto>> GeraNFCe(EnNfCeDto envNFCeDto)
     {
+        var json = JsonSerializer.Serialize(envNFCeDto);
+
+        Console.WriteLine(json);
         var httpResponse = await _http.PostAsJsonAsync("nf/enviar-nfce", envNFCeDto);
+
         if (!httpResponse.IsSuccessStatusCode)
             return new ReturnApiRefatored<NfeReturnDto>() { Status = "error", Messages = new List<string> { "Erro ao enviar NFC-e"} } ;
 
