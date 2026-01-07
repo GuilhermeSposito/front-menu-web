@@ -42,7 +42,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
                 // Se o token não for válido, remova-o do armazenamento local e retorne um estado de autenticação vazio
                 //await _localStorage.RemoveItemAsync("authToken");
                 //_httpClient.DefaultRequestHeaders.Authorization = null; // Limpa o cabeçalho de autorização
-                this.NotifyAuthenticationStateChanged();
+               // this.NotifyAuthenticationStateChanged();
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
             else
@@ -75,7 +75,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         }
         catch (Exception ex)
         {
-            this.NotifyAuthenticationStateChanged();
+           // this.NotifyAuthenticationStateChanged();
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
       
