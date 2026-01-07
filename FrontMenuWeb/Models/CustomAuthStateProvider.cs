@@ -1,7 +1,9 @@
-﻿using System.Security.Claims;
-using System.Net.Http.Headers;
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
+using FrontMenuWeb.Models.Merchant;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace FrontMenuWeb.Models;
@@ -17,7 +19,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         _httpClient = httpClient;
     }
 
-    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    /*public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         var token = await _localStorage.GetItemAsync<string>("authToken");
 
@@ -46,6 +48,33 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             return new AuthenticationState(user);
         }
 
+    }*/
+
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+        try
+        {
+            // Esse endpoint usa o cookie HttpOnly
+            var user = await _httpClient.GetFromJsonAsync<ClsMerchant>("merchant/details");
+
+            var claims = new List<Claim>
+            {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+             };
+
+            var identity = new ClaimsIdentity(claims, "CookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            return new AuthenticationState(principal);
+        }
+        catch
+        {
+            // Não autenticado (cookie ausente ou inválido)
+            return new AuthenticationState(
+                new ClaimsPrincipal(new ClaimsIdentity())
+            );
+        }
     }
 
     // ✅ Este é o método que você precisa chamar no logout/login
