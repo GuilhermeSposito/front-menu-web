@@ -42,6 +42,11 @@ builder.Services.AddScoped(sp =>
     return clientFactory.CreateClient("ApiAutorizada");
 });
 
+if (builder.HostEnvironment.IsProduction())
+{
+    Console.WriteLine("Estou em PRODUÇÃO");
+}
+
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
