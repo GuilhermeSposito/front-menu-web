@@ -50,7 +50,7 @@
 
     public async Task Logout()
     {
-        await LocalStorage.RemoveItemAsync("authToken");
+        //await LocalStorage.RemoveItemAsync("authToken");
 
         if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
         {
