@@ -9,10 +9,7 @@ window.socketIO = {
         const socket = io("https://syslogicadev.com", {
             path: "/socket.io/",
             transports: ["websocket"],
-            query:
-            {
-                token: `${token}`
-            }
+            withCredentials: true
         });
 
         socket.on("connect", () => {
