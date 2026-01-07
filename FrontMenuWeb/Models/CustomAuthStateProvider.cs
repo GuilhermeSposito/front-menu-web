@@ -1,10 +1,12 @@
 ﻿using Blazored.LocalStorage;
 using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
+using YamlDotNet.Core.Tokens;
 
 namespace FrontMenuWeb.Models;
 
@@ -19,38 +21,67 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         _httpClient = httpClient;
     }
 
-    /*public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var token = await _localStorage.GetItemAsync<string>("authToken");
+        /*  var token = await _localStorage.GetItemAsync<string>("authToken");
 
-        if (string.IsNullOrWhiteSpace(token))
+          if (string.IsNullOrWhiteSpace(token))
+          {
+              return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+          }
+
+          _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        */
+
+        try
         {
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            var ValidarOToken = await _httpClient.GetAsync("merchants/details");
+
+            if (!ValidarOToken.IsSuccessStatusCode)
+            {
+                // Se o token não for válido, remova-o do armazenamento local e retorne um estado de autenticação vazio
+                //await _localStorage.RemoveItemAsync("authToken");
+                //_httpClient.DefaultRequestHeaders.Authorization = null; // Limpa o cabeçalho de autorização
+                this.NotifyAuthenticationStateChanged();
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+            }
+            else
+            {
+                //var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
+                var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, merchant.NomeFantasia),
+                    new Claim(ClaimTypes.Email, merchant.Email),
+                    new Claim(ClaimTypes.Name, merchant.NomeFantasia ?? merchant.RazaoSocial),
+                    new Claim("merchant_id", merchant.Id),
+                    new Claim("razao_social", merchant.RazaoSocial),
+                    new Claim("nome_fantasia", merchant.NomeFantasia ?? ""),
+                    new Claim("imagem_logo", merchant.ImagemLogo ?? ""),
+                    new Claim("ativo", merchant.Ativo.ToString()),
+                    new Claim("emitindo_nfe", merchant.EmitindoNfeProd.ToString())
+                };
+
+                var identity = new ClaimsIdentity(claims, "CookieAuth");
+
+
+
+                var user = new ClaimsPrincipal(identity);
+
+                return new AuthenticationState(user);
+            }
+
         }
-
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var ValidarOToken = await _httpClient.GetAsync("merchants/details");
-
-        if (!ValidarOToken.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            // Se o token não for válido, remova-o do armazenamento local e retorne um estado de autenticação vazio
-            await _localStorage.RemoveItemAsync("authToken");
-            _httpClient.DefaultRequestHeaders.Authorization = null; // Limpa o cabeçalho de autorização
             this.NotifyAuthenticationStateChanged();
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
-        else
-        {
-            var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
-            var user = new ClaimsPrincipal(identity);
+      
+    }
 
-            return new AuthenticationState(user);
-        }
-
-    }*/
-
-    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    /*public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         try
         {
@@ -75,7 +106,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
                 new ClaimsPrincipal(new ClaimsIdentity())
             );
         }
-    }
+    }*/
 
     // ✅ Este é o método que você precisa chamar no logout/login
     public void NotifyAuthenticationStateChanged()
