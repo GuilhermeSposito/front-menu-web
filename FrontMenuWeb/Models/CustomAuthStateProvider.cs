@@ -49,6 +49,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             {
                 //var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
                 var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
+                var merchantJson = JsonSerializer.Serialize(merchant);
 
                 var claims = new List<Claim>
                 {
@@ -60,6 +61,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
                     new Claim("nome_fantasia", merchant.NomeFantasia ?? ""),
                     new Claim("imagem_logo", merchant.ImagemLogo ?? ""),
                     new Claim("ativo", merchant.Ativo.ToString()),
+                    new Claim("Merchant", merchantJson),
                     new Claim("emitindo_nfe", merchant.EmitindoNfeProd.ToString())
                 };
 
