@@ -16,14 +16,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 
+string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
+string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
+string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
+
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
-    client.BaseAddress = new Uri("https://syslogicadev.com/api/v1/"); //new Uri("https://localhost:3030");//
+    client.BaseAddress = new Uri(UrlSophos); //new Uri("https://localhost:3030");//
 });
 
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {
-    client.BaseAddress = new Uri("https://apidoni.ibpt.org.br/api/v1/produtos"); //new Uri("https://localhost:3030");//
+    client.BaseAddress = new Uri(UrlIBPT); //new Uri("https://localhost:3030");//
 });
 
 builder.Services.AddControllers(option =>
@@ -40,10 +44,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsLiberado", policy =>
     {
         policy
-            .WithOrigins("https://syslogicadev.com") // frontend
+            .WithOrigins(UrlCors)
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials(); // permite cookies
+            .AllowCredentials(); 
     });
 });
 var app = builder.Build();

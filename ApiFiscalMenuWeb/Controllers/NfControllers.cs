@@ -1,5 +1,6 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
 using ApiFiscalMenuWeb.Services;
+using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +26,7 @@ public class NfControllers : ControllerBase
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
         var token = HttpContext.Request.Cookies["auth_token"];
         if (string.IsNullOrEmpty(token))
-            return Unauthorized("Cookie auth_token não encontrado");
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
         var result = await _nfService.VerificaStatusDaNFe(token);
         return Ok(result);
@@ -34,8 +35,11 @@ public class NfControllers : ControllerBase
     [HttpGet("status-nfce")]
     public async Task<ActionResult> VerificarStatusNFCe()
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        var token = authHeader.Replace("Bearer ", "");
+
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"];
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
         var result = await _nfService.VerificaStatusDaNFCe(token);
         return Ok(result);
@@ -49,7 +53,7 @@ public class NfControllers : ControllerBase
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
         var token = HttpContext.Request.Cookies["auth_token"];
         if (string.IsNullOrEmpty(token))
-            return Unauthorized("Cookie auth_token não encontrado");
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
         var result = await _nfService.EmissaoDeNFe(token, Pedido);
         return Ok(result);
@@ -61,7 +65,7 @@ public class NfControllers : ControllerBase
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
         var token = HttpContext.Request.Cookies["auth_token"];
         if (string.IsNullOrEmpty(token))
-            return Unauthorized("Cookie auth_token não encontrado");
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
         var result = await _nfService.EmissaoDeNFCe(token, EnvNFCeDto);
         return Ok(result);
