@@ -22,8 +22,10 @@ public class NfControllers : ControllerBase
     [HttpGet("status-nfe")]
     public async Task<ActionResult> VerificarStatusNFe()
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        var token = authHeader.Replace("Bearer ", "");
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"];
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized("Cookie auth_token não encontrado");
 
         var result = await _nfService.VerificaStatusDaNFe(token);
         return Ok(result);
@@ -44,8 +46,10 @@ public class NfControllers : ControllerBase
     [HttpPost("enviar-nfe")]
     public async Task<ActionResult> EnviarNFe([FromBody] ClsPedido Pedido)
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        var token = authHeader.Replace("Bearer ", "");
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"];
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized("Cookie auth_token não encontrado");
 
         var result = await _nfService.EmissaoDeNFe(token, Pedido);
         return Ok(result);
@@ -54,8 +58,10 @@ public class NfControllers : ControllerBase
     [HttpPost("enviar-nfce")]
     public async Task<ActionResult> EnviarNFCe([FromBody] EnNfCeDto EnvNFCeDto)
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        var token = authHeader.Replace("Bearer ", "");
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"];
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized("Cookie auth_token não encontrado");
 
         var result = await _nfService.EmissaoDeNFCe(token, EnvNFCeDto);
         return Ok(result);

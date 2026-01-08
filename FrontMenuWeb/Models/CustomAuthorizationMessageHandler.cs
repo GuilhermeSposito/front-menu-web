@@ -1,9 +1,10 @@
 ﻿
+using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
-using Blazored.LocalStorage;
 
 namespace FrontMenuWeb.Models;
 public class CustomAuthorizationMessageHandler : DelegatingHandler
@@ -17,12 +18,14 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-
-        var token = await _localStorage.GetItemAsync<string>("authToken");
-        if (!string.IsNullOrEmpty(token))
-        {
-            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
+        request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
         return await base.SendAsync(request, cancellationToken);
     }
 }
+
+
+/*var token = await _localStorage.GetItemAsync<string>("authToken");
+if (!string.IsNullOrEmpty(token))
+{
+    //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+}*/

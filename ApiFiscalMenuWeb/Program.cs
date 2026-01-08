@@ -40,12 +40,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsLiberado", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins("https://syslogicadev.com") // frontend
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials(); // permite cookies
     });
 });
-
 var app = builder.Build();
 app.UseCors("CorsLiberado");
 
