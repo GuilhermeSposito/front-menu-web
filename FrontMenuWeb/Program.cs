@@ -19,7 +19,6 @@ using MudBlazor.Extensions;
 using MudBlazor.Services;
 using System.Globalization;
 
-
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
@@ -54,9 +53,11 @@ builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
 
 void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
 {
-    builder.ConfigureHttpClient(client =>
+    builder.ConfigureHttpClient((sp,client) =>
     {
-        client.BaseAddress = new Uri("https://syslogicadev.com/apifiscal/");
+        var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
+
+        client.BaseAddress = new Uri(settings.BaseUrlAPiFiscal);
     }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 }
 

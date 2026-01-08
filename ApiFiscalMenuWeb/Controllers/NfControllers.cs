@@ -24,7 +24,7 @@ public class NfControllers : ControllerBase
     public async Task<ActionResult> VerificarStatusNFe()
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
-        var token = HttpContext.Request.Cookies["auth_token"];
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
@@ -37,7 +37,7 @@ public class NfControllers : ControllerBase
     {
 
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
-        var token = HttpContext.Request.Cookies["auth_token"];
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", ""); 
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
@@ -51,7 +51,7 @@ public class NfControllers : ControllerBase
     public async Task<ActionResult> EnviarNFe([FromBody] ClsPedido Pedido)
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
-        var token = HttpContext.Request.Cookies["auth_token"];
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
@@ -63,7 +63,7 @@ public class NfControllers : ControllerBase
     public async Task<ActionResult> EnviarNFCe([FromBody] EnNfCeDto EnvNFCeDto)
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
-        var token = HttpContext.Request.Cookies["auth_token"];
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
