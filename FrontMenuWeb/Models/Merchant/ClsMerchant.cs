@@ -44,6 +44,7 @@ public class ClsMerchant
     [JsonPropertyName("AceitaFiado")] public bool AceitaFiado { get; set; }
     [JsonPropertyName("EnviaPedidoAutTaxyMachine")] public bool EnviaPedidoAutTaxyMachineAceitaFiado { get; set; }
     [JsonPropertyName("IntegraIfood")] public bool IntegraIfood { get; set; }
+    [JsonPropertyName("ReplicaFechamentoParaOFinanceiro")] public bool ReplicaFechamentoParaOFinanceiro { get; set; }
     [JsonPropertyName("TempoDeEntregaEMmin")] public int TempoDeEntregaEMmin { get; set; }
     [JsonPropertyName("TempoDeRetiradaEMmin")] public int TempoDeRetiradaEMmin { get; set; }
     [JsonPropertyName("TempoDePreparacaoEmMin")] public int TempoDePreparacaoEmMin { get; set; }
