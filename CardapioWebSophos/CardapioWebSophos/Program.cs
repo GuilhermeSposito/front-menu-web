@@ -37,9 +37,9 @@ app.UsePathBase("/cardapioweb-sophos");
 
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAntiforgery();
 
 app.MapFallbackToFile("index.html");
 
-app.Run();
 
 app.Run();
