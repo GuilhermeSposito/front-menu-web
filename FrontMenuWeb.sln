@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiFiscalMenuWeb", "ApiFisc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontDesktopBlzHybrid", "FrontDesktopBlzHybrid\FrontDesktopBlzHybrid.csproj", "{F730ECDB-6BDC-4CE7-ACF0-93D243B110E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardapioWebSophos", "CardapioWebSophos\CardapioWebSophos\CardapioWebSophos.csproj", "{50E9FAA3-F5B6-497A-9C75-BF75CB7E254C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardapioWebSophos.Client", "CardapioWebSophos\CardapioWebSophos.Client\CardapioWebSophos.Client.csproj", "{01EF0410-A9CD-43E0-AC97-8F4C59242678}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +39,14 @@ Global
 		{F730ECDB-6BDC-4CE7-ACF0-93D243B110E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F730ECDB-6BDC-4CE7-ACF0-93D243B110E0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F730ECDB-6BDC-4CE7-ACF0-93D243B110E0}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{50E9FAA3-F5B6-497A-9C75-BF75CB7E254C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50E9FAA3-F5B6-497A-9C75-BF75CB7E254C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50E9FAA3-F5B6-497A-9C75-BF75CB7E254C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50E9FAA3-F5B6-497A-9C75-BF75CB7E254C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01EF0410-A9CD-43E0-AC97-8F4C59242678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01EF0410-A9CD-43E0-AC97-8F4C59242678}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01EF0410-A9CD-43E0-AC97-8F4C59242678}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01EF0410-A9CD-43E0-AC97-8F4C59242678}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
