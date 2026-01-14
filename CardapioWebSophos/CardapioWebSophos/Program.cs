@@ -33,4 +33,13 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(CardapioWebSophos.Client._Imports).Assembly);
 
+app.UsePathBase("/cardapioweb-sophos");
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.MapFallbackToFile("index.html");
+
+app.Run();
+
 app.Run();
