@@ -22,10 +22,7 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 
-
-app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
@@ -34,12 +31,12 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(typeof(CardapioWebSophos.Client._Imports).Assembly);
 
 app.UsePathBase("/cardapioweb-sophos");
+app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAntiforgery();
 
-app.MapFallbackToFile("index.html");
 
 
 app.Run();
