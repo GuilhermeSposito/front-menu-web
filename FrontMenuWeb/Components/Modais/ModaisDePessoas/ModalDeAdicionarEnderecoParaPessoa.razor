@@ -21,64 +21,64 @@
         <DialogContent>
 
             <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5" @onsubmit="Submit">
-               
 
-         
-                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">                
-                        <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
-                            <MudText Typo="Typo.h6" Class="d-flex justify-content-center align-items-center ">
-                                Endereço do Cliente
-                            </MudText>
-                            <MudGrid>
-                                <MudItem xs="12" sm="8">
-                                    <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
-                                </MudItem>
 
-                                <MudItem xs="12" sm="4">
+
+                <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                    <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                        <MudText Typo="Typo.h6" Class="d-flex justify-content-center align-items-center ">
+                            Endereço do Cliente
+                        </MudText>
+                        <MudGrid>
+                            <MudItem xs="12" sm="8">
+                                <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
                                 <MudTextField Required Immediate=true RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12" sm="6">
+                            <MudItem xs="12" sm="6">
                                 <MudTextField Required Immediate=true RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12" sm="6">
+                            <MudItem xs="12" sm="6">
                                 <MudTextField Required Immediate=true RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12" sm="3">
+                            <MudItem xs="12" sm="3">
                                 <MudTextField Required Immediate=true RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12" sm="5">
+                            <MudItem xs="12" sm="5">
                                 <MudTextField Label="CEP" Immediate=true @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
-                                                  Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
-                                </MudItem>
+                                              Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
+                            </MudItem>
 
-                                <MudItem xs="12">
+                            <MudItem xs="12">
                                 <MudTextField Label="Complemento" Immediate=true @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12">
+                            <MudItem xs="12">
                                 <MudTextField Label="Referência" Immediate=true @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
-                                <MudItem xs="12">
+                            <MudItem xs="12">
                                 <MudTextField Label="Observações" Immediate=true @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
 
-                                <MudItem xs="12">
+                            <MudItem xs="12">
                                 <MudTextField Label="Tipo Do Endereço" Immediate=true @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
-                                </MudItem>
+                            </MudItem>
 
 
-                            </MudGrid>
-                        </MudPaper>
+                        </MudGrid>
+                    </MudPaper>
 
-                    </MudFocusTrap>
+                </MudFocusTrap>
 
-              
+
 
                 @if (ErroAoAdicionarEndereco)
                 {
@@ -110,10 +110,24 @@
     [Parameter]
     public ClsPessoas Pessoa { get; set; } = new ClsPessoas();//pessoa que vai ser enviada para adicionar o endereço nela
 
+    [Parameter] public EnderecoPessoa? EnderecoParaEditar { get; set; } = null;
+    private bool Editando = false;
+
     private EnderecoPessoa NovoEndereco { get; set; } = new EnderecoPessoa()
     {
         TipoEndereco = "Casa"
     };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EnderecoParaEditar is not null)
+        {
+            NovoEndereco = EnderecoParaEditar;
+            Editando = true;
+        }
+    }
+
 
     private async Task ProcuraCep()
     {
@@ -237,13 +251,16 @@
         {
             if (!string.IsNullOrEmpty(NovoEndereco.Rua) && !string.IsNullOrEmpty(NovoEndereco.Bairro) && !string.IsNullOrEmpty(NovoEndereco.Numero) && !string.IsNullOrEmpty(NovoEndereco.Cidade) && !string.IsNullOrEmpty(NovoEndereco.Estado))
             {
-                var response = await PessoasService.CadastraEndereco(NovoEndereco, Pessoa.Id);
+
+                var response = Editando ? await PessoasService.UpdateEndereco(NovoEndereco, Pessoa.Id)
+                                          : await PessoasService.CadastraEndereco(NovoEndereco, Pessoa.Id);
 
                 if (response is not null)
                 {
-                   Snackbar.Add($"{response}", Severity.Success);
+                    Snackbar.Add($"{response}", Severity.Success);
                     MudDialog.Close(DialogResult.Ok(true));
                 }
+
             }
             else
             {

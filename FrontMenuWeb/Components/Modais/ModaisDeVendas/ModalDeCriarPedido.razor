@@ -148,49 +148,43 @@
                                 @if (NovoPedido.TipoDePedido != "MESA")
                                 {
                                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                                        <MudStack>
+                                       <MudStack>
 
                                             <MudAutocomplete T="ClsPessoas"
                                                              Label=@LabelDeCliente
                                                              HelperText="Procure por Cliente (número | nome)"
                                                              SearchFunc="BuscarPessoas"
                                                              ToStringFunc="@(p =>
-                                                             {
-                                                                 if (p == null)
-                                                                     return string.Empty;
+                                                               {if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}";})"
+                                                         MinCharacters="1"
+                                                         Clearable="true"
+                                                         Dense="true"
+                                                         Variant="Variant.Outlined"
+                                                         ShowProgressIndicator="true"
+                                                         ValueChanged="SelecionarPessoa"
+                                                         OnKeyDown="OnKeyDownAutocomplete">
 
-                                                                 return $"{p.Nome} - {FormatarTelefone(p.Telefone)}";
-                                                             })"
-                                                             MinCharacters="1"
-                                                             Clearable="true"
-                                                             Dense="true"
-                                                             Variant="Variant.Outlined"
-                                                             ShowProgressIndicator="true"
-                                                             ValueChanged="SelecionarPessoa"
-                                                             OnKeyDown="OnKeyDownAutocomplete">
-
-                                                <NoItemsTemplate>
-                                                    <MudButton Class="w-100" Variant="Variant.Filled"
-                                                               Color="Color.Primary"
-                                                               StartIcon="@Icons.Material.Filled.PersonAdd"
-                                                               OnClick="AbreModalDeAdicionarPessoa">
-                                                        Cadastrar Cliente
-                                                    </MudButton>
-                                                </NoItemsTemplate>
-
+                                                              <NoItemsTemplate>
+                                                                                                                   <MudButton Class="w-100" Variant="Variant.Filled"
+                                                                                                                              Color="Color.Primary"
+                                                                                                                              StartIcon="@Icons.Material.Filled.PersonAdd"
+                                                                                                                              OnClick="AbreModalDeAdicionarPessoa">
+                                                                                                                       Cadastrar Cliente
+                                                                                                                   </MudButton>
+                                                              </NoItemsTemplate>
                                             </MudAutocomplete>
 
-                                        </MudStack>
+                                       </MudStack>
 
                                         <MudStack>
                                             <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
                                                 <MudSelectItem Value="@("BALCÃO")">
                                                     <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                        <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
-                                                        <span>BALCÃO</span>
+                                                         <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
+                                                            <span>BALCÃO</span>
                                                     </MudStack>
                                                 </MudSelectItem>
-                                                <MudSelectItem Value="@("DELIVERY")">
+                                                <MudSelectItem Value="@("DELIVERY")"> 
                                                     <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
                                                         @if (NovoPedido.Endereco is null)
                                                         {
@@ -199,15 +193,25 @@
                                                         }
                                                         else
                                                         {
-                                                            <MudStack Row=true>
+                                                            <MudStack Row=true Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
                                                                 <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
                                                                 <span>DELIVERY - @NovoPedido.Endereco.Rua, @NovoPedido.Endereco.Numero - @NovoPedido.Endereco.Bairro</span>
+                                                                <MudIconButton OnClick=@(async () => { await AbreModalDeAtualizarEndereco(NovoPedido.Cliente, NovoPedido.Endereco); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
                                                             </MudStack>
-                                                        }
+                                                        }                                                   
                                                     </MudStack>
                                                 </MudSelectItem>
+
                                             </MudSelect>
                                         </MudStack>
+                                        @if (NovoPedido.TipoDePedido == "DELIVERY" && NovoPedido.Cliente is not null)
+                                        {
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                <MudStack Class="w-100">
+                                                    <MudButton Class="w-100" OnClick=@(async () => { await AbreModalDeAdicionarEndereco(NovoPedido.Cliente); }) StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">Adicionar Novo Endereço</MudButton>
+                                                </MudStack>
+                                            </MudStack>
+                                        }
                                     </MudFocusTrap>
 
                                     <MudStack>
@@ -623,6 +627,61 @@
 
         await TextFieldProd.FocusAsync();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AbreModalDeAtualizarEndereco(ClsPessoas? pessoaSelecionadaParaEdicao, EnderecoPessoa endereco)
+    {
+        if (pessoaSelecionadaParaEdicao is null)
+        {
+            Snackbar.Add("Nenhuma pessoa selecionada para editar o endereço.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "Pessoa", pessoaSelecionadaParaEdicao },
+            { "EnderecoParaEditar", endereco }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEnderecoParaPessoa>("Atualizar endereço", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add("Endereço atualizado com sucesso!", Severity.Success);
+            StateHasChanged();
+        }
+
+    }
+
+    private async Task AbreModalDeAdicionarEndereco(ClsPessoas? pessoaSelecionadaParaEdicao)
+    {
+        if (pessoaSelecionadaParaEdicao is null)
+        {
+            Snackbar.Add("Nenhuma pessoa selecionada para editar o endereço.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "Pessoa", pessoaSelecionadaParaEdicao }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarEnderecoParaPessoa>("Adicionar endereço", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add("Endereço atualizado com sucesso!", Severity.Success);
+            await SelecionarPessoa(pessoaSelecionadaParaEdicao);
+            StateHasChanged();
+        }
+
+
     }
     #endregion
 
