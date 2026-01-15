@@ -29,13 +29,16 @@ public class PessoasService
 
     public async Task<ClsPessoas> GetPessoaAsync(int pessoaId)
     {
-        RetornoApiPessoas? response = await _HttpClient.GetFromJsonAsync<RetornoApiPessoas>($"pessoas/{pessoaId}");
+        HttpResponseMessage Httpresponse = await _HttpClient.GetAsync($"pessoas/{pessoaId}");
+        RetornoApiPessoas? response = await Httpresponse.Content.ReadFromJsonAsync<RetornoApiPessoas?>();
 
         if (response is null)
             return new ClsPessoas();
 
         if(response.Status != "success")
             return new ClsPessoas();
+
+        Console.WriteLine(response.Data.Pessoa.Pedidos);
 
         return response.Data.Pessoa; 
     }
@@ -51,7 +54,6 @@ public class PessoasService
     public async Task<RetornoApiPessoas> CadastraPessoa(ClsPessoas pessoaASerCadastrada)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PostAsJsonAsync("pessoas/create", pessoaASerCadastrada);
-
         RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
 
         return response!;

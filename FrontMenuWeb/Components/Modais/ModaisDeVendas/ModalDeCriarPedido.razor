@@ -149,26 +149,37 @@
                                 {
                                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
                                         <MudStack>
-                                            <MudTextField Class="rounded-2" Value="PesquisaPessoa" Label="Pesquisa" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.People" PlaceHolder="Pesquisar cliente..." @onfocus="OnFocusAutoCompleteManual" @onfocusout="OnFocusOutAutoCompleteManual" Immediate=true ValueChanged="ValueDeAutoCompleteMudou" T="string" Variant="Variant.Outlined" />
-                                            @if (MostrarSugestoes)
-                                            {
-                                                <MudPaper Elevation="4">
-                                                    <MudList T="ClsPessoas" Dense="true">
-                                                        @foreach (var pessoa in PessoasParaSelecionar)
-                                                        {
-                                                            <MudListItem @onkeydown=@(async (e) => { await HandleKeyDown(e, pessoa); }) OnClick="@(async x => { await SelecionarPessoa(pessoa); })">
-                                                                @pessoa.Nome
-                                                            </MudListItem>
-                                                        }
-                                                        <MudListItem OnClick="AbreModalDeAdicionarPessoa">
-                                                            <MudStack @onkeydown=@(async (e) => { await HandleKeyDownAdd(e); }) Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                                <MudIcon  Icon="@Icons.Material.Filled.Add" />
-                                                                <span>Adicionar Cliente</span>
-                                                            </MudStack>
-                                                        </MudListItem>
-                                                    </MudList>
-                                                </MudPaper>
-                                            }
+
+                                            <MudAutocomplete T="ClsPessoas"
+                                                             Label=@LabelDeCliente
+                                                             HelperText="Procure por Cliente (número | nome)"
+                                                             SearchFunc="BuscarPessoas"
+                                                             ToStringFunc="@(p =>
+                                                             {
+                                                                 if (p == null)
+                                                                     return string.Empty;
+
+                                                                 return $"{p.Nome} - {FormatarTelefone(p.Telefone)}";
+                                                             })"
+                                                             MinCharacters="1"
+                                                             Clearable="true"
+                                                             Dense="true"
+                                                             Variant="Variant.Outlined"
+                                                             ShowProgressIndicator="true"
+                                                             ValueChanged="SelecionarPessoa"
+                                                             OnKeyDown="OnKeyDownAutocomplete">
+
+                                                <NoItemsTemplate>
+                                                    <MudButton Class="w-100" Variant="Variant.Filled"
+                                                               Color="Color.Primary"
+                                                               StartIcon="@Icons.Material.Filled.PersonAdd"
+                                                               OnClick="AbreModalDeAdicionarPessoa">
+                                                        Cadastrar Cliente
+                                                    </MudButton>
+                                                </NoItemsTemplate>
+
+                                            </MudAutocomplete>
+
                                         </MudStack>
 
                                         <MudStack>
@@ -315,6 +326,9 @@
     //Funções de pesquisas
     private string? PesquisaDeProduto = string.Empty;
     private int ProdutoSelecionadoIndex = 0;
+
+    //auto complete
+    private string LabelDeCliente = "Cliente";
     #endregion
 
     #region Funções Auxiliares
@@ -392,20 +406,20 @@
         if (long.TryParse(PesquisaPessoa, out long resultNumber))
         {
             NumeroDeTelefoneValido = PesquisaPessoa;
-             Console.WriteLine("é numero válido");
         }
-
 
         var parameters = new DialogParameters
         {
-            { "TelefoneEnviado", NumeroDeTelefoneValido}
+            { "TelefoneEnviado", NumeroDeTelefoneValido},
+            { "CadastroRapido", true}
         };
 
         var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", parameters, options);
         var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        if (!result!.Canceled && result.Data is ClsPessoas pessoa && pessoa is not null)
         {
+            await SelecionarPessoa(pessoa);
             StateHasChanged();
         }
     }
@@ -599,6 +613,7 @@
         PessoaSelecionada = pessoa;
         NovoPedido.Cliente = pessoa;
         PesquisaPessoa = pessoa.Nome;
+        LabelDeCliente = pessoa.Nome;
         MostrarSugestoes = false;
         NovoPedido.Endereco = null;
 
@@ -846,6 +861,44 @@
     }
     #endregion
 
+    #region funções do mudAutoComplete
+    private bool _semResultados;
+    private async Task<IEnumerable<ClsPessoas>> BuscarPessoas(string valor, CancellationToken cancellationToken)
+    {
+        PesquisaPessoa = valor;
+
+        var ResponseAPi = await PessoaService.GetPessoasPaginado(valor, true);
+        PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+
+        _semResultados = !PessoasParaSelecionar.Any();
+
+        return PessoasParaSelecionar;
+    }
+
+    private void OnKeyDownAutocomplete(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && _semResultados)
+        {
+            AbreModalDeAdicionarPessoa();
+        }
+    }
+
+    private string FormatarTelefone(string? telefone)
+    {
+        if (string.IsNullOrWhiteSpace(telefone))
+            return "";
+
+        telefone = new string(telefone.Where(char.IsDigit).ToArray());
+
+        if (telefone.Length == 11)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 00000-0000");
+        else if (telefone.Length == 10)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 0000-0000");
+        else
+            return telefone; // ou trate como inválido
+    }
+    #endregion
+
     #region Lógica do drawer (Não esta sendo ultizado ainda)
     //Lógica do Drawer de edição de produto
     private bool carregandoProdutoParaEdicao = true;
@@ -891,4 +944,6 @@
         return InvokeAsync(StateHasChanged);
     }
     #endregion
+
+
 }

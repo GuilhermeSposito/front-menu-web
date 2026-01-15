@@ -31,45 +31,45 @@
                             </MudText>
                             <MudGrid>
                                 <MudItem xs="12" sm="8">
-                                    <MudTextField Required RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                                    <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="4">
-                                    <MudTextField Required RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                                <MudTextField Required Immediate=true RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Required RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                                <MudTextField Required Immediate=true RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Required RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                                <MudTextField Required Immediate=true RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="3">
-                                    <MudTextField Required RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                                <MudTextField Required Immediate=true RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="5">
-                                    <MudTextField Label="CEP" @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
+                                <MudTextField Label="CEP" Immediate=true @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
                                                   Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudTextField Label="Complemento" @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
+                                <MudTextField Label="Complemento" Immediate=true @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudTextField Label="Referência" @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
+                                <MudTextField Label="Referência" Immediate=true @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
                                 </MudItem>
 
                                 <MudItem xs="12">
-                                    <MudTextField Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
+                                <MudTextField Label="Observações" Immediate=true @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
                                 </MudItem>
 
 
                                 <MudItem xs="12">
-                                    <MudTextField Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
+                                <MudTextField Label="Tipo Do Endereço" Immediate=true @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
                                 </MudItem>
 
 

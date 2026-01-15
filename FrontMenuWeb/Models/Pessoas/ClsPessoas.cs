@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using FrontMenuWeb.Models.Pedidos;
+using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Models.Pessoas;
 
@@ -28,6 +29,8 @@ public class ClsPessoas
     [JsonPropertyName("desconto")] public int? Desconto { get; set; }
     [JsonPropertyName("enderecos")] public List<EnderecoPessoa> Enderecos { get; set; } = new List<EnderecoPessoa>();
     [JsonPropertyName("endereco")]public EnderecoPessoa? Endereco { get; set; } = new EnderecoPessoa(); //prop que só vai ser ultilizada quando serializarmos para mandar o end junto
+    [JsonPropertyName("Pedidos")]public List<ClsPedido>? Pedidos{ get; set; } = new List<ClsPedido>(); //prop que só vai ser ultilizada quando serializarmos para mandar o end junto
+    [JsonPropertyName("PedidosCaixa")]public List<ClsPedido>? PedidosCaixa { get; set; } = new List<ClsPedido>(); //prop que só vai ser ultilizada quando serializarmos para mandar o end junto
 
 }
 

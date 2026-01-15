@@ -8,6 +8,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.Fiscal
@@ -32,10 +33,10 @@
         </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-50" Row=true>
-                <MudTextField DebounceInterval="700" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged"  Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudTextField DebounceInterval="700" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged"  Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
             </MudStack>
             <MudStack Justify="Justify.FlexStart">
-                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F2 / F3)</MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
             </MudStack>
         </MudStack>
 
@@ -310,6 +311,10 @@
             {
                 await AbrirCriacaoDePedido(TiposDePedido.BALCAO);
             }
+            if (e.Key == "F1")
+            {
+                await AbrirCriacaoDePedido(TiposDePedido.MESA);
+            }
 
         }
         catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
@@ -359,10 +364,11 @@
         {
             var parameters = new DialogParameters
              {
-                 { "TiposDePedido", tipoDePedido }
+                 { "TiposDePedido", tipoDePedido },
+                 { "Mesa",  new ClsMesasEComandas { Id = 0,CodigoExterno = 0} }
              };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
+            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
 
             var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", parameters, options);
             var result = await dialog.Result;

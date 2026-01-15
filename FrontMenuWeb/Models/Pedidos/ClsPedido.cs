@@ -91,6 +91,8 @@ public class ClsPedido
     [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
     [JsonPropertyName("MesaComandaId")] public int MesaComandaId { get; set; }
 
+    [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
+
 }
 
 public class ItensPedido

@@ -30,7 +30,6 @@ namespace FrontMenuWeb.Services.ServicosDeTerceiros
             try
             {
                 string RuaSemEspacos = rua.Replace(" ", "%20");
-                Console.WriteLine($"Rua sem espaços: {RuaSemEspacos}");
 
                 List<EnderecoViaCep> response = await _http.GetFromJsonAsync<List<EnderecoViaCep>>($"SP/São%20Carlos/{RuaSemEspacos}/json/");
                 return response;
