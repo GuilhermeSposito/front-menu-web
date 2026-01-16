@@ -10,8 +10,18 @@
     padding: 0;
 }
 
+.blur-overlay {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0,0,0,0.25);
+}
+
 .product-card:focus,
 .product-card:focus-visible {
+    outline: none !important;
+}
+
+.gestao-pedido-page:focus,
+.gestao-pedido-page:focus-visible {
     outline: none !important;
 }
 

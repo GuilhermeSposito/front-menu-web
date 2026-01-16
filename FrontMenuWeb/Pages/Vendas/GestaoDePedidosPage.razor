@@ -25,216 +25,217 @@
 @inject PedidosService PedidosService
 @inject NfService NFService
 
-<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
-        <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
-            <MudText Typo="Typo.h4" Style="font-weight: 300">Últimos pedidos</MudText>
-            <MudDivider DividerType="DividerType.FullWidth" Light=true />
-        </MudStack>
-        <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-            <MudStack Class="w-50" Row=true>
-                <MudTextField DebounceInterval="700" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged"  Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
+        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+            <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
+                <MudText Typo="Typo.h4" Style="font-weight: 300">Últimos pedidos</MudText>
+                <MudDivider DividerType="DividerType.FullWidth" Light=true />
             </MudStack>
-            <MudStack Justify="Justify.FlexStart">
-                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
+            <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                <MudStack Class="w-50" Row=true>
+                    <MudTextField DebounceInterval="700" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
+                </MudStack>
+                <MudStack Justify="Justify.FlexStart">
+                    <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
+                </MudStack>
             </MudStack>
-        </MudStack>
 
-        @if (!Carregando)
-        {
-            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudGrid Class="w-100 mt-2">
-                    @foreach (var etapa in ListaDeEtapasDosPedidos)
-                    {
-                        <MudItem xs="12" md="6" xl="3">
-                            <MudCard Class="h-100 ma-1 rounded-3"
-                                     Style="min-height: 520px; max-height: 900px;">
-                                <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
-                                    <CardHeaderContent>
-                                        <MudText>@etapa.NomeDaEtapa</MudText>
-                                    </CardHeaderContent>
-                                    <CardHeaderActions>
-                                        <MudCheckBox T="bool" Disabled=@(etapa.Selector == "FINALIZADO") ValueChanged=@(() => { SelecionaPedidosParaProximaEtapaNoCabecalho(etapa); }) />
-                                    </CardHeaderActions>
-                                </MudCardHeader>
-                                <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px dashed var(--mud-palette-primary); ">
-                                    @{
-                                        var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
-                                        if (Pedidos.Count > 0)
-                                        {
-                                            foreach (var pedido in Pedidos)
+            @if (!Carregando)
+            {
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudGrid Class="w-100 mt-2">
+                        @foreach (var etapa in ListaDeEtapasDosPedidos)
+                        {
+                            <MudItem xs="12" md="6" xl="3">
+                                <MudCard Class="h-100 ma-1 rounded-3"
+                                         Style="min-height: 520px; max-height: 900px;">
+                                    <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
+                                        <CardHeaderContent>
+                                            <MudText>@etapa.NomeDaEtapa</MudText>
+                                        </CardHeaderContent>
+                                        <CardHeaderActions>
+                                            <MudCheckBox T="bool" Disabled=@(etapa.Selector == "FINALIZADO") ValueChanged=@(() => { SelecionaPedidosParaProximaEtapaNoCabecalho(etapa); }) />
+                                        </CardHeaderActions>
+                                    </MudCardHeader>
+                                    <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px dashed var(--mud-palette-primary); ">
+                                        @{
+                                            var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
+                                            if (Pedidos.Count > 0)
                                             {
-                                                <MudCard Class="rounded-3 mb-3" Style=@($"background-color: var(--mud-palette-background); border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
-                                                    <MudCardHeader>
-                                                        <CardHeaderAvatar>
-                                                            <MudAvatar Color="Color.Primary">
-                                                                @if (pedido.Pedido.CriadoPor == "SOPHOS")
+                                                foreach (var pedido in Pedidos)
+                                                {
+                                                    <MudCard Class="rounded-3 mb-3" Style=@($"background-color: var(--mud-palette-background); border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                        <MudCardHeader>
+                                                            <CardHeaderAvatar>
+                                                                <MudAvatar Color="Color.Primary">
+                                                                    @if (pedido.Pedido.CriadoPor == "SOPHOS")
+                                                                    {
+                                                                        <MudImage Src="/images/SOPHOSLOGOLOGIN.jpg"></MudImage>
+                                                                    }
+                                                                    else if (pedido.Pedido.CriadoPor == "IFOOD")
+                                                                    {
+                                                                        <MudImage Src="/images/ifoodImagem.png"></MudImage>
+                                                                    }
+                                                                </MudAvatar>
+                                                            </CardHeaderAvatar>
+                                                            <CardHeaderContent>
+                                                                <MudText Color="Color.Primary" Typo="Typo.body1">@pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId - @pedido.Pedido.Id</MudText>
+                                                                @if (pedido.Pedido.Cliente is not null)
                                                                 {
-                                                                    <MudImage Src="/images/SOPHOSLOGOLOGIN.jpg"></MudImage>
+                                                                    <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                                 }
-                                                                else if (pedido.Pedido.CriadoPor == "IFOOD")
+                                                                <MudText>@pedido.Pedido.CriadoEm</MudText>
+                                                            </CardHeaderContent>
+                                                            <CardHeaderActions>
+                                                                @if (!pedido.UltimaEtapa)
                                                                 {
-                                                                    <MudImage Src="/images/ifoodImagem.png"></MudImage>
+                                                                    <MudCheckBox ValueChanged=@(() => { pedido.Selecionado = !pedido.Selecionado; if (pedido.Selecionado) { ItensSelecionadosPArAProximaEtapa.Add(pedido); } else { ItensSelecionadosPArAProximaEtapa.Remove(pedido); } }) T="bool" Value=@pedido.Selecionado />
                                                                 }
-                                                            </MudAvatar>
-                                                        </CardHeaderAvatar>
-                                                        <CardHeaderContent>
-                                                            <MudText Color="Color.Primary" Typo="Typo.body1">@pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId - @pedido.Pedido.Id</MudText>
-                                                            @if (pedido.Pedido.Cliente is not null)
+                                                            </CardHeaderActions>
+                                                        </MudCardHeader>
+                                                        <MudCardContent>
+                                                            @foreach (var item in pedido.Pedido.Itens)
                                                             {
-                                                                <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
-                                                            }
-                                                            <MudText>@pedido.Pedido.CriadoEm</MudText>
-                                                        </CardHeaderContent>
-                                                        <CardHeaderActions>
-                                                            @if (!pedido.UltimaEtapa)
-                                                            {
-                                                                <MudCheckBox ValueChanged=@(() => { pedido.Selecionado = !pedido.Selecionado; if (pedido.Selecionado) { ItensSelecionadosPArAProximaEtapa.Add(pedido); } else { ItensSelecionadosPArAProximaEtapa.Remove(pedido); } }) T="bool" Value=@pedido.Selecionado />
-                                                            }
-                                                        </CardHeaderActions>
-                                                    </MudCardHeader>
-                                                    <MudCardContent>
-                                                        @foreach (var item in pedido.Pedido.Itens)
-                                                        {
-                                                            <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                <MudText>@($"{item.Quantidade}X {item.Descricao}")</MudText>
-                                                                <MudText>UNIT: @($"{item.PrecoUnitario.ToString("C")}")</MudText>
-                                                            </MudStack>
-                                                            <MudDivider DividerType="DividerType.FullWidth" Light=true />
-                                                            <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
-                                                                <MudText>TOTAL: @($"{item.PrecoTotal.ToString("C")}")</MudText>
-                                                            </MudStack>
-                                                            if (item.Complementos.Count > 0)
-                                                            {
-                                                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                                                    <MudText Align="Align.Center" Typo="Typo.caption">Complementos:</MudText>
+                                                                <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                    <MudText>@($"{item.Quantidade}X {item.Descricao}")</MudText>
+                                                                    <MudText>UNIT: @($"{item.PrecoUnitario.ToString("C")}")</MudText>
                                                                 </MudStack>
-                                                                foreach (var complemento in item.Complementos)
-                                                                {
-                                                                    <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
-                                                                        <MudText Typo="Typo.caption">@($"{complemento.Quantidade}X {complemento.Descricao} - {complemento.PrecoUnitario.ToString("C")}")</MudText>
-                                                                    </MudStack>
-                                                                }
                                                                 <MudDivider DividerType="DividerType.FullWidth" Light=true />
-                                                            }
-                                                        }
-                                                        <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
-                                                            <MudStack Spacing="2" Class="w-100">
-                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
-                                                                <MudDivider />
-                                                                <MudCollapse Expanded="@pedido.Expandido">
-                                                                    <MudStack Class="w-100">
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.ValorDosItens.ToString("C")</MudText>
-                                                                        </MudStack>
-
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Desconto:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.DescontoValor.ToString("C")</MudText>
-                                                                        </MudStack>
-
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
-                                                                        </MudStack>
-
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
-                                                                        </MudStack>
-
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
-                                                                        </MudStack>
-
-                                                                        <MudDivider />
-
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
-                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
-                                                                        </MudStack>
-
+                                                                <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexEnd">
+                                                                    <MudText>TOTAL: @($"{item.PrecoTotal.ToString("C")}")</MudText>
+                                                                </MudStack>
+                                                                if (item.Complementos.Count > 0)
+                                                                {
+                                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                        <MudText Align="Align.Center" Typo="Typo.caption">Complementos:</MudText>
                                                                     </MudStack>
-                                                                </MudCollapse>
-                                                            </MudStack>
-                                                        </MudStack>
-                                                    </MudCardContent>
-                                                    <MudCardActions>
-                                                        <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                            <MudStack Row=true>
-                                                                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                                                                    <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
-                                                                    <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
-                                                                    @if (pedido.Pedido.StatusPedido != "FECHADO")
+                                                                    foreach (var complemento in item.Complementos)
                                                                     {
-                                                                        <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
+                                                                        <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
+                                                                            <MudText Typo="Typo.caption">@($"{complemento.Quantidade}X {complemento.Descricao} - {complemento.PrecoUnitario.ToString("C")}")</MudText>
+                                                                        </MudStack>
                                                                     }
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
-                                                                </MudMenu>
-                                                            </MudStack>
-                                                            <MudStack>
-                                                                <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
-                                                                    @if (!pedido.UltimaEtapa)
-                                                                    {
-                                                                        <MudIconButton OnClick="@(async () => { await MudaEtapaDoPedido(pedido); })" Size="Size.Large" Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" />
+                                                                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                                                                }
+                                                            }
+                                                            <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
+                                                                <MudStack Spacing="2" Class="w-100">
+                                                                    <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
+                                                                    <MudDivider />
+                                                                    <MudCollapse Expanded="@pedido.Expandido">
+                                                                        <MudStack Class="w-100">
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.ValorDosItens.ToString("C")</MudText>
+                                                                            </MudStack>
 
-                                                                    }
-                                                                </MudTooltip>
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Desconto:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.DescontoValor.ToString("C")</MudText>
+                                                                            </MudStack>
+
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
+                                                                            </MudStack>
+
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
+                                                                            </MudStack>
+
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
+                                                                            </MudStack>
+
+                                                                            <MudDivider />
+
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
+                                                                                <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
+                                                                            </MudStack>
+
+                                                                        </MudStack>
+                                                                    </MudCollapse>
+                                                                </MudStack>
                                                             </MudStack>
-                                                        </MudStack>
-                                                    </MudCardActions>
-                                                </MudCard>
+                                                        </MudCardContent>
+                                                        <MudCardActions>
+                                                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                <MudStack Row=true>
+                                                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                                                                        <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
+                                                                        <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                        <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
+                                                                        <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
+                                                                        @if (pedido.Pedido.StatusPedido != "FECHADO")
+                                                                        {
+                                                                            <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
+                                                                        }
+                                                                        <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
+                                                                    </MudMenu>
+                                                                </MudStack>
+                                                                <MudStack>
+                                                                    <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
+                                                                        @if (!pedido.UltimaEtapa)
+                                                                        {
+                                                                            <MudIconButton OnClick="@(async () => { await MudaEtapaDoPedido(pedido); })" Size="Size.Large" Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" />
+
+                                                                        }
+                                                                    </MudTooltip>
+                                                                </MudStack>
+                                                            </MudStack>
+                                                        </MudCardActions>
+                                                    </MudCard>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <MudStack AlignItems="AlignItems.Center"
+                                                          Justify="Justify.Center"
+                                                          Style="width: 100%; height: 100%; opacity: 0.4;">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                                                    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                                                        Nenhum pedido nesta etapa
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Align="Align.Center">
+                                                        Seus pedidos aparecerão aqui quando estiverem nessa etapa.
+                                                    </MudText>
+                                                </MudStack>
                                             }
                                         }
-                                        else
-                                        {
-                                            <MudStack AlignItems="AlignItems.Center"
-                                                      Justify="Justify.Center"
-                                                      Style="width: 100%; height: 100%; opacity: 0.4;">
-                                                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
-                                                <MudText Typo="Typo.subtitle1" Align="Align.Center">
-                                                    Nenhum pedido nesta etapa
-                                                </MudText>
-                                                <MudText Typo="Typo.caption" Align="Align.Center">
-                                                    Seus pedidos aparecerão aqui quando estiverem nessa etapa.
-                                                </MudText>
-                                            </MudStack>
-                                        }
-                                    }
-                                </MudCardContent>
-                            </MudCard>
-                        </MudItem>
-                    }
-                </MudGrid>
-            </MudStack>
-        }
-        else
-        {
-            @*Carregando*@
-            <MudStack Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-surface); min-height: 520px" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="w-50 my-7" />
-            </MudStack>
-        }
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudStack>
+            }
+            else
+            {
+                @*Carregando*@
+                <MudStack Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-surface); min-height: 520px" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="w-50 my-7" />
+                </MudStack>
+            }
 
-        @if (ItensSelecionadosPArAProximaEtapa.Count > 0)
-        {
-            <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
-                      Style="color: #FFFF; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
-                <MudText>Você selecionou @ItensSelecionadosPArAProximaEtapa.Count pedidos, deseja envia-los para proxima etapa ?</MudText>
+            @if (ItensSelecionadosPArAProximaEtapa.Count > 0)
+            {
+                <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
+                          Style="color: #FFFF; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
+                    <MudText>Você selecionou @ItensSelecionadosPArAProximaEtapa.Count pedidos, deseja envia-los para proxima etapa ?</MudText>
 
-                <MudPaper Elevation="0" Style=" background-color: var(--mud-palette-primary);" Square="false">
+                    <MudPaper Elevation="0" Style=" background-color: var(--mud-palette-primary);" Square="false">
 
-                    <MudButton Style="color: #FFFF;" OnClick="@(async () => { ItensSelecionadosPArAProximaEtapa.Clear(); })">Descartar</MudButton>
-                    <MudButton Style="color: #FFFF;" OnClick="@(async () => { await MudaEtapaDoPedido(); })" Class="ml-2">Enviar para proxima etapa</MudButton>
+                        <MudButton Style="color: #FFFF;" OnClick="@(async () => { ItensSelecionadosPArAProximaEtapa.Clear(); })">Descartar</MudButton>
+                        <MudButton Style="color: #FFFF;" OnClick="@(async () => { await MudaEtapaDoPedido(); })" Class="ml-2">Enviar para proxima etapa</MudButton>
 
+                    </MudPaper>
                 </MudPaper>
-            </MudPaper>
-        }
-
+            }
+        </MudFocusTrap>
     </MudLayout>
 </MudPaper>
 
