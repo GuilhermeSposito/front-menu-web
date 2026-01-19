@@ -80,9 +80,9 @@
                 <PropertyColumn Property="x => x.CriadoEm" Title="Emissão" Format="dd/MM/yyyy"></PropertyColumn>
 
 
-                <TemplateColumn T="NFEmitidasDto" Title="Deletar">
+                <TemplateColumn T="NFEmitidasDto" Title="Cancelar">
                     <CellTemplate Context="context">
-                        <MudTooltip Text="Clique para deletar o lançamento" Color="Color.Error">
+                        <MudTooltip Text="Clique para Cancelar a NF" Color="Color.Error">
                             <MudIconButton OnClick=@(async p => { await DeletaRegistro(context.Item); }) Icon="@Icons.Material.Filled.Delete"
                                            Color="Color.Error" />
                         </MudTooltip>
@@ -257,29 +257,44 @@
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
-                {
+            {
                     { x => x.ContentText, $"Você tem certeza que deseja excluir o Registtro da NF {Registro.NmrNf}? Atenção, essa ação não pode ser desfeita" },
                     { x => x.ButtonText, "Sim" },
                     { x => x.Color, Color.Error}
-                };
+            };
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                var respostaApi = await NfService.CancelaNFe(Registro.ChaveNf, Registro.NmrProtocolo);
+                var optionsInputText = new DialogOptions { CloseButton = true, FullScreen=true, FullWidth = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true };
+                var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Motivo", parameters, options);
+                var Motivo = await dialogInputText.Result;
+                if (!Motivo!.Canceled || string.IsNullOrWhiteSpace(Motivo.Data?.ToString()))
+                {
+                    Snackbar.Add("Motivo é obrigatório para exclusão da NF.", Severity.Error);
+                    return;
+                }
+
+                var respostaApi = await NfService.CancelaNFe(Registro.ChaveNf!, Registro.NmrProtocolo!, Registro.NfTipo, Motivo: Motivo.Data.ToString());
 
                 string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
                 Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
 
                 if (respostaApi.Status == "success")
                     await dataGridRef!.ReloadServerData();
             }
         }
+        catch (Exception ex) when (ex is NullReferenceException)
+        {
+             Snackbar.Add($"Erro ao excluir Registro: Campo nescessario não foi encontrado.", Severity.Error);
+        }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao excluir Registro: {ex.Message}", Severity.Error);
+             Snackbar.Add($"Erro ao excluir Registro: {ex.Message}", Severity.Error);
+            //ignorado
         }
     }
     #endregion

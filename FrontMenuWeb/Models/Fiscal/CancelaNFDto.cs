@@ -2,6 +2,7 @@
 
 public class CancelaNFDto
 {
+    public int TipoNf { get; set; }
     public string ChNfe { get; set; } = string.Empty;
     public string Justificativa { get; set; } = string.Empty; 
     public string Cnpj { get; set; } = string.Empty;

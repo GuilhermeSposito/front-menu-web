@@ -307,7 +307,7 @@ public class NfService
         var DataToReturn = new NfeReturnDto
         {
             PedidoCaixaId = Pedido.Id,
-            NFTipo = 65,
+            NFTipo = 55,
             ChaveNf = autorizacao.Result.ProtNFe.InfProt.ChNFe,
             Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
             Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
@@ -406,7 +406,7 @@ public class NfService
         var DataToReturn = new NfeReturnDto
         {
             PedidoCaixaId = Pedido.Id,
-            NFTipo = 55,
+            NFTipo = 65,
             ChaveNf = autorizacao.Result.ProtNFe.InfProt.ChNFe,
             Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
             Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
@@ -457,7 +457,7 @@ public class NfService
                     {
                         NProt = cancelaNFDto.NumeroProtocolo,
                         Versao= "1.00",
-                        XJust = cancelaNFDto.Justificativa,
+                        XJust = cancelaNFDto.Justificativa.Trim(),
                     })
                     {
                         COrgao = UFBrasil.SP,
@@ -473,9 +473,11 @@ public class NfService
             }
         };
 
+        TipoDFe tipoDFe = RegistroNF?.NFTipo == 55 ? TipoDFe.NFe : TipoDFe.NFCe;
+
         var config = new Configuracao
         {
-            TipoDFe = TipoDFe.NFCe,
+            TipoDFe = tipoDFe,
             TipoEmissao = TipoEmissao.Normal,
             CertificadoDigital = CertificadoSelecionado,
         };

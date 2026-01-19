@@ -1,0 +1,55 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Services
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField
+                       style="width: 750px"
+                        @bind-Value="Texto"
+                      Label="Digite o texto"
+                      Variant="Variant.Filled"
+                      AutoFocus="true"
+                      Immediate="true"
+                      Required="true"
+                      RequiredError="O texto não deve ser vazio"
+                      />
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Color="Color.Secondary">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="Confirmar" Color="Color.Primary">
+            OK
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]private IMudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public string ContentText { get; set; }
+
+    [Parameter]
+    public string ButtonText { get; set; }
+
+    [Parameter]
+    public Color Color { get; set; }
+
+    public string Texto { get; set; } = string.Empty;
+
+    public void Confirmar()
+    {
+        if(string.IsNullOrEmpty(Texto) || Texto.Length < 15)
+        {
+            Snackbar.Add("O texto deve conter ao menos 15 caracteres.", Severity.Error);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(Texto));
+    }
+
+    void Cancelar() => MudDialog.Cancel();
+}

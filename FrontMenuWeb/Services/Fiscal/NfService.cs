@@ -88,7 +88,7 @@ public class NfService : INfService
         return await _pedidoService.DeleteRegistroDaNF(id);
     }
 
-    public async Task<ReturnApiRefatored<NFEmitidasDto>> CancelaNFe(string chaveNfe, string Protocolo, string Motivo = "Teste de motivo de cancelamento")
+    public async Task<ReturnApiRefatored<NFEmitidasDto>> CancelaNFe(string chaveNfe, string Protocolo, int TipoNf ,string Motivo = "Teste de motivo de cancelamento")
     {
         var response = await _http.PostAsJsonAsync($"nf/cancelar-nfce", new CancelaNFDto { ChNfe = chaveNfe, NumeroProtocolo = Protocolo, Justificativa = Motivo });
         var content = await response.Content.ReadAsStringAsync();
