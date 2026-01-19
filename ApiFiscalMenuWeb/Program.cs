@@ -20,6 +20,8 @@ string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
 string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
 
+Console.WriteLine(UrlCors);
+
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
     client.BaseAddress = new Uri(UrlSophos); //new Uri("https://localhost:3030");//

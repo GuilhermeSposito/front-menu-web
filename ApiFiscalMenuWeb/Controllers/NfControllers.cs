@@ -1,6 +1,7 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
 using ApiFiscalMenuWeb.Services;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Fiscal;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,5 +71,21 @@ public class NfControllers : ControllerBase
         var result = await _nfService.EmissaoDeNFCe(token, EnvNFCeDto);
         return Ok(result);
     }
+    #endregion
+
+    #region Cancelamento de NFe e NFCe
+    [HttpPost("cancelar-nfce")]
+    public async Task<ActionResult> CancelarNFce([FromBody] CancelaNFDto CancelNfDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+
+        var result = await _nfService.CancelamentoDeNFCe(token, CancelNfDto);
+        return Ok(result);
+    }
+
     #endregion
 }

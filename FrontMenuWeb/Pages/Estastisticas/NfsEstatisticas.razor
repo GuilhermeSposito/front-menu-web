@@ -268,7 +268,7 @@
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                var respostaApi = await NfService.DeleteRegistroDaNF(Registro.Id);
+                var respostaApi = await NfService.CancelaNFe(Registro.ChaveNf, Registro.NmrProtocolo);
 
                 string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
                 Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);

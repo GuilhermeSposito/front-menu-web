@@ -96,7 +96,7 @@ public class NfService
         return true;
     }
 
-    public async Task<bool> CreateRegistroDaNFInNestApi(string token, NfeReturnDto returnDto)
+    public async Task<bool> CreateRegistroDaNFInNestApi(string token, NfeReturnDto returnDto, bool update = false)
     {
         var client = _factory.CreateClient("ApiAutorizada");
         AdicionaTokenNaRequisicao(client, token);
@@ -107,7 +107,14 @@ public class NfService
 
         try
         {
-            response = await client.PostAsJsonAsync($"nfs", returnDto, cts.Token);
+            if (update)
+            {
+                response = await client.PatchAsJsonAsync($"nfs/{returnDto.ChaveNf}", returnDto, cts.Token);
+
+                Console.WriteLine(await response.Content.ReadAsStringAsync());
+            }
+            else
+                response = await client.PostAsJsonAsync($"nfs", returnDto, cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -118,6 +125,32 @@ public class NfService
             return false;
 
         return true;
+    }
+
+    public async Task<NfeReturnDto?> GetRegistroDaNFInNestApi(string token, string ChaveNF)
+    {
+        var client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, token);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+        HttpResponseMessage response;
+
+        try
+        {
+            response = await client.GetAsync($"nfs/{ChaveNF}", cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new TimeoutException("A requisição para 'Registrar a NF EMITIDA' excedeu o tempo limite.");
+        }
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        var content = await response.Content.ReadAsStringAsync(cts.Token);
+        var nfeReturnDto = JsonSerializer.Deserialize<ReturnApiRefatored<NfeReturnDto>>(content);
+
+        return nfeReturnDto?.Data.Objeto;
     }
     #endregion
 
@@ -196,7 +229,6 @@ public class NfService
             }
         };
     }
-
 
     #endregion
 
@@ -349,7 +381,7 @@ public class NfService
 
         var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
 
-       //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta 
+        //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta 
 
         string? XmlDeDistribuicao = null;
         switch (autorizacao.Result.ProtNFe.InfProt.CStat)
@@ -394,6 +426,109 @@ public class NfService
                 ObjetoWhenWriting = DataToReturn
             }
         };
+    }
+    #endregion
+
+    #region Funções de Cancelamento da NFe/NFCe
+    public async Task<ReturnApiRefatored<object>> CancelamentoDeNFCe(string token, CancelaNFDto cancelaNFDto)
+    {
+        ClsMerchant? merchant = await GetMerchantFromNestApi(token);
+
+        if (merchant is null || (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)))
+            throw new UnauthorizedAccessException("Certificado ou senha não informados");
+
+        //Função auxiliar para carregar o certificado digital
+        var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
+        var documentoMerchant = merchant.Documentos.FirstOrDefault();
+
+        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        var RegistroNF = await GetRegistroDaNFInNestApi(token, cancelaNFDto.ChNfe);
+
+        var xml = new EnvEvento
+        {
+            Versao = "1.00",
+            IdLote = "000000000000001",
+            Evento = new List<Evento>
+            {
+                new Evento
+                {
+                    Versao = "1.00",
+                    InfEvento = new InfEvento(new DetEventoCanc
+                    {
+                        NProt = cancelaNFDto.NumeroProtocolo,
+                        Versao= "1.00",
+                        XJust = cancelaNFDto.Justificativa,
+                    })
+                    {
+                        COrgao = UFBrasil.SP,
+                        TpAmb = TipoHambiente,
+                        CNPJ = LimparCnpj(documentoMerchant?.Cnpj ?? ""),
+                        ChNFe = cancelaNFDto.ChNfe,
+                        DhEvento = DateTime.Now,
+                        TpEvento = TipoEventoNFe.Cancelamento,
+                        NSeqEvento = 1,
+                        VerEvento = "1.00"
+                    }
+                }
+            }
+        };
+
+        var config = new Configuracao
+        {
+            TipoDFe = TipoDFe.NFCe,
+            TipoEmissao = TipoEmissao.Normal,
+            CertificadoDigital = CertificadoSelecionado,
+        };
+
+        var RecepçaoEvento = new Unimake.Business.DFe.Servicos.NFCe.RecepcaoEvento(xml, config);
+        RecepçaoEvento.Executar();
+
+
+        if (RecepçaoEvento.Result.CStat == 128)
+        {
+            switch (RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat)
+            {
+                case 135: //evento homologado
+                case 155: //evento homologado fora do prazo
+                    if (RegistroNF is not null)
+                    {
+                        RegistroNF.Cstat = RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat;
+                        RegistroNF.Xmotivo = "NF CANCELADA";
+                        await CreateRegistroDaNFInNestApi(token, RegistroNF, update: true);
+                    }
+
+                    return new ReturnApiRefatored<object>
+                    {
+                        Status = "success",
+                        Data = new Data<object>
+                        {
+                            Messages = new List<string> { $"Evento processado com sucesso: {RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat} - {RecepçaoEvento.Result.RetEvento[0].InfEvento.XMotivo}" }
+                        }
+                    };
+
+                default:
+                    return new ReturnApiRefatored<object>
+                    {
+                        Status = "error",
+                        Data = new Data<object>
+                        {
+                            Messages = new List<string> { $"Evento processado com erro: {RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat} - {RecepçaoEvento.Result.RetEvento[0].InfEvento.XMotivo}" }
+                        }
+                    };
+            }
+        }
+
+        return new ReturnApiRefatored<object>
+        {
+            Status = "error",
+            Data = new Data<object>
+            {
+                Messages = new List<string> { $"{RecepçaoEvento.Result.CStat} - {RecepçaoEvento.Result.XMotivo}" }
+            }
+        };
+
+
+
     }
     #endregion
 
@@ -478,11 +613,11 @@ public class NfService
                                     VIPIDevol = 0.00,
                                     VPIS = 0.00,
                                     VCOFINS = 0.00,
-                                    VOutro = Convert.ToDouble(enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor), 
+                                    VOutro = Convert.ToDouble(enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor),
                                     VNF = Convert.ToDouble(enNfCeDto.Pedido.ValorTotal),
                                     VTotTrib = ValorTotalTribNfAtual
                                }
-                            },         
+                            },
                             Transp = RetornaTransportedaNF(enNfCeDto.Pedido, merchant, DocumentoMerchant, enderecoMerchant, TipoDFe.NFCe),
                             Pag = new Pag
                             {
@@ -796,7 +931,7 @@ public class NfService
                     VUnCom = Convert.ToDecimal(item.PrecoUnitario),
                     VProd = Convert.ToDouble(item.PrecoTotal),
                     VFrete = ValorFreteDiluidoPorItem,
-                    VOutro =  ValorOutrosDiluidoPorItem,
+                    VOutro = ValorOutrosDiluidoPorItem,
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     UTrib = "UN",
                     QTrib = Convert.ToDecimal(item.Quantidade),
