@@ -65,22 +65,16 @@ public class ImpressaoService
                 }
 
                 //imprime na impressora auxiliar se tiver
-                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
+                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && !VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, 19);
-                }   
+                }
 
-                if(AppState.MerchantLogado is not null)
+
+                if (AppState.MerchantLogado is not null)
                 {
-                    if (AppState.MerchantLogado.ImprimeComandasSeparadaPorProdutos)
-                    {
-                        await ImprimirComanda(jsonDoPedido, Pedido.CriadoPor, false); 
-                    }
-                    else
-                    {
-
-                    }
+                    await ImprimirComanda(jsonDoPedido, Pedido.CriadoPor, false);
                 }
 
 
@@ -102,16 +96,85 @@ public class ImpressaoService
                     ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoMesa(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                    List<ItensPorImpressoraDto> produtosAgrupados =
+                     Pedido.Itens.Where(x => x.Produto?.ImpressoraComanda1 != "Não imprime").GroupBy(i => i.Produto?.ImpressoraComanda1 ?? "Não Imprime")
+                         .Select(grupo => new ItensPorImpressoraDto
+                         {
+                             Impressora = grupo.Key,
+                             Itens = grupo.ToList()
+                         })
+                     .ToList();
+
+                    foreach (var Prods in produtosAgrupados)
+                    {
+                        PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
+                        PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
+
+                        string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
+                        if (Impressora == "Sem Impressora")
+                            continue;
+
+                        var QtdDeLoops = 1;
+
+                        if (AppState.MerchantLogado is not null)
+                            QtdDeLoops = AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos ? Prods.Itens.Count() : 1;
+
+                        for (var i = 0; i < QtdDeLoops; i++)
+                        {
+                            if (QtdDeLoops > 1)//se for maior que 1 é porque é separado por item
+                            {
+                                var ItemAtual = Prods.Itens[i];
+                                PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido> { ItemAtual };
+                            }
+                            List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupados, AppQueEnviou);
+
+
+                            await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
+                        }
+                    }
+
                 }
-                else
+                else  //merchant nunca vai entrar nulo aqui
                 {
                     ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                     ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                    int QtdDeItensDoPedido = Pedido.Itens.Count();
+
+                    List<ItensPorImpressoraDto> produtosAgrupados =
+                    Pedido.Itens.Where(x => x.Produto?.ImpressoraComanda1 != "Não imprime").GroupBy(i => i.Produto?.ImpressoraComanda1 ?? "Sem Impressora")
+                        .Select(grupo => new ItensPorImpressoraDto
+                        {
+                            Impressora = grupo.Key,
+                            Itens = grupo.ToList()
+                        })
+                        .ToList();
+
+                    foreach (var Prods in produtosAgrupados)
+                    {
+                        ClsPedido PedidoAtualizadoComItensAgrupados = Pedido;
+                        PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
+
+                        string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
+                        if (Impressora == "Sem Impressora")
+                            continue;
+
+                        var QtdDeLoops = AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos ? Prods.Itens.Count() : 1;
+
+                        for (var i = 0; i < QtdDeLoops; i++)
+                        {
+                            if (QtdDeLoops > 1)//se for maior que 1 é porque é separado por item
+                            {
+                                var ItemAtual = Prods.Itens[i];
+                                PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido> { ItemAtual };
+                            }
+
+                            List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(PedidoAtualizadoComItensAgrupados, AppQueEnviou, AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos, QtdDeItensDoPedido, i);
+
+                            if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
+                                await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, 19);
+                        }
+                    }
                 }
             }
         }
@@ -190,12 +253,12 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
         return Conteudo;
     }
 
-    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(ClsPedido pedido, string AppQueEnviou)
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(ClsPedido pedido, string AppQueEnviou, bool ItemSeparadoPorComanda = false, int qtdItens = 0, int IndiceDoItemAtual = 0)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
@@ -209,6 +272,13 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
 
+        if (ItemSeparadoPorComanda)
+        {
+            int IndiceDoItemAtualMaisUm = IndiceDoItemAtual + 1; //isso pra não mudar o valor original que veio do for 
+
+            AdicionaConteudo(Conteudo, $"Item: {IndiceDoItemAtualMaisUm}/{qtdItens}", FonteDetalhesDoPedido);
+        }
+
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -216,6 +286,11 @@ public class ImpressaoService
         {
             AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+
+            if (item.Produto is not null && item.Produto.PrecoSelecionado.DescricaoDoTamanho is not null)
+            {
+                AdicionaConteudo(Conteudo, $"{item.Produto.PrecoSelecionado.DescricaoDoTamanho}", FonteCPF);
+            }
 
             if (item.Complementos.Count > 0)
             {
@@ -235,9 +310,8 @@ public class ImpressaoService
             //------------------------------------------------------------------------------------------
         }
 
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
         return Conteudo;
     }
@@ -350,7 +424,7 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
         return Conteudo;
     }
@@ -429,13 +503,11 @@ public class ImpressaoService
         //------------------------------------------------------------------------------------------
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, "syslogicadev.com", FonteCPF, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
         return Conteudo;
     }
     #endregion
 
-    #region Definição das comandas para impressão
-    #endregion
 
     #endregion
 
@@ -618,6 +690,25 @@ public class ImpressaoService
     public static string AdicionarSeparadorDuplo()
     {
         return "=======================================";
+    }
+
+    private string RetornaImpressoraSelecionadaNoCadastroDeProduto(ImpressorasConfigs Imps, string? ImpressoraCadastrada)
+    {
+        switch (ImpressoraCadastrada)
+        {
+            case "Cz1":
+                return Imps.ImpressoraCz1;
+            case "Cz2":
+                return Imps.ImpressoraCz2;
+            case "Cz3":
+                return Imps.ImpressoraCz3;
+            case "Bar":
+                return Imps.ImpressoraBar;
+            case null:
+                return Imps.ImpressoraCz1;
+            default:
+                return Imps.ImpressoraCz1;
+        }
     }
 
     #endregion

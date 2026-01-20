@@ -601,7 +601,7 @@
 
     private async Task ImprimirPedido(ClsPedido pedido)
     {
-        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
 
         if (!ImpressaoDesabilita)
             await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");

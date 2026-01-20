@@ -9,13 +9,21 @@ namespace SophosSyncDesktop
         [STAThread]
         static void Main()
         {
-            using (var context = new AppDbContext())
+            try
             {
-                context.Database.Migrate();
-            }
+                using (var context = new AppDbContext())
+                {
+                    context.Database.Migrate();
+                }
 
-            ApplicationConfiguration.Initialize();
-            Application.Run(new PaginaInicial(new ImpressaoService()));
+                ApplicationConfiguration.Initialize();
+                Application.Run(new PaginaInicial(new ImpressaoService()));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocorreu um erro ao iniciar o aplicativo: " + ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);  
+            }
+         
         }
     }
 }

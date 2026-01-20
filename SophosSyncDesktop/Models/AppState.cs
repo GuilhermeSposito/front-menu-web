@@ -76,6 +76,8 @@ public static class AppState
             {
                 if (response.IsSuccessStatusCode)
                 {
+                    var resultString = await response.Content.ReadAsStringAsync();
+
                     var result = await response.Content.ReadFromJsonAsync<LoginResult>();
                     using AppDbContext db = new AppDbContext();
                     var infoLogin = db.InfosDeLogin.FirstOrDefault();

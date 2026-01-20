@@ -99,8 +99,11 @@ public class ClsPedido
 public class ItensPedido
 {
     [JsonPropertyName("id")] public int Id { get; set; }
-    [JsonPropertyName("Produto")]
+
+    
     private ClsProduto? _produto;
+
+    [JsonPropertyName("produto")]
     public ClsProduto? Produto
     {
         get => _produto;

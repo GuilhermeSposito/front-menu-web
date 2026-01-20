@@ -14,7 +14,10 @@ public class AppDbContext: DbContext
     public DbSet<InfosDeLogin> InfosDeLogin { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "configs.db");
+        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SophosSync","configs.db");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
         optionsBuilder.UseSqlite($"Data Source={path}");
     }
 }

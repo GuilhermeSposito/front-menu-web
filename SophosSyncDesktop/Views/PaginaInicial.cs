@@ -110,8 +110,7 @@ public partial class PaginaInicial : Form
 
         watcherPedidos.Renamed += async (s, e) =>
         {
-            if (e.Name.Contains("SOPHOS-WEB", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            if ((e.Name.Contains("SOPHOS-WEB", StringComparison.OrdinalIgnoreCase) && !e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) && !e.Name.Contains("FECHA", StringComparison.OrdinalIgnoreCase)) && Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
             {
                 await Task.Delay(500); // espera terminar o download
                 try
@@ -263,8 +262,8 @@ public partial class PaginaInicial : Form
 
                 instancia.comboBox1.Text = Imps.ImpressoraCaixa;
                 instancia.comboBox6.Text = Imps.ImpressoraAux;
-                instancia.comboBox2.Text = Imps.ImpressoraCz1;
-                instancia.comboBox3.Text = Imps.ImpressoraCz2;
+                instancia.comboBox3.Text = Imps.ImpressoraCz1;
+                instancia.comboBox2.Text = Imps.ImpressoraCz2;
                 instancia.comboBox4.Text = Imps.ImpressoraCz3;
                 instancia.comboBox5.Text = Imps.ImpressoraBar;
                 instancia.comboBoxImpressoraDanfe.Text = Imps.ImpressoraDanfe;
