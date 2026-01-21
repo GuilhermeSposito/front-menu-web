@@ -68,11 +68,22 @@ window.socketIO = {
             }
         });
 
+        socket.on("mesa-fechada", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "PedidoMesaFechada", JSON.stringify(msg))
+                    .then(() => console.log(""))
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
         socket.on("disconnect", () => {
 
         });
 
     },
+
+   
 
 };
 

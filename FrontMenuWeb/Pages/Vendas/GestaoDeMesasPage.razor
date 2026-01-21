@@ -122,6 +122,11 @@
                 await InvokeAsync(() => OnPedidoRecebido(pedido));
             };
 
+            PedidosService.PedidoMesaFechada += async pedido =>
+            {
+                await InvokeAsync(() => PedidoMesaFechada(pedido));
+            };
+
             try
             {
                 await Connect();
@@ -281,13 +286,19 @@
 
     private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
-        Console.WriteLine("Chegou pedido");
-
         await CarregarMesasEComandas();
         // await ImprimirPedido(novoPedido); // por enquanto todos
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
         await JS.InvokeVoidAsync("playNotificationSound");
+    }
+
+    private async Task PedidoMesaFechada(ClsMesasEComandas mesa)
+    {
+        await CarregarMesasEComandas();
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add($"Mesa/Comanda {mesa.CodigoExterno} Fechada!", Severity.Info);
+
     }
 
     private async Task ChamaImpressaoDeItensDaMesa(ClsMesasEComandas mesaEnviada)
