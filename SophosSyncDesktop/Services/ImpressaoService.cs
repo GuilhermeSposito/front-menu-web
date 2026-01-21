@@ -33,7 +33,7 @@ public class ImpressaoService
     public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteDetalhesDoPedidoRegular { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Regular);
     public Font FonteNúmeroDoTelefone { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 15, FontStyle.Bold);
+    public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 14, FontStyle.Bold);
     public Font FonteEndereçoDoCliente { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
     public Font FonteItens { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteItens2 { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
@@ -175,7 +175,7 @@ public class ImpressaoService
 
                     foreach (ItensPorImpressoraDto Prods in produtosAgrupados)
                     {
-                        if (Prods.Impressora is not null && Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase))
+                        if (Prods.Impressora is not null && (Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase) || Prods.Impressora.Contains("Nao", StringComparison.OrdinalIgnoreCase)))
                             continue;
 
                         ClsPedido PedidoAtualizadoComItensAgrupados = Pedido;
@@ -299,6 +299,16 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
 
+        if (AppState.MerchantLogado!.ImprimeNomeNaComanda)
+        {
+            if (pedido.Cliente is not null)
+            {
+                AdicionaConteudo(Conteudo, $"Nome: {pedido.Cliente.Nome}", FonteNomeDoCliente);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            }
+        }
+
+        //========================================================================================
         if (ItemSeparadoPorComanda)
         {
             int IndiceDoItemAtualMaisUm = IndiceDoItemAtual + 1; //isso pra não mudar o valor original que veio do for 
@@ -307,7 +317,7 @@ public class ImpressaoService
         }
 
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"Tam.                V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {

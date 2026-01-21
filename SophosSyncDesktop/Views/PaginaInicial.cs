@@ -209,7 +209,7 @@ public partial class PaginaInicial : Form
            );
 
         string mesAno = DateTime.Now.ToString("MM-yyyy");
-        string destino = @$"C:\SophosCompany\Triburatios\Autorizadas-{mesAno}";
+        string destino = @$"C:\ArqNfe\Autorizadas\{mesAno}";
 
         // cria a pasta caso não exista
         if (!Directory.Exists(destino))
