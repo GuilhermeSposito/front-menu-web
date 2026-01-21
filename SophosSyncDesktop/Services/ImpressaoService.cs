@@ -102,7 +102,6 @@ public class ImpressaoService
                                                 new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
                                                 new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
                                           })
-                                         .Where(x => !string.IsNullOrWhiteSpace(x.Impressora) && x.Impressora != "Não imprime")
                                          .GroupBy(x => x.Impressora)
                                          .Select(grupo => new ItensPorImpressoraDto
                                          {
@@ -113,11 +112,15 @@ public class ImpressaoService
 
                     foreach (var Prods in produtosAgrupados)
                     {
+                        if (Prods.Impressora is not null && Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
 
+
                         string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
-                        if (Impressora == "Sem Impressora")
+                        if (Impressora == "Sem Impressora" || Impressora == "Não Imprime")
                             continue;
 
                         var QtdDeLoops = 1;
@@ -162,7 +165,6 @@ public class ImpressaoService
                                 new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
                                 new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
                         })
-                       .Where(x => !string.IsNullOrWhiteSpace(x.Impressora) && x.Impressora != "Não imprime")
                        .GroupBy(x => x.Impressora)
                        .Select(grupo => new ItensPorImpressoraDto
                        {
@@ -173,6 +175,9 @@ public class ImpressaoService
 
                     foreach (ItensPorImpressoraDto Prods in produtosAgrupados)
                     {
+                        if (Prods.Impressora is not null && Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         ClsPedido PedidoAtualizadoComItensAgrupados = Pedido;
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
 

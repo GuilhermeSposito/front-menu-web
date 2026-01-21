@@ -25,7 +25,7 @@ public static class AppState
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AppState.Token);
 
-                var response = await client.GetAsync("https://syslogicadev.com/api/v1/merchants/details");
+                var response = await client.GetAsync("https://sophos-erp.com.br/api/v1/merchants/details");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -71,7 +71,7 @@ public static class AppState
                 Senha = senha
             };
 
-            var response = await client.PostAsJsonAsync("https://syslogicadev.com/api/v1/auth/login", loginModel);
+            var response = await client.PostAsJsonAsync("https://sophos-erp.com.br/api/v1/auth/login", loginModel);
             if (response != null)
             {
                 if (response.IsSuccessStatusCode)

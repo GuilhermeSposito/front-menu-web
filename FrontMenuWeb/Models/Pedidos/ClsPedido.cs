@@ -103,7 +103,7 @@ public class ItensPedido
     
     private ClsProduto? _produto;
 
-    [JsonPropertyName("produto")]
+    [JsonPropertyName("Produto")]
     public ClsProduto? Produto
     {
         get => _produto;
