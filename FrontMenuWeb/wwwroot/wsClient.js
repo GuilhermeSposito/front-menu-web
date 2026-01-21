@@ -6,7 +6,7 @@ window.socketIO = {
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
-        const socket = io("https://syslogicadev.com", {
+        const socket = io("https://sophos-erp.com.br", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
@@ -42,7 +42,7 @@ window.socketIO = {
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
-        const socket = io("https://syslogicadev.com", {
+        const socket = io("https://sophos-erp.com.br", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
