@@ -71,8 +71,8 @@ window.socketIO = {
         socket.on("mesa-fechada", (msg) => {
             // Avisando o Blazor
             if (window.DotNet) {
-                DotNet.invokeMethodAsync("FrontMenuWeb", "PedidoMesaFechada", JSON.stringify(msg))
-                    .then(() => console.log(""))
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesaFechada", JSON.stringify(msg))
+                    .then(() => console.log("entrou na função de avisar mesa fechafa"))
                     .catch(err => console.error("Erro ao notificar Blazor:", err));
             }
         });
