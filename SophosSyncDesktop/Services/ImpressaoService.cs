@@ -96,14 +96,20 @@ public class ImpressaoService
                     ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                    List<ItensPorImpressoraDto> produtosAgrupados =
-                     Pedido.Itens.Where(x => x.Produto?.ImpressoraComanda1 != "Não imprime").GroupBy(i => i.Produto?.ImpressoraComanda1 ?? "Não Imprime")
-                         .Select(grupo => new ItensPorImpressoraDto
-                         {
-                             Impressora = grupo.Key,
-                             Itens = grupo.ToList()
-                         })
-                     .ToList();
+                    List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
+                                         .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
+                                          {
+                                                new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                                new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
+                                          })
+                                         .Where(x => !string.IsNullOrWhiteSpace(x.Impressora) && x.Impressora != "Não imprime")
+                                         .GroupBy(x => x.Impressora)
+                                         .Select(grupo => new ItensPorImpressoraDto
+                                         {
+                                             Impressora = grupo.Key,
+                                             Itens = grupo.Select(x => x.Item).ToList()
+                                         })
+                                         .ToList();
 
                     foreach (var Prods in produtosAgrupados)
                     {
@@ -128,8 +134,17 @@ public class ImpressaoService
                             }
                             List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupados, AppQueEnviou);
 
+                            if (AppState.MerchantLogado is not null)
+                            {
+                                for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
+                                    await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
 
-                            await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
+                            }
+                            else
+                            {
+                                await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
+                            }
+
                         }
                     }
 
@@ -141,16 +156,22 @@ public class ImpressaoService
 
                     int QtdDeItensDoPedido = Pedido.Itens.Count();
 
-                    List<ItensPorImpressoraDto> produtosAgrupados =
-                    Pedido.Itens.Where(x => x.Produto?.ImpressoraComanda1 != "Não imprime").GroupBy(i => i.Produto?.ImpressoraComanda1 ?? "Sem Impressora")
-                        .Select(grupo => new ItensPorImpressoraDto
+                    List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
+                       .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
                         {
-                            Impressora = grupo.Key,
-                            Itens = grupo.ToList()
+                                new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
                         })
-                        .ToList();
+                       .Where(x => !string.IsNullOrWhiteSpace(x.Impressora) && x.Impressora != "Não imprime")
+                       .GroupBy(x => x.Impressora)
+                       .Select(grupo => new ItensPorImpressoraDto
+                       {
+                           Impressora = grupo.Key,
+                           Itens = grupo.Select(x => x.Item).ToList()
+                       })
+                       .ToList();
 
-                    foreach (var Prods in produtosAgrupados)
+                    foreach (ItensPorImpressoraDto Prods in produtosAgrupados)
                     {
                         ClsPedido PedidoAtualizadoComItensAgrupados = Pedido;
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
@@ -172,7 +193,8 @@ public class ImpressaoService
                             List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(PedidoAtualizadoComItensAgrupados, AppQueEnviou, AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos, QtdDeItensDoPedido, i);
 
                             if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
-                                await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, 19);
+                                for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
+                                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, 19);
                         }
                     }
                 }
