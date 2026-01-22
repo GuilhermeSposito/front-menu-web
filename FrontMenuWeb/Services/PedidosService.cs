@@ -85,7 +85,7 @@ public class PedidosService
             QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
         }
 
-        if(QueryDePedido.DataCriadoEmInicio is not null && QueryDePedido.DataCriadoEmFinal is not null)
+        if (QueryDePedido.DataCriadoEmInicio is not null && QueryDePedido.DataCriadoEmFinal is not null)
             QueryDeFiltros += $"&DataCriadoEmInicio={QueryDePedido.DataCriadoEmInicio?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataCriadoEmFinal={QueryDePedido.DataCriadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
 
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
@@ -96,7 +96,7 @@ public class PedidosService
 
     public async Task<ReturnApiRefatored<PedidoMesaDto>> GetMesaOcupada(int idDaMesa)
     {
-        
+
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<PedidoMesaDto>>(
            $"pedidos/mesas/{idDaMesa}");
 
@@ -105,7 +105,7 @@ public class PedidosService
 
     public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido)
     {
-         var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+        var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
@@ -113,7 +113,7 @@ public class PedidosService
 
     public async Task<ReturnApiRefatored<ClsPedido>> FechaMesa(ClsPedido Pedido)
     {
-         var response = await _http.PostAsJsonAsync($"pedidos/mesa", Pedido);
+        var response = await _http.PostAsJsonAsync($"pedidos/mesa", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
@@ -127,7 +127,7 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesaPublic(string MerchantID,ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesaPublic(string MerchantID, ClsPedido Pedido)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/mesa/public/{MerchantID}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<PedidoMesaDto>>();
@@ -164,7 +164,7 @@ public class PedidosService
     {
         var QueryDeFiltros = "";
 
-        if(DataCriadoEmInicio is not null && DataCriadoEmFinal is not null)
+        if (DataCriadoEmInicio is not null && DataCriadoEmFinal is not null)
             QueryDeFiltros += $"&DataCriadoEmInicio={DataCriadoEmInicio?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataCriadoEmFinal={DataCriadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
 
         var httpResponse = await _http.GetAsync($"nfs?page={page}&limit={limit}{QueryDeFiltros}");
