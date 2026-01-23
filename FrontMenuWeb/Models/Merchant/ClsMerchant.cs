@@ -53,7 +53,7 @@ public class ClsMerchant
     [JsonPropertyName("ValorPorKm")] public float ValorPorKm { get; set; }
     [JsonPropertyName("KmMinimo")] public float KmMinimo { get; set; }
     [JsonPropertyName("ValorKmMinimo")] public float ValorKmMinimo { get; set; }
-    [JsonPropertyName("EspacamentoNaImpressao")] public int EspacamentoNaImpressao { get; set; }
+    /*[JsonPropertyName("EspacamentoNaImpressao")] public int EspacamentoNaImpressao { get; set; }
     [JsonPropertyName("TamFonteDetalhesPedido")] public int TamFonteDetalhesPedido { get; set; }
     [JsonPropertyName("TamFonteDescricaoItemNaComanda")] public int TamFonteDescricaoItemNaComandaTamFonteDetalhesPedido { get; set; }
     [JsonPropertyName("TamFonteDescricaoItem")] public int TamFonteDescricaoItem { get; set; }
@@ -64,7 +64,7 @@ public class ClsMerchant
     [JsonPropertyName("TamFonteTempoEntregaEConta")] public int TamFonteTempoEntregaEConta { get; set; }
     [JsonPropertyName("TamFonteLegendaDosItens")] public int TamFonteLegendaDosItens { get; set; }
     [JsonPropertyName("TamFonteTotais")] public int TamFonteTotais { get; set; }
-    [JsonPropertyName("TamFonteInfosPag")] public int TamFonteInfosPag { get; set; }
+    [JsonPropertyName("TamFonteInfosPag")] public int TamFonteInfosPag { get; set; }*/
 
 
 }
