@@ -53,6 +53,19 @@ public class ClsMerchant
     [JsonPropertyName("ValorPorKm")] public float ValorPorKm { get; set; }
     [JsonPropertyName("KmMinimo")] public float KmMinimo { get; set; }
     [JsonPropertyName("ValorKmMinimo")] public float ValorKmMinimo { get; set; }
+    [JsonPropertyName("EspacamentoNaImpressao")] public int EspacamentoNaImpressao { get; set; }
+    [JsonPropertyName("TamFonteDetalhesPedido")] public int TamFonteDetalhesPedido { get; set; }
+    [JsonPropertyName("TamFonteDescricaoItemNaComanda")] public int TamFonteDescricaoItemNaComandaTamFonteDetalhesPedido { get; set; }
+    [JsonPropertyName("TamFonteDescricaoItem")] public int TamFonteDescricaoItem { get; set; }
+    [JsonPropertyName("TamFonteDescricaoItemNaComanda")] public int TamFonteDescricaoItemNaComanda { get; set; }
+    [JsonPropertyName("TamFonteDescricaoComplemento")] public int TamFonteDescricaoComplemento { get; set; }
+    [JsonPropertyName("TamFonteDescricaoComplementoNaComanda")] public int TamFonteDescricaoComplementoNaComanda { get; set; }
+    [JsonPropertyName("TamFonteValorItem")] public int TamFonteValorItem { get; set; }
+    [JsonPropertyName("TamFonteTempoEntregaEConta")] public int TamFonteTempoEntregaEConta { get; set; }
+    [JsonPropertyName("TamFonteLegendaDosItens")] public int TamFonteLegendaDosItens { get; set; }
+    [JsonPropertyName("TamFonteTotais")] public int TamFonteTotais { get; set; }
+    [JsonPropertyName("TamFonteInfosPag")] public int TamFonteInfosPag { get; set; }
+
 
 }
 
