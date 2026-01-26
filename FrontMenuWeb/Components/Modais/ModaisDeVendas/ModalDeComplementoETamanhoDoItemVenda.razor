@@ -1,0 +1,338 @@
+﻿@using FrontMenuWeb.Models.Pedidos
+<MudFocusTrap>
+    <MudDialog tabindex="0" @onkeydown=OnKeyDown>
+        <TitleContent>
+            @*Vazio por enquantoi o titulo do dialog*@
+        </TitleContent>
+        <DialogContent>
+            <MudStack Class="p-1 mb-5" Style="background-color: var(--mud-palette-background);">
+                <MudGrid>
+                    <MudItem xs="12" sm="12" md="12" lg="12" xxl="12" xl="12">
+                        <MudStack Class="p-3 rounded-3" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-primary); border: 3px dashed var(--mud-palette-primary);">
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudImage Src="@Produto.ImgProduto" Alt="@Produto.Descricao" Width="60" Height="60" />
+                                <MudText Typo="Typo.h6">@Produto.Descricao</MudText>
+                            </MudStack>
+
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="12" md="8" lg="8" xxl="8" xl="8">
+                        <MudStack Class="w-100 h-100 rounded-3 p-1" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);">
+                            <MudTabs @ref=_tabsRef @bind-ActivePanelIndex="_tabIndex" ApplyEffectsToContainer="true" PanelClass="pa-6" Color="Color.Primary" Rounded="true" Centered="true">
+                                @if (!Produto.TamanhoUnico)
+                                {
+                                    @*Primeira parde de valores*@
+                                    <MudTabPanel Text="Tamanho">
+                                        <MudStack Class="mt-3" Style="min-height:500px" Spacing="3">
+                                            <MudRadioGroup Class="h-100" T="Preco" Value="Produto.PrecoSelecionado" ValueChanged="OnPrecoChanged">
+                                                <MudStack class="w-100 h-100 p-3" Spacing="3">
+                                                    @foreach (var preco in Produto.Precos)
+                                                    {
+                                                        <MudPaper Style="background-color: var(--mud-palette-background);" Class="pa-3 rounded-2" Elevation="0">
+                                                            <MudRadio T="Preco" Value="preco">
+                                                                <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                                                                    <MudStack Class="ms-3">
+                                                                        <MudText Typo="Typo.h6">@preco.DescricaoDoTamanho</MudText>
+                                                                        <MudText Typo="Typo.h6">R$ @preco.Valor.ToString("F2")</MudText>
+                                                                    </MudStack>
+                                                                </MudFocusTrap>
+                                                            </MudRadio>
+                                                        </MudPaper>
+                                                    }
+                                                </MudStack>
+                                            </MudRadioGroup>
+                                        </MudStack>
+                                    </MudTabPanel>
+                                }
+                                @if (Produto.GruposDeComplementosDoProduto is not null)
+                                {
+                                    @foreach (var relacao in Produto.GruposDeComplementosDoProduto)
+                                    {
+                                        <MudTabPanel Text="@relacao.Grupo.Descricao">
+                                            <MudStack Class="mt-3" Style="min-height:500px" Spacing="3">
+
+                                                @foreach (var complemento in relacao.Grupo.Complementos)
+                                                {
+                                                    @if (complemento.Complemento.Ativo)
+                                                    {
+                                                        <MudPaper Style="background-color: var(--mud-palette-background);" Class="pa-3 rounded-2" Elevation="0">
+                                                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                                                <MudStack Row=true AlignItems="AlignItems.Center">
+                                                                    <MudText Typo="Typo.h6">@complemento.Complemento.Descricao</MudText>
+                                                                    <MudText Typo="Typo.h6"> - R$ @complemento.Complemento.Valor.ToString("F2")</MudText>
+                                                                </MudStack>
+                                                                <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="1">
+                                                                    @if (RetornaQuantidadeAdicionadaDoComplemento(complemento.Complemento) > 0)
+                                                                    {
+                                                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                                                                       Disabled="@(!Complementos.Any(c => c.Complemento?.Id == complemento.Complemento.Id))"
+                                                                                       OnClick="@(() => RemoverComplemento(complemento.Complemento))" />
+
+                                                                        <MudText Typo="Typo.subtitle2" Class="mx-1">
+                                                                            @RetornaQuantidadeAdicionadaDoComplemento(complemento.Complemento)
+                                                                        </MudText>
+                                                                    }
+                                                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                                                                                   OnClick="@(() => AdicionarComplemento(complemento.Complemento))" />
+                                                                </MudStack>
+                                                            </MudStack>
+                                                        </MudPaper>
+
+                                                    }
+                                                }
+
+                                                @if (relacao.Grupo.Complementos.Count() == 0)
+                                                {
+                                                    <MudStack AlignItems="AlignItems.Center">
+                                                        <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento cadastrado neste grupo.</MudText>
+                                                    </MudStack>
+                                                }
+
+                                            </MudStack>
+                                        </MudTabPanel>
+                                    }
+                                }
+                            </MudTabs>
+                        </MudStack>
+                    </MudItem>
+
+
+                    <MudItem xs="12" sm="12" md="4" lg="4" xxl="4" xl="4">
+                        <MudStack Class="w-100 h-100 p-1" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);">
+                            <MudTabs ApplyEffectsToContainer="true" PanelClass="pa-6" Color=Color.Primary Rounded="true" Centered="true">
+                                <MudTabPanel Text="Pré Visualização">
+                                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                                        <MudStack>
+                                            <MudText Style="font-weight: 700">@Item.Descricao</MudText>
+                                            <MudText>@Item.Quantidade X @Item.PrecoTotal.ToString("C")</MudText>
+                                            @if (Complementos.Count > 0)
+                                            {
+                                                <MudDivider Light=true Class="w-100" />
+                                                @foreach (var complemento in Complementos)
+                                                {
+                                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                                        <MudText  Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                                    </MudStack>
+                                                }
+                                            }
+                                        </MudStack>
+                                    </MudPaper>
+                                </MudTabPanel>
+                            </MudTabs>
+                        </MudStack>
+                    </MudItem>
+
+                </MudGrid>
+
+            </MudStack>
+        </DialogContent>
+        <DialogActions>
+            <MudPaper Class="d-flex flex-wrap gap-2 justify-content-center align-items-center px-4 py-2"
+                      Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
+
+                <MudStack Class="w-100" Row=true>
+                    <MudStack Class="w-25" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Spacing="1">
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                       OnClick="@(() => DiminuiQuantidadeDoProduto())" />
+
+                        <MudText Typo="Typo.subtitle2" Class="mx-1">
+                            @Item.Quantidade
+                        </MudText>
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                                       OnClick="@(() => AumentaQuantidadeDoProduto())" />
+                    </MudStack>
+
+
+                    <MudButton Class="w-75" OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary">
+                        @if (!AtualizandoItem)
+                        {
+                            <MudText>Adicionar - @Item.PrecoTotal.ToString("F2")</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Atualizar - @Item.PrecoTotal.ToString("F2")</MudText>
+                        }
+                    </MudButton>
+
+                </MudStack>
+
+
+            </MudPaper>
+        </DialogActions>
+    </MudDialog>
+</MudFocusTrap>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ClsProduto Produto { get; set; } = new ClsProduto();
+    [Parameter] public bool AtualizandoItem { get; set; } = false;
+
+
+    //Lógica para montar o produto com os complementos e tamanhos
+    private ItensPedido Item = new ItensPedido();
+    private List<ComplementoNoItem> Complementos = new List<ComplementoNoItem>();
+
+    private MudTabs _tabsRef = new MudTabs();
+    private ElementReference Grid { get; set; } = new ElementReference();
+
+    protected override void OnInitialized()
+    {
+        Item.Descricao = Produto.Descricao;
+        Item.Produto = Produto;
+        Item.Quantidade = 1;
+
+        if (Produto.TamanhoUnico)
+        {
+            Item.Preco = Produto.Precos.MinBy(b => b.Valor) ?? new Preco() { Valor = 0f, DescricaoDoTamanho = "Único" };
+            Item.PrecoUnitario = Item.Preco.Valor;
+            AtualizarPrecoTotal();
+        }
+
+
+        AtualizarPrecoTotal();
+    }
+
+    private float RetornaQuantidadeAdicionadaDoComplemento(ClsComplemento complemento)
+    {
+        var complementoNoItem = Complementos.FirstOrDefault(c => c.Complemento?.Id == complemento.Id);
+        return complementoNoItem?.Quantidade ?? 0f;
+    }
+
+    private void AdicionarComplemento(ClsComplemento complemento)
+    {
+        bool existeComplemento = Complementos.Any(c => c.Id == complemento.Id);
+        if (existeComplemento)
+        {
+            var ComplementoJáExistente = Complementos.FirstOrDefault(c => c.Id == complemento.Id);
+            if (ComplementoJáExistente is not null)
+            {
+                ComplementoJáExistente.Quantidade += 1;
+                ComplementoJáExistente.PrecoTotal = ComplementoJáExistente.PrecoUnitario * ComplementoJáExistente.Quantidade;
+            }
+        }
+        else
+        {
+            var ComplementoNoItem = new ComplementoNoItem
+            {
+                Id = complemento.Id,
+                Descricao = complemento.Descricao,
+                Complemento = complemento,
+                Quantidade = 1,
+                PrecoUnitario = complemento.Valor,
+                PrecoTotal = complemento.Valor
+            };
+            Complementos.Add(ComplementoNoItem);
+        }
+
+        AtualizarPrecoTotal();
+        StateHasChanged();
+
+    }
+
+    private void OnPrecoChanged(Preco novoPreco)
+    {
+        Produto.PrecoSelecionado = novoPreco;
+        Item.PrecoUnitario = novoPreco?.Valor ?? 0;
+
+        AtualizarPrecoTotal();
+
+        Snackbar.Add($"Tamanho selecionado: {novoPreco?.DescricaoDoTamanho}, Preço: R$ {novoPreco?.Valor.ToString("F2")}", Severity.Info);
+
+        StateHasChanged();
+    }
+
+    private void AtualizarPrecoTotal()
+    {
+        Item.PrecoTotal = (Item.PrecoUnitario * Item.Quantidade)
+                          + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade);
+    }
+
+    private void RemoverComplemento(ClsComplemento complemento)
+    {
+        var existente = Complementos.FirstOrDefault(c => c.Id == complemento.Id);
+
+        if (existente is not null)
+        {
+            existente.Quantidade -= 1;
+            if (existente.Quantidade <= 0)
+                Complementos.Remove(existente);
+        }
+
+        AtualizarPrecoTotal();
+    }
+
+    private void AumentaQuantidadeDoProduto()
+    {
+        Item.Quantidade += 1;
+        AtualizarPrecoTotal();
+    }
+
+    private void DiminuiQuantidadeDoProduto()
+    {
+        if (Item.Quantidade > 0)
+        {
+            Item.Quantidade -= 1;
+            AtualizarPrecoTotal();
+        }
+    }
+
+    private void Submit()
+    {
+        if (Item.PrecoTotal == 0)
+        {
+            Snackbar.Add("O preço total do item não pode ser zero.", Severity.Error);
+            return;
+        }
+
+        Item.Complementos = Complementos;
+        MudDialog.Close(DialogResult.Ok(Item));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    #region Funções de Navegação por Teclado entre as Abas
+    private int _tabIndex = 0;
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowRight":
+                ProximaAba();
+                break;
+
+            case "ArrowLeft":
+                AbaAnterior();
+                break;
+
+            case "Enter":
+                Submit();
+                break;
+        }
+    }
+
+    private void ProximaAba()
+    {
+        _tabIndex++;
+
+        if (_tabIndex >= TotalTabs)
+            _tabIndex = 0; // circular
+    }
+
+    private void AbaAnterior()
+    {
+        _tabIndex--;
+
+        if (_tabIndex < 0)
+            _tabIndex = TotalTabs - 1; // circular
+    }
+
+    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Count;
+    #endregion
+
+}

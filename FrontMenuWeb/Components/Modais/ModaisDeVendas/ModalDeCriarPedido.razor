@@ -251,7 +251,7 @@
                                                         @foreach (var complemento in produtoNoPedido.Complementos)
                                                         {
                                                             <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
-                                                                <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                                                <MudText Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
                                                             </MudStack>
                                                         }
                                                     }
@@ -367,9 +367,10 @@
                { "Produto", produto}
             };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+            var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
 
-            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+            //var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is ItensPedido itemPedido)

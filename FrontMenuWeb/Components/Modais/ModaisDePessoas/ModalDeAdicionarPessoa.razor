@@ -22,9 +22,12 @@
 
             <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5">
                 <MudRadioGroup @bind-Value="NovaPessoa.TipoPessoaId" @bind-Value:after="@(()=> {if(NovaPessoa.TipoPessoaId == 2){ NovoEndereco.TipoEndereco = "Principal"; }else{NovoEndereco.TipoEndereco = "Casa";}})">
-                    <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
-                    <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
-                    <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
+                    @if (CadastroRapido)
+                    {
+                        <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
+                        <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
+                        <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
+                    }
                 </MudRadioGroup>
 
                 <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
@@ -38,7 +41,7 @@
                                           Clearable
                                           Required
                                           RequiredError="O Nome é obrigatório"
-                                          Immediate=true/>
+                                          Immediate=true />
 
                             <MudGrid Class="justify-space-between" Style="max-width: 400px;">
                                 <MudItem xs="12" sm="12">
@@ -84,26 +87,25 @@
 
                             <MudGrid Class="justify-space-between" Style="max-width:100%">
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField
-                                        Immediate=true Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
+                                    <MudTextField Immediate=true Mask="@phoneMask" Label="Celular (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
                                                   Variant="@Variant.Filled" Clearable
                                                   RequiredError="O Telefone é obrigatório" />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
-                                    <MudTextField  Immediate=true Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
+                                    <MudTextField Immediate=true Mask="@phoneMask" Label="Celular 2 (Brasil)" HelperText="Celular 2"
                                                   Value="@maskedPhone2" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged2)"
                                                   Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                                 <MudItem xs="6" sm="6">
-                                    <MudTextField  Immediate=true Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
+                                    <MudTextField Immediate=true Mask="@phoneMask" Label="Telefone  (Brasil)" HelperText="Telefone"
                                                   Value="@NovaPessoa.Telefone2"
                                                   Variant="@Variant.Filled" Clearable />
                                 </MudItem>
                             </MudGrid>
                             <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable Immediate=true />
                             <MudTextField Label="Contato" @bind-Value="NovaPessoa.Contato" HelperText="Nome do contato Principal da empresa" Immediate=true Variant="Variant.Filled" Clearable />
-                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Immediate=true  Variant="Variant.Filled" Clearable />
+                            <MudTextField Label="Observação" @bind-Value="NovaPessoa.Observacao" HelperText="Observação sobre a empresa" Immediate=true Variant="Variant.Filled" Clearable />
                         </MudPaper>
 
                     }
@@ -215,7 +217,7 @@
 
 
                             <MudItem xs="12">
-                                <MudTextField  Immediate=true Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Filled" />
+                                <MudTextField Immediate=true Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Filled" />
                             </MudItem>
 
 

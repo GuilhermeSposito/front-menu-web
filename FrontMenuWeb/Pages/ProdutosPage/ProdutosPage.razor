@@ -216,6 +216,8 @@
                 var ultimoproduto = Produtos?.OrderBy(x => x.CodigoInterno).LastOrDefault();
 
                 Navigation.NavigateTo($"/adicionarproduto/{produtoParaReultilizar.Id}?cilp={ultimoproduto!.CodigoInterno}");
+
+
             }
 
         }
@@ -274,6 +276,7 @@
             await AtualizaGrupos();
             await AtualizaAliquotas();
             AtualizaProdutos(); //não aguardar
+            carregandoProduto = false;
 
         }
         catch (Exception ex)
