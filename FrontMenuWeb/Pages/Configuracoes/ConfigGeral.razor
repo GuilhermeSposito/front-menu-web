@@ -102,10 +102,44 @@
                                 <MudCheckBox @bind-Value=@Merchant.ImprimeHorarioNaComanda T=bool Color="Color.Primary">Imprime Horario na comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudStack AlignItems=AlignItems.Center Row=true>
-                                    <MudNumericField @bind-Value=@Merchant.QtdViasDaComanda Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 Class="w-25" T="int" />
-                                    <MudText Class="w-75">Nmr de Vias da Comanda</MudText>
-                                </MudStack>
+                                <MudNumericField Variant="Variant.Outlined" Label="Nmr de Vias da Comanda" @bind-Value=@Merchant.QtdViasDaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Variant="Variant.Outlined" @bind-Value=@Merchant.EspacamentoNaImpressao Label="Espaçamento" HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Detalhes" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDetalhesPedido HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                    <MudNumericField Label="Fonte Item" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoItem HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0  T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Item (Comanda)" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoItemNaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Complemento" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoComplemento HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Complemento (Comanda)" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoComplementoNaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Valor Item" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteValorItem HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Tempos e Conta" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteTempoEntregaEConta HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Legenda Itens" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteLegendaDosItens HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Totais" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteTotais HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Infos De Pag" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteInfosPag HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudButton OnClick=@(async () => {Merchant.EspacamentoNaImpressao = 19; Merchant.TamFonteDescricaoComplementoNaComanda = 11; Merchant.TamFonteDescricaoItemNaComanda = 11; Merchant.TamFonteDetalhesPedido = 9; Merchant.TamFonteDescricaoItem = 11; Merchant.TamFonteDescricaoComplemento = 9; Merchant.TamFonteValorItem = 8; Merchant.TamFonteTempoEntregaEConta = 12; Merchant.TamFonteLegendaDosItens = 12; Merchant.TamFonteTotais = 12; Merchant.TamFonteInfosPag = 10; await SalvarInfosLojaAsync(); }) Color="Color.Primary" Variant="Variant.Filled">Resetar Fontes</MudButton>
                             </MudItem>
                         </MudGrid>
 
@@ -633,4 +667,5 @@
 
 
     #endregion
-}
+}
+
