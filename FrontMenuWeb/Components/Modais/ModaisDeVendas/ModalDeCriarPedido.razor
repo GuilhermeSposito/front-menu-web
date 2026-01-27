@@ -28,7 +28,7 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Style="overflow-y:hidden;  position: relative;">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Style="overflow-y:;  position: relative;">
 
 
             <MudGrid Class="w-100 h-100">
@@ -84,7 +84,7 @@
                                     <MudStack Class="w-100 h-100 p-3"
                                               @onkeydown="OnKeyDownProdutos"
                                               tabindex="0"
-                                              Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary); overflow-y:auto;"
+                                              Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);"
                                               AlignItems="AlignItems.Start" Justify="Justify.FlexStart" id="MudStackDeProduto">
                                         <MudGrid GutterSize="2">
                                             @foreach (var item in Produtos.Select((produto, index) => new { produto, index }))
@@ -157,7 +157,7 @@
                                                              HelperText="Procure por Cliente (número | nome)"
                                                              SearchFunc="BuscarPessoas"
                                                              ToStringFunc="@(p =>
-                                                                                                                                                                                                                                                                                                                   { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
+                                                                                                                                                                                                                                                                                                                                                                                                                                             { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
                                                          MinCharacters="1"
                                                          Clearable="true"
                                                          Dense="true"
@@ -166,23 +166,23 @@
                                                          ValueChanged="SelecionarPessoa"
                                                          OnKeyDown="OnKeyDownAutocomplete">
 
-                                                                                                                                                                                                                                                                                                      <NoItemsTemplate>
+                                                                                                                                                                                                                                                                                                                                                                                                                                <NoItemsTemplate>
 
-                                                                                                                                                                                                                                                                                                      </NoItemsTemplate>
-                                                                                                                                                                                                                                                                                                  </MudAutocomplete>
+                                                                                                                                                                                                                                                                                                                                                                                                                                </NoItemsTemplate>
+                                                                                                                                                                                                                                                                                                                                                                                                                            </MudAutocomplete>
 
-                                                                                                                                                                                                                                                                                              </MudStack>
+                                                                                                                                                                                                                                                                                                                                                                                                                        </MudStack>
 
-                                                                                                                                                                                                                                                                                              <MudStack>
-                                                                                                                                                                                                                                                                                                  <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
-                                                                                                                                                                                                                                                                                                      <MudSelectItem Value="@("BALCÃO")">
-                                                                                                                                                                                                                                                                                                          <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                                                                                                                                                                                                                                                                              <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
-                                                                                                                                                                                                                                                                                                              <span>BALCÃO</span>
-                                                                                                                                                                                                                                                                                                          </MudStack>
-                                                                                                                                                                                                                                                                                                      </MudSelectItem>
-                                                                                                                                                                                                                                                                                                      <MudSelectItem Value="@("DELIVERY")">
-                                                                                                                                                                                                                                                                                                          <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                                                                                                                                                                                                                                                                                                                                                                                        <MudStack>
+                                                                                                                                                                                                                                                                                                                                                                                                                            <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
+                                                                                                                                                                                                                                                                                                                                                                                                                                <MudSelectItem Value="@("BALCÃO")">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
+                                                                                                                                                                                                                                                                                                                                                                                                                                        <span>BALCÃO</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                    </MudStack>
+                                                                                                                                                                                                                                                                                                                                                                                                                                </MudSelectItem>
+                                                                                                                                                                                                                                                                                                                                                                                                                                <MudSelectItem Value="@("DELIVERY")">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
                                                     @if (NovoPedido.Endereco is null)
                                                         {
                                                             <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
@@ -245,7 +245,7 @@
                                                 <MudStack>
                                                     <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row=true Class="w-100">
                                                         <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
-                                                        <MudIconButton OnClick=@(()=> {NovoPedido.Itens.Remove(produtoNoPedido);}) Icon="@Icons.Material.Filled.Close" Color="Color.Primary"/>
+                                                        <MudIconButton OnClick=@(() => { NovoPedido.Itens.Remove(produtoNoPedido); }) Icon="@Icons.Material.Filled.Close" Color="Color.Primary" />
                                                     </MudStack>
                                                     <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
                                                     @if (produtoNoPedido.Complementos.Count > 0)
@@ -362,7 +362,7 @@
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
 
-        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) ||( !produto.TamanhoUnico && produto.Precos.Count > 0))
+        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) || (!produto.TamanhoUnico && produto.Precos.Count > 0))
         {
             var parameters = new DialogParameters
             {
@@ -378,19 +378,23 @@
 
             if (!result!.Canceled && result.Data is ItensPedido itemPedido)
             {
+
                 //Verifica se já existe o produto no pedido
-                if (NovoPedido.Itens.Any(x => x.Produto?.Id == produto.Id &&
-                    x.Complementos.SequenceEqual(itemPedido.Complementos) &&
-                    x.Preco.Id == itemPedido.Preco.Id &&
-                    x.Observacoes == itemPedido.Observacoes))
+                var itemExistente = NovoPedido.Itens.FirstOrDefault(x =>
+                      x.Produto?.Id == produto.Id &&
+                      x.PrecoId == itemPedido.PrecoId &&
+                      x.Observacoes == itemPedido.Observacoes &&
+                      x.Complementos.SequenceEqual(itemPedido.Complementos.OrderBy(c => c.Id))
+                  );
+
+                if (itemExistente != null)
                 {
-                    var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
                     itemExistente.Quantidade += 1;
                     itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
                     await InvokeAsync(StateHasChanged);
                     return;
                 }
-
+                 
                 NovoPedido.Itens.Add(itemPedido);
                 return;
             }
@@ -759,7 +763,7 @@
                 return;
             }
 
-            if (ResponseAPi.Data.Objeto is not null && !UsandoMobile )
+            if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
                 await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
 
             MudDialog.Close(DialogResult.Ok(true));
@@ -777,7 +781,7 @@
 
     private async Task EnviarItensParaMesa()
     {
-        if(Mesa.Id == 0)
+        if (Mesa.Id == 0)
         {
             NovoPedido.MesaComandaId = Mesa.CodigoExterno;
         }

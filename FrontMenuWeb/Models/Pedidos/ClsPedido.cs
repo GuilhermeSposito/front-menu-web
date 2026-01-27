@@ -119,12 +119,12 @@ public class ItensPedido
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; } = 0;
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; } = 0;
     [JsonPropertyName("Preco")] public Preco Preco { get; set; } = new Preco();
-    [JsonPropertyName("PrecoId")] public int PrecoId { get; set; }
+    [JsonPropertyName("PrecoId")] public string? PrecoId { get; set; }
     [JsonPropertyName("Observacoes")] public string? Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
 }
 
-public class ComplementoNoItem
+public class ComplementoNoItem : IEquatable<ComplementoNoItem>
 {
     [JsonPropertyName("id")] public int Id { get; set; }
     private ClsComplemento? _complemento;
@@ -147,4 +147,14 @@ public class ComplementoNoItem
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 0;
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
+
+    public bool Equals(ComplementoNoItem? other)
+    {
+        if (other is null) return false;
+        return Id == other.Id;
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as ComplementoNoItem);
+
+    public override int GetHashCode() => Id.GetHashCode();
 }

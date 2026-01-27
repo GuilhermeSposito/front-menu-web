@@ -238,6 +238,7 @@
     {
         Produto.PrecoSelecionado = novoPreco;
         Item.PrecoUnitario = novoPreco?.Valor ?? 0;
+        Item.PrecoId = novoPreco?.Id ?? "";
 
         AtualizarPrecoTotal();
 
