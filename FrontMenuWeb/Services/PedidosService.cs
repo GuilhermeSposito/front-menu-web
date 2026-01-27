@@ -180,7 +180,14 @@ public class PedidosService
         return retorno ?? new ReturnApiRefatored<NFEmitidasDto>();
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> CancelarPedido(ClsPedido Pedido)
+    {
+        var response = await _http.DeleteAsync($"pedidos/cancelar/{Pedido.Id}");
 
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
 
 }
 

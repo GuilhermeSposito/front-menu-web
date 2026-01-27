@@ -243,7 +243,10 @@
                                         {
                                             <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
                                                 <MudStack>
-                                                    <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row=true Class="w-100">
+                                                        <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                                        <MudIconButton OnClick=@(()=> {NovoPedido.Itens.Remove(produtoNoPedido);}) Icon="@Icons.Material.Filled.Close" Color="Color.Primary"/>
+                                                    </MudStack>
                                                     <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
                                                     @if (produtoNoPedido.Complementos.Count > 0)
                                                     {
