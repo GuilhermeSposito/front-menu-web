@@ -84,7 +84,7 @@
                                     <MudStack Class="w-100 h-100 p-3"
                                               @onkeydown="OnKeyDownProdutos"
                                               tabindex="0"
-                                              Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);"
+                                              Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary); overflow-y:auto;"
                                               AlignItems="AlignItems.Start" Justify="Justify.FlexStart" id="MudStackDeProduto">
                                         <MudGrid GutterSize="2">
                                             @foreach (var item in Produtos.Select((produto, index) => new { produto, index }))
