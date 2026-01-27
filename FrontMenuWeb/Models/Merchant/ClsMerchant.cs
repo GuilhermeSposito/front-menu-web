@@ -64,8 +64,7 @@ public class ClsMerchant
     [JsonPropertyName("TamFonteLegendaDosItens")] public int TamFonteLegendaDosItens { get; set; }
     [JsonPropertyName("TamFonteTotais")] public int TamFonteTotais { get; set; }
     [JsonPropertyName("TamFonteInfosPag")] public int TamFonteInfosPag { get; set; }
-
-
+    [JsonPropertyName("TamFonteNomeClienteComanda")] public int TamFonteNomeClienteComanda { get; set; }
 
 }
 

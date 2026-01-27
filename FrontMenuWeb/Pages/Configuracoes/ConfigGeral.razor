@@ -137,9 +137,12 @@
                             <MudItem xs="12" sm="6" md="3">
                                 <MudNumericField Label="Fonte Infos De Pag" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteInfosPag HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
                             </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudNumericField Label="Fonte Nome (Comanda)" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteNomeClienteComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                            </MudItem>
 
                             <MudItem xs="12" sm="6" md="3">
-                                <MudButton OnClick=@(async () => {Merchant.EspacamentoNaImpressao = 19; Merchant.TamFonteDescricaoComplementoNaComanda = 11; Merchant.TamFonteDescricaoItemNaComanda = 11; Merchant.TamFonteDetalhesPedido = 9; Merchant.TamFonteDescricaoItem = 11; Merchant.TamFonteDescricaoComplemento = 9; Merchant.TamFonteValorItem = 8; Merchant.TamFonteTempoEntregaEConta = 12; Merchant.TamFonteLegendaDosItens = 12; Merchant.TamFonteTotais = 12; Merchant.TamFonteInfosPag = 10; await SalvarInfosLojaAsync(); }) Color="Color.Primary" Variant="Variant.Filled">Resetar Fontes</MudButton>
+                                <MudButton OnClick=@(async () => { Merchant.TamFonteNomeClienteComanda = 12; Merchant.EspacamentoNaImpressao = 19; Merchant.TamFonteDescricaoComplementoNaComanda = 11; Merchant.TamFonteDescricaoItemNaComanda = 11; Merchant.TamFonteDetalhesPedido = 9; Merchant.TamFonteDescricaoItem = 11; Merchant.TamFonteDescricaoComplemento = 9; Merchant.TamFonteValorItem = 8; Merchant.TamFonteTempoEntregaEConta = 12; Merchant.TamFonteLegendaDosItens = 8; Merchant.TamFonteTotais = 12; Merchant.TamFonteInfosPag = 10; await SalvarInfosLojaAsync(); }) Color="Color.Primary" Variant="Variant.Filled">Resetar Fontes</MudButton>
                             </MudItem>
                         </MudGrid>
 
@@ -667,5 +670,6 @@
 
 
     #endregion
-}
+}
+
 

@@ -22,29 +22,22 @@ public class ImpressaoService
 {
 
     #region Fontes utilizadas na impressão
-    public Font FonteGeral { get; set; } = new Font("DejaVu sans mono mono", 11, FontStyle.Bold);
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-    public Font FonteSeparadores { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public Font FonteCódigoDeBarras { get; set; } = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
-    public Font FonteNomeRestaurante { get; set; } = new Font("DejaVu sans mono", 15, FontStyle.Bold);
-    public Font FonteEndereçoDoRestaurante { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
-    public Font FonteNúmeroDoPedido { get; set; } = new Font("DejaVu sans mono", 17, FontStyle.Bold);
+    public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
+    public Font FonteComplementoNaComanda { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-    public Font FonteDetalhesDoPedidoRegular { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Regular);
-    public Font FonteNúmeroDoTelefone { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
     public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 14, FontStyle.Bold);
-    public Font FonteEndereçoDoCliente { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
     public Font FonteItens { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
+    public Font FonteContaEntregaEConta { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteItens2 { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public Font FonteOpcionais { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Regular);
-    public Font FonteObservaçõesItem { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
-    public Font FonteTotaisDoPedido { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    public Font FonteItensComanda { get; set; } = new Font("DejaVu sans mono", 11, FontStyle.Bold);
     public Font FonteCPF { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FontQtdDescVunitVTotal { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
     public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
     public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
+    public int ValorEspacamento = 19;
     #endregion
 
     #region Funções que chamam a impressão
@@ -54,6 +47,8 @@ public class ImpressaoService
         {
             using (AppDbContext db = new AppDbContext())
             {
+                AtualizaTamanhoDeFontesParametrizados();
+
                 ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
@@ -61,14 +56,14 @@ public class ImpressaoService
                 if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 19);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, ValorEspacamento);
                 }
 
                 //imprime na impressora auxiliar se tiver
                 if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && !VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, 19);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, ValorEspacamento);
                 }
 
 
@@ -89,6 +84,8 @@ public class ImpressaoService
     {
         try
         {
+            AtualizaTamanhoDeFontesParametrizados();
+
             using (AppDbContext db = new AppDbContext())
             {
                 if (EMesa)
@@ -140,12 +137,12 @@ public class ImpressaoService
                             if (AppState.MerchantLogado is not null)
                             {
                                 for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
-                                    await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
+                                    await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
 
                             }
                             else
                             {
-                                await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, 19);
+                                await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
                             }
 
                         }
@@ -199,7 +196,7 @@ public class ImpressaoService
 
                             if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
                                 for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
-                                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, 19);
+                                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, ValorEspacamento);
                         }
                     }
                 }
@@ -215,6 +212,7 @@ public class ImpressaoService
     {
         try
         {
+            AtualizaTamanhoDeFontesParametrizados();
             using (AppDbContext db = new AppDbContext())
             {
                 ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
@@ -257,7 +255,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
 
             if (item.Complementos.Count > 0)
@@ -265,13 +263,13 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplementoNaComanda, eObs: true);
                 }
             }
 
             if (!String.IsNullOrEmpty(item.Observacoes))
             {
-                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplementoNaComanda, eObs: true);
             }
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -321,7 +319,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
 
             if (item.Produto is not null && item.Produto.PrecoSelecionado.DescricaoDoTamanho is not null)
@@ -334,13 +332,13 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplementoNaComanda, eObs: true);
                 }
             }
 
             if (!String.IsNullOrEmpty(item.Observacoes))
             {
-                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplementoNaComanda, eObs: true);
             }
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -368,11 +366,11 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"\n                     {pedido.DisplayId}", FonteItens);
+        AdicionaConteudo(Conteudo, $"\n                     {pedido.DisplayId}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}   Conta Nº:", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteItens);
+        AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         //------------------------------------------------------------------------------------------
@@ -419,13 +417,13 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteEndereçoDoRestaurante, eObs: true);
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplemento, eObs: true);
                 }
             }
 
             if (!String.IsNullOrEmpty(item.Observacoes))
             {
-                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteEndereçoDoRestaurante, eObs: true);
+                AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplemento, eObs: true);
             }
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -825,6 +823,27 @@ public class ImpressaoService
         };
     }
     #endregion
+
+    private void AtualizaTamanhoDeFontesParametrizados()
+    {
+        if(AppState.MerchantLogado is not null)
+        {
+            FonteTotaisNovo = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTotais, FontStyle.Regular);
+            FonteDetalhesDoPedido = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDetalhesPedido, FontStyle.Regular);
+            FonteComplemento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplemento, FontStyle.Regular);
+            //FontQtdDescVunitVTotal = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteLegendaDosItens, FontStyle.Regular);
+            FonteContaEntregaEConta = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTempoEntregaEConta, FontStyle.Regular);
+            FonteItens2 = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItem, FontStyle.Regular);
+            FonteCPF = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteValorItem, FontStyle.Regular); //ta sendo o valor dos itens 
+            FonteInfosPagamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteInfosPag, FontStyle.Regular);
+            FonteNomeDoCliente = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteNomeClienteComanda, FontStyle.Regular);
+
+            FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Regular);
+            FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Regular);
+
+             ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
+        }
+    }
 }
 
 #region Classes de definição de impressão

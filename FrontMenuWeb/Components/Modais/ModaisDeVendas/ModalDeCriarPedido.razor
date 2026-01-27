@@ -359,7 +359,7 @@
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
 
-        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) ||( !produto.TamanhoUnico && produto.Precos.Count > 0))
         {
             var parameters = new DialogParameters
             {
