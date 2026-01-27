@@ -182,6 +182,8 @@
 
     protected override void OnInitialized()
     {
+        Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Grupo.Id).ToList();  
+
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
         Item.Quantidade = 1;
