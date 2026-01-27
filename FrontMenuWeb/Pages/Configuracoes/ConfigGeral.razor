@@ -254,6 +254,15 @@
                         <MudItem xs="12" md="12" lg="12">
                             <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.ValorPorKm @onfocusout=SalvarInfosLojaAsync T="float" Immediate=true Label="Valor por km" Variant="Variant.Outlined" FullWidth="true" AdornmentText="R$" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
                         </MudItem>
+                        <MudItem xs="12" md="12" lg="12">
+                            <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.KmMinimo @onfocusout=SalvarInfosLojaAsync T="float" Immediate=true Label="Km Minimo" Variant="Variant.Outlined" FullWidth="true" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                        </MudItem>
+                        <MudItem xs="12" md="12" lg="12">
+                            <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.ValorKmMinimo @onfocusout=SalvarInfosLojaAsync T="float" Immediate=true Label="Valor Km Minimo" Variant="Variant.Outlined" FullWidth="true" AdornmentText="R$" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                        </MudItem>
+                        <MudItem xs="12" md="12" lg="12">
+                            <MudExTextField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.TokenApiEntrega @onfocusout=SalvarInfosLojaAsync T="string" Immediate=true Label="Valor Km Minimo" Variant="Variant.Outlined" FullWidth="true"  Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                        </MudItem>
                     </MudGrid>
                 </MudStack>
             </MudPaper>

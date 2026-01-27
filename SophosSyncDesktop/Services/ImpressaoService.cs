@@ -109,7 +109,7 @@ public class ImpressaoService
 
                     foreach (var Prods in produtosAgrupados)
                     {
-                        if (Prods.Impressora is not null && Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase))
+                        if (Prods.Impressora is not null && (Prods.Impressora.Contains("Não Imprime", StringComparison.OrdinalIgnoreCase) || Prods.Impressora.Contains("Nao", StringComparison.OrdinalIgnoreCase)))
                             continue;
 
                         PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
