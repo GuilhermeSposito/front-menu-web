@@ -58,7 +58,7 @@
                                             <MudCheckBox T="bool" Disabled=@(etapa.Selector == "FINALIZADO") ValueChanged=@(() => { SelecionaPedidosParaProximaEtapaNoCabecalho(etapa); }) />
                                         </CardHeaderActions>
                                     </MudCardHeader>
-                                    <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px dashed var(--mud-palette-primary); ">
+                                    <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px solid var(--mud-palette-primary); ">
                                         @{
                                             var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
                                             if (Pedidos.Count > 0)

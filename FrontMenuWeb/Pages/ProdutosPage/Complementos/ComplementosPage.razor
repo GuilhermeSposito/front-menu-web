@@ -86,7 +86,7 @@
                                                 <CardHeaderActions>
                                                     <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
                                                     <MudIconButton OnClick=@(async ()=> { await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento);}) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                                                    <MudIconButton OnClick=@(async ()=> { await PausaEDespausaComplemento(complemento.Complemento, grupo);}) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                                                    <MudIconButton OnClick=@(async ()=> { }) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Disabled=true />
                                                 </CardHeaderActions>
                                             </MudCardHeader>
                                         </MudCard>
@@ -316,7 +316,7 @@
                 Snackbar.Add(mensagemDeErro, Severity.Error);
             }
 
-            await AtualizaGruposDecomplementos();
+            //await AtualizaGruposDecomplementos();
             StateHasChanged();
         }
         catch (Exception ex)

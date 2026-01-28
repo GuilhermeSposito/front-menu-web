@@ -370,7 +370,7 @@
                { "Produto", produto}
             };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+            var options = new DialogOptions {BackdropClick = false, NoHeader=true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
 
             //var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
             var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
@@ -391,10 +391,10 @@
                 {
                     itemExistente.Quantidade += 1;
                     itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
-                    await InvokeAsync(StateHasChanged);
+                    StateHasChanged();
                     return;
                 }
-                 
+
                 NovoPedido.Itens.Add(itemPedido);
                 return;
             }
@@ -412,7 +412,7 @@
             var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
             itemExistente.Quantidade += 1;
             itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
-            await InvokeAsync(StateHasChanged);
+            StateHasChanged();
             return;
         }
 
@@ -427,7 +427,7 @@
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
         await Task.Delay(50);
-        await InvokeAsync(StateHasChanged);
+        StateHasChanged();
     }
 
     private async void AbreModalDeAdicionarPessoa()
@@ -452,6 +452,7 @@
         if (!result!.Canceled && result.Data is ClsPessoas pessoa && pessoa is not null)
         {
             await SelecionarPessoa(pessoa);
+            await TextFieldProd.FocusAsync();
             StateHasChanged();
         }
     }
@@ -587,6 +588,7 @@
                 NovoPedido.Endereco = enderecos.First();
                 NovoPedido.EnderecoId = NovoPedido.Endereco.Id;
                 Snackbar.Add("Endereço adicionado com sucesso", Severity.Success);
+                await TextFieldProd.FocusAsync();
                 StateHasChanged();
             }
             return;
@@ -596,6 +598,7 @@
             NovoPedido.Endereco = enderecos.First();
             NovoPedido.EnderecoId = NovoPedido.Endereco.Id;
             Snackbar.Add("Endereço adicionado com sucesso", Severity.Success);
+            await TextFieldProd.FocusAsync();
             return;
         }
         else if (enderecos.Count > 1)
@@ -636,6 +639,7 @@
                 }
             }
 
+            await TextFieldProd.FocusAsync();
             return;
         }
     }

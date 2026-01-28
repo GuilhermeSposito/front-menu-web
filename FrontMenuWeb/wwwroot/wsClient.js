@@ -153,3 +153,32 @@ window.bloquearAtalhosDoNavegador = function () {
 };
 
 
+window.lockArrowScroll = () => {
+
+    document.addEventListener('keydown', function (e) {
+        const keys = [
+            'ArrowUp',
+            'ArrowDown',
+            'ArrowLeft',
+            'ArrowRight',
+            'PageUp',
+            'PageDown',
+            'Home',
+            'End',
+            ' '
+        ];
+
+        if (keys.includes(e.key)) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+};
+
+
+window.copyToClipboard = function (text) {
+    if (!text) return;
+
+    navigator.clipboard.writeText(text)
+        .then()
+        .catch(err => console.error("Erro ao copiar", err));
+};

@@ -215,10 +215,21 @@
     private float ValorRestante = 0f;
     private float TotalKms = 0f;
 
+    //Lógica para editar o pagamento
+    [Parameter]public bool Editando { get; set; } = false;
+    [Parameter] public int IdRecebimento { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            if (Editando)
+            {
+                //fazer requisição para buscar o recebimento pelo id
+                //depois Colocar no Pedido para editar ele
+                //quando der o subimit ele atualiza o recebimento
+            }
+
             if (Pedido.TipoDePedido == "DELIVERY")
             {
                 var EnderecoInicial = AppState.MerchantLogado.EnderecosMerchant.FirstOrDefault();

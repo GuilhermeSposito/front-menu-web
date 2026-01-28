@@ -14,6 +14,7 @@
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
 @inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JS
 @inject EntregasMachineService EntregasMachineService
 @using MudBlazor.Extensions.Services
 
@@ -65,6 +66,7 @@
                     <CellTemplate Context="context">
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                             <MudMenuItem OnClick=@(async()=> {await AbrirModalCriacaoEdicao(context.Item,false);}) Icon="@Icons.Material.Filled.Edit" Label="Editar" />
+                            <MudMenuItem OnClick=@(async()=> {await CopiarToken(context.Item.TokenApiEntrega);}) Icon="@Icons.Material.Filled.CopyAll" Label="Copiar Token" />
                             <MudMenuItem OnClick=@(async()=> {await DeletarEmpresa(context.Item);}) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Deletar" />
                         </MudMenu>
                     </CellTemplate>
@@ -147,6 +149,19 @@
 
         await dataGridRef!.ReloadServerData();
 
+    }
+
+    private async Task CopiarToken(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            Snackbar.Add("Token inválido.", Severity.Error);
+            return;
+        }
+
+        await JS.InvokeVoidAsync("copyToClipboard", token);
+
+        Snackbar.Add("Token copiado para a área de transferência!", Severity.Success);
     }
     #endregion
 
