@@ -327,9 +327,9 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
 
-            if (item.Produto is not null && item.Produto.PrecoSelecionado.DescricaoDoTamanho is not null)
+            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
-                AdicionaConteudo(Conteudo, $"{item.Produto.PrecoSelecionado.DescricaoDoTamanho}", FonteCPF);
+                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteCPF);
             }
 
             if (item.Complementos.Count > 0)
@@ -410,12 +410,17 @@ public class ImpressaoService
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"Tam.          V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
             AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+
+            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+            {
+                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteCPF);
+            }
 
             if (item.Complementos.Count > 0)
             {

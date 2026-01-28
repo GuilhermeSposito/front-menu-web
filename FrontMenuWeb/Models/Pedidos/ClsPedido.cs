@@ -115,6 +115,7 @@ public class ItensPedido
     }
     [JsonPropertyName("ProdutoId")] public string? ProdutoId { get; set; }
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("LegTamanhoEscolhido")] public string? LegTamanhoEscolhido { get; set; }
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; } = 1;
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; } = 0;
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; } = 0;

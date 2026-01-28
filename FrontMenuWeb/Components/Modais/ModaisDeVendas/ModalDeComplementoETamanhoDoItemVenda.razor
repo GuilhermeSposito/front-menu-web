@@ -235,6 +235,7 @@
         Item.PrecoUnitario = novoPreco?.Valor ?? 0;
         Item.PrecoId = novoPreco?.Id ?? "";
 
+
         AtualizarPrecoTotal();
 
         Snackbar.Add($"Tamanho selecionado: {novoPreco?.DescricaoDoTamanho}, Preço: R$ {novoPreco?.Valor.ToString("F2")}", Severity.Info);
