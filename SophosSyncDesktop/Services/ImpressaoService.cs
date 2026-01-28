@@ -297,6 +297,11 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
 
+        AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
+        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================       
+
         if (AppState.MerchantLogado!.ImprimeNomeNaComanda)
         {
             if (pedido.Cliente is not null)
@@ -366,9 +371,9 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"\n                     {pedido.DisplayId}", FonteContaEntregaEConta);
-        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}   Conta Nº:", FonteDetalhesDoPedido);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
+        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -826,7 +831,7 @@ public class ImpressaoService
 
     private void AtualizaTamanhoDeFontesParametrizados()
     {
-        if(AppState.MerchantLogado is not null)
+        if (AppState.MerchantLogado is not null)
         {
             FonteTotaisNovo = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTotais, FontStyle.Regular);
             FonteDetalhesDoPedido = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDetalhesPedido, FontStyle.Regular);
@@ -841,7 +846,7 @@ public class ImpressaoService
             FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Regular);
             FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Regular);
 
-             ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
+            ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
         }
     }
 }

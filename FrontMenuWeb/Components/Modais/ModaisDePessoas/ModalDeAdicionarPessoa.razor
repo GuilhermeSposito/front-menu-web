@@ -322,8 +322,13 @@
     }
 
     private async Task ArrumaNomePrimeiraLetraMAiuscula(string input)
-    {
+    { 
         if (string.IsNullOrWhiteSpace(input))
+            NovaPessoa.Nome = string.Empty;
+
+            NovaPessoa.Nome = input.ToUpper();
+
+        /*if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.Nome = string.Empty;
 
         var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -335,7 +340,7 @@
             else
                 words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
         }
-        NovaPessoa.Nome = string.Join(' ', words);
+        NovaPessoa.Nome = string.Join(' ', words);*/
     }
 
     private async Task ArrumaNomePrimeiraLetraMAiusculaRazaoSocial(string input)
