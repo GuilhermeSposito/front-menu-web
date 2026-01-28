@@ -36,6 +36,7 @@ public class ImpressaoService
     public Font FontQtdDescVunitVTotal { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
     public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    public Font FonteLegendaDoTamanho { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
     public int ValorEspacamento = 19;
     #endregion
@@ -329,7 +330,7 @@ public class ImpressaoService
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
-                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteCPF);
+                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteLegendaDoTamanho);
             }
 
             if (item.Complementos.Count > 0)
@@ -419,7 +420,7 @@ public class ImpressaoService
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
-                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteCPF);
+                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteLegendaDoTamanho);
             }
 
             if (item.Complementos.Count > 0)
