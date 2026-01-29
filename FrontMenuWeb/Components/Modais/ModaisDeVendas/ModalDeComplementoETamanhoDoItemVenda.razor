@@ -1,7 +1,7 @@
 ﻿@using FrontMenuWeb.Models.Pedidos
 @inject IJSRuntime JS
 
-<MudDialog TitleClass="p-0" ContentClass="p-0" tabindex="0" @onkeydown=OnKeyDown  DefaultFocus="DefaultFocus.FirstChild">
+<MudDialog TitleClass="p-0" ContentClass="p-0" tabindex="0" @onkeydown=OnKeyDown DefaultFocus="DefaultFocus.FirstChild">
     <DialogContent>
         <MudStack Class="p-1 mb-5" Style="background-color: var(--mud-palette-background);">
             <MudGrid>
@@ -45,7 +45,7 @@
                             {
                                 @foreach (var relacao in Produto.GruposDeComplementosDoProduto)
                                 {
-                                    <MudTabPanel  Text="@relacao.Grupo.Descricao">
+                                    <MudTabPanel Text="@relacao.Grupo.Descricao">
                                         <MudStack Class="mt-3" Style="min-height:500px" Spacing="3">
 
                                             @foreach (var complemento in relacao.Grupo.Complementos)
@@ -53,7 +53,7 @@
                                                 @if (complemento.Complemento.Ativo)
                                                 {
                                                     <MudPaper Style="background-color: var(--mud-palette-background);" Class="pa-3 rounded-2" Elevation="0">
-                                                        <MudStack @onkeydown=@(async (e) => { await OnKeyDownAddComplemento(e, complemento.Complemento); }) Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                                        <MudStack @onkeydown=@(async (e) => { await OnKeyDownAddComplemento(e, complemento.Complemento, relacao); }) Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
                                                             <MudStack Row=true AlignItems="AlignItems.Center">
                                                                 <MudText Typo="Typo.h6">@complemento.Complemento.Descricao</MudText>
                                                                 <MudText Typo="Typo.h6"> - R$ @complemento.Complemento.Valor.ToString("F2")</MudText>
@@ -63,14 +63,14 @@
                                                                 {
                                                                     <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
                                                                                    Disabled="@(!Complementos.Any(c => c.Complemento?.Id == complemento.Complemento.Id))"
-                                                                                   OnClick="@(() => RemoverComplemento(complemento.Complemento))" />
+                                                                                   OnClick="@(() => RemoverComplemento(relacao,complemento.Complemento))" />
 
                                                                     <MudText Typo="Typo.subtitle2" Class="mx-1">
                                                                         @RetornaQuantidadeAdicionadaDoComplemento(complemento.Complemento)
                                                                     </MudText>
                                                                 }
                                                                 <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
-                                                                               OnClick="@(() => AdicionarComplemento(complemento.Complemento))" />
+                                                                               OnClick="@(() => AdicionarComplemento(relacao,complemento.Complemento))" />
                                                             </MudStack>
                                                         </MudStack>
                                                     </MudPaper>
@@ -167,15 +167,15 @@
 
 
     //Lógica para montar o produto com os complementos e tamanhos
-    private ItensPedido Item = new ItensPedido();
-    private List<ComplementoNoItem> Complementos = new List<ComplementoNoItem>();
+    public ItensPedido Item = new ItensPedido();
+    public List<ComplementoNoItem> Complementos = new List<ComplementoNoItem>();
 
     private MudTabs _tabsRef = new MudTabs();
     private MudGrid Grid { get; set; } = new MudGrid();
 
     protected override void OnInitialized()
     {
-        Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Grupo.Id).ToList();
+        Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Id).ToList();
 
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
@@ -198,8 +198,17 @@
         return complementoNoItem?.Quantidade ?? 0f;
     }
 
-    private void AdicionarComplemento(ClsComplemento complemento)
+    private void AdicionarComplemento(ClsGruposDeComplementosDoProduto relacaoGrupoComlpemento, ClsComplemento complemento)
     {
+        var ComplementosAdicionadoComEsseGrupo = Complementos.Where(c => c.RelacaoGrupoComlpemento.Grupo.Id == relacaoGrupoComlpemento.Grupo.Id).ToList();
+        var QtdAdicionadaNesseGrupo = ComplementosAdicionadoComEsseGrupo.Sum(c => c.Quantidade);
+
+        if (ComplementosAdicionadoComEsseGrupo is not null && QtdAdicionadaNesseGrupo == relacaoGrupoComlpemento.QtdMax)
+        {
+            Snackbar.Add($"Você atingiu o limite máximo de {relacaoGrupoComlpemento.QtdMax} complementos para o grupo {relacaoGrupoComlpemento.Grupo.Descricao}.", Severity.Warning);
+            return;
+        }
+
         bool existeComplemento = Complementos.Any(c => c.Id == complemento.Id);
         if (existeComplemento)
         {
@@ -208,6 +217,7 @@
             {
                 ComplementoJáExistente.Quantidade += 1;
                 ComplementoJáExistente.PrecoTotal = ComplementoJáExistente.PrecoUnitario * ComplementoJáExistente.Quantidade;
+                QtdAdicionadaNesseGrupo++;
             }
         }
         else
@@ -219,9 +229,19 @@
                 Complemento = complemento,
                 Quantidade = 1,
                 PrecoUnitario = complemento.Valor,
-                PrecoTotal = complemento.Valor
+                PrecoTotal = complemento.Valor,
+                RelacaoGrupoComlpemento = relacaoGrupoComlpemento
             };
             Complementos.Add(ComplementoNoItem);
+            ComplementosAdicionadoComEsseGrupo?.Add(ComplementoNoItem);
+            QtdAdicionadaNesseGrupo++;
+
+
+        }
+
+        if (ComplementosAdicionadoComEsseGrupo is not null && QtdAdicionadaNesseGrupo == relacaoGrupoComlpemento.QtdMax)
+        {
+            ProximaAba();
         }
 
         AtualizarPrecoTotal();
@@ -249,7 +269,7 @@
                           + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade);
     }
 
-    private void RemoverComplemento(ClsComplemento complemento)
+    private void RemoverComplemento(ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento, ClsComplemento complemento)
     {
         var existente = Complementos.FirstOrDefault(c => c.Id == complemento.Id);
 
@@ -314,17 +334,17 @@
         }
     }
 
-    private async Task OnKeyDownAddComplemento(KeyboardEventArgs e, ClsComplemento Complemento)
+    private async Task OnKeyDownAddComplemento(KeyboardEventArgs e, ClsComplemento Complemento, ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento)
     {
 
         switch (e.Key)
         {
             case "ArrowUp":
-                AdicionarComplemento(Complemento);
+                AdicionarComplemento(RelacaoGrupoComlpemento, Complemento);
                 break;
 
             case "ArrowDown":
-                RemoverComplemento(Complemento);
+                RemoverComplemento(RelacaoGrupoComlpemento, Complemento);
                 break;
 
         }
@@ -353,7 +373,7 @@
     {
         if (firstRender)
         {
-           
+
         }
     }
     #endregion

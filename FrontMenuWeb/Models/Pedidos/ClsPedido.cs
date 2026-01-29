@@ -149,6 +149,8 @@ public class ComplementoNoItem : IEquatable<ComplementoNoItem>
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
 
+    [JsonIgnore]public ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento { get; set; } = new ClsGruposDeComplementosDoProduto();
+
     public bool Equals(ComplementoNoItem? other)
     {
         if (other is null) return false;
