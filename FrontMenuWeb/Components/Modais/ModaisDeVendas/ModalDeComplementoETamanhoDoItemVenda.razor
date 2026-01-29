@@ -167,8 +167,8 @@
 
 
     //Lógica para montar o produto com os complementos e tamanhos
-    public ItensPedido Item = new ItensPedido();
-    public List<ComplementoNoItem> Complementos = new List<ComplementoNoItem>();
+    [Parameter] public ItensPedido Item { get; set; } = new ItensPedido();
+    [Parameter] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
 
     private MudTabs _tabsRef = new MudTabs();
     private MudGrid Grid { get; set; } = new MudGrid();
@@ -306,6 +306,9 @@
             return;
         }
 
+        Complementos = Complementos.OrderBy(x => x.RelacaoGrupoComlpemento.Id).ToList();
+
+        Item.Produto = Produto;
         Item.Complementos = Complementos;
         MudDialog.Close(DialogResult.Ok(Item));
     }
