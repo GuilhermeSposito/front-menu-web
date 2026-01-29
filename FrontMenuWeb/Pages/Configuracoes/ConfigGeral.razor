@@ -266,6 +266,9 @@
                         <MudItem xs="12" md="12" lg="12">
                             <MudCheckBox ValueChanged="@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaPedidoAutTaxyMachine = x))" Value=Merchant.EnviaPedidoAutTaxyMachine Disabled=EditandoInfosEntregaBloq T=bool Color="Color.Primary">Envia Pedido Automatico</MudCheckBox>
                         </MudItem>
+                        <MudItem xs="12" md="12" lg="12">
+                            <MudCheckBox ValueChanged="@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaEntregaPorKm = x))" Value=Merchant.UltilizaEntregaPorKm Disabled=EditandoInfosEntregaBloq T=bool Color="Color.Primary">Soma Entregas Por Km</MudCheckBox>
+                        </MudItem>
                     </MudGrid>
                 </MudStack>
             </MudPaper>

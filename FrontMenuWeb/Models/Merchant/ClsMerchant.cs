@@ -65,6 +65,7 @@ public class ClsMerchant
     [JsonPropertyName("TamFonteTotais")] public int TamFonteTotais { get; set; }
     [JsonPropertyName("TamFonteInfosPag")] public int TamFonteInfosPag { get; set; }
     [JsonPropertyName("TamFonteNomeClienteComanda")] public int TamFonteNomeClienteComanda { get; set; }
+    [JsonPropertyName("UltilizaEntregaPorKm")] public bool UltilizaEntregaPorKm { get; set; }
 
 }
 

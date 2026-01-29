@@ -54,14 +54,14 @@ public class ImpressaoService
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                 //primeiro imprime pedido
-                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, ValorEspacamento);
                 }
 
                 //imprime na impressora auxiliar se tiver
-                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && !VerificaSeEstaSemImpressora(Imps.ImpressoraAux))
+                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraAux))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, ValorEspacamento);
@@ -220,7 +220,7 @@ public class ImpressaoService
                 ClsFechamentoDeCaixa Fechamento = JsonSerializer.Deserialize<ClsFechamentoDeCaixa>(jsonDoFechamento) ?? throw new Exception("Erro ao desserializr fechamento");
 
                 //primeiro imprime pedido
-                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
                 {
                     List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDoFechamentoParaImpressao(Fechamento);
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 14);
@@ -719,7 +719,7 @@ public class ImpressaoService
     #endregion
 
     #region Funções auxiliares de impressão
-    private bool VerificaSeEstaSemImpressora(string impCadastrada)
+    private bool VerificaSeNaoEstaSemImpressora(string impCadastrada)
     {
         return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
     }
@@ -768,11 +768,11 @@ public class ImpressaoService
             string? ImpressoraDanfe = null;
             ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
 
-            if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeEstaSemImpressora(Imps.ImpressoraCaixa))
+            if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
             {
                 ImpressoraCaixa = Imps.ImpressoraCaixa;
             }
-            if (!string.IsNullOrEmpty(Imps.ImpressoraDanfe) && VerificaSeEstaSemImpressora(Imps.ImpressoraDanfe))
+            if (!string.IsNullOrEmpty(Imps.ImpressoraDanfe) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraDanfe))
             {
                 ImpressoraDanfe = Imps.ImpressoraDanfe;
             }

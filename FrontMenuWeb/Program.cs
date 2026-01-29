@@ -34,6 +34,7 @@ builder.Services.AddScoped<PessoasService>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
+builder.Services.AddScoped<EntregasService>();
 builder.Services.AddScoped<DistanciasService>();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("Api"));
@@ -100,6 +101,7 @@ ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasMachineService>());
 ConfigureSyslogicaClient(builder.Services.AddHttpClient<DistanciasService>());
+ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasService>());
 ConfigureApiFiscalSoophosClient(builder.Services.AddHttpClient<NfService>());
 
 

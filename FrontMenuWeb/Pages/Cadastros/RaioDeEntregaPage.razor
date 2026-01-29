@@ -1,0 +1,262 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/raios-de-entrega"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Models.Raios
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Services
+@inject IHttpClientFactory HttpClientFactory
+@inject FuncionariosService FuncionariosService
+@inject EntregasService EntregasService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Raios De Entrega</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Raios de entrega cadastrados.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { await CriarRaioDeEntrega(); })">Novo Raio</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="RaioDeEntrega"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection=false
+                     Class="rounded-3 custom-striped mt-2"
+                     Loading="Carregando"
+                     Hover
+                     HorizontalScrollbar="false"
+                     ServerData="LoadServerData">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Raio De Entrega" />
+            </NoRecordsContent>
+            <Columns>
+                <TemplateColumn T="RaioDeEntrega" Title="Acima De">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50">
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Culture="_pt"
+                                             T="int"
+                                             AdornmentText="Km(s)"
+                                             AdornmentColor="Color.Primary"
+                                             Adornment="Adornment.End"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.Km"
+                                             @onfocusout="@(async () => { await SalvarAlteracoes(context.Item); })" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="RaioDeEntrega" Title="Valor">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50">
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Format="N2"
+                                             Culture="_pt"
+                                             T="decimal"
+                                             AdornmentText="R$"
+                                             AdornmentColor="Color.Primary"
+                                             Adornment="Adornment.Start"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.ValorTaxa"
+                                             @onfocusout="@(async () => { await SalvarAlteracoes(context.Item); })" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="RaioDeEntrega" Title="Valor MotoBoy">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50">
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Format="N2"
+                                             Culture="_pt"
+                                             T="decimal"
+                                             AdornmentText="R$"
+                                             AdornmentColor="Color.Primary"
+                                             Adornment="Adornment.Start"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.ValorTaxaMotoboy"
+                                             @onfocusout="@(async () => { await SalvarAlteracoes(context.Item); })" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="RaioDeEntrega" Title="Tempo Em min">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50">
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Culture="_pt"
+                                             T="int"
+                                             AdornmentText="Minutos"
+                                             AdornmentColor="Color.Primary"
+                                             Adornment="Adornment.End"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.TempoMinutos"
+                                             @onfocusout="@(async () => { await SalvarAlteracoes(context.Item); })" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="RaioDeEntrega" Title="Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para ativar/desativar o produto" Color="Color.Primary">
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await SalvarAlteracoes(context.Item); })" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="RaioDeEntrega" Title="Deletar">
+                    <CellTemplate Context="context">
+                        <MudIconButton OnClick=@(async () => { await DeletarRaioDeEntrega(context.Item); }) Icon="@Icons.Material.Filled.Delete" Color="Color.Error" />
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+        </MudDataGrid>
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+    //Props Do Grid
+    private MudDataGrid<RaioDeEntrega> dataGridRef;
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    private bool Carregando = false;
+
+    private List<RaioDeEntrega> RaiosExistentes = new();
+
+    #region Funções do grid
+    private async Task<GridData<RaioDeEntrega>> LoadServerData(GridState<RaioDeEntrega> state)
+    {
+        try
+        {
+            Carregando = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await EntregasService.GetRaiosDeEntregaAsync();
+            RaiosExistentes = result.OrderBy(x => x.Km).ToList();
+
+            return new GridData<RaioDeEntrega>
+            {
+                Items = result.OrderBy(x => x.Km),
+                TotalItems = result.Count()
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Raios: {ex.Message}", Severity.Error);
+            return new GridData<RaioDeEntrega> { };
+        }
+        finally
+        {
+            Carregando = false;
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+    #endregion
+
+    #region Função De Interação com o Raio
+    private async Task SalvarAlteracoes(RaioDeEntrega raio)
+    {
+        try
+        {
+            Carregando = true;
+            var Response = await EntregasService.UpdateRaio(raio);
+
+            string mensagem = Response.Status == "error" ? string.Join(", ", Response.Messages) : string.Join(", ", Response.Data.Messages);
+            Snackbar.Add(mensagem, Response.Status == "error" ? Severity.Error : Severity.Success);
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar Raio: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task CriarRaioDeEntrega()
+    {
+        var UltimoRaio = RaiosExistentes.LastOrDefault();
+
+        if (UltimoRaio is null)
+            UltimoRaio = new RaioDeEntrega
+            {
+                Km = 0,
+                ValorTaxa = 0,
+                ValorTaxaMotoboy = 0,
+                TempoMinutos = 60,
+                Ativo = true
+            };
+
+        var novoRaio = new RaioDeEntrega
+        {
+            Km = UltimoRaio.Km + 1,
+            ValorTaxa = UltimoRaio.ValorTaxa + 1,
+            ValorTaxaMotoboy = UltimoRaio.ValorTaxaMotoboy + 1,
+            TempoMinutos = UltimoRaio.TempoMinutos + 5,
+            Ativo = true
+        };
+
+        try
+        {
+            Carregando = true;
+            var Response = await EntregasService.CreateRaio(novoRaio);
+            string mensagem = Response.Status == "error" ? string.Join(", ", Response.Messages) : string.Join(", ", Response.Data.Messages);
+            Snackbar.Add(mensagem, Response.Status == "error" ? Severity.Error : Severity.Success);
+            await dataGridRef.ReloadServerData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao criar Raio: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task DeletarRaioDeEntrega(RaioDeEntrega raio)
+    {
+        try
+        {
+            Carregando = true;
+            var Response = await EntregasService.DeleteRaio(raio);
+            string mensagem = Response.Status == "error" ? string.Join(", ", Response.Messages) : string.Join(", ", Response.Data.Messages);
+            Snackbar.Add(mensagem, Response.Status == "error" ? Severity.Error : Severity.Success);
+            await dataGridRef.ReloadServerData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao deletar Raio: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+    #endregion
+
+}
