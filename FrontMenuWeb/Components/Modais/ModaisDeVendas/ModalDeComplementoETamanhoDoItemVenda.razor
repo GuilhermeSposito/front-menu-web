@@ -45,7 +45,11 @@
                             @if (Produto.GruposDeComplementosDoProduto is not null)
                             {
                                 @foreach (var relacao in Produto.GruposDeComplementosDoProduto)
-                                { 
+                                {
+                                    if (!relacao.Grupo.Ativo)
+                                        continue;
+
+
                                     <MudTabPanel Text="@relacao.Grupo.Descricao">
                                         <MudStack Class="mt-3" Style="min-height:500px" Spacing="3">
 
@@ -389,7 +393,7 @@
             _tabIndex = TotalTabs - 1; // circular
     }
 
-    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Count();
+    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Where(x=> !x.Grupo.Ativo).ToList().Count;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

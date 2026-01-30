@@ -290,16 +290,37 @@ public class ImpressaoService
 
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
-
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
+
+        if (pedido.TipoDePedido != "DELIVERY")
+        {
+            int seed = pedido.Id;
+            var random = new Random(seed);
+
+            int senha = random.Next(500, 999);
+
+            AdicionaConteudo(Conteudo, $"SENHA: {senha}", FonteLegendaDoTamanho, Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            //========================================================================================       
+        }
+
+        DateTime EntregarAté = pedido.CriadoEm;
+        if (AppState.MerchantLogado is not null)
+        {
+            if (pedido.TipoDePedido == "DELIVERY")
+            {
+                EntregarAté = pedido.CriadoEm.AddMinutes((double?)AppState.MerchantLogado?.TempoDeEntregaEMmin ?? 0);
+            }
+            else
+            {
+                EntregarAté = pedido.CriadoEm.AddMinutes((double?)AppState.MerchantLogado?.TempoDeRetiradaEMmin ?? 0);
+            }
+        }
+
+        AdicionaConteudo(Conteudo, $"Entregar até as {EntregarAté:t}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido {pedido.TipoDePedido}", FonteDetalhesDoPedido);
-        AdicionaConteudo(Conteudo, $"Entregar em até {AppState.MerchantLogado?.TempoDeRetiradaEMmin} Minutos", FonteDetalhesDoPedido);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        //========================================================================================       
-
         AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
-        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
 
@@ -321,12 +342,11 @@ public class ImpressaoService
         }
 
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"Tam.                V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"Tam.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
             AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
-            AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
@@ -338,7 +358,7 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplementoNaComanda, eObs: true);
+                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao}", FonteComplementoNaComanda, eObs: true);
                 }
             }
 
@@ -374,7 +394,7 @@ public class ImpressaoService
             int seed = pedido.Id;
             var random = new Random(seed);
 
-            int senha = random.Next(1000, 10000);
+            int senha = random.Next(500, 999);
 
             AdicionaConteudo(Conteudo, $"SENHA: {senha}", FonteLegendaDoTamanho, Alinhamentos.Centro);
             AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
@@ -389,7 +409,22 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"Entregar Até: {pedido.CriadoEm:t}", FonteContaEntregaEConta);
+
+        DateTime EntregarAté = pedido.CriadoEm;
+        if (AppState.MerchantLogado is not null)
+        {
+            if (pedido.TipoDePedido == "DELIVERY")
+            {
+                EntregarAté = pedido.CriadoEm.AddMinutes((double?)AppState.MerchantLogado?.TempoDeEntregaEMmin ?? 0);
+            }
+            else
+            {
+                EntregarAté = pedido.CriadoEm.AddMinutes((double?)AppState.MerchantLogado?.TempoDeRetiradaEMmin ?? 0);
+            }
+        }
+
+
+        AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         //------------------------------------------------------------------------------------------
@@ -737,7 +772,7 @@ public class ImpressaoService
     #region Funções auxiliares de impressão
     private bool VerificaSeNaoEstaSemImpressora(string impCadastrada)
     {
-        return impCadastrada != "Sem Impressora" || !string.IsNullOrEmpty(impCadastrada);
+        return impCadastrada != "Sem Impressora" && !string.IsNullOrEmpty(impCadastrada);
     }
 
     public static void AdicionaConteudo(List<ClsImpressaoDefinicoes> Conteudo, string conteudoTexto, Font fonte, Alinhamentos alinhamento = Alinhamentos.Esquerda, bool eObs = false)

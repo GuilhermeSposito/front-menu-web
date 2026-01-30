@@ -107,10 +107,10 @@
 
                                                             <!-- Informações -->
                                                             <MudItem xs="9" Class="d-flex flex-column justify-center">
-                                                                <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
+                                                                <MudText Typo="Typo.subtitle1" Class="fw-semibold">
                                                                     @item.produto.CodigoInterno - @item.produto.Descricao
                                                                 </MudText>
-                                                                <MudText Typo="Typo.body2">
+                                                                <MudText Style="opacity: 0.7;" Typo="Typo.body2">
                                                                     @($"A Partir de: {item.produto.Precos.Min(p => p.Valor):C}")
                                                                 </MudText>
                                                             </MudItem>
