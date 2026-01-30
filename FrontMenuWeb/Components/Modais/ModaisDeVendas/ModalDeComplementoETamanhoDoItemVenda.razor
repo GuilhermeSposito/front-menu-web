@@ -192,6 +192,13 @@
     {
         Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Id).ToList();
 
+        if (Produto.GruposDeComplementosDoProduto is not null)
+            foreach (var grupo in Produto.GruposDeComplementosDoProduto)
+            {
+                grupo.Grupo.Complementos = grupo.Grupo.Complementos?.OrderBy(c => c.Id).ToList()!;
+            }
+
+
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
         Item.Quantidade = 1;
@@ -393,7 +400,7 @@
             _tabIndex = TotalTabs - 1; // circular
     }
 
-    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Where(x=> !x.Grupo.Ativo).ToList().Count;
+    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Where(x => !x.Grupo.Ativo).ToList().Count;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
