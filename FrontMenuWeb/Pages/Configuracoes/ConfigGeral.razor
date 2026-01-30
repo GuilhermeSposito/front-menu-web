@@ -81,6 +81,18 @@
                                 <MudCheckBox Value=@Merchant.ImprimeComandasDelivery ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasDelivery = x)) T=bool Color="Color.Primary">Imprime Comanda no Delivery</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.PerguntaImpressaoBalcao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaoBalcao = x)) T=bool Color="Color.Primary">Pergunta Impressão Balcao</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.PerguntaImpressaoDelivery ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaoDelivery = x)) T=bool Color="Color.Primary">Pergunta Impressão Delivery</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.PerguntaImpressaoMesa ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaoMesa = x)) T=bool Color="Color.Primary">Pergunta Impressão Mesa</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.PerguntaImpressaPdv ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaPdv = x)) T=bool Color="Color.Primary">Pergunta Impressão PDV</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.ImprimeComandasBalcao  ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasBalcao = x)) T=bool Color="Color.Primary">Imprime Comanda no Balcão</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">

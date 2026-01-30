@@ -25,7 +25,6 @@ public class ImpressaoService
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteComplementoNaComanda { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
-    public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 14, FontStyle.Bold);
     public Font FonteItens { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
@@ -36,6 +35,7 @@ public class ImpressaoService
     public Font FontQtdDescVunitVTotal { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteTotaisNovo { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Regular);
     public Font FonteInfosPagamento { get; set; } = new Font("DejaVu sans mono", 10, FontStyle.Bold);
+    public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteLegendaDoTamanho { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
     public int ValorEspacamento = 19;
@@ -363,10 +363,23 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
+        AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : "R E T I R A D A", FonteLegendaDoTamanho);
         if (AppState.MerchantLogado is not null)
-            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido);
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================       
+        if (pedido.TipoDePedido != "DELIVERY")
+        {
+            int seed = pedido.Id;
+            var random = new Random(seed);
+
+            int senha = random.Next(1000, 10000);
+
+            AdicionaConteudo(Conteudo, $"SENHA: {senha}", FonteLegendaDoTamanho, Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            //========================================================================================       
+        }
         //========================================================================================       
         AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
@@ -459,10 +472,13 @@ public class ImpressaoService
         {
             if (pagamento.FormaDePagamento is not null)
             {
-                AdicionaConteudo(Conteudo, $"Pedido será pago com {pagamento.FormaDePagamento.Descricao} -- Valor: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
+                bool ePedidoPagoOnline = pagamento.FormaDePagamento.PagamentoOnline;
+                var InfoSeSeraPago = ePedidoPagoOnline ? "PAGO ONLINE COM" : "PEDIDO SERÁ PAGO COM";
+
+                AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
                 if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
                 {
-                    AdicionaConteudo(Conteudo, $"Leva Troco: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
+                    AdicionaConteudo(Conteudo, $"LEVAR TROCO: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
                 }
             }
         }
@@ -839,18 +855,17 @@ public class ImpressaoService
     {
         if (AppState.MerchantLogado is not null)
         {
-            FonteTotaisNovo = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTotais, FontStyle.Regular);
-            FonteDetalhesDoPedido = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDetalhesPedido, FontStyle.Regular);
-            FonteComplemento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplemento, FontStyle.Regular);
+            FonteTotaisNovo = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTotais, FontStyle.Bold);
+            FonteDetalhesDoPedido = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDetalhesPedido, FontStyle.Bold);
+            FonteComplemento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplemento, FontStyle.Bold);
             //FontQtdDescVunitVTotal = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteLegendaDosItens, FontStyle.Regular);
-            FonteContaEntregaEConta = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTempoEntregaEConta, FontStyle.Regular);
-            FonteItens2 = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItem, FontStyle.Regular);
-            FonteCPF = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteValorItem, FontStyle.Regular); //ta sendo o valor dos itens 
-            FonteInfosPagamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteInfosPag, FontStyle.Regular);
-            FonteNomeDoCliente = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteNomeClienteComanda, FontStyle.Regular);
-
-            FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Regular);
-            FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Regular);
+            FonteContaEntregaEConta = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTempoEntregaEConta, FontStyle.Bold);
+            FonteItens2 = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItem, FontStyle.Bold);
+            FonteCPF = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteValorItem, FontStyle.Bold); //ta sendo o valor dos itens 
+            FonteInfosPagamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteInfosPag, FontStyle.Bold);
+            FonteNomeDoCliente = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteNomeClienteComanda, FontStyle.Bold);
+            FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Bold);
+            FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Bold);
 
             ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
         }

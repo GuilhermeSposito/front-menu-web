@@ -262,6 +262,7 @@
 
     [Parameter] public string? TelefoneEnviado { get; set; } = null;
     [Parameter] public bool CadastroRapido { get; set; } = false;
+    [Parameter] public string? NomeEnviado { get; set; } = null;
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
     {
@@ -318,6 +319,10 @@
         {
             maskedPhone = TelefoneEnviado;
             NovaPessoa.Telefone = new string(TelefoneEnviado?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+        }
+        else if (string.IsNullOrEmpty(TelefoneEnviado) && !string.IsNullOrEmpty(NomeEnviado))
+        {
+            NovaPessoa.Nome = NomeEnviado;
         }
     }
 

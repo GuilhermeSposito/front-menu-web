@@ -1,0 +1,47 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Services
+
+<MudDialog tabindex="0" OnKeyDown=OnKeyDown Style="min-width:30vw">
+    <DialogContent>
+        <MudText>Você confirma a impressão ?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Cancel">Não</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @ref=BtnConfirmar OnClick="Submit">Sim</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudButton BtnConfirmar;
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (BtnConfirmar is not null)
+                BtnConfirmar.FocusAsync();
+
+        }
+    }
+
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            Submit();
+        }
+        else if (args.Key == "Escape")
+        {
+            Cancel();
+        }
+    }
+}
