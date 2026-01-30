@@ -46,6 +46,10 @@
                             {
                                 @foreach (var relacao in Produto.GruposDeComplementosDoProduto)
                                 {
+                                    if (!relacao.Grupo.Ativo)
+                                        continue;
+
+
                                     <MudTabPanel Text="@relacao.Grupo.Descricao">
                                         <MudStack Class="mt-3" Style="min-height:500px" Spacing="3">
 
