@@ -393,7 +393,7 @@
             _tabIndex = TotalTabs - 1; // circular
     }
 
-    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Count;
+    private int TotalTabs => Produto.GruposDeComplementosDoProduto is null ? (Produto.TamanhoUnico ? 0 : 1) : (Produto.TamanhoUnico ? 0 : 1) + Produto.GruposDeComplementosDoProduto.Where(x=> !x.Grupo.Ativo).ToList().Count;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
