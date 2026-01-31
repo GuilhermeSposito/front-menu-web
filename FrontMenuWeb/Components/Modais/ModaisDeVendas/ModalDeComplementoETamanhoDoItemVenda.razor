@@ -192,12 +192,12 @@
     {
         Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Id).ToList();
 
-        if (Produto.GruposDeComplementosDoProduto is not null)
+       /* if (Produto.GruposDeComplementosDoProduto is not null)
             foreach (var grupo in Produto.GruposDeComplementosDoProduto)
             {
                 grupo.Grupo.Complementos = grupo.Grupo.Complementos?.OrderBy(c => c.Id).ToList()!;
             }
-
+            */
 
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
