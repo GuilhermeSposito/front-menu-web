@@ -451,8 +451,8 @@
         try
         {
             CarregandoParteFiscal = true;
-
             List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos = new List<ClsDeSuporteParaMostrarPedidos>();
+
             if (Supor is not null)
             {
                 ListaDePedidos.Add(Supor);
@@ -472,7 +472,6 @@
         finally
         {
             CarregandoParteFiscal = false;
-
         }
 
     }

@@ -155,7 +155,10 @@ public class ImpressaoService
                     ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                     ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                    int QtdDeItensDoPedido = Pedido.Itens.Count();
+                    bool SeparaComandaPorItens = AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos;
+                    float QtdDeItensDoPedido = Pedido.Itens.Count();
+                    if (SeparaComandaPorItens)
+                        QtdDeItensDoPedido = Pedido.Itens.Sum(x => x.Quantidade);
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
                        .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
@@ -177,6 +180,9 @@ public class ImpressaoService
                             continue;
 
                         ClsPedido PedidoAtualizadoComItensAgrupados = Pedido;
+                        List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = new List<ClsImpressaoDefinicoes>();
+                        ClsPedido PedidoAtualizadoComItensAgrupadosAuxiliar = new ClsPedido(Pedido);
+
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
 
                         string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
@@ -185,19 +191,43 @@ public class ImpressaoService
 
                         var QtdDeLoops = AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos ? Prods.Itens.Count() : 1;
 
+                        var IndiceDoItemAtual = 1;
                         for (var i = 0; i < QtdDeLoops; i++)
                         {
-                            if (QtdDeLoops > 1)//se for maior que 1 é porque é separado por item
+                            if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)//se for maior que 1 é porque é separado por item
                             {
                                 var ItemAtual = Prods.Itens[i];
                                 PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido> { ItemAtual };
+
+                                if (ItemAtual.Quantidade > 1)
+                                {
+                                    PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido>();
+                                    var QtdOriginalDoProduto = ItemAtual.Quantidade;
+                                    for (var x = 0; x < QtdOriginalDoProduto; x++)
+                                    {
+                                        ItemAtual.Quantidade = 1;
+                                        PedidoAtualizadoComItensAgrupados.Itens.Add(ItemAtual);
+                                    }
+                                }
                             }
 
-                            List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(PedidoAtualizadoComItensAgrupados, AppQueEnviou, AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos, QtdDeItensDoPedido, i);
+                            var SeparaPorItem = 1f;
+                            if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)
+                                SeparaPorItem = PedidoAtualizadoComItensAgrupados.Itens.Count;
 
-                            if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
-                                for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
-                                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, ValorEspacamento);
+                            for (var y = 0; y < SeparaPorItem; y++)
+                            {
+                                if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)
+                                    PedidoAtualizadoComItensAgrupadosAuxiliar.Itens = new List<ItensPedido> { PedidoAtualizadoComItensAgrupados.Itens[y] };
+
+                                ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(PedidoAtualizadoComItensAgrupadosAuxiliar, AppQueEnviou, AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos, QtdDeItensDoPedido, IndiceDoItemAtual);
+
+                                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
+                                    for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
+                                        await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, ValorEspacamento);
+
+                                IndiceDoItemAtual++;
+                            }
                         }
                     }
                 }
@@ -284,7 +314,7 @@ public class ImpressaoService
         return Conteudo;
     }
 
-    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(ClsPedido pedido, string AppQueEnviou, bool ItemSeparadoPorComanda = false, int qtdItens = 0, int IndiceDoItemAtual = 0)
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(ClsPedido pedido, string AppQueEnviou, bool ItemSeparadoPorComanda = false, float qtdItens = 0, int IndiceDoItemAtual = 0)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
@@ -336,7 +366,7 @@ public class ImpressaoService
         //========================================================================================
         if (ItemSeparadoPorComanda)
         {
-            int IndiceDoItemAtualMaisUm = IndiceDoItemAtual + 1; //isso pra não mudar o valor original que veio do for 
+            int IndiceDoItemAtualMaisUm = IndiceDoItemAtual; //isso pra não mudar o valor original que veio do for 
 
             AdicionaConteudo(Conteudo, $"Item: {IndiceDoItemAtualMaisUm}/{qtdItens}", FonteDetalhesDoPedido);
         }

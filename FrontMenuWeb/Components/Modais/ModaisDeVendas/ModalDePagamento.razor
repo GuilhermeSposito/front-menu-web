@@ -113,43 +113,47 @@
                               AlignItems="AlignItems.Center"
                               Justify="Justify.Center"
                               Spacing="1">
-
-                        @for (int i = 0; i < Formas.Count; i++)
+                        @if (Formas != null)
                         {
-                            var forma = Formas[i];
-                            var numeroForma = i + 1;
+                            @for (int i = 0; i < Formas.Count; i++)
+                            {
+                                var forma = Formas[i];
+                                var numeroForma = i + 1;
 
-                            <MudChip T="string"
-                                     Variant="Variant.Filled"
-                                     Color="Color.Primary"
-                                     Class="pa-2"
-                                     Size="Size.Large"
-                                     Style="min-width: 160px; text-align:center; cursor:pointer;"
-                                     OnClick=@(()=> {AdicionaFormaAoPagamento(forma);})>
+                                <MudChip T="string"
+                                         Variant="Variant.Filled"
+                                         Color="Color.Primary"
+                                         Class="pa-2"
+                                         Size="Size.Large"
+                                         Style="min-width: 160px; text-align:center; cursor:pointer;"
+                                         OnClick=@(()=> {AdicionaFormaAoPagamento(forma);})>
 
-                                <MudStack Row="true"
-                                          AlignItems="AlignItems.Center"
-                                          Justify="Justify.Center"
-                                          Spacing="1">
+                                    <MudStack Row="true"
+                                              AlignItems="AlignItems.Center"
+                                              Justify="Justify.Center"
+                                              Spacing="1">
 
-                                    @foreach (var conta in forma.ListasDeContasDaForma)
-                                    {
-                                        <MudAvatar Size="Size.Small" Class="me-1">
-                                            <MudImage Src="@AppState.GetBancoIcon(conta.Conta.CodIconeDoBanco)"
-                                                      Alt="@conta.Conta.NomeConta"
-                                                      Width="24"
-                                                      Height="24" />
-                                        </MudAvatar>
-                                    }
+                                        @foreach (var conta in forma.ListasDeContasDaForma)
+                                        {
 
-                                    <MudText Typo="Typo.body2" Class="fw-semibold">
-                                        @forma.Descricao
-                                    </MudText>
-                                    <MudText Typo="Typo.caption" Class="ms-1">
-                                        (F<span>@numeroForma</span>)
-                                    </MudText>
-                                </MudStack>
-                            </MudChip>
+                                            <MudAvatar Size="Size.Small" Class="me-1">
+                                                <MudImage Src="@AppState.GetBancoIcon(conta.Conta.CodIconeDoBanco)"
+                                                          Alt="@conta.Conta.NomeConta"
+                                                          Width="24"
+                                                          Height="24" />
+                                            </MudAvatar>
+
+                                        }
+
+                                        <MudText Typo="Typo.body2" Class="fw-semibold">
+                                            @forma.Descricao
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Class="ms-1">
+                                            (F<span>@numeroForma</span>)
+                                        </MudText>
+                                    </MudStack>
+                                </MudChip>
+                            }
                         }
                     </MudStack>
                 </MudStack>
@@ -216,7 +220,7 @@
     private float TotalKms = 0f;
 
     //Lógica para editar o pagamento
-    [Parameter]public bool Editando { get; set; } = false;
+    [Parameter] public bool Editando { get; set; } = false;
     [Parameter] public int IdRecebimento { get; set; }
 
     protected override async Task OnInitializedAsync()

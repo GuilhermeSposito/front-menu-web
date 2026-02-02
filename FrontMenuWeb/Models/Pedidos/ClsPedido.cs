@@ -44,6 +44,40 @@ public class ClsDeSuporteParaMostrarPedidos
 
 public class ClsPedido
 {
+    public ClsPedido() { }
+
+    public ClsPedido(ClsPedido pedido)
+    {
+        if (pedido == null)
+            return;
+
+        Id = pedido.Id;
+        CriadoEm = pedido.CriadoEm;
+        ModificadoEm = pedido.ModificadoEm;
+        CriadoPor = pedido.CriadoPor;
+        TipoDePedido = pedido.TipoDePedido;
+        EtapaPedido = pedido.EtapaPedido;
+        DisplayId = pedido.DisplayId;
+        StatusPedido = pedido.StatusPedido;
+        Cliente = pedido.Cliente;
+        ClienteId = pedido.ClienteId;
+        Endereco = pedido.Endereco;
+        EnderecoId = pedido.EnderecoId;
+        Itens = pedido.Itens;
+        Pagamentos = pedido.Pagamentos;
+        ValorDosItens = pedido.ValorDosItens;
+        TaxaEntregaValor = pedido.TaxaEntregaValor;
+        DescontoValor = pedido.DescontoValor;
+        AcrescimoValor = pedido.AcrescimoValor;
+        ServicoValor = pedido.ServicoValor;
+        IncentivosExternosValor = pedido.IncentivosExternosValor;
+        ValorTotal = pedido.ValorTotal;
+        MesaComandaId = pedido.MesaComandaId;
+        CodigoExternoMesa = pedido.CodigoExternoMesa;
+        ObservacaoDoPedido = pedido.ObservacaoDoPedido;
+        ExpandidoNaUI = pedido.ExpandidoNaUI;
+    }
+
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
     [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
