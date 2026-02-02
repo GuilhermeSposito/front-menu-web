@@ -136,12 +136,15 @@
                                         @foreach (var conta in forma.ListasDeContasDaForma)
                                         {
 
-                                            <MudAvatar Size="Size.Small" Class="me-1">
-                                                <MudImage Src="@AppState.GetBancoIcon(conta.Conta.CodIconeDoBanco)"
-                                                          Alt="@conta.Conta.NomeConta"
-                                                          Width="24"
-                                                          Height="24" />
-                                            </MudAvatar>
+                                            if (conta.Conta is not null)
+                                            {
+                                                <MudAvatar Size="Size.Small" Class="me-1">
+                                                    <MudImage Src="@AppState.GetBancoIcon(conta.Conta.CodIconeDoBanco)"
+                                                              Alt="@conta.Conta.NomeConta"
+                                                              Width="24"
+                                                              Height="24" />
+                                                </MudAvatar>
+                                            }
 
                                         }
 

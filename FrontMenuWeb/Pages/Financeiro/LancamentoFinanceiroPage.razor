@@ -278,9 +278,12 @@
 
                 <TemplateColumn Title="Banco">
                     <CellTemplate Context="context">
-                        <img src="@AppState.GetBancoIcon(context.Item.Conta.CodIconeDoBanco)"
-                             alt="Banco"
-                             style="width:32px;height:32px;" />
+                        @if (context.Item.Conta is not null)
+                        {
+                            <img src="@AppState.GetBancoIcon(context.Item.Conta.CodIconeDoBanco)"
+                                 alt="Banco"
+                                 style="width:32px;height:32px;" />
+                        }
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
@@ -568,7 +571,7 @@
             IdDoLancamento = LancamentoParaEditar.Id;
         }
 
-        
+
         var parameters = new DialogParameters
         {
            { "IdDoLancamento", IdDoLancamento},
