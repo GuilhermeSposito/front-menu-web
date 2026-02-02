@@ -74,9 +74,21 @@
                             <MudCardContent>
                                 @if (grupo.Expanded)
                                 {
+
+                                    if(grupo.Complementos.Count > 0)
+                                    {
+                                        <MudTextField T="string" Label="Buscar complemento"  Variant="Variant.Filled" @bind-Value="PesquisaDeComlpementoDentroDoGrupo" Immediate=true Clearable   />       
+                                        <MudDivider Class="mb-2" Light=true />
+                                    }
+
                                     <MudDivider Class="mb-2" Light=true />
                                     @foreach (var complemento in grupo.Complementos)
                                     {
+                                        if(!string.IsNullOrEmpty(PesquisaDeComlpementoDentroDoGrupo) && !complemento.Complemento.Descricao.Contains(PesquisaDeComlpementoDentroDoGrupo, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            continue;
+                                        }   
+
                                         <MudCard Class="mb-2 card-complemento" Style="background-color: var(--mud-palette-background);">
                                             <MudCardHeader>
                                                 <CardHeaderContent>
@@ -116,6 +128,22 @@
                              Loading="CarregandoComplementos"
                              Hover
                              ServerData="LoadServerData">
+             <ToolBarContent>
+                <MudTextField T="string"
+                 Label="Buscar complemento"
+                 Variant="Variant.Filled"
+                 Value="PesquisaDeComplemto"
+                 Immediate=false
+                  ValueChanged="async (string value) => {
+                        PesquisaDeComplemto = value;
+                        await dataGridRef!.ReloadServerData();
+                    }"
+                 DebounceInterval="800"
+                 Clearable 
+            />               
+
+
+            </ToolBarContent>
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Complementos" />
             </NoRecordsContent>
@@ -188,19 +216,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 @code {
     //Logica De Complementos
     private bool CarregandoGrupos = true;
@@ -212,6 +227,24 @@
 
     //Grid De Complementos
     private MudDataGrid<ClsComplemento>? dataGridRef;
+    private string PesquisaDeComlpementoDentroDoGrupo = string.Empty;           
+
+    private async Task<IEnumerable<ClsComplemento>> BuscarComplementos(
+    string texto,
+    CancellationToken cancellationToken)
+    {
+        
+            PesquisaDeComplemto = texto;
+
+
+        await dataGridRef.ReloadServerData();        
+
+        return Complementos
+            .Where(c => c.Descricao.Contains(texto, StringComparison.OrdinalIgnoreCase))
+            .Take(20);
+    }
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -232,6 +265,7 @@
 
     private void AoExpandirCardDeGrupo(ClsGrupoDeComplemento grupo)
     {
+        PesquisaDeComlpementoDentroDoGrupo = string.Empty;
         grupo.Expanded = !grupo.Expanded;
     }
 
@@ -283,17 +317,17 @@
             if(GrupoDEComplemento is not null)
             {
                 var idDoGrupo = GrupoDEComplemento.Id;
-                
+
                 var GrupoNoComplemento = complementoEnviado.Grupos.FirstOrDefault(g => g.Grupo.Id == idDoGrupo);
 
                 if (GrupoNoComplemento is not null)
                 {
-                   complementoEnviado.Grupos.Remove(GrupoNoComplemento);
+                    complementoEnviado.Grupos.Remove(GrupoNoComplemento);
                 }
-                
+
                 Complemento = complementoEnviado;
 
-              
+
             }
 
             if (GrupoDEComplemento is null)
@@ -439,7 +473,7 @@
         }
     }
 
- 
+
 
     //Parte para fazer resonsividade //--------------------------------------------------------------------------------------
     [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
@@ -487,6 +521,7 @@
         return InvokeAsync(StateHasChanged);
     }
 
+    string PesquisaDeComplemto = null;
     private async Task<GridData<ClsComplemento>> LoadServerData(GridState<ClsComplemento> state)
     {
         try
@@ -498,6 +533,10 @@
 
             var result = await ComplementosService.GetComplementosPagineted(page, pageSize);
 
+            if(!string.IsNullOrEmpty(PesquisaDeComplemto))
+             result.Data = result.Data.Where(c => c.Descricao.Contains(PesquisaDeComplemto, StringComparison.OrdinalIgnoreCase)).ToList();
+
+            Complementos = result.Data;
 
             return new GridData<ClsComplemento>
             {

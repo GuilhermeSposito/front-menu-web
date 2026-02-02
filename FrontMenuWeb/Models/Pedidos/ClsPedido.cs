@@ -10,9 +10,11 @@ namespace FrontMenuWeb.Models.Pedidos;
 public enum TiposDePedido
 {
     [Display(Name = "BALCÃO")] BALCAO,
+    BALCÃO,
     MESA,
     DELIVERY,
     RETIRADA,
+    TODOS
 }
 
 public enum EtapasPedido

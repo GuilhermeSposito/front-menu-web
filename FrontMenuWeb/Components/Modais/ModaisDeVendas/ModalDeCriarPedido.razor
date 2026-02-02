@@ -839,7 +839,8 @@
             CarregandoEnvioDoPedido = true;
             StateHasChanged();
 
-            ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido, cts.Token);
 
             string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
             Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
@@ -905,9 +906,17 @@
 
             MudDialog.Close(DialogResult.Ok(true));
         }
+        catch (OperationCanceledException)
+        {
+            Snackbar.Add("Tempo limite excedido. Tente novamente.", Severity.Warning);
+        }
+        catch (HttpRequestException ex)
+        {
+            Snackbar.Add("Erro de comunicação com o servidor.", Severity.Error);
+        }
         catch (Exception ex)
         {
-            Snackbar.Add("Erro ao enviar pedido. Tente novamente.", Severity.Error);
+            Snackbar.Add($"Erro inesperado: {ex.Message}", Severity.Error);
         }
         finally
         {

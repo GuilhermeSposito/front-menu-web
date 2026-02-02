@@ -65,6 +65,12 @@ public class PedidosService
             QueryDeFiltros += $"&pesquisa={QueryDePedido.Pesquisa}";
         }
 
+        if (QueryDePedido.TipoPedido is not null)
+        {
+            if (QueryDePedido.TipoPedido != TiposDePedido.TODOS)
+                QueryDeFiltros += $"&TipoPedido={QueryDePedido.TipoPedido}";
+        }
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
            $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 
@@ -103,9 +109,9 @@ public class PedidosService
         return response!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedido(ClsPedido Pedido, CancellationToken cancellationToken = default)
     {
-        var response = await _http.PostAsJsonAsync($"pedidos", Pedido);
+        var response = await _http.PostAsJsonAsync($"pedidos", Pedido, cancellationToken);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;

@@ -77,9 +77,9 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
-                        <MudText>Delivery - 80% (28/35)</MudText>
+                        <MudText>Delivery - @($"{PercentualPedidosDelivery:F1}")% </MudText>
                     </MudStack>
-                    <MudProgressLinear Color="Color.Primary" Value="80" Rounded />
+                    <MudProgressLinear Color="Color.Primary" Value="PercentualPedidosMesa" Rounded />
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -89,9 +89,9 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.Storefront" Color="Color.Info" />
-                        <MudText>Balcão - 92% (Fila: 12 / 8)</MudText>
+                        <MudText>Balcão - @($"{PercentualPedidosBalcao:F1}")%</MudText>
                     </MudStack>
-                    <MudProgressLinear Color="Color.Info" Value="92" Rounded />
+                    <MudProgressLinear Color="Color.Info" Value="PercentualPedidosBalcao" Rounded />
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -101,9 +101,9 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.Restaurant" Color="Color.Secondary" />
-                        <MudText>Mesas - 72% (18/25)</MudText>
+                        <MudText>Mesas - @($"{PercentualPedidosMesa:F1}")% </MudText>
                     </MudStack>
-                    <MudProgressLinear Color="Color.Secondary" Value="72" Rounded />
+                    <MudProgressLinear Color="Color.Secondary" Value="PercentualPedidosMesa" Rounded />
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -113,32 +113,7 @@
         <MudCardHeader>
             <MudText Typo="Typo.h6">Pedidos Recentes</MudText>
         </MudCardHeader>
-        <MudCardContent>
-            <!-- Filtros -->
-            <MudGrid Spacing="2" Class="mb-4">
-                <MudItem xs="12" sm="6" md="3">
-                    <MudTextField @bind-Value="filtroBusca" Label="Buscar pedidos" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <MudDatePicker Label="Data" @bind-Date="dataSelecionada" />
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <MudSelect Label="Status" @bind-Value="statusSelecionado">
-                        <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
-                        <MudSelectItem Value="@("Recebido")">Recebido</MudSelectItem>
-                        <MudSelectItem Value="@("Em preparo")">Em preparo</MudSelectItem>
-                        <MudSelectItem Value="@("Pronto")">Pronto</MudSelectItem>
-                        <MudSelectItem Value="@("Entregue")">Entregue</MudSelectItem>
-                    </MudSelect>
-                </MudItem>
-                <MudItem xs="12" sm="6" md="3">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="FiltrarPedidos">
-                        <MudIcon Icon="@Icons.Material.Filled.FilterList" />
-                        Filtrar
-                    </MudButton>
-                </MudItem>
-            </MudGrid>
-
+        <MudCardContent>            
             <!-- Tabela de Pedidos -->
             <MudTable Items="@pedidosFiltrados" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
                 <HeaderContent>
@@ -147,7 +122,6 @@
                     <MudTh>Status</MudTh>
                     <MudTh>Valor</MudTh>
                     <MudTh>Hora</MudTh>
-                    <MudTh>Ações</MudTh>
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd>@context.Id</MudTd>
@@ -156,11 +130,7 @@
 
                     </MudTd>
                     <MudTd>@(context.Pagamentos.Sum(p => p.ValorTotal).ToString("C"))</MudTd>
-                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>
-                    <MudTd>
-                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Secondary" Size="Size.Small" />
-                    </MudTd>
+                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>    
                 </RowTemplate>
             </MudTable>
         </MudCardContent>
@@ -187,11 +157,17 @@
 
     private float ValorTotalVendasHoje = 0.0f;
     private float TicketMedioHoje = 0.0f;
+    private float PercentualPedidosMesa = 0.0f;
+    private float PercentualPedidosBalcao = 0.0f;
+    private float PercentualPedidosDelivery = 0.0f;
 
     // Lista de pedidos
     private List<ClsPedido> pedidos = new List<ClsPedido>();
     private List<ClsPedido> pedidosFiltrados = new List<ClsPedido>();
-
+    
+    //timer para atualização automática
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource _cts = new();
 
 
     protected override void OnInitialized()
@@ -247,6 +223,27 @@
             }
 
 
+            _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (await _timer.WaitForNextTickAsync(_cts.Token))
+                    {
+                        await InvokeAsync(async () =>
+                        {
+                            await AtualizaInfosDosPedidos();
+                            StateHasChanged();
+                        });
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // cancelado
+                }
+            });
+
         }
         catch (Exception ex)
         {
@@ -269,7 +266,7 @@
             SeverityCaixa = Severity.Success;
         }
 
-        var retornoPedidosTotal = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 5 });
+        PaginatedResponse<ClsPedido> retornoPedidosTotal = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 5 });
         if (retornoPedidosTotal.Total > 0)
         {
             NumeroTotalDePedidos = retornoPedidosTotal.Total;
@@ -280,6 +277,13 @@
 
         }
 
+        if(retornoPedidosTotal.PercentualDePedidos is not null)
+        {
+            PercentualPedidosBalcao = retornoPedidosTotal.PercentualDePedidos.Balcao;
+            PercentualPedidosDelivery = retornoPedidosTotal.PercentualDePedidos.Delivery;
+            PercentualPedidosMesa = retornoPedidosTotal.PercentualDePedidos.Mesa;
+        }
+
         var retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 1, Status = StatusPedidos.ABERTO });
         if (retornoPedidosAbertos.Total > 0)
         {
@@ -287,6 +291,8 @@
             TicketMedioHoje = retornoPedidosTotal.TiketMedio;
             ValorTotalVendasHoje = retornoPedidosTotal.VendasHoje;
         }
+
+       
 
     }
 

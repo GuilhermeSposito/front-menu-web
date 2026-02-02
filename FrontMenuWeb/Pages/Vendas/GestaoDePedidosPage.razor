@@ -28,13 +28,17 @@
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
         <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-            <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
-                <MudText Typo="Typo.h4" Style="font-weight: 300">Últimos pedidos</MudText>
-                <MudDivider DividerType="DividerType.FullWidth" Light=true />
-            </MudStack>
             <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
                 <MudStack Class="w-50" Row=true>
                     <MudTextField DebounceInterval="1300" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
+                </MudStack>
+                <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
+                        <MudSelectItem Value="@TiposDePedido.TODOS">Todos</MudSelectItem>
+                        <MudSelectItem Value=@TiposDePedido.BALCÃO>Balcão</MudSelectItem>
+                        <MudSelectItem Value=@TiposDePedido.DELIVERY>Delivery</MudSelectItem>
+                        <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
+                    </MudSelect>
                 </MudStack>
                 <MudStack Justify="Justify.FlexStart">
                     <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
@@ -266,6 +270,7 @@
 
     private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
+    private TiposDePedido FiltroPorTipoDePedido = TiposDePedido.TODOS;
     #endregion
 
     #region Funções de Enventos de Página
@@ -413,7 +418,7 @@
     {
         try
         {
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto });
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido });
 
             if (result?.Data?.Any() == true)
             {
@@ -437,6 +442,12 @@
             Carregando = false;
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task OnFiltroChanged(TiposDePedido novoValor)
+    {
+        FiltroPorTipoDePedido = novoValor;
+        await CarregarPedidos();
     }
 
     private async Task CancelarPedido(ClsPedido pedido)
