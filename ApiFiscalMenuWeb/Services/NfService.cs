@@ -625,7 +625,7 @@ public class NfService
                             Transp = RetornaTransportedaNF(enNfCeDto.Pedido, merchant, DocumentoMerchant, enderecoMerchant, TipoDFe.NFCe),
                             Pag = new Pag
                             {
-                                DetPag = ReturnInfosDePags(Pedido: enNfCeDto.Pedido)
+                                DetPag = ReturnInfosDePags(pedido: enNfCeDto.Pedido)
                             },
                             InfAdic = new InfAdic
                             {
@@ -832,7 +832,7 @@ public class NfService
                             },
                             Pag = new Pag
                             {
-                                DetPag = ReturnInfosDePags(Pedido: Pedido)
+                                DetPag = ReturnInfosDePags(pedido: Pedido)
                             },
                             InfAdic = new InfAdic
                             {
@@ -845,7 +845,7 @@ public class NfService
         };
     }
 
-    private List<DetPag> ReturnInfosDePags(ClsPedido Pedido)
+    private List<DetPag> ReturnInfosDePags2(ClsPedido Pedido) // função com erro
     {
         var pags = new List<DetPag>();
 
@@ -889,6 +889,36 @@ public class NfService
             return MeioPagamento.BoletoBancario;
 
         return MeioPagamento.Outros;
+
+    }
+
+    private List<DetPag> ReturnInfosDePags(ClsPedido pedido)
+    {
+        var pags = new List<DetPag>();
+
+        foreach (var pag in pedido.Pagamentos)
+        {
+            var tipoPag = RetornaIndicadorDePagamento(pag.FormaDePagamento);
+
+            var detPag = new DetPag
+            {
+                IndPag = IndicadorPagamento.PagamentoVista,
+                TPag = tipoPag,
+                VPag = pag.ValorTotal
+            };
+
+            if (tipoPag == MeioPagamento.CartaoCredito || tipoPag == MeioPagamento.CartaoDebito)
+            {
+                detPag.Card = new Card
+                {
+                    TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado,
+                };
+            }
+
+            pags.Add(detPag);
+        }
+
+        return pags;
     }
 
     private async Task<List<Det>> RetornaDetsDosProdutosNoPedido(List<ItensPedido> ItensDoPedido, ClsPedido Pedido, TipoDFe? tipoNFE = TipoDFe.NFe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
