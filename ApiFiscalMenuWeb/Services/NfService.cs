@@ -372,7 +372,7 @@ public class NfService
             TipoAmbiente = Tipoambiente,
             CertificadoDigital = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64!, merchant.SenhaCertificado!),
             CSC = DocumentoMerchant.CSC,
-            CSCIDToken = DocumentoMerchant.IdCscToken
+            CSCIDToken = DocumentoMerchant.IdCscToken ?? 1 //Colocar o ID Token padrão como 1 se não tiver
         };
 
         var autorizacao = new Unimake.Business.DFe.Servicos.NFCe.Autorizacao(xml.Result, configuracao);

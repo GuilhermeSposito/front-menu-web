@@ -80,8 +80,8 @@ public class DocumentosMerchant
     [JsonPropertyName("inscricaoEstadual")] public string IncricaoEstadual { get; set; } = string.Empty;
     [JsonPropertyName("inscricaoMunicipal")] public string InscricaoMunicipal { get; set; } = string.Empty;
     [JsonPropertyName("cnae")] public string Cnae { get; set; } = string.Empty;
-    [JsonPropertyName("CSC")] public string CSC { get; set; } = string.Empty;
-    [JsonPropertyName("IdCscToken")] public int IdCscToken { get; set; }
+    [JsonPropertyName("CSC")] public string? CSC { get; set; }
+    [JsonPropertyName("IdCscToken")] public int? IdCscToken { get; set; } = 1;
 }
 
 public class EnderecoMerchant
