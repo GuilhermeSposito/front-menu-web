@@ -919,7 +919,7 @@ public class NfService
 
             ValorTotalTribNfAtual += valorTotalTrib;
 
-            string NomeDoProdutoParaNf = tipoAmbiente == TipoAmbiente.Producao ? item.Produto.Descricao : "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
+            string NomeDoProdutoParaNf = tipoAmbiente == TipoAmbiente.Producao ? item.Produto.Descricao.Trim() : "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
             if(NomeDoProdutoParaNf.Length > 120) 
                 NomeDoProdutoParaNf = NomeDoProdutoParaNf.Substring(0, 120);
 
