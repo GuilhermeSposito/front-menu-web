@@ -7,6 +7,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModalFiscais
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
@@ -523,11 +524,17 @@
         }
     }
 
-    private void MostraMensagemDeUpdateDoPedido(ReturnApiRefatored<ClsPedido> Response)
+    private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
     {
-        var message = Response.Status == "error" ? string.Join(", ", Response.Messages) : string.Join(",", Response.Data.Messages);
-        var severity = Response.Status == "error" ? Severity.Error : Severity.Success;
-        Snackbar.Add($"{message}", severity);
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
     }
 
     public class ClsDeSuporteParaVizualicacaoDePedidos
@@ -580,26 +587,33 @@
                 Pedido = Pedido
             };
 
-            var response = await NFService.GeraNFCe(EnvNFCeDto);
-            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
-            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
-
-            Snackbar.Add($"{message}", severity);
-
-            //baixar o xml e o pdf se sucesso
-            if (response.Status != "error")
+            var parameters = new DialogParameters<ModalDeCpfNaNota>
             {
-                bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+                 { x => x.enNfCeDto, EnvNFCeDto  }
+             };
 
-                if (!ImpressaoDesabilita)
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
+            var result = await dialog.Result;
+
+
+            if (!result!.Canceled)
+            {
+                var response = await NFService.GeraNFCe(EnvNFCeDto);
+                MostraMensagemDeUpdateDoPedido(response);
+
+
+                //baixar o xml e o pdf se sucesso
+                if (response.Status != "error")
                 {
                     if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
                         await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+
                 }
-                else
-                {
-                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
-                }
+            }
+            else
+            {
+                Snackbar.Add("Emissão de NFC-e cancelada pelo usuário.", Severity.Info);
             }
 
 

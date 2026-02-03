@@ -629,7 +629,7 @@ public class NfService
                             },
                             InfAdic = new InfAdic
                             {
-                                InfCpl = "NFCE emitida para teste"
+                                InfCpl = null
                             }
                         }
                     }
@@ -843,29 +843,6 @@ public class NfService
                 }
             }
         };
-    }
-
-    private List<DetPag> ReturnInfosDePags2(ClsPedido Pedido) // função com erro
-    {
-        var pags = new List<DetPag>();
-
-        foreach (var pag in Pedido.Pagamentos)
-        {
-            var detPag = new DetPag
-            {
-                IndPag = IndicadorPagamento.PagamentoVista,
-                TPag = RetornaIndicadorDePagamento(pag.FormaDePagamento),
-                VPag = pag.ValorTotal,
-                Card = new Card
-                {
-                    TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado
-                }
-            };
-
-            pags.Add(detPag);
-        }
-
-        return pags;
     }
 
     private MeioPagamento RetornaIndicadorDePagamento(ClsFormaDeRecebimento Forma)

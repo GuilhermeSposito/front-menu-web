@@ -405,7 +405,7 @@
                                 <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.InscricaoMunicipal Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
                             </MudItem>
                             <MudItem xs="8" md="8" lg="8" xxl="8">
-                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.IncricaoEstadual Immediate=true Label="Inscricao Municipal" Variant="Variant.Outlined" FullWidth="true" />
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.IncricaoEstadual Immediate=true Label="Inscricao Estadual" Variant="Variant.Outlined" FullWidth="true" />
                             </MudItem>
                             <MudItem xs="4" md="4" lg="4" xxl="4">
                                 <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.Cnae Immediate=true Label="CNAE" Variant="Variant.Outlined" FullWidth="true" />
@@ -551,6 +551,7 @@
         string base64 = Convert.ToBase64String(certificadoBytes);
 
         CertificadoCarregado = base64;
+        Merchant.CertificadoBase64 = base64;
         CarregouNovoCertificado = true;
         StateHasChanged();
     }

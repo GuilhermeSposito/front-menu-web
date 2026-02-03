@@ -1,0 +1,64 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Services
+
+<MudDialog tabindex="0" OnKeyDown=OnKeyDown Style="min-width:30vw">
+    <DialogContent>
+        <MudStack>
+            <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                <MudTextField @ref=txtCpf Mask="CpfMask" Label="CPF" @bind-Value=enNfCeDto.CPF Variant="Variant.Filled" />
+                <MudTextField Label="Nome" @bind-Value=enNfCeDto.NomeCliente Variant="Variant.Filled" />
+            </MudFocusTrap>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Cancel">Não</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @ref=BtnConfirmar OnClick="Submit">Sim</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudButton BtnConfirmar;
+    private MudTextField<string> txtCpf;
+
+    [Parameter] public EnNfCeDto enNfCeDto { get; set; } = new EnNfCeDto();
+
+    public PatternMask CpfMask = new PatternMask("000.000.000-00");
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (txtCpf is not null)
+                txtCpf.FocusAsync();
+
+        }
+    }
+
+    private void Submit()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(enNfCeDto);
+        Console.WriteLine(json);
+
+        MudDialog.Close(DialogResult.Ok(enNfCeDto));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            Submit();
+        }
+        else if (args.Key == "Escape")
+        {
+            Cancel();
+        }
+    }
+}
