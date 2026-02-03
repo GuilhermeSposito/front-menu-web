@@ -410,7 +410,12 @@
                             <MudItem xs="4" md="4" lg="4" xxl="4">
                                 <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.Cnae Immediate=true Label="CNAE" Variant="Variant.Outlined" FullWidth="true" />
                             </MudItem>
-
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="string" @bind-Value=@doc.CSC Immediate=true Label="CSC" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="4" md="4" lg="4" xxl="4">
+                                <MudTextField Disabled=EditandoDocumentosBloq @onfocusout=@(async () => { await DeletarEEditarDocumentoAsync(doc, true); }) T="int" MaxLength="1" @bind-Value=@doc.IdCscToken Immediate=true Label="ID CSC" Variant="Variant.Outlined" FullWidth="true" />
+                            </MudItem>
                         </MudGrid>
                         <MudStack Class="p-3" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
                             <MudButton Disabled=EditandoDocumentosBloq OnClick=@(async () => { await DeletarEEditarDocumentoAsync(doc); }) Color="Color.Error" Variant="Variant.Filled">Deletar</MudButton>

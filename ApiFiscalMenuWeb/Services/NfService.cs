@@ -166,17 +166,19 @@ public class NfService
         //Função auxiliar para carregar o certificado digital
         var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
 
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;    
+
         var xml = new ConsStatServ
         {
             Versao = "4.00",
             CUF = UFBrasil.SP,
-            TpAmb = TipoAmbiente.Homologacao,
+            TpAmb = Tipoambiente,
         };
 
         var config = new Configuracao
         {
             TipoDFe = TipoDFe.NFe,
-            TipoAmbiente = TipoAmbiente.Homologacao,
+            TipoAmbiente = Tipoambiente,
             CertificadoDigital = CertificadoSelecionado
         };
 
@@ -203,11 +205,13 @@ public class NfService
         //Função auxiliar para carregar o certificado digital
         var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
 
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+
         var xml = new ConsStatServ
         {
             Versao = "4.00",
             CUF = UFBrasil.SP,
-            TpAmb = TipoAmbiente.Producao,
+            TpAmb = Tipoambiente,
         };
 
         var config = new Configuracao
@@ -247,8 +251,8 @@ public class NfService
             throw new BadHttpRequestException("Nenhum endereço foi fornecido para emissão da NFe");
 
         DocumentosMerchant? DocumentoMerchant = merchant.Documentos.FirstOrDefault();
-        if (DocumentoMerchant is null)
-            throw new BadHttpRequestException("Nenhum documento foi fornecido para emissão da NFe");
+        if (DocumentoMerchant is null || string.IsNullOrEmpty(DocumentoMerchant.CSC))
+            throw new BadHttpRequestException("Documento Incompleto ou faltando para emissão da NFe");
 
         CnpjMerchantAtual = LimparCnpj(DocumentoMerchant.Cnpj);
 
@@ -262,16 +266,16 @@ public class NfService
         int ProxNmrNfe = merchant.UltimoNmrSerieNFe + 1;
         merchant.UltimoNmrSerieNFe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
 
-        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
 
         #region Criação do XML da NFe
-        EnviNFe xml = await CriaXmlDeNfeSN(Pedido: Pedido, merchant: merchant, enderecoMerchant: enderecoMerchant, DocumentoMerchant: DocumentoMerchant, Destinatario: Destinatario, ProxNmrNfe: ProxNmrNfe, TipoHambiente); //CriaXmlDeExemplo();
+        EnviNFe xml = await CriaXmlDeNfeSN(Pedido: Pedido, merchant: merchant, enderecoMerchant: enderecoMerchant, DocumentoMerchant: DocumentoMerchant, Destinatario: Destinatario, ProxNmrNfe: ProxNmrNfe, Tipoambiente); //CriaXmlDeExemplo();
         #endregion
 
         var configuracao = new Configuracao
         {
             TipoDFe = TipoDFe.NFe,
-            TipoAmbiente = TipoHambiente,
+            TipoAmbiente = Tipoambiente,
             CertificadoDigital = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64!, merchant.SenhaCertificado!)
         };
         var autorizacao = new Autorizacao(xml, configuracao);
@@ -344,8 +348,8 @@ public class NfService
             throw new BadHttpRequestException("Nenhum endereço foi fornecido para emissão da NFe");
 
         DocumentosMerchant? DocumentoMerchant = merchant.Documentos.FirstOrDefault();
-        if (DocumentoMerchant is null)
-            throw new BadHttpRequestException("Nenhum documento foi fornecido para emissão da NFe");
+        if (DocumentoMerchant is null || string.IsNullOrEmpty(DocumentoMerchant.CSC))
+            throw new BadHttpRequestException("Documento Incompleto ou faltando para emissão da NFe");
 
         int ProxNmrNFCe = merchant.UltimoNmrSerieNFCe + 1;
         merchant.UltimoNmrSerieNFCe = ProxNmrNFCe; //atrubuir novo valor para atualizarmos o banco de dados
@@ -358,19 +362,17 @@ public class NfService
         merchant.UltimoNmrSerieNFCe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
         #endregion
 
-        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
 
-        var xml = CriaXmlDeNFCeSN(merchant, enderecoMerchant, DocumentoMerchant, EnvNfceDTO, ProxNmrNFCe, TipoHambiente);
-
-        Console.WriteLine(xml.Result.GerarXML());
+        var xml = CriaXmlDeNFCeSN(merchant, enderecoMerchant, DocumentoMerchant, EnvNfceDTO, ProxNmrNFCe, Tipoambiente);
 
         var configuracao = new Configuracao
         {
             TipoDFe = TipoDFe.NFCe,
-            TipoAmbiente = TipoAmbiente.Homologacao,
+            TipoAmbiente = Tipoambiente,
             CertificadoDigital = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64!, merchant.SenhaCertificado!),
-            CSC = "b3aedaf9-8544-4664-a391-e4b360b58b72",
-            CSCIDToken = 1
+            CSC = DocumentoMerchant.CSC,
+            CSCIDToken = DocumentoMerchant.IdCscToken
         };
 
         var autorizacao = new Unimake.Business.DFe.Servicos.NFCe.Autorizacao(xml.Result, configuracao);
@@ -571,7 +573,7 @@ public class NfService
                                 IndFinal = SimNao.Sim,
                                 IndPres = IndicadorPresenca.OperacaoPresencial,
                                 ProcEmi = ProcessoEmissao.AplicativoContribuinte,
-                                VerProc = $"Teste"
+                                VerProc = $"NFCe em Prod"
                             },
                             Emit = new Emit //Tag de Emitente
                             {
@@ -593,8 +595,8 @@ public class NfService
                                 CNAE = DocumentoMerchant.Cnae,
                                 CRT = CRT.SimplesNacional
                             },
-                            Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente),
-                            Det =  await RetornaDetsDosProdutosNoPedido(ItensDoPedido:enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe), //Itens do pedido
+                            Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente, tipoAmbiente),
+                            Det =  await RetornaDetsDosProdutosNoPedido(ItensDoPedido:enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente), //Itens do pedido
                             Total = new Total
                             {
                                ICMSTot = new ICMSTot
@@ -673,14 +675,14 @@ public class NfService
         }
     }
 
-    private Dest? RetornaDestinatarioDeNFCe(EnNfCeDto enNfCeDto, ClsPessoas? Cliente)
+    private Dest? RetornaDestinatarioDeNFCe(EnNfCeDto enNfCeDto, ClsPessoas? Cliente, TipoAmbiente tipoAmbiente)
     {
         if (enNfCeDto.CPF is not null)
         {
             return new Dest
             {
                 CPF = LimparCnpj(enNfCeDto.CPF),
-                XNome = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",//enNfCeDto.NomeCliente ?? "CONSUMIDOR FINAL",
+                XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
                 IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
             };
         }
@@ -700,7 +702,6 @@ public class NfService
             IdLote = "000000000000001",
             IndSinc = SimNao.Sim,
             NFe = new List<NFe> //Infos da Nfe
-
             {
                 new NFe
                 {
@@ -728,7 +729,7 @@ public class NfService
                                 IndFinal = SimNao.Sim,
                                 IndPres = IndicadorPresenca.OperacaoPresencial,
                                 ProcEmi = ProcessoEmissao.AplicativoContribuinte,
-                                VerProc = $"Teste 123"
+                                VerProc = $"NFe em Prod"
                             },
                             Emit = new Emit //Tag de Emitente
                             {
@@ -753,7 +754,7 @@ public class NfService
                             Dest = new Dest // Tag de Destinatário
                             {
                                 CNPJ = LimparCnpj(Destinatario.Cnpj!),
-                                XNome = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",// Destinatario.Nome,
+                                XNome = tipoAmbiente == TipoAmbiente.Producao ? Destinatario.Nome : "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",// Destinatario.Nome,
                                 EnderDest = new EnderDest
                                 {
                                     XLgr = Destinatario.Endereco?.Rua,
@@ -770,7 +771,7 @@ public class NfService
                                 Email = "guilhermesposito14@gmail.com"
 
                             },
-                            Det = await RetornaDetsDosProdutosNoPedido(ItensDoPedido:Pedido.Itens, Pedido: Pedido), //Itens do pedido
+                            Det = await RetornaDetsDosProdutosNoPedido(ItensDoPedido:Pedido.Itens, Pedido: Pedido,TipoDFe.NFe ,tipoAmbiente), //Itens do pedido
                             Total = new Total
                             {
                                ICMSTot = new ICMSTot
@@ -890,7 +891,7 @@ public class NfService
         return MeioPagamento.Outros;
     }
 
-    private async Task<List<Det>> RetornaDetsDosProdutosNoPedido(List<ItensPedido> ItensDoPedido, ClsPedido Pedido, TipoDFe? tipoNFE = TipoDFe.NFe)
+    private async Task<List<Det>> RetornaDetsDosProdutosNoPedido(List<ItensPedido> ItensDoPedido, ClsPedido Pedido, TipoDFe? tipoNFE = TipoDFe.NFe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
 
         var Dets = new List<Det>();
@@ -918,6 +919,10 @@ public class NfService
 
             ValorTotalTribNfAtual += valorTotalTrib;
 
+            string NomeDoProdutoParaNf = tipoAmbiente == TipoAmbiente.Producao ? item.Produto.Descricao : "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
+            if(NomeDoProdutoParaNf.Length > 120) 
+                NomeDoProdutoParaNf = NomeDoProdutoParaNf.Substring(0, 120);
+
             var Det = new Det
             {
                 NItem = ContadorItem,
@@ -925,7 +930,7 @@ public class NfService
                 {
                     CProd = item.Produto.CodigoInterno,
                     CEAN = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
-                    XProd = "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL", //item.Descricao,
+                    XProd = NomeDoProdutoParaNf, //item.Descricao,
                     NCM = item.Produto.NCM,
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
