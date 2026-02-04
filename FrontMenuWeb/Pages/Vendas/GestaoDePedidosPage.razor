@@ -46,6 +46,15 @@
                 </MudStack>
             </MudStack>
 
+            @if (CarregandoParteFiscal)
+            {
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.subtitle1">Emitindo NFC-e...</MudText>
+                    <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
+                    <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
+                </MudPaper>
+            }
+
             @if (!Carregando)
             {
                 <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -577,9 +586,29 @@
         }
     }
 
+
+    //Simula progresso de emissão fiscal
+    int ProgressoFiscal = 0;
+    CancellationTokenSource? _progressCts;
+    private async Task SimulaProgressoAsync(CancellationToken token)
+    {
+        ProgressoFiscal = 0;
+
+        while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(600, token);
+            ProgressoFiscal += Random.Shared.Next(2, 6);
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
-        CarregandoParteFiscal = true;
+        ProgressoFiscal = 0;
+        _progressCts = new CancellationTokenSource();
+
+        StateHasChanged();
         try
         {
             var EnvNFCeDto = new EnNfCeDto
@@ -596,9 +625,12 @@
             var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
             var result = await dialog.Result;
 
-
             if (!result!.Canceled)
             {
+                CarregandoParteFiscal = true;
+
+                _ = SimulaProgressoAsync(_progressCts.Token);
+
                 var response = await NFService.GeraNFCe(EnvNFCeDto);
                 MostraMensagemDeUpdateDoPedido(response);
 
@@ -625,6 +657,11 @@
         finally
         {
             CarregandoParteFiscal = false;
+            _progressCts?.Cancel();
+            ProgressoFiscal = 100;
+            await Task.Delay(300); // efeito visual
+            CarregandoParteFiscal = false;
+            StateHasChanged();
         }
     }
     #endregion

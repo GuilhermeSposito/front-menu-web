@@ -8,7 +8,7 @@
     <DialogContent>
         <MudStack>
             <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                <MudTextField @ref=txtCpf Mask="CpfMask" Label="CPF" @bind-Value=enNfCeDto.CPF Variant="Variant.Filled" />
+                <MudTextField T="string" Value="@enNfCeDto.CPF" ValueChanged="OnEscritaChanged" Mask="DocumentoMask" Label="CPF / CNPJ" Immediate="true" @ref="txtCpf" />
                 <MudTextField Label="Nome" @bind-Value=enNfCeDto.NomeCliente Variant="Variant.Filled" />
             </MudFocusTrap>
         </MudStack>
@@ -28,6 +28,9 @@
     [Parameter] public EnNfCeDto enNfCeDto { get; set; } = new EnNfCeDto();
 
     public PatternMask CpfMask = new PatternMask("000.000.000-00");
+    public PatternMask CnpjMask = new PatternMask("00.000.000/0000-00");
+    public PatternMask DocumentoMask = new PatternMask("000.000.000-00");
+
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -39,10 +42,13 @@
         }
     }
 
+    private void OnEscritaChanged(string value)
+    {
+        enNfCeDto.CPF = value;
+    }
+
     private void Submit()
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(enNfCeDto);
-        Console.WriteLine(json);
 
         MudDialog.Close(DialogResult.Ok(enNfCeDto));
     }
