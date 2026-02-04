@@ -921,6 +921,9 @@ public class NfService
             if (item.Produto.NCM is null)
                 continue;
 
+            if (item.Produto.CEST is null)
+                continue;
+
             var valorTotalTrib = await _ibptServices.GetIBPTValor
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);
 
@@ -938,7 +941,8 @@ public class NfService
                     CProd = item.Produto.CodigoInterno,
                     CEAN = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     XProd = NomeDoProdutoParaNf, //item.Descricao,
-                    NCM = item.Produto.NCM,
+                    NCM = LimparNcmECest(item.Produto.NCM),
+                    CEST = LimparNcmECest(item.Produto.CEST),
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
                     QCom = Convert.ToDecimal(item.Quantidade),
@@ -1171,6 +1175,12 @@ public class NfService
     {
         return new string(cnpj.Where(char.IsDigit).ToArray());
     }
+
+    public static string LimparNcmECest(string value)
+    {
+        return new string(value.Where(char.IsDigit).ToArray());
+    }
+
 
     private EnviNFe CriaXmlDeExemplo() //função temporario para teste
     {

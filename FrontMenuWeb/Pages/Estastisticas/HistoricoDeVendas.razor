@@ -106,7 +106,7 @@
 
             </ToolBarContent>
             <Columns>
-                <HierarchyColumn T="ClsPedido"/>
+                <HierarchyColumn T="ClsPedido" />
                 @if (MultiSelecao)
                 {
                     <SelectColumn T="ClsPedido" />
@@ -152,11 +152,25 @@
                     <MudCardHeader>
                         <CardHeaderContent>
                             <MudStack Class="w-100 p-1" Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
-                                <MudText Align=Align.Center Typo="Typo.h6">Produtos no Pedido: @context.Item.Itens.Count() --> @context.Item.Itens.Sum(x=> x.PrecoTotal).ToString("C")</MudText>
-                                <MudText Align=Align.Center Typo="Typo.h6">Taxa Entrega do Pedido: @context.Item.TaxaEntregaValor.ToString("C")</MudText>
-                                <MudText Align=Align.Center Typo="Typo.h6">Desconto do Pedido: @context.Item.DescontoValor.ToString("C")</MudText>
-                                <MudText Align=Align.Center Typo="Typo.h6">Acrescimos do Pedido: @context.Item.AcrescimoValor.ToString("C")</MudText>
-                                <MudText Align=Align.Center Typo="Typo.h6">Incentivos do Pedido: @context.Item.IncentivosExternosValor.ToString("C")</MudText>
+                                <MudText Align=Align.Center Typo="Typo.h6">Produtos no Pedido: @context.Item.Itens.Count() --> @context.Item.Itens.Sum(x => x.PrecoTotal).ToString("C")</MudText>
+                                @if (context.Item.TaxaEntregaValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Taxa Entrega do Pedido: @context.Item.TaxaEntregaValor.ToString("C")</MudText>
+                                }
+                                @if (context.Item.DescontoValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Desconto do Pedido: @context.Item.DescontoValor.ToString("C")</MudText>
+                                }
+                                @if (context.Item.AcrescimoValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Acrescimos do Pedido: @context.Item.AcrescimoValor.ToString("C")</MudText>
+
+                                }
+                                @if (context.Item.IncentivosExternosValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Incentivos do Pedido: @context.Item.IncentivosExternosValor.ToString("C")</MudText>
+
+                                }
                             </MudStack>
                         </CardHeaderContent>
                     </MudCardHeader>
@@ -171,8 +185,9 @@
                         </MudDataGrid>
                     </MudCardContent>
 
-                    <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
-                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item);})>Emitir Cupom Fiscal</MudButton>
+                    <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" Row=true AlignItems=AlignItems.Center Spacing=3 Justify="Justify.Center">
+                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item); })>Emitir Cupom Fiscal</MudButton>
+                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await ImprimirPedido(context.Item); })>Reimprimir Pedido</MudButton>
                     </MudStack>
 
                 </MudCard>
@@ -207,7 +222,7 @@
                 </MudCard>
             </MudItem>
 
-           
+
         </MudGrid>
 
     </MudLayout>
@@ -307,7 +322,7 @@
             await dataGridRef.ReloadServerData();
         }
     }
- 
+
     #endregion
 
     #region Funcções Auxiliares
@@ -592,6 +607,20 @@
         }
     }
     #endregion
+
+    #region Função de impressão do pedido se mvalor fiscal
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+
+    #endregion
+
 }
 
 
@@ -684,7 +713,7 @@
         <tfoot>
             @{
                 var totalReceitas = PedidosSelecionados
-                                        .Sum(l => l.ValorTotal);
+                .Sum(l => l.ValorTotal);
             }
 
             <tr style="background-color:#ecf0f1; font-weight:bold;">
