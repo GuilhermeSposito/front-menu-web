@@ -257,6 +257,9 @@
             claims = user.Claims;
 
             var merchantClaim = claims.FirstOrDefault(c => c.Type == "Merchant");
+
+            Console.WriteLine(merchantClaim.Value);
+
             if (merchantClaim != null)
             {
                 merchant = JsonSerializer.Deserialize<ClsMerchant?>(

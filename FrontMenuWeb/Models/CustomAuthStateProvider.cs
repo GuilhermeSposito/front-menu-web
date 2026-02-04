@@ -22,32 +22,18 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-    {
-        /*  var token = await _localStorage.GetItemAsync<string>("authToken");
-
-          if (string.IsNullOrWhiteSpace(token))
-          {
-              return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-          }
-
-          _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        */
-
+    {      
         try
         {
             var ValidarOToken = await _httpClient.GetAsync("merchants/details");
 
             if (!ValidarOToken.IsSuccessStatusCode)
             {
-                // Se o token não for válido, remova-o do armazenamento local e retorne um estado de autenticação vazio
-                //await _localStorage.RemoveItemAsync("authToken");
-                //_httpClient.DefaultRequestHeaders.Authorization = null; // Limpa o cabeçalho de autorização
-               // this.NotifyAuthenticationStateChanged();
+             
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
             else
             {
-                //var identity = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
                 var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
                 var merchantJson = JsonSerializer.Serialize(merchant);
 
@@ -77,40 +63,12 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         }
         catch (Exception ex)
         {
-           // this.NotifyAuthenticationStateChanged();
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
       
     }
 
-    /*public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-    {
-        try
-        {
-            // Esse endpoint usa o cookie HttpOnly
-            var user = await _httpClient.GetFromJsonAsync<ClsMerchant>("merchant/details");
-
-            var claims = new List<Claim>
-            {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-             };
-
-            var identity = new ClaimsIdentity(claims, "CookieAuth");
-            var principal = new ClaimsPrincipal(identity);
-
-            return new AuthenticationState(principal);
-        }
-        catch
-        {
-            // Não autenticado (cookie ausente ou inválido)
-            return new AuthenticationState(
-                new ClaimsPrincipal(new ClaimsIdentity())
-            );
-        }
-    }*/
-
-    // ✅ Este é o método que você precisa chamar no logout/login
+ 
     public void NotifyAuthenticationStateChanged()
     {
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
@@ -141,16 +99,6 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         return claims;
     }
 
-    /* private byte[] ParseBase64WithoutPadding(string base64)
-     {
-         switch (base64.Length % 4)
-         {
-             case 2: base64 += "=="; break;
-             case 3: base64 += "="; break;
-         }
-
-         return Convert.FromBase64String(base64);
-     }*/
 
     private byte[] ParseBase64WithoutPadding(string base64Url)
     {
