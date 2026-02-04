@@ -519,19 +519,32 @@ public class ImpressaoService
             //------------------------------------------------------------------------------------------
         }
 
-        AdicionaConteudo(Conteudo, $"SUB TOTAL. . . .  : {pedido.ValorDosItens:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"TAXA DE ENTREGA . : {pedido.TaxaEntregaValor:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"TAXAS ADICIONAIS  : {(pedido.AcrescimoValor + pedido.ServicoValor):F2} ", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"DESCONTOS. . . .  : {pedido.DescontoValor:F2}", FonteTotaisNovo);
-        AdicionaConteudo(Conteudo, $"INCENTIVOS . . .  : {pedido.IncentivosExternosValor:F2}", FonteTotaisNovo);
+        if (pedido.ValorDosItens > 0)
+            AdicionaConteudo(Conteudo, $"SUB TOTAL. . . .  : {pedido.ValorDosItens:F2}", FonteTotaisNovo);
+        if (pedido.TaxaEntregaValor > 0)
+            AdicionaConteudo(Conteudo, $"TAXA DE ENTREGA . : {pedido.TaxaEntregaValor:F2}", FonteTotaisNovo);
+        if (pedido.AcrescimoValor > 0)
+            AdicionaConteudo(Conteudo, $"TAXAS ADICIONAIS  : {(pedido.AcrescimoValor + pedido.ServicoValor):F2} ", FonteTotaisNovo);
+        if (pedido.DescontoValor > 0)
+            AdicionaConteudo(Conteudo, $"DESCONTOS. . . .  : {pedido.DescontoValor:F2}", FonteTotaisNovo);
+        if (pedido.IncentivosExternosValor > 0)
+            AdicionaConteudo(Conteudo, $"INCENTIVOS . . .  : {pedido.IncentivosExternosValor:F2}", FonteTotaisNovo);
+
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"TOTAL DA CONTA .  : {pedido.ValorTotal:F2}", FonteTotaisNovo);
 
-
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-
+        if (!string.IsNullOrEmpty(pedido.ObservacaoDoPedido))
+        {
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            AdicionaConteudo(Conteudo, $"OBS: {pedido.ObservacaoDoPedido}", FonteInfosPagamento);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        }
+        else
+        {
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
 
         foreach (var pagamento in pedido.Pagamentos)
         {
