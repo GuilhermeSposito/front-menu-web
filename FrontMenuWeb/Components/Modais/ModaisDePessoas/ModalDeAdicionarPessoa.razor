@@ -327,11 +327,11 @@
     }
 
     private async Task ArrumaNomePrimeiraLetraMAiuscula(string input)
-    { 
+    {
         if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.Nome = string.Empty;
 
-            NovaPessoa.Nome = input.ToUpper();
+        NovaPessoa.Nome = input.ToUpper();
 
         /*if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.Nome = string.Empty;
@@ -352,17 +352,11 @@
     {
         if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.RazaoSocial = string.Empty;
+        else
+            NovaPessoa.RazaoSocial = input.ToUpper();
 
-        var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < words.Length; i++)
-        {
-            var w = words[i];
-            if (w.Length == 1)
-                words[i] = char.ToUpper(w[0]).ToString();
-            else
-                words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
-        }
-        NovaPessoa.RazaoSocial = string.Join(' ', words);
+
+
         NovaPessoa.Nome = NovaPessoa.RazaoSocial; // Atualiza o nome com a razão social
     }
 
