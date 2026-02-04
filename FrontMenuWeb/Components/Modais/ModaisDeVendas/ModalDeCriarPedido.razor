@@ -478,7 +478,7 @@
         }
 
         //Verifica se já existe o produto no pedido
-        if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto))
+        if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V"))
         {
             var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
 
@@ -881,7 +881,6 @@
                     await ChamaImpressao(ResponseAPi);
                 }
 
-                Console.WriteLine(AppState.MerchantLogado.PerguntaImpressaoMesa && ResponseAPi.Data.Objeto?.TipoDePedido == "MESA");
 
                 if (AppState.MerchantLogado.PerguntaImpressaoMesa && ResponseAPi.Data.Objeto?.TipoDePedido == "MESA")
                 {
