@@ -188,7 +188,7 @@ public class PedidosService
 
     public async Task<ReturnApiRefatored<ClsPedido>> CancelarPedido(ClsPedido Pedido, bool ePedidoDeCaixaFechado = false)
     {
-         var url = ePedidoDeCaixaFechado ? $"pedidos/cancelar/fechado/{Pedido.Id}" : $"pedidos/cancelar/{Pedido.Id}";
+        var url = ePedidoDeCaixaFechado ? $"pedidos/cancelar/fechado/{Pedido.Id}" : $"pedidos/cancelar/{Pedido.Id}";
 
         var response = await _http.DeleteAsync(url);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();

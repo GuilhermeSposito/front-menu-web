@@ -7,6 +7,7 @@
 @inject IJSRuntime JS
 @inject FormasDeRecebimentoService FormasDeRecebimentoService
 @inject DistanciasService DistanciaService
+@inject CaixaEPagamentosService CaixaService
 
 <MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
@@ -175,12 +176,12 @@
                     }
                     else
                     {
-                        foreach (var pagamentoRealizados in Pedido.Pagamentos)
+                        foreach (var pagamentoRealizado in Pedido.Pagamentos)
                         {
-                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(() => { if (pagamentoRealizados.Troco > 0) { ValorTroco -= pagamentoRealizados.Troco; } Pedido.Pagamentos.Remove(pagamentoRealizados); })>
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(async () => { await RemovePagamentoDoPedido(pagamentoRealizado); })>
                                 <ChildContent>
                                     <MudStack Row=true Spacing="-1">
-                                        <MudText>@pagamentoRealizados.FormaDePagamento.Descricao -> @pagamentoRealizados.ValorTotal.ToString("C")</MudText>
+                                        <MudText>@pagamentoRealizado.FormaDePagamento.Descricao -> @pagamentoRealizado.ValorTotal.ToString("C")</MudText>
                                     </MudStack>
                                 </ChildContent>
                             </MudChip>
@@ -199,7 +200,14 @@
         <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
                   Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
             <MudButton Variant="Variant.Filled" OnClick="ConcluirPagamento" Color="Color.Primary" Class="w-100">
-                Finalizar Pagamento (Ctrl + Alt)
+                @if (Editando)
+                {
+                    @("Concluir Atualização")
+                }
+                else
+                {
+                    @("Finalizar Pagamento (Ctrl + Alt)")
+                }
             </MudButton>
         </MudPaper>
     </DialogActions>
@@ -224,7 +232,6 @@
 
     //Lógica para editar o pagamento
     [Parameter] public bool Editando { get; set; } = false;
-    [Parameter] public int IdRecebimento { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -295,6 +302,7 @@
 
     private async Task ConcluirPagamento()
     {
+
         if (Pedido.Pagamentos.Sum(x => x.ValorTotal) < ValorTotal)
         {
             Snackbar.Add("O valor total do pedido não foi pago.", Severity.Error);
@@ -435,6 +443,21 @@
             FormaDePagamento = clsFormaDeRecebimento
         };
 
+        if (Editando)
+        {
+            var RetornoApiDeAdicionarPagamento = await CaixaService.AdicionaPagamentoAoPedido(clsPagamentoDoPedido, Pedido);
+
+            var sucesso = RetornoApiDeAdicionarPagamento.Status == "success";
+            string Mensagem = string.Join(",", sucesso ? RetornoApiDeAdicionarPagamento.Data.Messages : RetornoApiDeAdicionarPagamento.Messages);
+            Snackbar.Add(Mensagem, sucesso ? Severity.Success : Severity.Error);
+
+            if (!sucesso)
+                return;
+
+            clsPagamentoDoPedido = RetornoApiDeAdicionarPagamento.Data.Objeto ?? clsPagamentoDoPedido;
+        }
+
+
         Pedido.Pagamentos.Add(clsPagamentoDoPedido);
 
         if (clsFormaDeRecebimento.EDinheiro)
@@ -487,6 +510,36 @@
         }
     }
 
+    private async Task RemovePagamentoDoPedido(PagamentoDoPedido Pagamento)
+    {
+        if (Pagamento.Troco > 0)
+        {
+            ValorTroco -= Pagamento.Troco;
+        }
+
+        if (Editando)
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir este pagamento, essa ação não poderá ser desfeita. Deseja Proseguir?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var ReturnFromApi = await CaixaService.DeletePagamento(Pagamento);
+                Pedido.Pagamentos.Remove(Pagamento);
+                StateHasChanged();
+                return;
+            }
+        }
+
+        Pedido.Pagamentos.Remove(Pagamento);
+    }
 
 
 }

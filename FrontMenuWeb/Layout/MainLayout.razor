@@ -159,8 +159,8 @@
                         <MudNavLink Icon="@Icons.Material.Filled.GroupWork" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/funcionarios", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeFuncionarios); })">Funcionários</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.Percent" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/aliquotas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeAliquotas); })">Alíquotas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/mesas-comandas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraMesaOuComandas); })">Mesas/Comandas</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.TwoWheeler" Href="/empresas-entrega-integradas">Empresas de Entrega</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.Place" Href="/raios-de-entrega">Raios de Entrega</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.TwoWheeler" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/empresas-entrega-integradas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Empresas de Entrega</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Place" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/raios-de-entrega", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Raios de Entrega</MudNavLink>
                     </MudNavGroup>
 
                     @*Financeiro*@
@@ -172,20 +172,13 @@
                         <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
                     </MudNavGroup>
 
-                    <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
-                        @*<MudNavLink Icon="@Icons.Material.Filled.Sell" Href="/pagemconst">Tiket Médio</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.TableRestaurant" Href="/pagemconst">Performance dos Garçons</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/pagemconst">Posição Fiscal</MudNavLink>*@
-                        <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" Href="/nfs-estatisticas">NF-e NFC-e Emitidas</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" Href="/vendas/historico-de-vendas">Vendas Realizadas</MudNavLink>
-                        @*<MudNavLink Icon="@Icons.Material.Filled.AddBusiness" Href="/pagemconst">Compras</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.BusinessCenter" Href="/pagemconst">Operações de Caixa</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.NetworkCheck" Href="/pagemconst">Vendas Pela Internet</MudNavLink>
-                        <MudNavLink Icon="@Icons.Material.Filled.DeliveryDining" Href="/pagemconst">Entregas</MudNavLink>*@
+                    <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">                   
+                        <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/nfs-estatisticas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">NF-e NFC-e Emitidas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/vendas/historico-de-vendas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Vendas Realizadas</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">
-                        <MudNavLink Icon="@Icons.Material.Filled.Settings" Href="/config-geral">Geral</MudNavLink>
+                        <MudNavLink OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/config-geral", AppState.MerchantLogado.FuncionarioLogado?.AcessoConfiguracoes); })" Icon="@Icons.Material.Filled.Settings">Geral</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavLink @onclick="Logout" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.ExitToApp">Sair</MudNavLink>
@@ -338,7 +331,7 @@
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMerchant>>();
-            if(result is not null)
+            if (result is not null)
             {
                 var mensagem = result.Status == "success" ? "Logout realizado com sucesso." : string.Join(", ", result.Messages);
                 Snackbar.Add(mensagem, result.Status == "success" ? Severity.Success : Severity.Error);
@@ -351,7 +344,7 @@
 
             Navigation.NavigateTo("/login", forceLoad: true);
         }
-       
+
     }
 
 
@@ -418,9 +411,11 @@
     {
         if (merchantLogado.FuncionarioLogado is null)
         {
+            DrawerToggle();
             Navigation.NavigateTo(url);
             return;
         }
+
 
         if (temAcesso == true)
         {

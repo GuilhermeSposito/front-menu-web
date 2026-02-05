@@ -1,11 +1,13 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Financeiro;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
 using SocketIO.Core;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Unimake.Business.DFe.Xml.CTe;
 namespace FrontMenuWeb.Services;
 
 public class CaixaEPagamentosService
@@ -75,7 +77,43 @@ public class CaixaEPagamentosService
         };
     }
 
+    public async Task<ReturnApiRefatored<PagamentoDoPedido>> GetPagamentosDoPedidoAsync(ClsPedido Pedido)
+    {
+        var response = await _HttpClient.GetAsync($"caixas/pagamentos/{Pedido.Id}");
+        string json = await response.Content.ReadAsStringAsync();
 
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<PagamentoDoPedido>>(json);
+        return retorno ?? new ReturnApiRefatored<PagamentoDoPedido>
+        {
+            Status = "error",
+            Messages = ["Erro ao buscar pagamentos para o pedido."]
+        };
+    }
+
+    public async Task<ReturnApiRefatored<PagamentoDoPedido>> DeletePagamento(PagamentoDoPedido pagamentoDoPedido)
+    {
+        var response = await _HttpClient.DeleteAsync($"caixas/pagamentos/{pagamentoDoPedido.Id}");
+        string json = await response.Content.ReadAsStringAsync();
+
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<PagamentoDoPedido>>(json);
+        return retorno ?? new ReturnApiRefatored<PagamentoDoPedido>
+        {
+            Status = "error",
+            Messages = ["Erro ao deletar pagamento para o pedido."]
+        };
+    }
+
+    public async Task<ReturnApiRefatored<PagamentoDoPedido>> AdicionaPagamentoAoPedido(PagamentoDoPedido pagamentoDoPedido, ClsPedido pedidoCaixa)
+    {
+        var response = await _HttpClient.PostAsJsonAsync($"caixas/pagamentos/create/{pedidoCaixa.Id}", pagamentoDoPedido);
+        string json = await response.Content.ReadAsStringAsync();
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<PagamentoDoPedido>>(json);
+        return retorno ?? new ReturnApiRefatored<PagamentoDoPedido>
+        {
+            Status = "error",
+            Messages = ["Erro ao adicionar pagamento para o pedido."]
+        };
+    }
 
 }
 

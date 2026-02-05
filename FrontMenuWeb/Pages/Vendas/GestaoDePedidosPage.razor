@@ -9,6 +9,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Components.Modais.ModalFiscais
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
@@ -18,6 +19,7 @@
 @using MudBlazor.Extensions
 @using MudBlazor.Extensions.Components
 @inject GrupoServices GrupoService
+@inject CaixaEPagamentosService CaixasService
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
@@ -189,13 +191,13 @@
                                                                     <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
                                                                     <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.Edit" Label="Editar" />
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
                                                                     {
                                                                         <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
                                                                     }
                                                                     @if (pedido.Pedido.StatusPedido != "CANCELADO")
                                                                     {
+                                                                        <MudMenuItem OnClick="@(async () => { await EditarPedido(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pagamento" />
                                                                         <MudMenuItem OnClick=@(async () => { await CancelarPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                                                     }
                                                                 </MudMenu>
@@ -558,7 +560,7 @@
 
             if (Response.Status == "success")
             {
-                pedido.StatusPedido = "CANCELADO";   
+                pedido.StatusPedido = "CANCELADO";
             }
 
             MostraMensagemDeUpdateDoPedido(Response);
@@ -701,6 +703,43 @@
             await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
         else
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+    #endregion
+
+    #region Funções de edicao do pedido
+    private async Task EditarPedido(ClsPedido pedido)
+    {
+        //Primeiro fazer a requisição para ver se existe pagamentos para ser editado
+        ReturnApiRefatored<PagamentoDoPedido> ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
+        MostraMensagemDeUpdateDoPedido(ReturnFromApi);
+        if(ReturnFromApi.Status == "eror")
+            return;
+
+        pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
+        var parameters = new DialogParameters
+         {
+             { "Pedido", pedido },
+             {"Editando", true}
+         };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = false,
+            BackdropClick = false,
+            MaxWidth = MaxWidth.False,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+           
+        }
+
     }
     #endregion
 }
