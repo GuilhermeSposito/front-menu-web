@@ -45,6 +45,12 @@ builder.Services.AddScoped(sp =>
     return clientFactory.CreateClient("ApiAutorizada");
 });
 
+builder.Services.AddHttpClient("ApiRefresh", (sp, client) =>
+{
+    var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
+});
+
 builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;

@@ -11,10 +11,12 @@ namespace FrontMenuWeb.Models;
 public class CustomAuthorizationMessageHandler : DelegatingHandler
 {
     private readonly ILocalStorageService _localStorage;
+    private readonly IHttpClientFactory _factory;
 
-    public CustomAuthorizationMessageHandler(ILocalStorageService localStorage)
+    public CustomAuthorizationMessageHandler(ILocalStorageService localStorage, IHttpClientFactory factory)
     {
         _localStorage = localStorage;
+        _factory = factory;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -24,35 +26,14 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
 
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
-           /* var refreshResponse = await _httpClient.PostAsync(
-                "auth/refresh", null, cancellationToken);
+            var refreshClient = _factory.CreateClient("ApiRefresh");
 
-            if (!refreshResponse.IsSuccessStatusCode)
-            {
-                await _localStorage.RemoveItemAsync("authToken");
-                _navigation.NavigateTo("/login");
-                return response;
-            }
+            var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
+            refreshRequest.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
-            var auth = await refreshResponse.Content
-                .ReadFromJsonAsync<AuthResponseDto>();
-
-            await _localStorage.SetItemAsync("authToken", auth.Token);
-
-            // refaz a request original
-            request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", auth.Token);
-
-            response = await base.SendAsync(request, cancellationToken);*/
+            var refreshResponse = await refreshClient.SendAsync(refreshRequest);
         }
 
         return response;
     }
 }
-
-
-/*var token = await _localStorage.GetItemAsync<string>("authToken");
-if (!string.IsNullOrEmpty(token))
-{
-    //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-}*/
