@@ -44,6 +44,8 @@ public class ClsProduto
     [JsonPropertyName("trib_pis_confins")] public string? TribPisCofins { get; set; }
     [JsonIgnore] public Preco PrecoSelecionado = new Preco();
 
+    [JsonPropertyName("QtdEmEstoque")] public float QtdEmEstoque { get; set; }
+    [JsonPropertyName("PrecoCusto")] public float PrecoCusto { get; set; }
 
 
 

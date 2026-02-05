@@ -79,7 +79,7 @@
                                             {
                                                 foreach (var pedido in Pedidos)
                                                 {
-                                                    <MudCard Class="rounded-3 mb-3" Style=@($"background-color: var(--mud-palette-background); border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                    <MudCard Class="rounded-3 mb-3" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
                                                         <MudCardHeader>
                                                             <CardHeaderAvatar>
                                                                 <MudAvatar Color="Color.Primary">
@@ -115,7 +115,7 @@
                                                     <MudCardContent>
                                                         @foreach (var item in pedido.Pedido.Itens)
                                                         {
-                                                            <MudStack Class="p-2 mt-1 rounded-2" Style=@($"background-color: var(--mud-palette-background); border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                            <MudStack Class="p-2 mt-1 rounded-2" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
                                                                 <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                     <MudText>@($"{item.Quantidade}X {item.Descricao}")</MudText>
                                                                     <MudText>Valor Unitario: @($"{item.PrecoUnitario.ToString("C")}")</MudText>
@@ -460,12 +460,6 @@
         await CarregarPedidos();
     }
 
-    private async Task CancelarPedido(ClsPedido pedido)
-    {
-        var Response = await PedidosService.CancelarPedido(pedido);
-        MostraMensagemDeUpdateDoPedido(Response);
-        await InvokeAsync(StateHasChanged);
-    }
 
     private async Task MudaEtapaDoPedido(ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
@@ -544,6 +538,19 @@
             : Severity.Success;
 
         Snackbar.Add(message, severity);
+    }
+
+    private async Task CancelarPedido(ClsPedido pedido)
+    {
+        var Response = await PedidosService.CancelarPedido(pedido);
+
+        if (Response.Status == "success")
+        {
+            pedido.StatusPedido = "CANCELADO";
+        }
+
+        MostraMensagemDeUpdateDoPedido(Response);
+        await InvokeAsync(StateHasChanged);
     }
 
     public class ClsDeSuporteParaVizualicacaoDePedidos

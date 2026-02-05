@@ -139,7 +139,7 @@
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
-                <PropertyColumn Property="x => x.EtapaPedido" Title="Etapa"></PropertyColumn>
+                <PropertyColumn Property="x => x.StatusPedido" Title="Status"></PropertyColumn>
                 <TemplateColumn T="ClsPedido" Title="Formas de pag">
                     <CellTemplate Context="context">
                         <MudText Style="font-weight:600" Color=Color.Success>@string.Join(", ", context.Item.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</MudText>
@@ -179,6 +179,7 @@
                             <Columns>
                                 <PropertyColumn Property="x => x.Produto!.CodigoInterno" Title="Código" />
                                 <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade" />
                                 <PropertyColumn Property="x => x.PrecoUnitario" Title="Preco Unitário" />
                                 <PropertyColumn Property="x => x.PrecoTotal" Title="Preco Total" />
                             </Columns>
@@ -188,6 +189,10 @@
                     <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" Row=true AlignItems=AlignItems.Center Spacing=3 Justify="Justify.Center">
                         <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item); })>Emitir Cupom Fiscal</MudButton>
                         <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await ImprimirPedido(context.Item); })>Reimprimir Pedido</MudButton>
+                        @if (context.Item.StatusPedido != "CANCELADO")
+                        {
+                            <MudButton Color="Color.Error" OnClick=@(async p => { await CancelarPedido(context.Item); }) Variant="Variant.Filled">Deletar Pedido</MudButton>
+                        }
                     </MudStack>
 
                 </MudCard>
@@ -608,7 +613,7 @@
     }
     #endregion
 
-    #region Função de impressão do pedido se mvalor fiscal
+    #region Função de impressão do pedido sem valor fiscal
     private async Task ImprimirPedido(ClsPedido pedido)
     {
         bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
@@ -621,10 +626,42 @@
 
     #endregion
 
+    #region Função para cancelamento de pedido
+    private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+    private async Task CancelarPedido(ClsPedido pedido)
+    {
+        var Response = await PedidosService.CancelarPedido(pedido, true);
+
+        if (Response.Status == "success")
+        {
+            pedido.StatusPedido = "CANCELADO";
+            if (dataGridRef != null)
+            {
+                await dataGridRef.ReloadServerData();
+            }
+        }
+
+        MostraMensagemDeUpdateDoPedido(Response);
+        await InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
 }
 
 
-#<!-- #region RELATORIO -->
+<!-- #region RELATORIO -->
 @*Relatório dos lançamentos selecionados*@
 <div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
     <div class="d-flex flex-column">

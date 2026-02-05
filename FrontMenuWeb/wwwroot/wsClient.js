@@ -182,3 +182,22 @@ window.copyToClipboard = function (text) {
         .then()
         .catch(err => console.error("Erro ao copiar", err));
 };
+
+window.selectAllInput = (id) => {
+    setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.select();
+        }
+    },0);
+}
+
+window.FocoNoProximoCampoDeEstoque = (name) => {
+    setTimeout(() => {
+        name = name + 1;
+        const el = document.getElementsByClassName(name);
+        if (el) {
+            el.focus();
+        }
+    }, 0);
+}

@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/produtos"
+@inject IJSRuntime JS
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
@@ -85,9 +86,11 @@
                                                  Format="N2"
                                                  Culture="_pt"
                                                  T="float"
+                                                 id="@($"{context.Item.Id}-preco")"
                                                  HideSpinButtons="true"
                                                  @bind-Value="precoMenor.Valor"
-                                                 @onfocusout="@(() => AtualizaValorDoProduto(precoMenor, true, context.Item.Id))" />
+                                                 @onfocusout="@(() => AtualizaValorDoProduto(precoMenor, true, context.Item.Id))"
+                                                 @onfocus="@(async () => await SelectAll($"{context.Item.Id}-preco"))" />
                             </MudPaper>
                         }
                         else
@@ -105,6 +108,43 @@
                         }
                     </CellTemplate>
                 </TemplateColumn>
+
+                <TemplateColumn T="ClsProduto" Title="Estoque" Hidden="@(!AppState.MerchantLogado.ControlaEstoque)">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50 justify-content-center align-items-center">
+                            <MudNumericField T="float"
+                                             Format="N3"
+                                             id="@context.Item.Id"
+                                             Variant="Variant.Outlined"
+                                             Culture="_pt"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.QtdEmEstoque"
+                                             Immediate="false"
+                                             Min="0"
+                                             @onfocusout=@(async () => { await OnSaveChanges(context.Item); })
+                                             @onfocus="@(async () => await SelectAll($"{context.Item.Id}"))" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsProduto" Title="Preço De Custo" Hidden="@(!AppState.MerchantLogado.ControlaEstoque)">
+                    <CellTemplate Context="context">
+                        <MudPaper Elevation="0" Square="false" Class="d-flex w-50 justify-content-center align-items-center">
+                            <MudNumericField T="float"
+                                             Format="N3"
+                                             id="@($"{context.Item.Id}-precoCusto")"
+                                             Variant="Variant.Outlined"
+                                             Culture="_pt"
+                                             HideSpinButtons="true"
+                                             @bind-Value="context.Item.PrecoCusto"
+                                             Immediate="false"
+                                             Min="0"
+                                             @onfocusout=@(async () => { await OnSaveChanges(context.Item); })
+                                             @onfocus="@(async () => await SelectAll($"{context.Item.Id}-precoCusto"))" />
+                        </MudPaper>
+                    </CellTemplate>
+                </TemplateColumn>
+
                 <TemplateColumn T="ClsProduto" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar o produto" Color="Color.Primary">
@@ -147,7 +187,7 @@
             </Columns>
             <PagerContent>
 
-                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20 }) />
+                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 100, 200, 300, 400, 500 }) />
 
             </PagerContent>
         </MudDataGrid>
@@ -433,8 +473,6 @@
     {
         try
         {
-            Console.WriteLine(produtoModificado.CodigoInterno);
-
             produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
             produtoModificado.ImpressoraComanda2 = TraduzImpressora(produtoModificado.ImpressoraComanda2!);
             var response = await ProdutoService.EditaProduto(produtoModificado);
@@ -448,6 +486,7 @@
             {
                 Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
             }
+
 
             StateHasChanged();
         }
@@ -766,7 +805,10 @@
 
     }
 
-
+    private async Task SelectAll(string id)
+    {
+        await JS.InvokeVoidAsync("selectAllInput", id);
+    }
 
     //Lógica do expand do codigo de barras
     bool _expanded = true;
@@ -1309,7 +1351,7 @@
                                                                                     <MudText Typo="Typo.body2">@complemento.Complemento.ComplementoInfo</MudText>
                                                                                 </CardHeaderContent>
                                                                                 <CardHeaderActions>
-                                                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento);})" />
+                                                                                    <MudIconButton Icon=@( !complemento.Complemento.Ativo ? Icons.Material.Filled.PlayArrow : Icons.Material.Filled.Pause ) Color="Color.Primary" OnClick="@(async () => { await PausaEDespausaComplemento(complemento.Complemento); })" />
                                                                                     <MudIconButton OnClick=@(async () => { await AbrirModalDeAdicionarOuEditarComplemento(false, complemento.Complemento); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
                                                                                 </CardHeaderActions>
                                                                             </MudCardHeader>

@@ -23,4 +23,8 @@
     <PackageReference Include="Unimake.Security.Platform" Version="20230706.1027.33" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Drawers\" />
+  </ItemGroup>
+
 </Project>

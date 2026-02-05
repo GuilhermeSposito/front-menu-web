@@ -186,11 +186,11 @@ public class PedidosService
         return retorno ?? new ReturnApiRefatored<NFEmitidasDto>();
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> CancelarPedido(ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> CancelarPedido(ClsPedido Pedido, bool ePedidoDeCaixaFechado = false)
     {
-        var response = await _http.DeleteAsync($"pedidos/cancelar/{Pedido.Id}");
+         var url = ePedidoDeCaixaFechado ? $"pedidos/cancelar/fechado/{Pedido.Id}" : $"pedidos/cancelar/{Pedido.Id}";
 
-        Console.WriteLine(await response.Content.ReadAsStringAsync());
+        var response = await _http.DeleteAsync(url);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
         return retorno!;
     }
