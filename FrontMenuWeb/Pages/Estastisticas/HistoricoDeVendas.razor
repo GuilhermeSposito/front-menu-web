@@ -30,10 +30,6 @@
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownHistoricoDePedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
-        <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
-            <MudText Typo="Typo.h4" Style="font-weight: 300">Histórico de Pedidos</MudText>
-            <MudDivider DividerType="DividerType.FullWidth" Light=true />
-        </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-50" Row=true>
                 <MudTextField DebounceInterval="500" Value="pesquisaTexto" Clearable=true ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
@@ -41,14 +37,26 @@
             <MudStack Justify="Justify.FlexStart">
             </MudStack>
         </MudStack>
-        <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-            <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
-            <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
-            @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
-            {
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
-            }
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
+                <MudTabPanel Text="Mês Passado" />
+                <MudTabPanel Text="Semana Passada" />
+                <MudTabPanel Text="Hoje" />
+                <MudTabPanel Text="Esta Semana" />
+                <MudTabPanel Text="Semana Que Vem" />
+                <MudTabPanel Text="Este Mês" />
+            </MudTabs>
+
+            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
+                <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
+                @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
+                }
+            </MudStack>
+
         </MudStack>
 
         <MudPaper Class="mb-3 p-3 mt-3 w-100">
@@ -86,6 +94,14 @@
             </MudStack>
         </MudPaper>
 
+        @if (CarregandoParteFiscal)
+        {
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1">Emitindo NFC-e...</MudText>
+                <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
+                <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
+            </MudPaper>
+        }
 
         <MudDataGrid T="ClsPedido"
                      @ref="dataGridRef"
@@ -120,7 +136,7 @@
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                 <PropertyColumn Property="x => x.DisplayId" Title="Display Id"></PropertyColumn>
-                <PropertyColumn Property="x => x.CriadoEm" Title="Realizado Em" Format="dd/MM/yyyy"></PropertyColumn>
+                <PropertyColumn Property="x => x.CriadoEm" Title="Realizado Em" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
                 <TemplateColumn T="ClsPedido" Title="Cliente">
                     <CellTemplate Context="context">
                         @if (context.Item.Cliente is null)
@@ -328,6 +344,61 @@
         }
     }
 
+    //Simula progresso de emissão fiscal
+    int ProgressoFiscal = 0;
+    CancellationTokenSource? _progressCts;
+    private async Task SimulaProgressoAsync(CancellationToken token)
+    {
+        ProgressoFiscal = 0;
+
+        while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(600, token);
+            ProgressoFiscal += Random.Shared.Next(2, 6);
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+
+    private async Task AtualizarPeriodoRapido(int index)
+    {
+
+        switch (index)
+        {
+            case 0: // Mês Passado
+                var mesPassado = DateTime.Today.AddMonths(-1);
+                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+            case 1: // Semana Passada
+                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
+                FiltroDateTimeInicial = lastWeekStart;
+                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
+                break;
+            case 2: // Hoje
+                FiltroDateTimeInicial = DateTime.Today;
+                FiltroDateTimeFinal = DateTime.Today;
+                break;
+            case 3: // Esta Semana
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 4: // Semana Que Vem
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 5: // Este Mês
+                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+        }
+
+        StateHasChanged();
+        await dataGridRef!.ReloadServerData();
+    }
+
+
     #endregion
 
     #region Funcções Auxiliares
@@ -387,6 +458,8 @@
     {
         try
         {
+            ProgressoFiscal = 0;
+            _progressCts = new CancellationTokenSource();
             CarregandoParteFiscal = true;
 
             #region Validações iniciais
@@ -477,6 +550,9 @@
             }
             #endregion
 
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
+
             ClsPedido Pedido = MontarPedidoParaNFe(PedidosSelecionados, Pessoa);
             var response = await NFService.GeraNFe(Pedido);
 
@@ -548,6 +624,9 @@
     #region Função para emitir NFC-e individual
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        ProgressoFiscal = 0;
+        _progressCts = new CancellationTokenSource();
+
         CarregandoParteFiscal = true;
         try
         {
@@ -577,6 +656,9 @@
             {
                 Pedido = Pedido
             };
+
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
 
             var response = await NFService.GeraNFCe(EnvNFCeDto);
             var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
@@ -642,19 +724,32 @@
 
     private async Task CancelarPedido(ClsPedido pedido)
     {
-        var Response = await PedidosService.CancelarPedido(pedido, true);
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+        var result = await dialog.Result;
 
-        if (Response.Status == "success")
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            pedido.StatusPedido = "CANCELADO";
-            if (dataGridRef != null)
-            {
-                await dataGridRef.ReloadServerData();
-            }
-        }
+            var Response = await PedidosService.CancelarPedido(pedido, true);
 
-        MostraMensagemDeUpdateDoPedido(Response);
-        await InvokeAsync(StateHasChanged);
+            if (Response.Status == "success")
+            {
+                pedido.StatusPedido = "CANCELADO";
+                if (dataGridRef != null)
+                {
+                    await dataGridRef.ReloadServerData();
+                }
+            }
+
+            MostraMensagemDeUpdateDoPedido(Response);
+            await InvokeAsync(StateHasChanged);
+        }
     }
     #endregion
 
@@ -709,7 +804,7 @@
                 <!-- Linha principal do pedido -->
                 <tr style="border-bottom: 1px solid #ddd; text-align:center;">
                     <td>@pedidos.DisplayId</td>
-                    <td style="text-align:left;">@pedidos.Cliente.Nome</td>
+                    <td style="text-align:left;">@pedidos.Cliente?.Nome</td>
                     <td>@pedidos.ValorTotal.ToString("C")</td>
                     <td style="text-align:right;">@pedidos.TipoDePedido</td>
                     <td>@pedidos.CriadoEm.ToString("dd/MM/yyyy")</td>

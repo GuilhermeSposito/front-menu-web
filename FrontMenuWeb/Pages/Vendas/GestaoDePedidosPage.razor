@@ -542,15 +542,28 @@
 
     private async Task CancelarPedido(ClsPedido pedido)
     {
-        var Response = await PedidosService.CancelarPedido(pedido);
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+        var result = await dialog.Result;
 
-        if (Response.Status == "success")
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            pedido.StatusPedido = "CANCELADO";
-        }
+            var Response = await PedidosService.CancelarPedido(pedido);
 
-        MostraMensagemDeUpdateDoPedido(Response);
-        await InvokeAsync(StateHasChanged);
+            if (Response.Status == "success")
+            {
+                pedido.StatusPedido = "CANCELADO";   
+            }
+
+            MostraMensagemDeUpdateDoPedido(Response);
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     public class ClsDeSuporteParaVizualicacaoDePedidos
