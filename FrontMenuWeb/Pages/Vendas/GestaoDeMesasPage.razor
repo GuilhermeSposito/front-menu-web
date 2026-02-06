@@ -280,7 +280,7 @@
     #region Funções de Impressão e WebSocket
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIOMesa", "https://syslogicadev.com/api/v1/");
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
         status = "Conectado";
     }
 

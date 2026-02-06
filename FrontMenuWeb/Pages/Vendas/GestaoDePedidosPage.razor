@@ -304,6 +304,11 @@
                 await InvokeAsync(() => OnPedidoRecebido(pedido));
             };
 
+            PedidosService.PedidoMudouEtapa += async pedido =>
+           {
+               await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
+           };
+
             await CarregarPedidos();
 
             try
@@ -319,6 +324,12 @@
         {
             Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
         }
+    }
+
+    private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
+    {
+        await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
