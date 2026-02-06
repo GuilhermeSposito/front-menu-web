@@ -6,11 +6,19 @@ window.socketIO = {
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
+        if (window.socketIO.socket && window.socketIO.socket.connected) {
+            console.log("Socket já conectado.");
+            return;
+        }
+
+        //https://sophos-erp.com.br
         const socket = io("https://sophos-erp.com.br", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
         });
+
+        window.socketIO.socket = socket;
 
         socket.on("connect", () => {
 
@@ -32,15 +40,49 @@ window.socketIO = {
             }
         });
 
+        // Quando o servidor envia algo para o cliente
+        socket.on("pedido-recebido-mesa", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesa", JSON.stringify(msg))
+                    .then(() => console.log(""))
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
+        socket.on("mesa-fechada", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesaFechada", JSON.stringify(msg))
+                    .then(() => { })
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
+        //Quando Atualiza a etapa de um pedido
+        socket.on("pedido-mudou-etapa", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveEtapaDoPedido", JSON.stringify(msg))
+                    .then(() => { })
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
         socket.on("disconnect", () => {
 
         });
 
     },
 
-    connectSocketIOMesa: async (url) => {
+   /* connectSocketIOMesa: async (url) => {
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
+
+        if (!window.socketIO.socket) {
+            await window.socketIO.connectSocketIO();
+        }
+
 
         const socket = io("https://sophos-erp.com.br", {
             path: "/socket.io/",
@@ -58,30 +100,13 @@ window.socketIO = {
         socket.on("registrado", (msg) => {
         });
 
-        // Quando o servidor envia algo para o cliente
-        socket.on("pedido-recebido-mesa", (msg) => {
-            // Avisando o Blazor
-            if (window.DotNet) {
-                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesa", JSON.stringify(msg))
-                    .then(() => console.log(""))
-                    .catch(err => console.error("Erro ao notificar Blazor:", err));
-            }
-        });
-
-        socket.on("mesa-fechada", (msg) => {
-            // Avisando o Blazor
-            if (window.DotNet) {
-                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesaFechada", JSON.stringify(msg))
-                    .then(() => console.log("entrou na função de avisar mesa fechafa"))
-                    .catch(err => console.error("Erro ao notificar Blazor:", err));
-            }
-        });
+      
 
         socket.on("disconnect", () => {
 
         });
 
-    },
+    },*/
 
    
 
@@ -90,6 +115,16 @@ window.socketIO = {
 //Função para reproduzir som de notificação
 window.playNotificationSound = () => {
     const audio = new Audio('/sounds/notify.mp3');
+    audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
+
+    audio.addEventListener('ended', () => {
+        audio.src = ''; // limpa referência
+    });
+};
+
+//Função para reproduzir som de notificação da fila
+window.playNotificationSoundFila = () => {
+    const audio = new Audio('/sounds/SomDaFila.mp3');
     audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
 
     audio.addEventListener('ended', () => {

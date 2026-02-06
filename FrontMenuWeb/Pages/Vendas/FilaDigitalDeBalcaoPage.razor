@@ -1,0 +1,344 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@layout CardapioDigitalLayout
+@page "/fila-digital-balcao"
+@inject IJSRuntime JS
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModalFiscais
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject GrupoServices GrupoService
+@inject CaixaEPagamentosService CaixasService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+@inject PedidosService PedidosService
+@inject NfService NFService
+
+<MudPaper Square="false" Elevation="0" class="gestao-pedido-page" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+        @if (!Carregando)
+        {
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudGrid Class="w-100 mt-2">
+                    @foreach (var etapa in ListaDeEtapasDosPedidos)
+                    {
+                        <MudItem xs="12" md="6" xl="6">
+                            <MudCard Class="h-100 ma-1 rounded-3" Style="min-height: 800px; max-height: 1500px;">
+                                <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
+                                    <CardHeaderContent>
+                                        <MudText>@etapa.NomeDaEtapa</MudText>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px solid var(--mud-palette-primary); ">
+                                    @{
+                                        var Pedidos = _items.Where(p => p.Selector == etapa.Selector).ToList();
+                                        if (Pedidos.Count > 0)
+                                        {
+                                            foreach (var pedido in Pedidos)
+                                            {
+                                                <MudCard Class="rounded-3 mb-3" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                    <MudCardHeader>
+                                                        <CardHeaderAvatar>
+                                                            <MudAvatar Color="Color.Primary">
+                                                                @if (pedido.Pedido.CriadoPor == "SOPHOS")
+                                                                {
+                                                                    <MudImage Src="/images/SOPHOSLOGOLOGIN.jpg"></MudImage>
+                                                                }
+                                                                else if (pedido.Pedido.CriadoPor == "IFOOD")
+                                                                {
+                                                                    <MudImage Src="/images/ifoodImagem.png"></MudImage>
+                                                                }
+                                                            </MudAvatar>
+                                                        </CardHeaderAvatar>
+
+                                                        <CardHeaderContent>
+                                                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="p-5">
+
+                                                                <MudText @onclick="@(async () => { await OnPedidoRecebido(pedido.Pedido); })" Color="Color.Primary" Typo="Typo.h4">@pedido.Pedido.TipoDePedido</MudText>
+                                                                @if (pedido.Pedido.Cliente is not null)
+                                                                {
+                                                                    <MudText Color="Color.Default" Typo="Typo.h4">@pedido.Pedido.Cliente.Nome</MudText>
+                                                                }
+                                                                else
+                                                                {
+                                                                    int seed = pedido.Pedido.Id;
+                                                                    var random = new Random(seed);
+
+                                                                    int senha = random.Next(500, 999);
+
+                                                                    <MudText Color="Color.Default" Typo="Typo.h4">@senha</MudText>
+                                                                }
+                                                                <MudText Typo="Typo.subtitle1">@($"{pedido.Pedido.CriadoEm:t}")</MudText>
+
+
+                                                            </MudStack>
+                                                        </CardHeaderContent>
+                                                    </MudCardHeader>
+                                                </MudCard>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <MudStack AlignItems="AlignItems.Center"
+                                                      Justify="Justify.Center"
+                                                      Style="width: 100%; height: 100%; opacity: 0.4;">
+                                                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                                                <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                                                    Nenhum pedido nesta etapa
+                                                </MudText>
+                                                <MudText Typo="Typo.caption" Align="Align.Center">
+                                                    Os pedidos aparecerão aqui quando estiverem nessa etapa.
+                                                </MudText>
+                                            </MudStack>
+                                        }
+                                    }
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudStack>
+        }
+        else
+        {
+            @*Carregando*@
+            <MudStack Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-surface); min-height: 520px" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="w-50 my-7" />
+            </MudStack>
+        }
+
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    #region Propriedades
+    public bool Carregando { get; set; } = true;
+    public bool CarregandoParteFiscal { get; set; } = false;
+    private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
+    public List<ClsDeSuporteParaVizualicacaoDePedidos> ListaDeEtapasDosPedidos = new List<ClsDeSuporteParaVizualicacaoDePedidos>
+    {
+        //new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "NOVOS", Selector = "NOVO" },
+        new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "PREPARANDO", Selector = "PREPARANDO" },
+        new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "PRONTOS", Selector = "DESPACHADO" },
+        //new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "FINALIZADOS", Selector = "FINALIZADO" },
+    };
+    public List<ClsDeSuporteParaMostrarPedidos> ItensSelecionadosPArAProximaEtapa = new List<ClsDeSuporteParaMostrarPedidos>();
+
+    private string status = "Desconectado";
+
+    private MudTextField<string> pesquisaField;
+    private string pesquisaTexto = string.Empty;
+    private TiposDePedido FiltroPorTipoDePedido = TiposDePedido.BALCÃO;
+    #endregion
+
+    #region Funções de Enventos de Página
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            PedidosService.PedidoRecebido += async pedido =>
+            {
+                await InvokeAsync(() => OnPedidoRecebido(pedido));
+            };
+
+            PedidosService.PedidoMudouEtapa += async pedido =>
+            {
+                await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
+            };
+
+            await CarregarPedidos();
+
+            try
+            {
+                await Connect();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
+        }
+    }
+
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
+        await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+        Snackbar.Add("Novo pedido recebido!", Severity.Success);
+
+    }
+
+
+    private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
+    {
+        await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+
+        if (novoPedido.EtapaPedido == "DESPACHADO")
+        {
+            await JS.InvokeVoidAsync("playNotificationSoundFila");
+            Snackbar.Add("Pedido Pronto para Retirada", Severity.Error);
+
+            var parameters = new DialogParameters
+                {
+                    { "Pedido", novoPedido }
+                };
+
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.False,
+                FullWidth = false,
+                FullScreen = false,
+                CloseOnEscapeKey = true,
+                BackdropClick = false
+            };
+
+            var dialog = await DialogService.ShowAsync<ModalDePedidoProntoParaAFila>(
+                "Pedido Pronto",
+                parameters,
+                options
+            );
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(8000);
+                await InvokeAsync(() => dialog.Close());
+            });
+
+        }
+    }
+
+
+    private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
+    {
+        sup.Expandido = !sup.Expandido;
+    }
+
+    #endregion
+
+    #region Funções Auxiliares
+    public async Task CarregarPedidos()
+    {
+        try
+        {
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido });
+
+            if (result?.Data?.Any() == true)
+            {
+                _items = result.Data.Select(p => new ClsDeSuporteParaMostrarPedidos
+                {
+                    Pedido = p,
+                    Selector = p.EtapaPedido
+                }).ToList();
+            }
+            else
+            {
+                Snackbar.Add("Nenhum pedido encontrado.", Severity.Warning);
+            }
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Nenhum pedido encontrado.", Severity.Warning);
+        }
+        finally
+        {
+            Carregando = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task Connect()
+    {
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
+        status = "Conectado";
+    }
+
+    private async Task AtualizaPedidosEtapa(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
+    {
+        foreach (var item in ListaDePedidos)
+        {
+            if (item.Selector == "NOVO")
+            {
+                item.Selector = "PREPARANDO";
+                var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (item.Selector == "PREPARANDO")
+            {
+                item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
+                var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (item.Selector == "DESPACHADO")
+            {
+                item.Selector = "FINALIZADO";
+                item.UltimaEtapa = true;
+                var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
+                MostraMensagemDeUpdateDoPedido(Response);
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+
+    public class ClsDeSuporteParaVizualicacaoDePedidos
+    {
+        public string NomeDaEtapa = string.Empty;
+        public string Selector { get; set; } = "1";
+    }
+
+
+    #endregion
+
+
+
+}

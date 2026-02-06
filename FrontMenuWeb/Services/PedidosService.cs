@@ -22,7 +22,7 @@ public class PedidosService
     public static event Action<ClsPedido>? PedidoRecebido;
     public static event Action<PedidoMesaDto>? PedidoMesaRecebido;
     public static event Action<ClsMesasEComandas>? PedidoMesaFechada;
-
+    public static event Action<ClsPedido>? PedidoMudouEtapa;
 
     [JSInvokable]
     public static Task ReceivePedido(string msg)
@@ -30,6 +30,15 @@ public class PedidosService
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
         PedidoRecebido?.Invoke(pedido);
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public static Task ReceiveEtapaDoPedido(string msg)
+    {
+        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
+
+        PedidoMudouEtapa?.Invoke(pedido);
         return Task.CompletedTask;
     }
 

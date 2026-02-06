@@ -31,6 +31,11 @@
                 }
 
                 <MudSpacer />
+                <MudTooltip Text="Abrir Fila De Pedidos" Color="Color.Primary">
+                    <a href="/fila-digital-balcao" target="_blank" style="text-decoration:none; color:inherit;">
+                        <MudIconButton Icon="@Icons.Material.Filled.RemoveRedEye" Color="Color.Inherit" />
+                    </a>
+                </MudTooltip>
                 <MudTooltip Text="Ativar/Desativar a impressão" Color="Color.Primary">
                     <MudIconButton Icon="@(ImpressaoDesabilita? @Icons.Material.Filled.PrintDisabled : @Icons.Material.Filled.Print)" Color="@(ImpressaoDesabilita? Color.Error: Color.Success)" OnClick="@AlteraImpressaoDesabilita" />
                 </MudTooltip>
@@ -172,7 +177,7 @@
                         <MudNavLink Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/financeiro/lancamentos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancamentosFinanceiro); })">Lançamento financeiro</MudNavLink>
                     </MudNavGroup>
 
-                    <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">                   
+                    <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/nfs-estatisticas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">NF-e NFC-e Emitidas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/vendas/historico-de-vendas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Vendas Realizadas</MudNavLink>
                     </MudNavGroup>

@@ -203,6 +203,15 @@
                                                                 </MudMenu>
                                                             </MudStack>
                                                             <MudStack>
+                                                                @if (pedido.Pedido.EtapaPedido == "DESPACHADO")
+                                                                {
+                                                                    <MudTooltip Color="Color.Primary" Text="Clique para Avisar Novamente">
+                                                                       
+                                                                            <MudIconButton OnClick="@(async () => { await AvisarNovamenteMesmoPedido(pedido.Pedido);  })" Size="Size.Large" Icon="@Icons.Material.Filled.RemoveRedEye" Color="Color.Primary" />
+                                                                
+                                                                
+                                                                    </MudTooltip>
+                                                                }
                                                                 <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
                                                                     @if (!pedido.UltimaEtapa)
                                                                     {
@@ -529,6 +538,12 @@
         }
     }
 
+    private async Task AvisarNovamenteMesmoPedido(ClsPedido pedido)
+    {
+        var Response = await PedidosService.UpdatePedidoDespachadoEPronto(pedido);
+        MostraMensagemDeUpdateDoPedido(Response);
+    }
+
     private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
     {
         var message = response.Status == "error"
@@ -712,7 +727,7 @@
         //Primeiro fazer a requisição para ver se existe pagamentos para ser editado
         ReturnApiRefatored<PagamentoDoPedido> ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
         MostraMensagemDeUpdateDoPedido(ReturnFromApi);
-        if(ReturnFromApi.Status == "eror")
+        if (ReturnFromApi.Status == "eror")
             return;
 
         pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
@@ -737,7 +752,7 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-           
+
         }
 
     }
