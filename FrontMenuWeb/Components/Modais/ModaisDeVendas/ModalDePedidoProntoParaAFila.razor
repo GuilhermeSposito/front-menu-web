@@ -15,20 +15,20 @@
 @inject IJSRuntime JS
 @inject MesasServices MesaService
 
-<MudDialog TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background); overflow:hidden">
+<MudDialog TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0 dialog-fila-digital" Style="background-color: var(--mud-palette-background); overflow:hidden">
     <TitleContent>
     </TitleContent>
     <DialogContent>
 
         <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudText Typo="Typo.h4">PEDIDO PRONTO</MudText>
+                <MudText Typo="Typo.h2">PEDIDO PRONTO</MudText>
 
             <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
 
                 <MudText Color="Color.Primary" Typo="Typo.h5">@Pedido.TipoDePedido</MudText>
                 @if (Pedido.Cliente is not null)
                 {
-                    <MudText Color="Color.Default" Typo="Typo.h1">@Pedido.Cliente.Nome</MudText>
+                    <MudText Color="Color.Default" Style="font-weight:600; font-size:600px" Typo="Typo.h1">@Pedido.Cliente.Nome</MudText>
                 }
                 else
                 {
@@ -37,9 +37,9 @@
 
                     int senha = random.Next(500, 999);
 
-                    <MudText Color="Color.Default" Typo="Typo.h1">@senha</MudText>
+                    <MudText Color="Color.Default" Style="font-weight:600; font-size:600px" Typo="Typo.h1">@senha</MudText>
                 }
-                <MudText Typo="Typo.subtitle1">Você já pode retirar seu pedido no balcão.</MudText>
+                <MudText Color="Color.Default" Typo="Typo.subtitle1">Você já pode retirar seu pedido no balcão.</MudText>
             </MudStack>
 
         </MudStack>

@@ -41,7 +41,9 @@
                             <MudCard Class="h-100 ma-1 rounded-3" Style="min-height: 800px; max-height: 1500px;">
                                 <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
                                     <CardHeaderContent>
-                                        <MudText>@etapa.NomeDaEtapa</MudText>
+                                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                            <MudText Typo="Typo.h4">@etapa.NomeDaEtapa</MudText>
+                                        </MudStack>
                                     </CardHeaderContent>
                                 </MudCardHeader>
                                 <MudCardContent Style="overflow-y: auto; scroll-behavior: smooth; border: 2px solid var(--mud-palette-primary); ">
@@ -69,7 +71,7 @@
                                                         <CardHeaderContent>
                                                             <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="p-5">
 
-                                                                <MudText @onclick="@(async () => { await OnPedidoRecebido(pedido.Pedido); })" Color="Color.Primary" Typo="Typo.h4">@pedido.Pedido.TipoDePedido</MudText>
+                                                                <MudText Color="Color.Primary" Typo="Typo.h4">@pedido.Pedido.TipoDePedido</MudText>
                                                                 @if (pedido.Pedido.Cliente is not null)
                                                                 {
                                                                     <MudText Color="Color.Default" Typo="Typo.h4">@pedido.Pedido.Cliente.Nome</MudText>
@@ -204,8 +206,7 @@
         if (novoPedido.EtapaPedido == "DESPACHADO")
         {
             await JS.InvokeVoidAsync("playNotificationSoundFila");
-            Snackbar.Add("Pedido Pronto para Retirada", Severity.Error);
-
+         
             var parameters = new DialogParameters
                 {
                     { "Pedido", novoPedido }

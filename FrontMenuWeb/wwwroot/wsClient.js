@@ -124,7 +124,7 @@ window.playNotificationSound = () => {
 
 //Função para reproduzir som de notificação da fila
 window.playNotificationSoundFila = () => {
-    const audio = new Audio('/sounds/SomDaFila.mp3');
+    const audio = new Audio('/sounds/dingdong.mp3');
     audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
 
     audio.addEventListener('ended', () => {

@@ -1,5 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+.dialog-fila-digital {
+    position: relative;
+    overflow: hidden;
+}
+
+    .dialog-fila-digital::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("/images/logo.png"); /* coloque o caminho certo */
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 0.2; /* marca d'água bem leve */
+        pointer-events: none;
+        z-index: 0;
+        background-size: 98% 98%; /* preenche tudo */
+    }
+
+    /* garante que o conteúdo fique acima da marca d’água */
+    .dialog-fila-digital > * {
+        position: relative;
+        z-index: 1;
+    }
+
 .floating-green-dot {
     position: fixed;
     bottom: 16px;
