@@ -4,6 +4,7 @@
 @using MudBlazor;
 @using System.Text.Json
 @inject IJSRuntime JS
+@inject PedidosService PedidoService
 
 @inherits LayoutComponentBase
 
@@ -222,60 +223,94 @@
     private bool ImpressaoDesabilita = false;
 
     #region Funções de WebSocket
-
+    private async Task Connect()
+    {
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
+    }
+   
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
+        await InvokeAsync(StateHasChanged);
+        
+        await JS.InvokeVoidAsync("playNotificationSound");
+    }
     #endregion
 
 
     protected override async Task OnInitializedAsync()
     {
-        if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
+        try
         {
-            bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
-            _isDarkMode = isDarkMode;
-        }
-
-        ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
-
-        _theme = new()
-        {
-            PaletteLight = _lightPalette,
-            PaletteDark = _darkPalette,
-            LayoutProperties = new LayoutProperties()
-        };
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            ClsMerchant? merchant = null;
-            IEnumerable<System.Security.Claims.Claim> claims;
-
-            claims = user.Claims;
-
-            var merchantClaim = claims.FirstOrDefault(c => c.Type == "Merchant");
-            if (merchantClaim != null)
+            if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
             {
-                merchant = JsonSerializer.Deserialize<ClsMerchant?>(
-                    merchantClaim.Value,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                );
+                bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
+                _isDarkMode = isDarkMode;
+            }
 
-                if (merchant is not null)
+            ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+            _theme = new()
+            {
+                PaletteLight = _lightPalette,
+                PaletteDark = _darkPalette,
+                LayoutProperties = new LayoutProperties()
+            };
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                ClsMerchant? merchant = null;
+                IEnumerable<System.Security.Claims.Claim> claims;
+
+                claims = user.Claims;
+
+                var merchantClaim = claims.FirstOrDefault(c => c.Type == "Merchant");
+                if (merchantClaim != null)
                 {
-                    AppState.MerchantLogado = merchant;
+                    merchant = JsonSerializer.Deserialize<ClsMerchant?>(
+                        merchantClaim.Value,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    );
 
-                    if (!(await LocalStorage.ContainKeyAsync("authEntregaToken")))
+                    if (merchant is not null)
                     {
-                        if (!string.IsNullOrEmpty(merchant.TokenApiEntrega))
-                            await LocalStorage.SetItemAsync("authEntregaToken", merchant.TokenApiEntrega);
+                        AppState.MerchantLogado = merchant;
+
+                        if (!(await LocalStorage.ContainKeyAsync("authEntregaToken")))
+                        {
+                            if (!string.IsNullOrEmpty(merchant.TokenApiEntrega))
+                                await LocalStorage.SetItemAsync("authEntregaToken", merchant.TokenApiEntrega);
+                        }
                     }
                 }
             }
-        }
 
-        await AtualizaStatusDoCaixa();
+            await AtualizaStatusDoCaixa();
+            
+
+            PedidosService.PedidoRecebido += async pedido =>
+             {
+                 await InvokeAsync(() => OnPedidoRecebido(pedido));
+             };
+
+            try
+            {
+                await Connect();
+            }
+            catch (Exception)
+            {
+                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
+            }
+        }
+        catch (Exception)
+        {
+            
+            Snackbar.Add("Ocorreu um erro ao carregar as preferências do tema ou o status do caixa. As configurações padrão serão usadas.", Severity.Error);
+        }
+        
     }
 
     private async Task AlteraImpressaoDesabilita()
