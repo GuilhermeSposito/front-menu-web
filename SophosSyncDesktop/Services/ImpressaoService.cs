@@ -23,6 +23,7 @@ public class ImpressaoService
 
     #region Fontes utilizadas na impressão
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public static Font FonteCódigoDeBarras = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
     public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteComplementoNaComanda { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
@@ -401,6 +402,7 @@ public class ImpressaoService
             //------------------------------------------------------------------------------------------
         }
 
+
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
@@ -563,8 +565,16 @@ public class ImpressaoService
 
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
+
+        if (pedido.TipoDePedido != "DELIVERY")
+        {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
+                AdicionaConteudo(Conteudo, $"*{pedido.Id}*", FonteCódigoDeBarras, Alinhamentos.Centro);
+        }
 
         return Conteudo;
     }

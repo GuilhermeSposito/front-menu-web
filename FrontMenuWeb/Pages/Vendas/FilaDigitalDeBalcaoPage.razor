@@ -281,42 +281,6 @@
         status = "Conectado";
     }
 
-    private async Task AtualizaPedidosEtapa(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
-    {
-        foreach (var item in ListaDePedidos)
-        {
-            if (item.Selector == "NOVO")
-            {
-                item.Selector = "PREPARANDO";
-                var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-
-            if (item.Selector == "PREPARANDO")
-            {
-                item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
-                var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-
-            if (item.Selector == "DESPACHADO")
-            {
-                item.Selector = "FINALIZADO";
-                item.UltimaEtapa = true;
-                var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-
-            await InvokeAsync(StateHasChanged);
-        }
-    }
-
     private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
     {
         var message = response.Status == "error"

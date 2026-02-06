@@ -9,6 +9,7 @@ public class AppState
    public ClsMerchant MerchantLogado { get; set; } = new ClsMerchant();
    public bool CaixaAberto { get; set; } = false;
 
+
     public string GetBancoIcon(int codBanco)
     {
         switch (codBanco)
@@ -70,4 +71,7 @@ public class AppState
             return 0;
 
     }
+
+   
+
 }

@@ -117,6 +117,9 @@
                                 <MudCheckBox Value=@Merchant.ImprimeHorarioNaComanda ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeHorarioNaComanda = x)) T=bool Color="Color.Primary">Imprime Horario na comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.UsaCodigoDeBarrasParAProximaEtapa ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UsaCodigoDeBarrasParAProximaEtapa = x)) T=bool Color="Color.Primary">Imprime Cod De Barras Para Proxima Etapa</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
                                 <MudNumericField Variant="Variant.Outlined" Label="Nmr de Vias da Comanda" @bind-Value=@Merchant.QtdViasDaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">

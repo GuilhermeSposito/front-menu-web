@@ -12,7 +12,7 @@ window.socketIO = {
         }
 
         //https://sophos-erp.com.br
-        const socket = io("https://sophos-erp.com.br", {
+        const socket = io("http://localhost:3030", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true

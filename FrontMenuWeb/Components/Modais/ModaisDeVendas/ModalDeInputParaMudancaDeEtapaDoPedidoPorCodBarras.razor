@@ -1,0 +1,129 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@inject PedidosService PedidosService
+@inject AppState AppState
+
+<MudDialog tabindex="0" OnKeyDown=OnKeyDown Style="min-width:60vw">
+    <DialogContent>
+        <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+            <MudTextField @bind-Value=CodBarrasInformado @ref=FieldDeCod T="string" Label="Código De Barras Para Proxima Etapa" Immediate=true />
+        </MudFocusTrap>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit" @ref=BtnConfirmar>Sair</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudButton BtnConfirmar;
+    private MudTextField<string> FieldDeCod;
+
+    private string CodBarrasInformado { get; set; } = string.Empty;
+
+    private void Submit()
+    {
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (FieldDeCod is not null)
+                FieldDeCod.FocusAsync();
+
+        }
+    }
+
+    private async Task EnviaPedidoParAProximaEtapa()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(CodBarrasInformado))
+            {
+                return;
+            }
+
+            bool IdDoInseridoEhValido = int.TryParse(CodBarrasInformado, out int idDoPedido);
+            if (!IdDoInseridoEhValido)
+            {
+                return;
+            }
+
+            ClsPedido? pedido = await PedidosService.GetPedidoById(idDoPedido);
+            if (pedido is null)
+            {
+                Snackbar.Add("Pedido não encontrado. Verifique o código de barras e tente novamente.", Severity.Error);
+                await FieldDeCod.SelectAsync();
+                return;
+            }
+
+            var response = await MudaEtapaDePedido(pedido);
+            MostraMensagemSnacBarComReturnApiRefatored(response);
+
+            await FieldDeCod.SelectAsync();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao enviar pedido para próxima etapa: {ex.Message}");
+            Snackbar.Add("Ocorreu um erro ao processar o código de barras. Por favor, tente novamente.", Severity.Error);
+            return;
+        }
+    }
+
+    public void MostraMensagemSnacBarComReturnApiRefatored<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+    private async void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await EnviaPedidoParAProximaEtapa();
+        }
+        else if (args.Key == "Escape")
+        {
+            Cancel();
+        }
+    }
+
+    private async Task<ReturnApiRefatored<ClsPedido>> MudaEtapaDePedido(ClsPedido pedido)
+    {
+        switch (pedido.EtapaPedido)
+        {
+            case "NOVO":
+                return await PedidosService.UpdatePedidoPreparando(pedido);
+
+            case "PREPARANDO":
+                return await PedidosService.UpdatePedidoDespachadoEPronto(pedido);
+
+            case "DESPACHADO":
+                return await PedidosService.UpdatePedidoFinalizadoo(pedido);
+            default:
+                return new ReturnApiRefatored<ClsPedido>
+                {
+                    Status = "error",
+                    Messages = new List<string> { "Pedido Já Finalizado." }
+                };
+        }
+    }
+}

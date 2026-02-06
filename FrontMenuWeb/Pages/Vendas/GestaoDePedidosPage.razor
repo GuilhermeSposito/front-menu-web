@@ -43,8 +43,12 @@
                         <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
                     </MudSelect>
                 </MudStack>
-                <MudStack Justify="Justify.FlexStart">
+                <MudStack Row=true Justify="Justify.FlexStart">
                     <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
+                    @if (AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
+                    }
                 </MudStack>
             </MudStack>
 
@@ -202,21 +206,17 @@
                                                                     }
                                                                 </MudMenu>
                                                             </MudStack>
-                                                            <MudStack>
+                                                            <MudStack Row=true>
                                                                 @if (pedido.Pedido.EtapaPedido == "DESPACHADO")
                                                                 {
                                                                     <MudTooltip Color="Color.Primary" Text="Clique para Avisar Novamente">
-                                                                       
-                                                                            <MudIconButton OnClick="@(async () => { await AvisarNovamenteMesmoPedido(pedido.Pedido);  })" Size="Size.Large" Icon="@Icons.Material.Filled.RemoveRedEye" Color="Color.Primary" />
-                                                                
-                                                                
+                                                                        <MudIconButton OnClick="@(async () => { await AvisarNovamenteMesmoPedido(pedido.Pedido); })" Size="Size.Large" Icon="@Icons.Material.Filled.RemoveRedEye" Color="Color.Primary" />
                                                                     </MudTooltip>
                                                                 }
                                                                 <MudTooltip Color="Color.Primary" Text="Clique para enviar pedido para proxima etapa!">
                                                                     @if (!pedido.UltimaEtapa)
                                                                     {
                                                                         <MudIconButton OnClick="@(async () => { await MudaEtapaDoPedido(pedido); })" Size="Size.Large" Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" />
-
                                                                     }
                                                                 </MudTooltip>
                                                             </MudStack>
@@ -443,6 +443,32 @@
         }
     }
 
+
+    private async Task AbreModalDeCodigoDeBarrasParaProximaEtapa()
+    {
+        if (AppState.CaixaAberto)
+        {
+          
+            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
+
+            var dialog = await DialogService.ShowAsync<ModalDeInputParaMudancaDeEtapaDoPedidoPorCodBarras>("Código De Barras Para Enviar pedido para Proxima Etapa", options);
+            var result = await dialog.Result;
+
+
+        }
+        else
+        {
+            var parameters = new DialogParameters<ModalDeAcessoNegado>
+            {
+                  { x => x.ContentText, $"Caixa está fechado, não é possivel interagir com pedidos." },
+                  { x => x.ButtonText, "OK" },
+                  { x => x.Color, Color.Success}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
+            var result = await dialog.Result;
+        }
+    }
     #endregion
 
     #region Funções Auxiliares

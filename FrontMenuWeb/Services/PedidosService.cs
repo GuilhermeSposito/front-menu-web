@@ -5,8 +5,10 @@ using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services.Fiscal;
 using Microsoft.JSInterop;
+using MudBlazor;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using Unimake.Business.DFe.Xml.ESocial;
 using YamlDotNet.Core.Tokens;
 
 namespace FrontMenuWeb.Services;
@@ -14,9 +16,10 @@ namespace FrontMenuWeb.Services;
 public class PedidosService
 {
     private HttpClient _http;
+
     public PedidosService(HttpClient http)
     {
-        _http = http;
+        _http = http; 
     }
 
     public static event Action<ClsPedido>? PedidoRecebido;
@@ -126,6 +129,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ClsPedido?> GetPedidoById(int IdPedido, CancellationToken cancellationToken = default)
+    {
+        var response = await _http.GetAsync($"pedidos/{IdPedido}");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno?.Data?.Objeto;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> FechaMesa(ClsPedido Pedido)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/mesa", Pedido);
@@ -200,6 +211,14 @@ public class PedidosService
         var url = ePedidoDeCaixaFechado ? $"pedidos/cancelar/fechado/{Pedido.Id}" : $"pedidos/cancelar/{Pedido.Id}";
 
         var response = await _http.DeleteAsync(url);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
+
+    public async Task<ReturnApiRefatored<ClsPedido>> LimparMesa(ClsMesasEComandas mesa) 
+    {
+        var response = await _http.DeleteAsync($"pedidos/cancelar/itens/{mesa.Id}");
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
         return retorno!;
     }

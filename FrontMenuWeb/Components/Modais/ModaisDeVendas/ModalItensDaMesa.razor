@@ -43,6 +43,10 @@
                     <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
                     <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Itens Selecionado</MudButton>
                     <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
+                    @if (AppState.MerchantLogado.FuncionarioLogado is null || AppState.MerchantLogado.FuncionarioLogado.AcessoCancelaItensDaVenda)
+                    {
+                        <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
+                    }
                 </MudStack>
             </ToolBarContent>
             <Columns>
@@ -255,5 +259,23 @@
         }
 
     }
+    #endregion
+
+    #region Função de limpar os itens da mesa
+    private async Task LimparItens()
+    {
+        var responseFromApi = await PedidosService.LimparMesa(MesaOuComanda);
+        var sucesso = responseFromApi.Status != "error";
+        List<string> mensagem = sucesso ? responseFromApi.Data.Messages : responseFromApi.Messages;
+
+        Snackbar.Add(string.Join(",", mensagem), sucesso ? Severity.Success : Severity.Error);
+
+        if (dataGridRef is not null)
+        {
+            await dataGridRef.ReloadServerData();
+            StateHasChanged();
+        }
+    }
+
     #endregion
 }
