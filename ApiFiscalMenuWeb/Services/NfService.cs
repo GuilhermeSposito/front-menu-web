@@ -540,6 +540,9 @@ public class NfService
 
     private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
+        var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente);
+        double VOutros = enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor;
+
         return new EnviNFe
         {
             Versao = "4.00",
@@ -596,7 +599,7 @@ public class NfService
                                 CRT = CRT.SimplesNacional
                             },
                             Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente, tipoAmbiente),
-                            Det =  await RetornaDetsDosProdutosNoPedido(ItensDoPedido:enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente), //Itens do pedido
+                            Det =  detDosProd, //Itens do pedido
                             Total = new Total
                             {
                                ICMSTot = new ICMSTot
@@ -608,7 +611,7 @@ public class NfService
                                     VFCPST = 0.00,
                                     VFCPSTRet = 0.00,
                                     VBCST = 0.00,
-                                    VProd = Convert.ToDouble(enNfCeDto.Pedido.ValorDosItens),
+                                    VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
                                     VFrete = 0.00,
                                     VSeg = 0.00,
                                     VDesc = 0.00,
@@ -617,7 +620,7 @@ public class NfService
                                     VIPIDevol = 0.00,
                                     VPIS = 0.00,
                                     VCOFINS = 0.00,
-                                    VOutro = Convert.ToDouble(enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor),
+                                    VOutro = VOutros,
                                     VNF = Convert.ToDouble(enNfCeDto.Pedido.ValorTotal),
                                     VTotTrib = ValorTotalTribNfAtual
                                }
@@ -928,9 +931,6 @@ public class NfService
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);
 
             valorTotalTrib = (float)Math.Round(valorTotalTrib, 2, MidpointRounding.AwayFromZero);
-
-            Console.WriteLine($"Valor total do tributo: {valorTotalTrib}");
-
             ValorTotalTribNfAtual += valorTotalTrib;
 
             string NomeDoProdutoParaNf = tipoAmbiente == TipoAmbiente.Producao ? item.Produto.Descricao.Trim() : "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
