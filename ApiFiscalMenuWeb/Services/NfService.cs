@@ -951,7 +951,7 @@ public class NfService
 
             //Somas e arredondamentos
             decimal qCom = Convert.ToDecimal(item.Quantidade);
-            decimal vUnCom = Math.Round(Convert.ToDecimal(item.PrecoUnitario), 2, MidpointRounding.AwayFromZero);
+            decimal vUnCom = Math.Round(Convert.ToDecimal(item.PrecoTotal), 2, MidpointRounding.AwayFromZero);
 
             double vProd = (double)Math.Round(qCom * vUnCom, 2, MidpointRounding.AwayFromZero);
 
