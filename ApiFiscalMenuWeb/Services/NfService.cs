@@ -600,10 +600,6 @@ public class NfService
                             Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente, tipoAmbiente),
                             Det =  detDosProd, //Itens do pedido
                             Transp = RetornaTransportedaNF(enNfCeDto.Pedido, merchant, DocumentoMerchant, enderecoMerchant, TipoDFe.NFCe),
-                            Pag = new Pag
-                            {
-                                DetPag = ReturnInfosDePags(pedido: enNfCeDto.Pedido)
-                            },
                             InfAdic = new InfAdic
                             {
                                 InfCpl = null
@@ -618,6 +614,8 @@ public class NfService
         double VOutros = detDosProd.Sum(x=> x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
         double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
+
+        Console.WriteLine($"VALOR NF {ValorNf}");
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -644,6 +642,11 @@ public class NfService
                 VNF = ValorNf,
                 VTotTrib = ValorTotalTribNfAtual
             }
+        };
+
+        xml.NFe[0].InfNFe[0].Pag = new Pag
+        {
+            DetPag = ReturnInfosDePags(pedido: enNfCeDto.Pedido)
         };
 
 
