@@ -14,29 +14,44 @@ public class IBPTServices
 
     public async Task<float> GetIBPTValor(string cnpj, string ncm, string uf, string descricao, float valor, string gtin = "SEM%GTIN")
     {
-        var client = _factory.CreateClient("ApiIBPT");
+        try
+        {
+            var client = _factory.CreateClient("ApiIBPT");
 
-        var response = await client.GetAsync($"?token=VROoQxeyOD4wBqTS6neLweOUlkCajSf4j9uInykJRFORUrvYBDBkhpd1lrJ5gKVG&" +
-            $"cnpj={cnpj}&" +
-            $"codigo={ncm}&" +
-            $"uf={uf}&" +
-            $"ex=0&" +
-            $"descricao={Uri.EscapeDataString(descricao)}&" +
-            $"unidadeMedida=UN&" +
-            $"valor={valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
-            $"gtin={gtin}");
+            var response = await client.GetAsync($"?token=VROoQxeyOD4wBqTS6neLweOUlkCajSf4j9uInykJRFORUrvYBDBkhpd1lrJ5gKVG&" +
+                $"cnpj={cnpj}&" +
+                $"codigo={ncm}&" +
+                $"uf={uf}&" +
+                $"ex=0&" +
+                $"descricao={Uri.EscapeDataString(descricao)}&" +
+                $"unidadeMedida=UN&" +
+                $"valor={valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
+                $"gtin={gtin}");
 
-        if (!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
+                return valor * 0.30f;
+
+            var content = await response.Content.ReadAsStringAsync();
+            var ibptResponse = System.Text.Json.JsonSerializer.Deserialize<IBPTResponse>(content);
+
+            float VTotalTrib = ibptResponse!.ValorTributoNacional +
+                              ibptResponse.ValorTributoEstadual +
+                              ibptResponse.ValorTributoMunicipal;
+
+            return VTotalTrib;
+        }
+        catch (TaskCanceledException ex)
+        {
+            // Timeout ou cancelamento
+            Console.WriteLine("Timeout/cancelado de IBPT: " + ex.Message);
             return valor * 0.30f;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro geral de IBPT: " + ex.Message);
+            return valor * 0.30f;
+        }
 
-        var content = await response.Content.ReadAsStringAsync();
-        var ibptResponse = System.Text.Json.JsonSerializer.Deserialize<IBPTResponse>(content);
-
-        float VTotalTrib = ibptResponse!.ValorTributoNacional +
-                          ibptResponse.ValorTributoEstadual +
-                          ibptResponse.ValorTributoMunicipal;
-
-        return VTotalTrib;
     }
 }
 
