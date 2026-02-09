@@ -4,13 +4,13 @@
     <_LastSelectedProfileId>C:\Prog\projeto_menu_web\front-menu-web\FrontMenuWeb\SophosSyncDesktop\Properties\PublishProfiles\ClickOnceProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Views\ConfigsGeral.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Views\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Views\PaginaInicial.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Views\TestesNfe\TesteComCertificado.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

@@ -5,7 +5,6 @@ using SophosSyncDesktop.Models;
 using SophosSyncDesktop.Services;
 using SophosSyncDesktop.Utils;
 using SophosSyncDesktop.Views;
-using SophosSyncDesktop.Views.TestesNfe;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -97,138 +96,246 @@ public partial class PaginaInicial : Form
     }
     private void IniciarMonitoramento()
     {
-        string downloadsPath = Path.Combine(
-               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-               "Downloads"
-           );
-
-        watcherPedidos = new FileSystemWatcher(downloadsPath)
+        try
         {
-            Filter = "*.*", // todos os arquivos
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-        };
-
-        watcherPedidos.Renamed += async (s, e) =>
-        {
-            if ((e.Name.Contains("SOPHOS-WEB", StringComparison.OrdinalIgnoreCase) && !e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) && !e.Name.Contains("FECHA", StringComparison.OrdinalIgnoreCase)) && Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            if (watcherPedidos != null)
             {
-                await Task.Delay(500); // espera terminar o download
-                try
-                {
-                    string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
-                    await _impressaoService.Imprimir(conteudo, "SOPHOS");
-                    File.Delete(e.FullPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.Write(ex.ToString());
-                }
+                watcherPedidos.EnableRaisingEvents = false; // Para o monitoramento
+                watcherPedidos.Renamed -= OnWatcherRenamedLeituraDePedido; // Remove o evento (veja nota abaixo)
+                watcherPedidos.Dispose(); // Limpa da memória
             }
-        };
 
-        watcherPedidos.EnableRaisingEvents = true;
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                {
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+                }
+
+                watcherPedidos = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*", // todos os arquivos
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                watcherPedidos.Renamed += OnWatcherRenamedLeituraDePedido;
+
+                watcherPedidos.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Erro ao iniciar monitoramento de pedidos, Por favor abra o aplicativo novamente.", "erro", buttons: MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private async void OnWatcherRenamedLeituraDePedido(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("SOPHOS-WEB", StringComparison.OrdinalIgnoreCase) &&
+            !e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(500);
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                await _impressaoService.Imprimir(conteudo, "SOPHOS");
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex) { Console.WriteLine("Erro ao imprimir pedido"); }
+        }
     }
 
     private void IniciarMonitoramentoMesa()
     {
-        string downloadsPath = Path.Combine(
-               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-               "Downloads"
-           );
-
-        WatcherMesas = new FileSystemWatcher(downloadsPath)
+        try
         {
-            Filter = "*.*", // todos os arquivos
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-        };
-
-        WatcherMesas.Renamed += async (s, e) =>
-        {
-            if (e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            if (WatcherMesas != null)
             {
-                await Task.Delay(500); // espera terminar o download
-                try
-                {
-                    string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
-                    await _impressaoService.ImprimirComanda(conteudo, "SOPHOS");
-                    File.Delete(e.FullPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.Write(ex.ToString());
-                }
+                WatcherMesas.EnableRaisingEvents = false;
+                WatcherMesas.Renamed -= OnWatcherRenamedLeituraDePedidoMesa;
+                WatcherMesas.Dispose();
             }
-        };
 
-        WatcherMesas.EnableRaisingEvents = true;
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                {
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+                }
+
+                WatcherMesas = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*", // todos os arquivos
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                WatcherMesas.Renamed += OnWatcherRenamedLeituraDePedidoMesa;
+
+                WatcherMesas.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    private async void OnWatcherRenamedLeituraDePedidoMesa(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
+               Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(500); // espera terminar o download
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                await _impressaoService.ImprimirComanda(conteudo, "SOPHOS");
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.ToString());
+            }
+        }
     }
 
     private void IniciarMonitoramentoDeFechamentoDeCaixa()
     {
-        string downloadsPath = Path.Combine(
-               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-               "Downloads"
-           );
-
-        watcherFechamentos = new FileSystemWatcher(downloadsPath)
+        try
         {
-            Filter = "*.*", // todos os arquivos
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-        };
-
-        watcherFechamentos.Renamed += async (s, e) =>
-        {
-            if (e.Name.Contains("SOPHOS-WEB-FECHA", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+            if (watcherFechamentos != null)
             {
-                await Task.Delay(500); // espera terminar o download
-                try
-                {
-                    string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
-
-                    if (!String.IsNullOrEmpty(conteudo))
-                        await _impressaoService.ImprimirFechamento(conteudo);
-
-                    File.Delete(e.FullPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.Write(ex.ToString());
-                }
+                watcherFechamentos.EnableRaisingEvents = false;
+                watcherFechamentos.Renamed -= OnWatcherRenamedLeituraDeFechamentoDeCaixa;
+                watcherFechamentos.Dispose();
             }
-        };
 
-        watcherFechamentos.EnableRaisingEvents = true;
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                {
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+                }
+
+                watcherFechamentos = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*", // todos os arquivos
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                watcherFechamentos.Renamed += OnWatcherRenamedLeituraDeFechamentoDeCaixa;
+
+                watcherFechamentos.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+
     }
+    private async void OnWatcherRenamedLeituraDeFechamentoDeCaixa(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("SOPHOS-WEB-FECHA", StringComparison.OrdinalIgnoreCase) &&
+                    Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(500); // espera terminar o download
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+
+                if (!String.IsNullOrEmpty(conteudo))
+                    await _impressaoService.ImprimirFechamento(conteudo);
+
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.ToString());
+            }
+        }
+    }
+
+
     private void IniciarMonitoramentoDeNfs()
     {
-        string downloadsPath = Path.Combine(
-               Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-               "Downloads"
-           );
-
-        string mesAno = DateTime.Now.ToString("MM-yyyy");
-        string destino = @$"C:\ArqNfe\Autorizadas\{mesAno}";
-
-        // cria a pasta caso não exista
-        if (!Directory.Exists(destino))
-            Directory.CreateDirectory(destino);
-
-        WatcherNFs = new FileSystemWatcher(downloadsPath)
+        try
         {
-            Filter = "*.*", // todos os arquivos
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
-        };
-
-        WatcherNFs.Renamed += async (s, e) =>
-        {
-            if (e.Name.Contains("-procnfe", StringComparison.OrdinalIgnoreCase) &&
-                Path.GetExtension(e.FullPath).Equals(".xml", StringComparison.OrdinalIgnoreCase))
+            if (WatcherNFs != null)
             {
-                await Task.Delay(500);
-                try
+                WatcherNFs.EnableRaisingEvents = false;
+                WatcherNFs.Renamed -= OnWatcherRenamedNfes;
+                WatcherNFs.Dispose();
+            }
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
                 {
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+                }
+
+                WatcherNFs = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*", // todos os arquivos
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                WatcherNFs.Renamed += OnWatcherRenamedNfes;
+
+                WatcherNFs.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+       
+    }
+    private async void OnWatcherRenamedNfes(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("-procnfe", StringComparison.OrdinalIgnoreCase) &&
+       Path.GetExtension(e.FullPath).Equals(".xml", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(500);
+            try
+            {
+                using (AppDbContext db = new AppDbContext())
+                {
+                    var config = db.Impressoras.FirstOrDefault();
+
+                    var CaminhoDeSalvamentoDaNfe = @"C:\ArqNfe\Autorizadas";
+
+                    if (config is not null)
+                    {
+                        CaminhoDeSalvamentoDaNfe = config.CaminhoSalvamentoDasNfe ?? CaminhoDeSalvamentoDaNfe;
+                    }
+
+                    string mesAno = DateTime.Now.ToString("MM-yyyy");
+                    string destino = CaminhoDeSalvamentoDaNfe + @$"\{mesAno}";
+
+                    // cria a pasta caso não exista
+                    if (!Directory.Exists(destino))
+                        Directory.CreateDirectory(destino);
+
                     string destinoArquivo = Path.Combine(destino, e.Name);
 
                     // Se já existir um arquivo com o mesmo nome, sobrescreve
@@ -239,15 +346,17 @@ public partial class PaginaInicial : Form
 
                     _impressaoService.ImprimeDANFE(destinoArquivo);
                 }
-                catch (Exception ex)
-                {
-                    Console.Write(ex.ToString());
-                }
             }
-        };
-
-        WatcherNFs.EnableRaisingEvents = true;
+            catch (Exception ex)
+            {
+                Console.Write(ex.ToString());
+            }
+        }
     }
+
+
+
+
     private void pictureBox2_Click(object sender, EventArgs e)
     {
         this.Hide();
@@ -486,8 +595,10 @@ public partial class PaginaInicial : Form
     }
     private void btnConfig_Click(object sender, EventArgs e)
     {
-        TesteComCertificado teste = new TesteComCertificado();
-        teste.Show();
+        ConfigsGeral teste = new ConfigsGeral();
+        teste.ShowDialog();
+        IniciarMonitoramento(); // Reinicia o monitoramento para pegar possíveis mudanças no caminho de salvamento
+        IniciarMonitoramentoMesa();
     }
     private void labeLogin_Click(object sender, EventArgs e)
     {

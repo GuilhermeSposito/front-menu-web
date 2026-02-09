@@ -18,6 +18,7 @@ public class ImpressorasConfigs
     [Column("impressora_Cz3")] public string ImpressoraCz3 { get; set; } = "Sem Impressora";
     [Column("impressora_Bar")] public string ImpressoraBar { get; set; } = "Sem Impressora";
     [Column("impressora_Danfe")] public string ImpressoraDanfe { get; set; } = "Sem Impressora";
-    [Column("teste_base64")] public string base64Certificado { get; set; } = "";
+    [Column("caminho_salvamento_json")] public string CaminhoSalvamentoDoJson { get; set; } = "Downloads";
+    [Column("caminho_salvamento_nfe")] public string CaminhoSalvamentoDasNfe { get; set; } = @$"C:\ArqNfe\Autorizadas\";
 
 }
