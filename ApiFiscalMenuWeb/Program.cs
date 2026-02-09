@@ -29,7 +29,7 @@ builder.Services.AddHttpClient("ApiAutorizada", client =>
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {
     client.BaseAddress = new Uri(UrlIBPT); //new Uri("https://localhost:3030");//
-    client.Timeout = TimeSpan.FromSeconds(15);
+    client.Timeout = TimeSpan.FromSeconds(8);
 });
 
 builder.Services.AddControllers(option =>

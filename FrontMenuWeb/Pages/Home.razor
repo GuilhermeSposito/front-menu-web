@@ -113,7 +113,7 @@
         <MudCardHeader>
             <MudText Typo="Typo.h6">Pedidos Recentes</MudText>
         </MudCardHeader>
-        <MudCardContent>            
+        <MudCardContent>
             <!-- Tabela de Pedidos -->
             <MudTable Items="@pedidosFiltrados" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
                 <HeaderContent>
@@ -130,7 +130,7 @@
 
                     </MudTd>
                     <MudTd>@(context.Pagamentos.Sum(p => p.ValorTotal).ToString("C"))</MudTd>
-                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>    
+                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>
                 </RowTemplate>
             </MudTable>
         </MudCardContent>
@@ -164,7 +164,7 @@
     // Lista de pedidos
     private List<ClsPedido> pedidos = new List<ClsPedido>();
     private List<ClsPedido> pedidosFiltrados = new List<ClsPedido>();
-    
+
     //timer para atualização automática
     private PeriodicTimer? _timer;
     private CancellationTokenSource _cts = new();
@@ -172,6 +172,11 @@
 
     protected override void OnInitialized()
     {
+        PedidosService.PedidoRecebido += async pedido =>
+           {
+               await InvokeAsync(() => OnPedidoRecebido(pedido));
+           };
+
         pedidosFiltrados = new List<ClsPedido>(pedidos);
     }
 
@@ -222,28 +227,6 @@
                 UsuarioPermitidoAcessarDashboard = true;
             }
 
-
-            _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
-
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    while (await _timer.WaitForNextTickAsync(_cts.Token))
-                    {
-                        await InvokeAsync(async () =>
-                        {
-                            await AtualizaInfosDosPedidos();
-                            StateHasChanged();
-                        });
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // cancelado
-                }
-            });
-
         }
         catch (Exception ex)
         {
@@ -277,7 +260,7 @@
 
         }
 
-        if(retornoPedidosTotal.PercentualDePedidos is not null)
+        if (retornoPedidosTotal.PercentualDePedidos is not null)
         {
             PercentualPedidosBalcao = retornoPedidosTotal.PercentualDePedidos.Balcao;
             PercentualPedidosDelivery = retornoPedidosTotal.PercentualDePedidos.Delivery;
@@ -292,8 +275,15 @@
             ValorTotalVendasHoje = retornoPedidosTotal.VendasHoje;
         }
 
-       
 
+
+    }
+
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
+        await InvokeAsync(StateHasChanged);
+        await AtualizaInfosDosPedidos();
+        Snackbar.Add("Novo pedido recebido!", Severity.Info);
     }
 
     private void ClickCardPedidos()
