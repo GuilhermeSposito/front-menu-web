@@ -541,9 +541,8 @@ public class NfService
     private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
         var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente);
-        double VOutros = enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor;
 
-        return new EnviNFe
+        var xml =  new EnviNFe
         {
             Versao = "4.00",
             IdLote = "000000000000001",
@@ -600,31 +599,6 @@ public class NfService
                             },
                             Dest = RetornaDestinatarioDeNFCe(enNfCeDto, enNfCeDto.Pedido.Cliente, tipoAmbiente),
                             Det =  detDosProd, //Itens do pedido
-                            Total = new Total
-                            {
-                               ICMSTot = new ICMSTot
-                               {
-                                    VBC = 0.00,
-                                    VICMS = 0.00,
-                                    VICMSDeson = 0.00,
-                                    VFCP = 0.00,
-                                    VFCPST = 0.00,
-                                    VFCPSTRet = 0.00,
-                                    VBCST = 0.00,
-                                    VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
-                                    VFrete = 0.00,
-                                    VSeg = 0.00,
-                                    VDesc = 0.00,
-                                    VII = 0.00,
-                                    VIPI = 0.00,
-                                    VIPIDevol = 0.00,
-                                    VPIS = 0.00,
-                                    VCOFINS = 0.00,
-                                    VOutro = VOutros,
-                                    VNF = Convert.ToDouble(enNfCeDto.Pedido.ValorTotal),
-                                    VTotTrib = ValorTotalTribNfAtual
-                               }
-                            },
                             Transp = RetornaTransportedaNF(enNfCeDto.Pedido, merchant, DocumentoMerchant, enderecoMerchant, TipoDFe.NFCe),
                             Pag = new Pag
                             {
@@ -639,6 +613,44 @@ public class NfService
                 }
             }
         };
+
+        double VOutros = enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor;
+
+        double vProd = detDosProd.Sum(x => (double)x.Prod.VProd);
+        double vFrete = detDosProd.Sum(x => (double)x.Prod.VFrete);
+        double vOutro = detDosProd.Sum(x => (double)x.Prod.VOutro);
+
+        double vNf = Math.Round(vProd + vOutro, 2);
+
+        //Somar os totais separados
+        xml.NFe[0].InfNFe[0].Total = new Total
+        {
+            ICMSTot = new ICMSTot
+            {
+                VBC = 0.00,
+                VICMS = 0.00,
+                VICMSDeson = 0.00,
+                VFCP = 0.00,
+                VFCPST = 0.00,
+                VFCPSTRet = 0.00,
+                VBCST = 0.00,
+                VProd = vProd,
+                VFrete = 0.00,
+                VSeg = 0.00,
+                VDesc = 0.00,
+                VII = 0.00,
+                VIPI = 0.00,
+                VIPIDevol = 0.00,
+                VPIS = 0.00,
+                VCOFINS = 0.00,
+                VOutro = vOutro,
+                VNF = vNf,
+                VTotTrib = ValorTotalTribNfAtual
+            }
+        };
+
+
+        return xml;
     }
 
     private Transp RetornaTransportedaNF(ClsPedido Pedido, ClsMerchant merchant, DocumentosMerchant DocumentoMerchant, EnderecoMerchant enderecoMerchant, TipoDFe? tipoNFE = TipoDFe.NFe)
