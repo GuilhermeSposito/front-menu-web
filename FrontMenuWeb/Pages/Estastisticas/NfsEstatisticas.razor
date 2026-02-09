@@ -40,14 +40,26 @@
                 <AvisoDeDadosVazios ReferenciaDados="NF-e NFC-e" />
             </NoRecordsContent>
             <ToolBarContent>
-                <MudStack Class="p-2" Row=true>
-                    <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
-                    <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
-                    @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
-                    }
+                <MudStack Class="p-2 w-100" Row=false>
+                    <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
+                        <MudTabPanel Text="Mês Passado" />
+                        <MudTabPanel Text="Semana Passada" />
+                        <MudTabPanel Text="Hoje" />
+                        <MudTabPanel Text="Esta Semana" />
+                        <MudTabPanel Text="Semana Que Vem" />
+                        <MudTabPanel Text="Este Mês" />
+                    </MudTabs>
+
+                    <MudStack Row=true>
+                        <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
+                        <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
+                        @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
+                        }
+                    </MudStack>
+                  
                 </MudStack>
             </ToolBarContent>
             <Columns>
@@ -233,6 +245,43 @@
     #endregion
 
     #region Funções de Ações da Página
+    private async Task AtualizarPeriodoRapido(int index)
+    {
+
+        switch (index)
+        {
+            case 0: // Mês Passado
+                var mesPassado = DateTime.Today.AddMonths(-1);
+                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+            case 1: // Semana Passada
+                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
+                FiltroDateTimeInicial = lastWeekStart;
+                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
+                break;
+            case 2: // Hoje
+                FiltroDateTimeInicial = DateTime.Today;
+                FiltroDateTimeFinal = DateTime.Today;
+                break;
+            case 3: // Esta Semana
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 4: // Semana Que Vem
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 5: // Este Mês
+                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+        }
+
+        StateHasChanged();
+        await dataGridRef!.ReloadServerData();
+    }
+
     private async Task AplicarFiltros()
     {
         if (dataGridRef != null)

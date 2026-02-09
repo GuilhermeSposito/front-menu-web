@@ -361,6 +361,11 @@
     }
 
 
+
+
+    #endregion
+
+    #region Funcções Auxiliares
     private async Task AtualizarPeriodoRapido(int index)
     {
 
@@ -397,11 +402,6 @@
         StateHasChanged();
         await dataGridRef!.ReloadServerData();
     }
-
-
-    #endregion
-
-    #region Funcções Auxiliares
     private async Task GerarPdf()
     {
         await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioPedidos", "RelatorioPedidos.pdf");
