@@ -51,6 +51,23 @@
                     }
                 </MudStack>
             </MudStack>
+            @if (PedidosEmAberto.Any())
+            {
+                <MudStack Class="w-100 p-3 rounded-2 mt-1"  AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                    <MudText>Pedidos Abertos</MudText>
+                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        @{
+                            int ReferenciaDoPedido = 1;
+                            foreach (var pedido in PedidosEmAberto)
+                            {
+                                var referenciaAtual = ReferenciaDoPedido;
+                                <MudChip Value=@pedido OnClose="Closed" OnClick="@(async () => { await AbrirCriacaoDePedido(PedidoAberto: pedido); })" T="ClsPedido" Color="Color.Error" Variant="Variant.Filled" Class="m-1 p-2">Pedido @referenciaAtual</MudChip>
+                                ReferenciaDoPedido++;
+                            }
+                        }
+                    </MudStack>
+                </MudStack>
+            }
 
             @if (CarregandoParteFiscal)
             {
@@ -292,6 +309,9 @@
     private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
     private TiposDePedido FiltroPorTipoDePedido = TiposDePedido.TODOS;
+
+    //Propriedade Para Manter pedidos em aberto
+    private List<ClsPedido> PedidosEmAberto { get; set; } = new List<ClsPedido>();
     #endregion
 
     #region Funções de Enventos de Página
@@ -405,7 +425,7 @@
         }
     }
 
-    private async Task AbrirCriacaoDePedido(TiposDePedido? tipoDePedido = TiposDePedido.BALCAO)
+    private async Task AbrirCriacaoDePedido(TiposDePedido? tipoDePedido = TiposDePedido.BALCAO, ClsPedido? PedidoAberto = null)
     {
         if (AppState.CaixaAberto)
         {
@@ -415,7 +435,27 @@
                  { "Mesa",  new ClsMesasEComandas { Id = 0,CodigoExterno = 0} }
              };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
+            if (PedidoAberto is not null)
+            {
+                parameters.Add("NovoPedido", PedidoAberto);
+                PedidosEmAberto.Remove(PedidoAberto);
+
+
+                if(PedidoAberto.TipoDePedido == "DELIVERY")
+                {
+                    parameters["TiposDePedido"] = TiposDePedido.DELIVERY;
+                }
+                else if (PedidoAberto.TipoDePedido == "BALCÂO")
+                {
+                    parameters["TiposDePedido"] = TiposDePedido.BALCÃO;
+                }
+                else if (PedidoAberto.TipoDePedido == "MESA")
+                {
+                    parameters["TiposDePedido"] = TiposDePedido.MESA;
+                }
+            }
+
+            var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
 
             var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Cadastrar Pedido", parameters, options);
             var result = await dialog.Result;
@@ -426,6 +466,11 @@
                 await CarregarPedidos();
                 await InvokeAsync(StateHasChanged);
                 Carregando = false;
+            }
+            else if (result.Data is ClsPedido Pedido)
+            {
+                PedidosEmAberto.Add(Pedido);
+                StateHasChanged();
             }
 
         }
@@ -448,7 +493,7 @@
     {
         if (AppState.CaixaAberto)
         {
-          
+
             var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
 
             var dialog = await DialogService.ShowAsync<ModalDeInputParaMudancaDeEtapaDoPedidoPorCodBarras>("Código De Barras Para Enviar pedido para Proxima Etapa", options);
@@ -467,6 +512,16 @@
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
             var result = await dialog.Result;
+        }
+    }
+
+    //função de close do chip
+    void Closed(MudChip<ClsPedido> chip)
+    {
+        if (chip.Value is not null)
+        {
+            PedidosEmAberto.Remove(chip.Value);
+            StateHasChanged();
         }
     }
     #endregion
@@ -645,10 +700,7 @@
             CarregandoParteFiscal = true;
 
             var response = await NFService.VerificaStatusServicoNFCe();
-            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
-            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
-
-            Snackbar.Add($"{message}", severity);
+            MostraMensagemDeUpdateDoPedido(response);
         }
         catch (Exception ex)
         {
