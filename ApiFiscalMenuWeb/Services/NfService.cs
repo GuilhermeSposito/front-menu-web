@@ -974,8 +974,8 @@ public class NfService
                     VOutro = ValorOutrosDiluidoPorItem,
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     UTrib = "UN",
-                    QTrib = Convert.ToDecimal(item.Quantidade),
-                    VUnTrib = Convert.ToDecimal(item.PrecoUnitario),
+                    QTrib = qCom,
+                    VUnTrib = (decimal)vProd,
                     IndTot = SimNao.Sim,
                     NItemPed = ContadorItem.ToString()
                 },
