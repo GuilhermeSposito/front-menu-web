@@ -44,16 +44,21 @@
                     </MudSelect>
                 </MudStack>
                 <MudStack Row=true Justify="Justify.FlexStart">
-                    <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
+
+                    <MudTooltip Text="Abre Criação de novo Pedido" Color="Color.Primary">
+                        <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
+                    </MudTooltip>
                     @if (AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
                     {
-                        <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
+                        <MudTooltip Text="Abre Leitor de código de barras para enviar pedido para proxima etapa" Color="Color.Primary">
+                            <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
+                        </MudTooltip>
                     }
                 </MudStack>
             </MudStack>
             @if (PedidosEmAberto.Any())
             {
-                <MudStack Class="w-100 p-3 rounded-2 mt-1"  AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                <MudStack Class="w-100 p-3 rounded-2 mt-1" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
                     <MudText>Pedidos Abertos</MudText>
                     <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
                         @{
@@ -441,7 +446,7 @@
                 PedidosEmAberto.Remove(PedidoAberto);
 
 
-                if(PedidoAberto.TipoDePedido == "DELIVERY")
+                if (PedidoAberto.TipoDePedido == "DELIVERY")
                 {
                     parameters["TiposDePedido"] = TiposDePedido.DELIVERY;
                 }
