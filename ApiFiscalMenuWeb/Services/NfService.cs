@@ -614,13 +614,10 @@ public class NfService
             }
         };
 
-        double VOutros = enNfCeDto.Pedido.TaxaEntregaValor + enNfCeDto.Pedido.AcrescimoValor + enNfCeDto.Pedido.ServicoValor;
 
-        double vProd = detDosProd.Sum(x => (double)x.Prod.VProd);
-        double vFrete = detDosProd.Sum(x => (double)x.Prod.VFrete);
-        double vOutro = detDosProd.Sum(x => (double)x.Prod.VOutro);
-
-        double vNf = Math.Round(vProd + vOutro, 2);
+        double VOutros = detDosProd.Sum(x=> x.Prod.VOutro);
+        double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
+        double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -634,8 +631,8 @@ public class NfService
                 VFCPST = 0.00,
                 VFCPSTRet = 0.00,
                 VBCST = 0.00,
-                VProd = vProd,
-                VFrete = 0.00,
+                VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
+                VFrete = vFrete,
                 VSeg = 0.00,
                 VDesc = 0.00,
                 VII = 0.00,
@@ -643,8 +640,8 @@ public class NfService
                 VIPIDevol = 0.00,
                 VPIS = 0.00,
                 VCOFINS = 0.00,
-                VOutro = vOutro,
-                VNF = vNf,
+                VOutro = VOutros,
+                VNF = ValorNf,
                 VTotTrib = ValorTotalTribNfAtual
             }
         };
