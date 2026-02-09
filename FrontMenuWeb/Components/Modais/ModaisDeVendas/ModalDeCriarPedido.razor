@@ -156,16 +156,15 @@
                                                              Label=@LabelDeCliente
                                                              HelperText="Procure por Cliente (número | nome)"
                                                              SearchFunc="BuscarPessoas"
-                                                             ToStringFunc="@(p =>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
-                                                         MinCharacters="1"
-                                                         Clearable="true"
-                                                         Dense="true"
-                                                         Variant="Variant.Outlined"
-                                                         ShowProgressIndicator="true"
+                                                             ToStringFunc="@(p => { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
+                                                             MinCharacters="1"
+                                                             Clearable="true"
+                                                             Dense="true"
+                                                             Variant="Variant.Outlined"
+                                                             ShowProgressIndicator="true"
                                                          ValueChanged="SelecionarPessoa"
                                                          OnKeyDown="OnKeyDownAutocomplete"
-                                                         >
+                                                              >
 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <NoItemsTemplate>
 
@@ -1164,7 +1163,6 @@
                 Snackbar.Add("Nenhum produto encontrado para adicionar.", Severity.Warning);
         }
     }
-
     #endregion
 
     #region funções do mudAutoComplete

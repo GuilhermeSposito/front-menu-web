@@ -937,6 +937,12 @@ public class NfService
             if(NomeDoProdutoParaNf.Length > 120) 
                 NomeDoProdutoParaNf = NomeDoProdutoParaNf.Substring(0, 120);
 
+            //Somas e arredondamentos
+            decimal qCom = Convert.ToDecimal(item.Quantidade);
+            decimal vUnCom = Math.Round(Convert.ToDecimal(item.PrecoUnitario), 2, MidpointRounding.AwayFromZero);
+
+            double vProd = (double)Math.Round(qCom * vUnCom, 2, MidpointRounding.AwayFromZero);
+
             var Det = new Det
             {
                 NItem = ContadorItem,
@@ -949,9 +955,9 @@ public class NfService
                     CEST = LimparNcmECest(item.Produto.CEST),
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
-                    QCom = Convert.ToDecimal(item.Quantidade),
-                    VUnCom = Convert.ToDecimal(item.PrecoUnitario),
-                    VProd = Convert.ToDouble(item.PrecoTotal),
+                    QCom = qCom,
+                    VUnCom = vUnCom,
+                    VProd = vProd,
                     VFrete = ValorFreteDiluidoPorItem,
                     VOutro = ValorOutrosDiluidoPorItem,
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
