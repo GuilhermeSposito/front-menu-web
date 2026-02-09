@@ -927,6 +927,8 @@ public class NfService
             var valorTotalTrib = await _ibptServices.GetIBPTValor
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);
 
+            Console.WriteLine($"Valor total do tributo: {valorTotalTrib}");
+
             ValorTotalTribNfAtual += valorTotalTrib;
 
             string NomeDoProdutoParaNf = tipoAmbiente == TipoAmbiente.Producao ? item.Produto.Descricao.Trim() : "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL";
