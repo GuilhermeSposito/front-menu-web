@@ -353,7 +353,7 @@
 
         while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
         {
-            await Task.Delay(600, token);
+            await Task.Delay(100, token);
             ProgressoFiscal += Random.Shared.Next(2, 6);
             ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
             await InvokeAsync(StateHasChanged);
