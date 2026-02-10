@@ -95,21 +95,10 @@
                 <TemplateColumn T="NFEmitidasDto" Title="Ações">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para mais" Color="Color.Primary">
-                            <MudMenu Dense
-                                     Variant="Variant.Text"
-                                     Size="Size.Medium"
-                                     Color="Color.Inherit"
-                                     Icon="@Icons.Material.TwoTone.MoreVert">
+                            <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                                <MudMenuItem OnClick=@(async () => { await ReimprimirNF(context.Item); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
 
-                                <MudTooltip Text="Clique para Cancelar a NF" Color="Color.Error">
-                                    <MudIconButton OnClick=@(async p => { await DeletaRegistro(context.Item); }) Icon="@Icons.Material.Filled.Delete"
-                                                   Color="Color.Error" />
-                                </MudTooltip>
-
-                                <MudTooltip Text="Clique Reimprimir a NF" Color="Color.Error">
-                                    <MudIconButton OnClick=@(async p => { await ReimprimirNF(context.Item); }) Icon="@Icons.Material.Filled.ReceiptLong"
-                                                   Color="Color.Success" />
-                                </MudTooltip>
+                                <MudMenuItem OnClick=@(async () => { await DeletaRegistro(context.Item); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
 
                             </MudMenu>
                         </MudTooltip>
@@ -118,7 +107,7 @@
 
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="NFEmitidasDto" RowsPerPageString="NF's por página" ShowPageNumber="false" PageSizeOptions=@(new int[] { 20, 30, 500, 600, 1000,3000 }) />
+                <MudDataGridPager T="NFEmitidasDto" RowsPerPageString="NF's por página" ShowPageNumber="false" PageSizeOptions=@(new int[] { 20, 30, 500, 600, 1000, 3000 }) />
             </PagerContent>
         </MudDataGrid>
 
@@ -331,7 +320,7 @@
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                var optionsInputText = new DialogOptions { CloseButton = true, FullScreen=true, FullWidth = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true };
+                var optionsInputText = new DialogOptions { CloseButton = true, FullScreen = true, FullWidth = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true };
                 var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Motivo", parameters, options);
                 var Motivo = await dialogInputText.Result;
                 if (!Motivo!.Canceled || string.IsNullOrWhiteSpace(Motivo.Data?.ToString()))
@@ -362,7 +351,7 @@
     }
 
     private async Task ReimprimirNF(NFEmitidasDto registro)
-    {  
+    {
         await JS.InvokeVoidAsync("baixarXMLNF", registro.XmlDistribuicao, $"{registro.ChaveNf}-procnfe-copia.xml");
     }
     #endregion
