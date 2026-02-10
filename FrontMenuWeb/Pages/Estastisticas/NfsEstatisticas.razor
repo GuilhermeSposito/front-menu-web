@@ -102,8 +102,6 @@
                                      Color="Color.Inherit"
                                      Icon="@Icons.Material.TwoTone.MoreVert">
 
-
-
                                 <MudTooltip Text="Clique para Cancelar a NF" Color="Color.Error">
                                     <MudIconButton OnClick=@(async p => { await DeletaRegistro(context.Item); }) Icon="@Icons.Material.Filled.Delete"
                                                    Color="Color.Error" />
@@ -111,7 +109,7 @@
 
                                 <MudTooltip Text="Clique Reimprimir a NF" Color="Color.Error">
                                     <MudIconButton OnClick=@(async p => { await ReimprimirNF(context.Item); }) Icon="@Icons.Material.Filled.ReceiptLong"
-                                                   Color="Color.Error" />
+                                                   Color="Color.Success" />
                                 </MudTooltip>
 
                             </MudMenu>

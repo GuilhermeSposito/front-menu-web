@@ -140,7 +140,7 @@ public partial class PaginaInicial : Form
             !e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
             Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
         {
-            await Task.Delay(500);
+            await Task.Delay(100);
             try
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
@@ -195,7 +195,7 @@ public partial class PaginaInicial : Form
         if (e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
                Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
         {
-            await Task.Delay(500); // espera terminar o download
+            await Task.Delay(100); // espera terminar o download
             try
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
@@ -325,16 +325,9 @@ public partial class PaginaInicial : Form
                     var CaminhoDeSalvamentoDaNfe = @"C:\ArqNfe\Autorizadas";
                     var CaminhoSalvamentoDoJson = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
-                    if (!e.Name.Contains("-copia"))
+                    if (config is not null)
                     {
-                        if (config is not null)
-                        {
-                            CaminhoDeSalvamentoDaNfe = config.CaminhoSalvamentoDasNfe ?? CaminhoDeSalvamentoDaNfe;
-                        }
-                    }
-                    else
-                    {
-                        CaminhoDeSalvamentoDaNfe = config?.CaminhoSalvamentoDoJson ?? CaminhoSalvamentoDoJson;
+                        CaminhoDeSalvamentoDaNfe = config.CaminhoSalvamentoDasNfe ?? CaminhoDeSalvamentoDaNfe;
                     }
 
                     string mesAno = DateTime.Now.ToString("MM-yyyy");
@@ -353,6 +346,11 @@ public partial class PaginaInicial : Form
                     File.Move(e.FullPath, destinoArquivo);
 
                     _impressaoService.ImprimeDANFE(destinoArquivo);
+
+                    if (e.Name.Contains("-copia"))
+                    {
+                        File.Delete(destinoArquivo);
+                    }
                 }
             }
             catch (Exception ex)
