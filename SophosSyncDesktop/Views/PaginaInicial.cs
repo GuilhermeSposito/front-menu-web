@@ -308,14 +308,14 @@ public partial class PaginaInicial : Form
         {
             Console.Write(ex.ToString());
         }
-       
+
     }
     private async void OnWatcherRenamedNfes(object sender, RenamedEventArgs e)
     {
         if (e.Name.Contains("-procnfe", StringComparison.OrdinalIgnoreCase) &&
        Path.GetExtension(e.FullPath).Equals(".xml", StringComparison.OrdinalIgnoreCase))
         {
-            await Task.Delay(500);
+            await Task.Delay(100);
             try
             {
                 using (AppDbContext db = new AppDbContext())
@@ -323,10 +323,18 @@ public partial class PaginaInicial : Form
                     var config = db.Impressoras.FirstOrDefault();
 
                     var CaminhoDeSalvamentoDaNfe = @"C:\ArqNfe\Autorizadas";
+                    var CaminhoSalvamentoDoJson = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 
-                    if (config is not null)
+                    if (!e.Name.Contains("-copia"))
                     {
-                        CaminhoDeSalvamentoDaNfe = config.CaminhoSalvamentoDasNfe ?? CaminhoDeSalvamentoDaNfe;
+                        if (config is not null)
+                        {
+                            CaminhoDeSalvamentoDaNfe = config.CaminhoSalvamentoDasNfe ?? CaminhoDeSalvamentoDaNfe;
+                        }
+                    }
+                    else
+                    {
+                        CaminhoDeSalvamentoDaNfe = config?.CaminhoSalvamentoDoJson ?? CaminhoSalvamentoDoJson;
                     }
 
                     string mesAno = DateTime.Now.ToString("MM-yyyy");
