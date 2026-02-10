@@ -28,6 +28,28 @@
             </MudStack>
         </MudStack>
 
+        <MudStack Class="p-2 w-100 mt-2" Row=false>
+            <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
+                <MudTabPanel Text="Mês Passado" />
+                <MudTabPanel Text="Semana Passada" />
+                <MudTabPanel Text="Hoje" />
+                <MudTabPanel Text="Esta Semana" />
+                <MudTabPanel Text="Semana Que Vem" />
+                <MudTabPanel Text="Este Mês" />
+            </MudTabs>
+
+            <MudStack Row=true>
+                <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
+                <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
+                @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
+                }
+            </MudStack>
+
+        </MudStack>
+
         <MudDataGrid T="NFEmitidasDto"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
@@ -40,29 +62,6 @@
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="NF-e NFC-e" />
             </NoRecordsContent>
-            <ToolBarContent>
-                <MudStack Class="p-2 w-100" Row=false>
-                    <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
-                        <MudTabPanel Text="Mês Passado" />
-                        <MudTabPanel Text="Semana Passada" />
-                        <MudTabPanel Text="Hoje" />
-                        <MudTabPanel Text="Esta Semana" />
-                        <MudTabPanel Text="Semana Que Vem" />
-                        <MudTabPanel Text="Este Mês" />
-                    </MudTabs>
-
-                    <MudStack Row=true>
-                        <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
-                        <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
-                        @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
-                        {
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
-                        }
-                    </MudStack>
-                  
-                </MudStack>
-            </ToolBarContent>
             <Columns>
                 <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
                 <TemplateColumn T="NFEmitidasDto" Title="Tipo">

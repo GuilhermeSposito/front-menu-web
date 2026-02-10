@@ -20,6 +20,7 @@ using Unimake.Business.DFe.Servicos;
 using Unimake.Business.DFe.Servicos.NFe;
 using Unimake.Business.DFe.Xml.EFDReinf;
 using Unimake.Business.DFe.Xml.ESocial;
+using Unimake.Business.DFe.Xml.GNRE;
 using Unimake.Business.DFe.Xml.NFe;
 using Unimake.Business.Security;
 
@@ -45,30 +46,42 @@ public class NfService
     /// Recupera os dados do Merchant na Nest API
     public async Task<ClsMerchant?> GetMerchantFromNestApi(string token)
     {
-        var client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, token);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
-
-        HttpResponseMessage response;
-
         try
         {
-            response = await client.GetAsync("merchants/details", cts.Token);
+            var client = _factory.CreateClient("ApiAutorizada");
+            AdicionaTokenNaRequisicao(client, token);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await client.GetAsync("merchants/details", cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
+
+            return merchant;
         }
-        catch (OperationCanceledException)
+        catch (TaskCanceledException ex)
         {
             throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
         }
+        catch (Exception ex)
+        {
+          return null;
+        }
 
-        var content = await response.Content.ReadAsStringAsync(cts.Token);
-
-        if (!response.IsSuccessStatusCode)
-            return null;
-
-        var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
-
-        return merchant;
     }
 
     public async Task<bool> AtualizaMerchantInNestApi(string token, ClsMerchant UpdatedMerchant)
@@ -614,8 +627,6 @@ public class NfService
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
         double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
-
-        Console.WriteLine($"VALOR NF {ValorNf}");
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total

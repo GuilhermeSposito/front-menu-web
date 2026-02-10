@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using FrontMenuWeb.Models;
+using System.Text.Json.Serialization;
 
 namespace ApiFiscalMenuWeb.Services;
 
@@ -16,27 +17,23 @@ public class IBPTServices
     {
         try
         {
-            var client = _factory.CreateClient("ApiIBPT");
+            var client = _factory.CreateClient("ApiAutorizada");
 
-            var response = await client.GetAsync($"?token=VROoQxeyOD4wBqTS6neLweOUlkCajSf4j9uInykJRFORUrvYBDBkhpd1lrJ5gKVG&" +
-                $"cnpj={cnpj}&" +
+            var response = await client.GetAsync($"produtos/ibpt?"  +
                 $"codigo={ncm}&" +
-                $"uf={uf}&" +
-                $"ex=0&" +
-                $"descricao={Uri.EscapeDataString(descricao)}&" +
-                $"unidadeMedida=UN&" +
-                $"valor={valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}&" +
-                $"gtin={gtin}");
+                $"valor={valor.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
             if (!response.IsSuccessStatusCode)
-                return valor * 0.30f;
+                return valor * 0.26f;
 
             var content = await response.Content.ReadAsStringAsync();
-            var ibptResponse = System.Text.Json.JsonSerializer.Deserialize<IBPTResponse>(content);
+            var ibptResponse = System.Text.Json.JsonSerializer.Deserialize<ReturnApiRefatored<IBPTResponse>>(content);
 
-            float VTotalTrib = ibptResponse!.ValorTributoNacional +
-                              ibptResponse.ValorTributoEstadual +
-                              ibptResponse.ValorTributoMunicipal;
+            float VTotalTrib = ibptResponse!.Data.Objeto!.ValorTributoNacional +
+                              ibptResponse.Data.Objeto!.ValorTributoEstadual +
+                              ibptResponse.Data.Objeto!.ValorTributoMunicipal;
+
+            Console.WriteLine($"VTOTALTRIB: {VTotalTrib}");
 
             return VTotalTrib;
         }
@@ -44,12 +41,12 @@ public class IBPTServices
         {
             // Timeout ou cancelamento
             Console.WriteLine("Timeout/cancelado de IBPT: " + ex.Message);
-            return valor * 0.30f;
+            return valor * 0.26f;
         }
         catch (Exception ex)
         {
             Console.WriteLine("Erro geral de IBPT: " + ex.Message);
-            return valor * 0.30f;
+            return valor * 0.26f;
         }
 
     }

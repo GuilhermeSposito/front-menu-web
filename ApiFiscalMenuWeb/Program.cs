@@ -24,12 +24,13 @@ string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
     client.BaseAddress = new Uri(UrlSophos); //new Uri("https://localhost:3030");//
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {
     client.BaseAddress = new Uri(UrlIBPT); //new Uri("https://localhost:3030");//
-    client.Timeout = TimeSpan.FromSeconds(1);
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.AddControllers(option =>
