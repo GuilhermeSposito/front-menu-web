@@ -300,13 +300,13 @@ public class NfService
             case 303: //Uso denegado> destinatario na lista de bloqueio
                 var ProcNfe = autorizacao.NfeProcResult.GerarXML();
                 XmlDeDistribuicao = ProcNfe.OuterXml;
+                bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
                 break;
             default:
                 break;
         }
 
         var NmrProtocolo = autorizacao.Result.ProtNFe.InfProt.NProt;
-        bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
 
         var DataToReturn = new NfeReturnDto
         {
@@ -397,13 +397,13 @@ public class NfService
             case 303: //Uso denegado> destinatario na lista de bloqueio
                 var ProcNfe = autorizacao.NfeProcResult.GerarXML();
                 XmlDeDistribuicao = ProcNfe.OuterXml;
+                bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
                 break;
             default:
                 break;
         }
 
         var NmrProtocolo = autorizacao.Result.ProtNFe.InfProt.NProt;
-        bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
 
         var DataToReturn = new NfeReturnDto
         {

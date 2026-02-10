@@ -51,8 +51,9 @@ public class NfService : INfService
     {
         var httpResponse = await _http.PostAsJsonAsync("nf/enviar-nfce", envNFCeDto);
 
-        if (!httpResponse.IsSuccessStatusCode)
+        /*if (!httpResponse.IsSuccessStatusCode)
             return new ReturnApiRefatored<NfeReturnDto>() { Status = "error", Messages = new List<string> { "Erro ao enviar NFC-e"} } ;
+        */
 
         var content = await httpResponse.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<ReturnApiRefatored<NfeReturnDto>>(content);
