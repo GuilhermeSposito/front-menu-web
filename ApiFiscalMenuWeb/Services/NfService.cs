@@ -725,10 +725,10 @@ public class NfService
                         XLgr = Destinatario.Endereco?.Rua,
                         Nro = Destinatario.Endereco?.Numero,
                         XBairro = Destinatario.Endereco?.Bairro,
-                        CMun = enderecoMerchant.Cidade.NumCidade,
+                        CMun = enderecoMerchant!.Cidade.NumCidade,
                         XMun = enderecoMerchant.Cidade.Descricao,
                         UF = UFBrasil.SP,
-                        CEP = Destinatario.Endereco?.Cep,
+                        CEP = LimparCnpj(Destinatario.Endereco?.Cep),
                     },
                     IndIEDest = IndicadorIEDestinatario.ContribuinteICMS,
 
@@ -853,7 +853,7 @@ public class NfService
                                     {
                                         QVol = 1,
                                         Esp = "Caixa",
-                                        Marca = "Marca Teste",
+                                        Marca = "Sem Marca",
                                         NVol = "0",
                                     }
                                 }
@@ -1218,8 +1218,13 @@ public class NfService
         return CertificadoSelecionado;
     }
 
-    public static string LimparCnpj(string cnpj)
+    public static string LimparCnpj(string? cnpj)
     {
+        if(cnpj is null)
+        {
+            return string.Empty;
+        }
+
         return new string(cnpj.Where(char.IsDigit).ToArray());
     }
 
