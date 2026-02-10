@@ -962,10 +962,12 @@ public class NfService
                 NomeDoProdutoParaNf = NomeDoProdutoParaNf.Substring(0, 120);
 
             //Somas e arredondamentos
-            decimal qCom = Convert.ToDecimal(item.Quantidade);
-            decimal vUnCom = Math.Round(Convert.ToDecimal(item.PrecoTotal), 2, MidpointRounding.AwayFromZero);
+            decimal ValorUnitarioDoProduto = (decimal)(item.PrecoTotal / item.Quantidade);
 
-            double vProd = (double)Math.Round(qCom * vUnCom, 2, MidpointRounding.AwayFromZero);
+            decimal QuantidadeComercial = Convert.ToDecimal(item.Quantidade);
+            decimal ValorUnitarioDaComercializacao = Math.Round(ValorUnitarioDoProduto, 2, MidpointRounding.AwayFromZero);
+            double ValorProduto = (double)Math.Round(QuantidadeComercial * ValorUnitarioDaComercializacao, 2, MidpointRounding.AwayFromZero);
+
 
             var Det = new Det
             {
@@ -979,15 +981,15 @@ public class NfService
                     CEST = LimparNcmECest(item.Produto.CEST),
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
-                    QCom = qCom,
-                    VUnCom = vUnCom,
-                    VProd = vProd,
+                    QCom = QuantidadeComercial,
+                    VUnCom = ValorUnitarioDaComercializacao,
+                    VProd = ValorProduto,
                     VFrete = ValorFreteDiluidoPorItem,
                     VOutro = ValorOutrosDiluidoPorItem,
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     UTrib = "UN",
-                    QTrib = qCom,
-                    VUnTrib = (decimal)vProd,
+                    QTrib = QuantidadeComercial,
+                    VUnTrib = ValorUnitarioDoProduto,
                     IndTot = SimNao.Sim,
                     NItemPed = ContadorItem.ToString()
                 },
