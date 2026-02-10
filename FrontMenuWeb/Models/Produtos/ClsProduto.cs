@@ -37,11 +37,11 @@ public class ClsProduto
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
     [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
-    [JsonPropertyName("csosn")] public string? csosn { get; set; }
+    [JsonPropertyName("csosn")] public string? csosn { get; set; } = "102";
     [JsonPropertyName("aliquota")] public ClsAliquota Aliquota { get; set; } = new ClsAliquota();
     [JsonPropertyName("aliquota_id")] public int AliquotaId { get; set; }
-    [JsonPropertyName("origem_produto")] public string? OrigemProduto { get; set; }
-    [JsonPropertyName("trib_pis_confins")] public string? TribPisCofins { get; set; }
+    [JsonPropertyName("origem_produto")] public string? OrigemProduto { get; set; } = "0";
+    [JsonPropertyName("trib_pis_confins")] public string? TribPisCofins { get; set; } = "49";
     [JsonIgnore] public Preco PrecoSelecionado = new Preco();
 
     [JsonPropertyName("QtdEmEstoque")] public float QtdEmEstoque { get; set; }

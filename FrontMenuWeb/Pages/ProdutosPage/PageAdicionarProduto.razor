@@ -1,6 +1,7 @@
 ﻿@page "/adicionarproduto/{idDeProdutoReaproveitado}"
 @page "/adicionarproduto"
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Models.Fiscal
 @using FrontMenuWeb.Services
 @using System.Globalization
 @inject ProdutoService ProdutoService
@@ -443,42 +444,72 @@
 
                             <MudGrid Class="d-flex align-items-stretch">
                                 <MudItem xs="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudTextField @bind-Value=@Produto.NCM Disabled="false" Class="w-25 m-2" Label="NCM" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-                                        <MudTextField @bind-Value=@Produto.CEST Class="w-75 m-2" Label="CEST" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                    <MudPaper Class="d-flex align-center justify-center w-100 py-8">
+                                        <MudStack Row=true Justify=Justify.FlexStart AlignItems=AlignItems.Start Class="d-flex align-center w-100">
+                                            <MudTextField T="string" Value=Produto.NCM ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense"/>
+
+                                            <MudStack Class="w-75" AlignItems="AlignItems.Stretch" Justify="Justify.FlexEnd">
+                                                <MudSelect T="Cest" Class="w-100" Variant=Variant.Filled Value="CestSelecionado" Clearable=true ValueChanged="OnCestChanged">
+                                                    @if (ListaDeCests == null || !ListaDeCests.Any())
+                                                    {
+                                                        <MudSelectItem Disabled="true" Value="@(default(Cest))">
+                                                            Nenhum CEST encontrado
+                                                        </MudSelectItem>
+                                                    }
+
+                                                    @foreach (var cest in ListaDeCests)
+                                                    {
+
+                                                        <MudSelectItem Value="@cest">@cest.CestReferente - @cest.Descricao</MudSelectItem>
+                                                    }
+
+                                                </MudSelect>
+                                                <MudStack Class="w-75" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                                                    <MudButton OnClick="IrParaProximaAba" Color="Color.Primary" Class="mt-4">Inserir CEST manual</MudButton>
+                                                </MudStack>
+                                            </MudStack>
+
+                                        </MudStack>
                                     </MudPaper>
                                 </MudItem>
 
 
                                 <MudItem xs="12">
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="Produto.CSOSNSelected"
-                                                   T="CSOSN"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="CSOSN"
-                                                   Placeholder="Defina o CSOSN">
+                                    @if (AppState.MerchantLogado.CrtMerchant == 1)
+                                    {
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="Produto.CSOSNSelected"
+                                                       T="CSOSN"
+                                                       Class="m-3"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="CSOSN"
+                                                       Placeholder="Defina o CSOSN"
+                                                       Variant="Variant.Filled">
 
-                                            @foreach (var CSOCN in ListaDeCSOSN)
-                                            {
-                                                <MudSelectItem Value="@CSOCN">@CSOCN.Id - @CSOCN.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
-                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                        <MudSelect @bind-Value="Produto.CSTSelected"
-                                                   T="CST"
-                                                   Class="m-3"
-                                                   ToStringFunc="g=> g.Descricao"
-                                                   Label="CST"
-                                                   Placeholder="Defina o CST">
+                                                @foreach (var CSOCN in ListaDeCSOSN)
+                                                {
+                                                    <MudSelectItem Value="@CSOCN">@CSOCN.Id - @CSOCN.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    }
+                                    else
+                                    {
+                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                            <MudSelect @bind-Value="Produto.CSTSelected"
+                                                       T="CST"
+                                                       Class="m-3"
+                                                       ToStringFunc="g=> g.Descricao"
+                                                       Label="CST"
+                                                       Placeholder="Defina o CST" Variant="Variant.Filled">
 
-                                            @foreach (var CST in ListaDeCSTS)
-                                            {
-                                                <MudSelectItem Value="@CST">@CST.Id - @CST.Descricao</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudPaper>
+                                                @foreach (var CST in ListaDeCSTS)
+                                                {
+                                                    <MudSelectItem Value="@CST">@CST.Id - @CST.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudPaper>
+                                    }
 
                                 </MudItem>
 
@@ -492,7 +523,7 @@
                                                    HelperText="Aliquota"
                                                    Placeholder="Escolha a alíquota correspondente"
                                                    AdornmentIcon="@Icons.Material.Filled.Percent"
-                                                   AdornmentColor="Color.Success">
+                                                   AdornmentColor="Color.Success" Variant="Variant.Filled">
 
                                             @foreach (var Aliquota in ListaDeAliquotas)
                                             {
@@ -514,7 +545,7 @@
                                                    Class="m-2"
                                                    ClearIcon="@Icons.Material.Filled.Close"
                                                    Clearable="true"
-                                                   FitContent="false">
+                                                   FitContent="false" Variant="Variant.Filled">
 
 
                                             @foreach (var tibPisCOnfins in ListaDeTibPisCOnfins)
@@ -537,7 +568,8 @@
                                                    Class="m-2"
                                                    ClearIcon="@Icons.Material.Filled.Close"
                                                    Clearable="true"
-                                                   FitContent="false">
+                                                   FitContent="false"
+                                                   Variant="Variant.Filled">
 
 
                                             @foreach (var origemProd in ListaDeOrigemDoProdutos)
@@ -635,6 +667,39 @@
     public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
     public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
 
+    public List<Cest> ListaDeCests { get; set; } = new List<Cest>();
+    private Cest? CestSelecionado;
+
+    private void OnCestChanged(Cest? cest)
+    {
+        CestSelecionado = cest;
+        Produto.CEST = cest?.CestReferente ?? string.Empty; // Atualiza o campo CEST do produto com o valor selecionado
+    }
+
+    private async Task MudouValorNcm(string novoValor)
+    {
+        Produto.NCM = novoValor;
+        if (Produto.NCM.Length <= 8)
+        {
+            try
+            {
+                var resposta = await ProdutoService.GetCestsAsync(Produto.NCM);
+                MostraMensagem(resposta);
+
+                if (resposta.Status != "error")
+                    ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+            }
+            catch (Exception ex)
+            {
+                ExibeErro($"Erro ao obter o CEST: {ex.Message}");
+            }
+        }
+        else
+        {
+            Produto.CEST = string.Empty; // Limpa o campo de CEST se o NCM não tiver 8 dígitos
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -726,6 +791,20 @@
             {
                 Produto.TribPisCofinsSelected = new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
 
+            }
+
+            if (!string.IsNullOrEmpty(Produto.NCM))
+            {
+                var resposta = await ProdutoService.GetCestsAsync(Produto.NCM);
+                MostraMensagem(resposta);
+
+                if (resposta.Status != "error")
+                    ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+
+                if (Produto.CEST is not null)
+                {
+                    CestSelecionado = ListaDeCests.FirstOrDefault(c => c.CestReferente == Produto.CEST);
+                }
             }
 
             if (Produto.ImpressoraComanda1 is null)
@@ -862,6 +941,18 @@
         Snackbar.Add(mensagemDeErro, Severity.Error);
     }
 
+    private void MostraMensagem<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
 
     private void IrParaProximaAba()
     {

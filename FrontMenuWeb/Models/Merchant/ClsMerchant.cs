@@ -72,6 +72,7 @@ public class ClsMerchant
     [JsonPropertyName("PerguntaImpressaPdv")] public bool PerguntaImpressaPdv { get; set; }
     [JsonPropertyName("ControlaEstoque")] public bool ControlaEstoque { get; set; }
     [JsonPropertyName("UsaCodigoDeBarrasParAProximaEtapa")] public bool UsaCodigoDeBarrasParAProximaEtapa { get; set; }
+    [JsonPropertyName("ImprimeHorarioLimiteNoPedido")] public bool ImprimeHorarioLimiteNoPedido { get; set; }
 }
 
 

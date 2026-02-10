@@ -1,5 +1,6 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Fiscal;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +35,16 @@ public class ProdutoService
         return response;
     }
 
+    public async Task<ReturnApiRefatored<Cest>> GetCestsAsync(string ncm)
+    {
+        HttpResponseMessage response = await _http.GetAsync($"produtos/cest?codigo={ncm}");
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+        ReturnApiRefatored<Cest>? deserializedResponse = JsonSerializer.Deserialize<ReturnApiRefatored<Cest>>(responseContent);
+
+        return deserializedResponse ?? new ReturnApiRefatored<Cest> { Status = "error", Messages = new List<string> { "Erro ao obter Cest" } };
+    }
+
     public async Task<ClsProduto> GetProdutoAsync(string ProdutoID)
     {
         ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/{ProdutoID}") ?? new ClsProduto();
@@ -50,7 +61,7 @@ public class ProdutoService
         return response!;
     }
 
-    public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaPublicAsync(string MerchantId ,int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
+    public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaPublicAsync(string MerchantId, int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
     {
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsProduto>>(
            $"produtos/pagination/public/{MerchantId}?page={page}&limit={pageSize}&descricao={pesquisaNome}&grupo={pesquisaDeGrupo}");

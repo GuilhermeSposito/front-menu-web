@@ -348,8 +348,10 @@ public class ImpressaoService
                 EntregarAté = pedido.CriadoEm.AddMinutes((double?)AppState.MerchantLogado?.TempoDeRetiradaEMmin ?? 0);
             }
         }
-
-        AdicionaConteudo(Conteudo, $"Entregar até as {EntregarAté:t}", FonteDetalhesDoPedido);
+        if (AppState.MerchantLogado is null || !AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
+        {
+            AdicionaConteudo(Conteudo, $"Entregar até as {EntregarAté:t}", FonteDetalhesDoPedido);
+        }
         AdicionaConteudo(Conteudo, $"Pedido {pedido.TipoDePedido}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
@@ -456,8 +458,11 @@ public class ImpressaoService
         }
 
 
-        AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        if (AppState.MerchantLogado is null || !AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
+        {
+            AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
 
         //------------------------------------------------------------------------------------------
 
