@@ -139,7 +139,9 @@ public class CaixaEPagamentosService
 
         string json = await response.Content.ReadAsStringAsync();
 
-        Console.WriteLine( json );
+        Console.WriteLine("STATUS: " + response.StatusCode);
+        Console.WriteLine("CONTENT-TYPE: " + response.Content.Headers.ContentType);
+        Console.WriteLine(json);
 
         var retorno = JsonSerializer.Deserialize<PaginatedResponse<Caixa>>(json);
 
