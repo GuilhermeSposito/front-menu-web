@@ -129,7 +129,7 @@ public class CaixaEPagamentosService
         if (queryDto.DataFechadoEmFinal.HasValue)
             queryParams.Add($"DataFechadoEmFinal={queryDto.DataFechadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}");
 
-        var url = "/caixas/fechados";
+        var url = "caixas/fechados";
 
         if (queryParams.Count > 0)
             url += "?" + string.Join("&", queryParams);
