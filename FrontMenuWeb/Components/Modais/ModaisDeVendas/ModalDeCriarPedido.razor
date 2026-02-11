@@ -69,7 +69,7 @@
                     <MudPaper Class="h-100 rounded-3 p-1" Style="background-color: var(--mud-palette-surface);border: 3px dashed var(--mud-palette-primary); overflow-y: auto" Elevation="4">
                         <MudStack Class="w-100 h-100">
                             <MudStack Class="w-100">
-                                <MudTextField @ref=TextFieldProd Value=PesquisaDeProduto @onkeydown="OnKeyDownProdutos" ValueChanged=OnPesquisaChanged Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                                <MudTextField @ref=TextFieldProd Value=PesquisaDeProduto @onkeydown="OnKeyDownProdutos" ValueChanged=OnPesquisaChanged Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary DebounceInterval="280"></MudTextField>
                             </MudStack>
                             <MudStack Class="w-100 h-100" Style="overflow-y:auto">
                                 @if (CarregandoProduto)
