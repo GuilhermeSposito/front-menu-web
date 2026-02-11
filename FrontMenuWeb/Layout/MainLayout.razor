@@ -181,6 +181,7 @@
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/nfs-estatisticas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">NF-e NFC-e Emitidas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/vendas/historico-de-vendas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Vendas Realizadas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixas-fechados", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Caixas Fechados</MudNavLink>
                     </MudNavGroup>
 
                     <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">
@@ -225,13 +226,13 @@
     #region Funções de WebSocket
     private async Task Connect()
     {
-      //  await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
+        //  await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
     }
-   
+
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
         await InvokeAsync(StateHasChanged);
-        
+
         await JS.InvokeVoidAsync("playNotificationSound");
     }
     #endregion
@@ -289,7 +290,7 @@
             }
 
             await AtualizaStatusDoCaixa();
-            
+
 
             PedidosService.PedidoRecebido += async pedido =>
              {
@@ -307,10 +308,10 @@
         }
         catch (Exception)
         {
-            
+
             Snackbar.Add("Ocorreu um erro ao carregar as preferências do tema ou o status do caixa. As configurações padrão serão usadas.", Severity.Error);
         }
-        
+
     }
 
     private async Task AlteraImpressaoDesabilita()

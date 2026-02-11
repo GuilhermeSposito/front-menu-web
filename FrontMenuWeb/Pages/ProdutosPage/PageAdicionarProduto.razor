@@ -445,12 +445,12 @@
                             <MudGrid Class="d-flex align-items-stretch">
                                 <MudItem xs="12">
                                     <MudPaper Class="d-flex align-center justify-center w-100 py-8">
-                                        <MudStack Row=true Justify=Justify.FlexStart AlignItems=AlignItems.Start Class="d-flex align-center w-100">
-                                            <MudTextField T="string" Value=Produto.NCM ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense"/>
+                                        <MudStack Row=true Justify=Justify.FlexStart AlignItems=AlignItems.Start Class="w-100">
+                                            <MudTextField T="string" Value=Produto.NCM DebounceInterval="100" ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense"/>
 
                                             <MudStack Class="w-75" AlignItems="AlignItems.Stretch" Justify="Justify.FlexEnd">
-                                                <MudSelect T="Cest" Class="w-100" Variant=Variant.Filled Value="CestSelecionado" Clearable=true ValueChanged="OnCestChanged">
-                                                    @if (ListaDeCests == null || !ListaDeCests.Any())
+                                                <MudSelect T="Cest" Class="w-100" Label="CEST" Variant=Variant.Filled Value="CestSelecionado" Clearable=true ValueChanged="OnCestChanged">
+                                                    @if (!ListaDeCests.Any())
                                                     {
                                                         <MudSelectItem Disabled="true" Value="@(default(Cest))">
                                                             Nenhum CEST encontrado
@@ -465,8 +465,13 @@
 
                                                 </MudSelect>
                                                 <MudStack Class="w-75" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
-                                                    <MudButton OnClick="IrParaProximaAba" Color="Color.Primary" Class="mt-4">Inserir CEST manual</MudButton>
+                                                    <MudButton OnClick="@(()=> {InsereuCestManualmente = !InsereuCestManualmente;})" Color="Color.Primary" Class="mt-4">Inserir CEST manual</MudButton>
                                                 </MudStack>
+                                                @if (InsereuCestManualmente)
+                                                {
+                                                    <MudTextField T="string" @bind-Value=@Produto.CEST Disabled="false" Class="w-100 m-2" Label="CEST Manual" Variant="Variant.Filled" Margin="Margin.Dense" />
+
+                                                }
                                             </MudStack>
 
                                         </MudStack>
@@ -669,10 +674,12 @@
 
     public List<Cest> ListaDeCests { get; set; } = new List<Cest>();
     private Cest? CestSelecionado;
+    private bool InsereuCestManualmente = false;
 
     private void OnCestChanged(Cest? cest)
     {
         CestSelecionado = cest;
+        StateHasChanged();
         Produto.CEST = cest?.CestReferente ?? string.Empty; // Atualiza o campo CEST do produto com o valor selecionado
     }
 
@@ -688,6 +695,11 @@
 
                 if (resposta.Status != "error")
                     ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+
+                if(ListaDeCests is not null && ListaDeCests.Count == 1)
+                {
+                    OnCestChanged(ListaDeCests.First());
+                }
             }
             catch (Exception ex)
             {

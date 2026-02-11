@@ -458,10 +458,16 @@ public class ImpressaoService
         }
 
 
-        if (AppState.MerchantLogado is null || !AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
+        if (AppState.MerchantLogado is null || AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
         {
             AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
+
+        if (!string.IsNullOrEmpty(pedido.ObservacaoDoPedido))
+        {
+            AdicionaConteudo(Conteudo, $"OBS: {pedido.ObservacaoDoPedido}", FonteInfosPagamento, eObs: true);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         }
 
         //------------------------------------------------------------------------------------------
@@ -542,16 +548,11 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"TOTAL DA CONTA .  : {pedido.ValorTotal:F2}", FonteTotaisNovo);
 
         //------------------------------------------------------------------------------------------
-        if (!string.IsNullOrEmpty(pedido.ObservacaoDoPedido))
-        {
-            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-            AdicionaConteudo(Conteudo, $"OBS: {pedido.ObservacaoDoPedido}", FonteInfosPagamento);
-            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        }
-        else
-        {
+       
+
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        }
+        
+        
 
         foreach (var pagamento in pedido.Pagamentos)
         {

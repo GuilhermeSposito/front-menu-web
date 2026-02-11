@@ -28,7 +28,7 @@
             </MudStack>
         </MudStack>
 
-        <MudStack Class="p-2 w-100 mt-2" Row=false>
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
                 <MudTabPanel Text="Mês Passado" />
                 <MudTabPanel Text="Semana Passada" />
@@ -38,7 +38,7 @@
                 <MudTabPanel Text="Este Mês" />
             </MudTabs>
 
-            <MudStack Row=true>
+            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
                 <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
                 <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>

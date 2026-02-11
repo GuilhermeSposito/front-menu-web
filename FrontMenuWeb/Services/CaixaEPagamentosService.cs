@@ -2,6 +2,7 @@
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Financeiro;
 using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Models.Vendas;
 using SocketIO.Core;
 using System.Net.Http.Json;
@@ -115,5 +116,34 @@ public class CaixaEPagamentosService
         };
     }
 
+    public async Task<PaginatedResponse<Caixa>> GetCaixasFechadosAsync(QueryCaixasDto queryDto)
+    {
+        var queryParams = new List<string>();
+
+        queryParams.Add($"limit={queryDto.Limit}");
+        queryParams.Add($"page={queryDto.page}");
+
+        if (queryDto.DataFechadoEmInicio.HasValue)
+            queryParams.Add($"DataFechadoEmInicio={queryDto.DataFechadoEmInicio?.ToString("yyyy-MM-ddTHH:mm:ssZ")}");
+
+        if (queryDto.DataFechadoEmFinal.HasValue)
+            queryParams.Add($"DataFechadoEmFinal={queryDto.DataFechadoEmFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}");
+
+        var url = "/caixas/fechados";
+
+        if (queryParams.Count > 0)
+            url += "?" + string.Join("&", queryParams);
+
+        var response = await _HttpClient.GetAsync(url);
+
+
+        string json = await response.Content.ReadAsStringAsync();
+        var retorno = JsonSerializer.Deserialize<PaginatedResponse<Caixa>>(json);
+
+        return retorno ?? new PaginatedResponse<Caixa>();
+    }
+
 }
+
+
 

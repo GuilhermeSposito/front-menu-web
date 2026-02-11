@@ -462,8 +462,8 @@
     ClsConta ContaMaisUsada = new ClsConta();
 
     //lógica do filtros
-    private DateTime? FiltroDateTimeInicial = null;
-    private DateTime? FiltroDateTimeFinal = null;
+    private DateTime? FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); //Incia no começo do mes
+    private DateTime? FiltroDateTimeFinal = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1); //Termina no final do mes
     private DateTime? FiltroDataDeEmissão = null;
     private DateTime? FiltroDataDePagamento = null;
     private DateTime? FiltroDataDeVencimento = null;

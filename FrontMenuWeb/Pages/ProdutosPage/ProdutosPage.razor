@@ -6,6 +6,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Models.Fiscal
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -873,6 +874,19 @@
                 ProdutoSelecionadoParaEdicao.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.TribPisCofins);
                 ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
 
+                if (!string.IsNullOrEmpty(ProdutoSelecionadoParaEdicao.NCM))
+                {
+                    var resposta = await ProdutoService.GetCestsAsync(ProdutoSelecionadoParaEdicao.NCM);
+                    MostraMensagem(resposta);
+
+                    if (resposta.Status != "error")
+                        ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+
+                    if (ProdutoSelecionadoParaEdicao.CEST is not null)
+                    {
+                        CestSelecionado = ListaDeCests.FirstOrDefault(c => c.CestReferente == ProdutoSelecionadoParaEdicao.CEST);
+                    }
+                }
             }
 
 
@@ -1082,6 +1096,71 @@
             Snackbar.Add($"{ex.Message}", Severity.Error);
         }
 
+    }
+
+    private void MostraMensagem<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+    public List<Cest> ListaDeCests { get; set; } = new List<Cest>();
+    private Cest? CestSelecionado;
+    private bool InsereuCestManualmente = false;
+
+    private async Task OnCestChanged(Cest? cest)
+    {
+        if (ProdutoSelecionadoParaEdicao is not null)
+        {
+            CestSelecionado = cest;
+            StateHasChanged();
+            ProdutoSelecionadoParaEdicao.CEST = cest?.CestReferente ?? string.Empty; // Atualiza o campo CEST do produto com o valor selecionado
+            await OnSaveChanges(ProdutoSelecionadoParaEdicao);
+        }
+    }
+
+    private async Task MudouValorNcm(string novoValor)
+    {
+        if (ProdutoSelecionadoParaEdicao is not null)
+        {
+            ProdutoSelecionadoParaEdicao.NCM = novoValor;
+            if(novoValor.Length == 0)
+            {
+                return;
+            }
+
+            if (ProdutoSelecionadoParaEdicao.NCM.Length <= 8)
+            {
+                try
+                {
+                    var resposta = await ProdutoService.GetCestsAsync(ProdutoSelecionadoParaEdicao.NCM);
+                    MostraMensagem(resposta);
+
+                    if (resposta.Status != "error")
+                        ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+
+                    if (ListaDeCests is not null && ListaDeCests.Count == 1)
+                    {
+                        await OnCestChanged(ListaDeCests.First());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MostraMensagem(new ReturnApiRefatored<Cest> { Status = "error", Messages = new List<string> { "Erro ao obter Cest" } });
+                }
+            }
+            else
+            {
+                ProdutoSelecionadoParaEdicao.CEST = string.Empty; // Limpa o campo de CEST se o NCM não tiver 8 dígitos
+            }
+        }
     }
 
 }
@@ -1651,9 +1730,37 @@
                             {
                                 <MudGrid>
                                     <MudItem xs="12">
-                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                            <MudTextField Class="m-2" Label="NCM" @bind-value=ProdutoSelecionadoParaEdicao.NCM @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) />
-                                            <MudTextField Class="m-2" Label="CEST" @bind-value=ProdutoSelecionadoParaEdicao.CEST @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) />
+                                        <MudPaper Class="d-flex align-center justify-center w-100 py-8">
+                                            <MudStack Row=true Justify=Justify.FlexStart AlignItems=AlignItems.Start Class="w-100">
+                                                <MudTextField @onfocusout=@(async (prop) => {await OnSaveChanges(ProdutoSelecionadoParaEdicao);}) T="string" Value=ProdutoSelecionadoParaEdicao.NCM DebounceInterval="100" ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense" />
+
+                                                <MudStack Class="w-75" AlignItems="AlignItems.Stretch" Justify="Justify.FlexEnd">
+                                                    <MudSelect T="Cest" Class="w-100" Label="CEST" Variant=Variant.Filled Value="CestSelecionado" Clearable=true ValueChanged="OnCestChanged">
+                                                        @if (!ListaDeCests.Any())
+                                                        {
+                                                            <MudSelectItem Disabled="true" Value="@(default(Cest))">
+                                                                Nenhum CEST encontrado
+                                                            </MudSelectItem>
+                                                        }
+
+                                                        @foreach (var cest in ListaDeCests)
+                                                        {
+
+                                                            <MudSelectItem Value="@cest">@cest.CestReferente - @cest.Descricao</MudSelectItem>
+                                                        }
+
+                                                    </MudSelect>
+                                                    <MudStack Class="w-75" AlignItems="AlignItems.End" Justify="Justify.FlexEnd">
+                                                        <MudButton OnClick="@(() => { InsereuCestManualmente = !InsereuCestManualmente; })" Color="Color.Primary" Class="mt-4">Inserir CEST manual</MudButton>
+                                                    </MudStack>
+                                                    @if (InsereuCestManualmente)
+                                                    {
+                                                        <MudTextField @onfocusout=@(async (prop) => { await OnSaveChanges(ProdutoSelecionadoParaEdicao); }) T="string" @bind-Value=@ProdutoSelecionadoParaEdicao.CEST Disabled="false" Class="w-100 m-2" Label="CEST Manual" Variant="Variant.Filled" Margin="Margin.Dense" />
+
+                                                    }
+                                                </MudStack>
+
+                                            </MudStack>
                                         </MudPaper>
                                     </MudItem>
                                     <MudItem xs="12" sm="12">

@@ -1,0 +1,479 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/caixas-fechados"
+@inject IJSRuntime JS
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Models.Vendas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Components
+@inject GrupoServices GrupoService
+@inject ISnackbar Snackbar
+@inject IHttpClientFactory HttpClientFactory
+@inject ProdutoService ProdutoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+@inject PedidosService PedidosService
+@inject NfService NFService
+@inject PessoasService PessoasService
+@inject CaixaEPagamentosService CaixaEPagamentosService
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
+    <MudLayout>
+        <MudStack Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="p-2">
+                <MudText Typo="Typo.h4">Caixas Fechados</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Histórico De Caixas Fechados</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
+                <MudTabPanel Text="Mês Passado" />
+                <MudTabPanel Text="Semana Passada" />
+                <MudTabPanel Text="Hoje" />
+                <MudTabPanel Text="Esta Semana" />
+                <MudTabPanel Text="Semana Que Vem" />
+                <MudTabPanel Text="Este Mês" />
+            </MudTabs>
+
+            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
+                <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
+                @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
+                }
+            </MudStack>
+
+        </MudStack>
+
+        @if (CarregandoParteFiscal)
+        {
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1">Emitindo NFC-e...</MudText>
+                <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
+                <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
+            </MudPaper>
+        }
+        <MudDataGrid T="Caixa"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection=false
+                     Class="rounded-3 custom-striped mt-2"
+                     Loading="Carregando"
+                     Hover
+                     HorizontalScrollbar="false"
+                     ServerData="LoadServerData">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="NF-e NFC-e" />
+            </NoRecordsContent>
+            <Columns>
+                <HierarchyColumn T="Caixa" />
+                <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                <PropertyColumn Property="x => x.DataAbertura" Title="Abertura" Format="dd/MM/yyy HH:mm"></PropertyColumn>
+                <PropertyColumn Property="x => x.TiketMedio" Title="Tiket Médio" Format="C"></PropertyColumn>
+                <PropertyColumn Property="x => x.Resumo.ValorTotalEmVendas" Title="Total De Vendas" Format="C"></PropertyColumn>
+                <PropertyColumn Property="x => x.Resumo.TotalTaxaEntrega" Title="Taxas De Entrega" Format="C"></PropertyColumn>
+                <PropertyColumn Property="x => x.Resumo.TotalEmIncentivos" Title="Taxas De Incentivos" Format="C"></PropertyColumn>
+                <PropertyColumn Property="x => x.Resumo.TotalEmDescontos" Title="Taxas De Descontos" Format="C"></PropertyColumn>
+
+            </Columns>
+            <ChildRowContent>
+                <MudStack Class="w-100" Style="background-color: var(--mud-palette-background);">
+                    @*--------------------------------------------- Aqui começa o grid de pedidos do caixa --------------------------------------------*@
+                    <MudDataGrid T="ClsPedido"
+                                 Items="context.Item.Pedidos"
+                                 EditTrigger="DataGridEditTrigger.Manual"
+                                 Class="rounded-3 custom-striped"
+                                 Loading="Carregando"
+                                 Hover
+                                 HorizontalScrollbar="false"
+                                 Style="background-color: var(--mud-palette-background);">
+                        <NoRecordsContent>
+                            <AvisoDeDadosVazios ReferenciaDados="Pedidos" />
+                        </NoRecordsContent>
+                        <ToolBarContent>
+                            <MudStack Class="w-100">
+                                <MudText Align="Align.Center">Pedidos Referentes ao Caixa @context.Item.Id</MudText>
+                            </MudStack>
+                        </ToolBarContent>
+                        <Columns>
+                            <HierarchyColumn T="ClsPedido"  />
+                            <TemplateColumn T="ClsPedido" Title="Origem">
+                                <CellTemplate Context="contextPedido">
+                                    <MudTooltip Color="Color.Primary" Text="@contextPedido.Item.CriadoPor">
+                                        <MudImage Style="width:32px;height:32px;" Src="@AppState.GetIconeDoApp(contextPedido.Item.CriadoPor)"></MudImage>
+                                    </MudTooltip>
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                            <PropertyColumn Property="x => x.DisplayId" Title="Display Id"></PropertyColumn>
+                            <PropertyColumn Property="x => x.CriadoEm" Title="Realizado Em" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
+                            <TemplateColumn T="ClsPedido" Title="Cliente">
+                                <CellTemplate Context="contextPedido">
+                                    @if (contextPedido.Item.Cliente is null)
+                                    {
+                                        <MudText Style="font-weight:600" Color="Color.Warning">Cliente não informado</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Style="font-weight:600" Color="Color.Success">@contextPedido.Item.Cliente.Nome</MudText>
+                                    }
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn T="ClsPedido" Title="Valor">
+                                <CellTemplate Context="contextPedido">
+                                    <MudText Style="font-weight:600" Color=Color.Success>@contextPedido.Item.ValorTotal.ToString("C")</MudText>
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
+                            <PropertyColumn Property="x => x.StatusPedido" Title="Status"></PropertyColumn>
+                            <TemplateColumn T="ClsPedido" Title="Formas de pag">
+                                <CellTemplate Context="contextPedido">
+                                    <MudText Style="font-weight:600" Color=Color.Success>@string.Join(", ", contextPedido.Item.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</MudText>
+                                </CellTemplate>
+                            </TemplateColumn>
+
+                        </Columns>
+                        <ChildRowContent Context="ContextDoPedido">
+                            <MudCard Style="background-color: var(--mud-palette-background);">
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <MudStack Class="w-100 p-1" Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+                                            <MudText Align=Align.Center Typo="Typo.h6">Produtos no Pedido: @ContextDoPedido.Item.Itens.Count() --> @ContextDoPedido.Item.Itens.Sum(x => x.PrecoTotal).ToString("C")</MudText>
+                                            @if (ContextDoPedido.Item.TaxaEntregaValor > 0)
+                                            {
+                                                <MudText Align=Align.Center Typo="Typo.h6">Taxa Entrega do Pedido: @ContextDoPedido.Item.TaxaEntregaValor.ToString("C")</MudText>
+                                            }
+                                            @if (ContextDoPedido.Item.DescontoValor > 0)
+                                            {
+                                                <MudText Align=Align.Center Typo="Typo.h6">Desconto do Pedido: @ContextDoPedido.Item.DescontoValor.ToString("C")</MudText>
+                                            }
+                                            @if (ContextDoPedido.Item.AcrescimoValor > 0)
+                                            {
+                                                <MudText Align=Align.Center Typo="Typo.h6">Acrescimos do Pedido: @ContextDoPedido.Item.AcrescimoValor.ToString("C")</MudText>
+
+                                            }
+                                            @if (ContextDoPedido.Item.IncentivosExternosValor > 0)
+                                            {
+                                                <MudText Align=Align.Center Typo="Typo.h6">Incentivos do Pedido: @ContextDoPedido.Item.IncentivosExternosValor.ToString("C")</MudText>
+
+                                            }
+                                        </MudStack>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudDataGrid T="ItensPedido" Items="@ContextDoPedido.Item.Itens">
+                                        <Columns>
+                                            <PropertyColumn Property="x => x.Produto!.CodigoInterno" Title="Código" />
+                                            <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                                            <PropertyColumn Property="x => x.Quantidade" Title="Quantidade" />
+                                            <PropertyColumn Property="x => x.PrecoUnitario" Title="Preco Unitário" />
+                                            <PropertyColumn Property="x => x.PrecoTotal" Title="Preco Total" />
+                                        </Columns>
+                                    </MudDataGrid>
+                                </MudCardContent>
+
+                                <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" Row=true AlignItems=AlignItems.Center Spacing=3 Justify="Justify.Center">
+                                    <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(ContextDoPedido.Item); })>Emitir Cupom Fiscal</MudButton>
+                                    <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await ImprimirPedido(ContextDoPedido.Item); })>Reimprimir Pedido</MudButton>
+                                    @if (ContextDoPedido.Item.StatusPedido != "CANCELADO")
+                                    {
+                                        <MudButton Color="Color.Error" OnClick=@(async p => { await CancelarPedido(ContextDoPedido.Item); }) Variant="Variant.Filled">Deletar Pedido</MudButton>
+                                    }
+                                </MudStack>
+
+                            </MudCard>
+                        </ChildRowContent>
+                       
+                    </MudDataGrid>
+                </MudStack>
+            </ChildRowContent>
+            <PagerContent>
+
+                <MudDataGridPager T="Caixa" RowsPerPageString="Caixas por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 30, 100, 20, 500, 1000, 2000, 5000, 6000, 7000, 10000000 }) />
+
+            </PagerContent>
+        </MudDataGrid>
+
+
+    </MudLayout>
+</MudPaper>
+
+
+
+
+@code {
+    #region Props
+    private MudDataGrid<Caixa>? dataGridRef = new();
+
+    //lógica do filtros
+    private DateTime? FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); //Incia no começo do mes
+    private DateTime? FiltroDateTimeFinal = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1); //Termina no final do mes
+
+    private bool Carregando = false;
+    private bool CarregandoParteFiscal = false;
+    #endregion
+
+    #region Função de load do Grid
+    private async Task<GridData<Caixa>> LoadServerData(GridState<Caixa> itens)
+    {
+        try
+        {
+            Carregando = true;
+
+            int page = itens.Page + 1;
+            int pageSize = itens.PageSize;
+
+
+            var queryDto = new QueryCaixasDto() { Limit = pageSize, page = page, DataFechadoEmInicio = FiltroDateTimeInicial, DataFechadoEmFinal = FiltroDateTimeFinal };
+
+            var result = await CaixaEPagamentosService.GetCaixasFechadosAsync(queryDto);
+
+            StateHasChanged();
+
+            return new GridData<Caixa>
+            {
+                Items = result.Data,
+                TotalItems = result.Total
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar NFs: {ex.Message}", Severity.Error);
+            return new GridData<Caixa>
+            {
+
+            };
+
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+    #endregion
+    
+
+    #region Função para emitir NFC-e individual
+    //Simula progresso de emissão fiscal
+    int ProgressoFiscal = 0;
+    CancellationTokenSource? _progressCts;
+    private async Task SimulaProgressoAsync(CancellationToken token)
+    {
+        ProgressoFiscal = 0;
+
+        while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(100, token);
+            ProgressoFiscal += Random.Shared.Next(2, 6);
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task EmiteNFCe(ClsPedido Pedido)
+    {
+        ProgressoFiscal = 0;
+        _progressCts = new CancellationTokenSource();
+
+        CarregandoParteFiscal = true;
+        try
+        {
+            #region Verificação de cupom fiscal já emitido
+            bool AlgumTemCupom = Pedido.Pagamentos.Any(p => p.CupomFiscalChave is not null);
+
+            if (AlgumTemCupom)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você já tem um cupom emitido para o pedido, deseja prosseguir ?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+                var result = await dialog.Result;
+
+                if (result!.Canceled && result.Data is bool sucesso && !sucesso)
+                {
+                    throw new Exception("Operação de emissão de NF-e cancelada pelo usuário.");
+                }
+            }
+            #endregion
+
+            var EnvNFCeDto = new EnNfCeDto
+            {
+                Pedido = Pedido
+            };
+
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
+
+            var response = await NFService.GeraNFCe(EnvNFCeDto);
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+
+            //baixar o xml e o pdf se sucesso
+            if (response.Status != "error")
+            {
+                bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+                if (!ImpressaoDesabilita)
+                {
+                    if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
+                        await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+                }
+                else
+                {
+                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
+    }
+    #endregion
+
+    #region Função de impressão do pedido sem valor fiscal
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+
+    #endregion
+
+    #region Função para cancelamento de pedido
+    private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+    private async Task CancelarPedido(ClsPedido pedido)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var Response = await PedidosService.CancelarPedido(pedido, true);
+
+            if (Response.Status == "success")
+            {
+                pedido.StatusPedido = "CANCELADO";
+                if (dataGridRef != null)
+                {
+                    await dataGridRef.ReloadServerData();
+                }
+            }
+
+            MostraMensagemDeUpdateDoPedido(Response);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    #endregion
+
+    #region Funções de Ações dos filtros
+    private async Task AplicarFiltros()
+    {
+        if (dataGridRef != null)
+        {
+            await dataGridRef.ReloadServerData();
+        }
+    }
+
+    private async Task LimparFiltros()
+    {
+        FiltroDateTimeInicial = null;
+        FiltroDateTimeFinal = null;
+
+        if (dataGridRef != null)
+        {
+            await dataGridRef.ReloadServerData();
+        }
+    }
+
+    private async Task AtualizarPeriodoRapido(int index)
+    {
+
+        switch (index)
+        {
+            case 0: // Mês Passado
+                var mesPassado = DateTime.Today.AddMonths(-1);
+                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+            case 1: // Semana Passada
+                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
+                FiltroDateTimeInicial = lastWeekStart;
+                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
+                break;
+            case 2: // Hoje
+                FiltroDateTimeInicial = DateTime.Today;
+                FiltroDateTimeFinal = DateTime.Today;
+                break;
+            case 3: // Esta Semana
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 4: // Semana Que Vem
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 5: // Este Mês
+                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+        }
+
+        StateHasChanged();
+        await dataGridRef!.ReloadServerData();
+    }
+    #endregion
+}
