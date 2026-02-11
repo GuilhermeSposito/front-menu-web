@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Unimake.Business.DFe.Xml.CTe;
+using static System.Net.WebRequestMethods;
 namespace FrontMenuWeb.Services;
 
 public class CaixaEPagamentosService
@@ -134,18 +135,9 @@ public class CaixaEPagamentosService
         if (queryParams.Count > 0)
             url += "?" + string.Join("&", queryParams);
 
-        var response = await _HttpClient.GetAsync(url);
+        var response = await _HttpClient.GetFromJsonAsync<PaginatedResponse<Caixa>>($"{url}");
 
-
-        string json = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine("STATUS: " + response.StatusCode);
-        Console.WriteLine("CONTENT-TYPE: " + response.Content.Headers.ContentType);
-        Console.WriteLine(json);
-
-        var retorno = JsonSerializer.Deserialize<PaginatedResponse<Caixa>>(json);
-
-        return retorno ?? new PaginatedResponse<Caixa>();
+        return response ?? new PaginatedResponse<Caixa>();
     }
 
 }
