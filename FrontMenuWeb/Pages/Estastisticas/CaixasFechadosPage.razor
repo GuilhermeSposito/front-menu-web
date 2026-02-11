@@ -82,7 +82,6 @@
                 <AvisoDeDadosVazios ReferenciaDados="NF-e NFC-e" />
             </NoRecordsContent>
             <Columns>
-                <HierarchyColumn T="Caixa" />
                 <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
                 <PropertyColumn Property="x => x.DataAbertura" Title="Abertura" Format="dd/MM/yyy HH:mm"></PropertyColumn>
                 <PropertyColumn Property="x => x.DataFechamento" Title="Abertura" Format="dd/MM/yyy HH:mm"></PropertyColumn>
@@ -158,7 +157,6 @@
         }
     }
     #endregion
-    
 
     #region Função para emitir NFC-e individual
     //Simula progresso de emissão fiscal

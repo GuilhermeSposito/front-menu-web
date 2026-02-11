@@ -2,10 +2,13 @@
 @attribute [Authorize]
 
 @page "/"
+@using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Pedidos
-
+@using FrontMenuWeb.Services.Fiscal
+@inject IJSRuntime JS
 @inject PedidosService PedidosService
 @inject CaixaEPagamentosService CaixaService
+@inject NfService NFService
 
 <MudStack Class="pagina-home min-vh-100">
 
@@ -79,7 +82,7 @@
                         <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
                         <MudText>Delivery - @($"{PercentualPedidosDelivery:F1}")% </MudText>
                     </MudStack>
-                    <MudProgressLinear Color="Color.Primary" Value="PercentualPedidosMesa" Rounded />
+                    <MudProgressLinear Color="Color.Primary" Value="PercentualPedidosDelivery" Rounded />
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -108,36 +111,163 @@
             </MudCard>
         </MudItem>
     </MudGrid>
-    <!-- Filtros e Tabela de Pedidos -->
-    <MudCard Class="pa-4" Elevation="3">
-        <MudCardHeader>
-            <MudText Typo="Typo.h6">Pedidos Recentes</MudText>
-        </MudCardHeader>
-        <MudCardContent>
-            <!-- Tabela de Pedidos -->
-            <MudTable Items="@pedidosFiltrados" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
-                <HeaderContent>
-                    <MudTh>Nº Pedido</MudTh>
-                    <MudTh>Cliente</MudTh>
-                    <MudTh>Status</MudTh>
-                    <MudTh>Valor</MudTh>
-                    <MudTh>Hora</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>@context.Id</MudTd>
-                    <MudTd>@context.Cliente?.Nome</MudTd>
-                    <MudTd>
 
-                    </MudTd>
-                    <MudTd>@(context.Pagamentos.Sum(p => p.ValorTotal).ToString("C"))</MudTd>
-                    <MudTd> @(context.CriadoEm.ToString("HH:mm"))</MudTd>
-                </RowTemplate>
-            </MudTable>
-        </MudCardContent>
-    </MudCard>
+    @*------------------------- Parte de Graficos ----------------------------*@
+    @if (!CarregandoInfosParaOGrafico)
+    {
+        <MudStack Class="w-100 p-2">
+            <MudPaper Class="pa-4 rounded-2 w-100">
+                <MudGrid>
+                    <MudItem xs="12" md="6" xl="4" lg="4" xxl="4">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudText Typo="Typo.h6">Itens mais Vendidos</MudText>
+                            <MudChart ChartType="ChartType.Pie" InputData="@dataItensMaisVendidos" @bind-SelectedIndex="Index" InputLabels="@labelsItensMaisVendidos" Width="300px" Height="300px" />
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6" xl="4" lg="4" xxl="4">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudText Typo="Typo.h6">Grupos mais Vendidos</MudText>
+                            <MudChart ChartType="ChartType.Pie" InputData="@dataGrupoMaisVendidos" @bind-SelectedIndex="IndexGrupos" InputLabels="@labelsGruposMaisVendidos" Width="300px" Height="300px" />
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" md="6" xl="4" lg="4" xxl="4">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudText Typo="Typo.h6">Formas De Recebimentos Mais Usadas</MudText>
+                            <MudChart ChartType="ChartType.Pie" InputData="@dataFormas" @bind-SelectedIndex="IndexFormas" InputLabels="@labelsFormasMaisRecebidas" Width="300px" Height="300px" />
+                        </MudStack>
+                    </MudItem>
+
+
+                </MudGrid>
+            </MudPaper>
+        </MudStack>
+    }
+
+
+    @if (CarregandoParteFiscal)
+    {
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.subtitle1">Emitindo NFC-e...</MudText>
+            <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
+            <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
+        </MudPaper>
+    }
+    <MudStack Class="w-100" AlignItems="AlignItems.Stretch" Justify="Justify.Center">
+        <MudDataGrid T="ClsPedido"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection=false
+                     Class="rounded-3 custom-striped mt-2"
+                     Loading="Carregando"
+                     Hover
+                     HorizontalScrollbar="false"
+                     Items="@pedidosFiltrados">
+
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Pedidos" />
+            </NoRecordsContent>
+            <ToolBarContent>
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudText Class="mb-2" Typo="Typo.h4">Ultimos 10 Pedidos</MudText>
+                </MudStack>
+            </ToolBarContent>
+            <Columns>
+                <HierarchyColumn T="ClsPedido" />
+                <TemplateColumn T="ClsPedido" Title="Origem">
+                    <CellTemplate Context="context">
+                        <MudTooltip Color="Color.Primary" Text="@context.Item.CriadoPor">
+                            <MudImage Style="width:32px;height:32px;" Src="@AppState.GetIconeDoApp(context.Item.CriadoPor)"></MudImage>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Id" Title="Código"></PropertyColumn>
+                <PropertyColumn Property="x => x.DisplayId" Title="Display Id"></PropertyColumn>
+                <PropertyColumn Property="x => x.CriadoEm" Title="Realizado Em" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
+                <TemplateColumn T="ClsPedido" Title="Cliente">
+                    <CellTemplate Context="context">
+                        @if (context.Item.Cliente is null)
+                        {
+                            <MudText Style="font-weight:600" Color="Color.Warning">Cliente não informado</MudText>
+                        }
+                        else
+                        {
+                            <MudText Style="font-weight:600" Color="Color.Success">@context.Item.Cliente.Nome</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsPedido" Title="Valor">
+                    <CellTemplate Context="context">
+                        <MudText Style="font-weight:600" Color=Color.Success>@context.Item.ValorTotal.ToString("C")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
+                <PropertyColumn Property="x => x.StatusPedido" Title="Status"></PropertyColumn>
+                <TemplateColumn T="ClsPedido" Title="Formas de pag">
+                    <CellTemplate Context="context">
+                        <MudText Style="font-weight:600" Color=Color.Success>@string.Join(", ", context.Item.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+            <ChildRowContent>
+                <MudCard Style="background-color: var(--mud-palette-background);">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Class="w-100 p-1" Style="background-color: var(--mud-palette-surface);" AlignItems=AlignItems.Center Justify="Justify.SpaceBetween">
+                                <MudText Align=Align.Center Typo="Typo.h6">Produtos no Pedido: @context.Item.Itens.Count() --> @context.Item.Itens.Sum(x => x.PrecoTotal).ToString("C")</MudText>
+                                @if (context.Item.TaxaEntregaValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Taxa Entrega do Pedido: @context.Item.TaxaEntregaValor.ToString("C")</MudText>
+                                }
+                                @if (context.Item.DescontoValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Desconto do Pedido: @context.Item.DescontoValor.ToString("C")</MudText>
+                                }
+                                @if (context.Item.AcrescimoValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Acrescimos do Pedido: @context.Item.AcrescimoValor.ToString("C")</MudText>
+
+                                }
+                                @if (context.Item.IncentivosExternosValor > 0)
+                                {
+                                    <MudText Align=Align.Center Typo="Typo.h6">Incentivos do Pedido: @context.Item.IncentivosExternosValor.ToString("C")</MudText>
+
+                                }
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudDataGrid T="ItensPedido" Items="@context.Item.Itens">
+                            <Columns>
+                                <PropertyColumn Property="x => x.Produto!.CodigoInterno" Title="Código" />
+                                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade" />
+                                <PropertyColumn Property="x => x.PrecoUnitario" Title="Preco Unitário" />
+                                <PropertyColumn Property="x => x.PrecoTotal" Title="Preco Total" />
+                            </Columns>
+                        </MudDataGrid>
+                    </MudCardContent>
+
+                    <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" Row=true AlignItems=AlignItems.Center Spacing=3 Justify="Justify.Center">
+                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item); })>Emitir Cupom Fiscal</MudButton>
+                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await ImprimirPedido(context.Item); })>Reimprimir Pedido</MudButton>
+                        @if (context.Item.StatusPedido != "CANCELADO")
+                        {
+                            <MudButton Color="Color.Error" OnClick=@(async p => { await CancelarPedido(context.Item); }) Variant="Variant.Filled">Deletar Pedido</MudButton>
+                        }
+                    </MudStack>
+
+                </MudCard>
+            </ChildRowContent>
+
+        </MudDataGrid>
+    </MudStack>
+
 </MudStack>
 
 @code {
+    #region Propriedades e Variáveis
     private bool drawerOpen = true;
     private DateTime ultimaAtualizacao = DateTime.Now;
     private string filtroBusca = "";
@@ -164,20 +294,91 @@
     // Lista de pedidos
     private List<ClsPedido> pedidos = new List<ClsPedido>();
     private List<ClsPedido> pedidosFiltrados = new List<ClsPedido>();
+    private bool Carregando = true;
+    private bool CarregandoParteFiscal = false;
 
     //timer para atualização automática
     private PeriodicTimer? _timer;
     private CancellationTokenSource _cts = new();
 
+    //Props Para Os Graficos
+    private bool CarregandoInfosParaOGrafico = false;
 
-    protected override void OnInitialized()
+    //Grafico de Itens mais Vendidos
+    private int Index = -1;
+    int dataSize = 4;
+    double[] dataItensMaisVendidos = { };
+    string[] labelsItensMaisVendidos = { };
+
+    //Grafico de Grupos mais Vendidos
+    private int IndexGrupos = -1;
+    int dataSizeGrupos = 4;
+    double[] dataGrupoMaisVendidos = { };
+    string[] labelsGruposMaisVendidos = { };
+
+    //Grafico de formas de recebimentos mais usadas
+    private int IndexFormas = -1;
+    int dataSizeFormas = 4;
+    double[] dataFormas = { };
+    string[] labelsFormasMaisRecebidas = { };
+
+    #endregion
+
+    #region Funções de Inicialização e Atualização da página
+    protected override async Task OnInitializedAsync()
     {
-        PedidosService.PedidoRecebido += async pedido =>
-           {
-               await InvokeAsync(() => OnPedidoRecebido(pedido));
-           };
+        try
+        {
 
-        pedidosFiltrados = new List<ClsPedido>(pedidos);
+            PedidosService.PedidoRecebido += async pedido =>
+              {
+                  await InvokeAsync(() => OnPedidoRecebido(pedido));
+              };
+
+            pedidosFiltrados = new List<ClsPedido>(pedidos);
+
+            await AtualizaInfosDosPedidos();
+
+            if (AppState.MerchantLogado.FuncionarioLogado is not null)
+            {
+                if (AppState.MerchantLogado.FuncionarioLogado.AcessoDashboard)
+                {
+                    UsuarioPermitidoAcessarDashboard = true;
+                }
+                else
+                {
+                    UsuarioPermitidoAcessarDashboard = false;
+                }
+            }
+            else
+            {
+                UsuarioPermitidoAcessarDashboard = true;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await CarregarDadosGrafico();
+                await CarregarDadosGraficoDeVendasPorGrupo();
+                await CarregarDadosGraficoDeFormasMaisRecebidas();
+                StateHasChanged();
+                CarregandoInfosParaOGrafico = false;
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("Erro ao carregar dados do gráfico");
+            }
+        }
     }
 
     private Color GetStatusColor(string status)
@@ -205,34 +406,7 @@
     }
 
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            await AtualizaInfosDosPedidos();
 
-            if (AppState.MerchantLogado.FuncionarioLogado is not null)
-            {
-                if (AppState.MerchantLogado.FuncionarioLogado.AcessoDashboard)
-                {
-                    UsuarioPermitidoAcessarDashboard = true;
-                }
-                else
-                {
-                    UsuarioPermitidoAcessarDashboard = false;
-                }
-            }
-            else
-            {
-                UsuarioPermitidoAcessarDashboard = true;
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
-        }
-    }
 
     public async Task AtualizaInfosDosPedidos()
     {
@@ -249,7 +423,7 @@
             SeverityCaixa = Severity.Success;
         }
 
-        PaginatedResponse<ClsPedido> retornoPedidosTotal = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 5 });
+        PaginatedResponse<ClsPedido> retornoPedidosTotal = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 10 });
         if (retornoPedidosTotal.Total > 0)
         {
             NumeroTotalDePedidos = retornoPedidosTotal.Total;
@@ -276,7 +450,7 @@
         }
 
 
-
+        Carregando = false;
     }
 
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
@@ -295,4 +469,262 @@
     {
         Navigation.NavigateTo("/vendas/historico-de-vendas");
     }
+    #endregion
+
+    #region Propriedades Que carregam o Graficos
+    private async Task CarregarDadosGrafico()
+    {
+        var retorno = await PedidosService.EstastisticaDeItensMaisVendidos();
+        if (retorno.Status == "success" && retorno.Data != null)
+        {
+            List<double> dataList = new();
+            List<string> labelsList = new();
+
+            if (retorno.Data.Lista is not null)
+            {
+                var top6 = retorno.Data.Lista.Take(6).ToList();
+
+                foreach (var item in top6)
+                {
+                    dataList.Add(item.Porcentagem);
+                    labelsList.Add(item.Descricao);
+                }
+
+                var outros = retorno.Data.Lista.Skip(6).Sum(i => i.Porcentagem);
+                outros = Math.Round(outros, 2, MidpointRounding.AwayFromZero);
+                if (outros > 0)
+                {
+                    dataList.Add(outros);
+                    labelsList.Add("Outros");
+                }
+            }
+
+            dataItensMaisVendidos = dataList.ToArray();
+            labelsItensMaisVendidos = labelsList.ToArray();
+
+        }
+        else
+        {
+            Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
+        }
+    }
+
+    private async Task CarregarDadosGraficoDeVendasPorGrupo()
+    {
+
+        var retorno = await PedidosService.EstastisticaDeGruposMaisVendidos();
+        if (retorno.Status == "success" && retorno.Data != null)
+        {
+            List<double> dataList = new();
+            List<string> labelsList = new();
+
+            if (retorno.Data.Lista is not null)
+            {
+                var top6 = retorno.Data.Lista.Take(6).ToList();
+
+                foreach (var item in top6)
+                {
+                    dataList.Add(item.Porcentagem);
+                    labelsList.Add(item.Descricao);
+                }
+
+                var outros = retorno.Data.Lista.Skip(6).Sum(i => i.Porcentagem);
+                outros = Math.Round(outros, 2, MidpointRounding.AwayFromZero);
+                if (outros > 0)
+                {
+                    dataList.Add(outros);
+                    labelsList.Add("Outros");
+                }
+            }
+
+            dataGrupoMaisVendidos = dataList.ToArray();
+            labelsGruposMaisVendidos = labelsList.ToArray();
+        }
+        else
+        {
+            Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
+        }
+    }
+
+    private async Task CarregarDadosGraficoDeFormasMaisRecebidas()
+    {
+        var retorno = await PedidosService.EstastisticaDeFormasMaisRecebidas();
+        if (retorno.Status == "success" && retorno.Data != null)
+        {
+            List<double> dataList = new();
+            List<string> labelsList = new();
+
+            if (retorno.Data.Lista is not null)
+            {
+                var top6 = retorno.Data.Lista.Take(6).ToList();
+
+                foreach (var item in top6)
+                {
+                    dataList.Add(item.Porcentagem);
+                    labelsList.Add(item.Descricao);
+                }
+
+                var outros = retorno.Data.Lista.Skip(6).Sum(i => i.Porcentagem);
+                outros = Math.Round(outros, 2, MidpointRounding.AwayFromZero);
+                if (outros > 0)
+                {
+                    dataList.Add(outros);
+                    labelsList.Add("Outros");
+                }
+            }
+
+            dataFormas = dataList.ToArray();
+            labelsFormasMaisRecebidas = labelsList.ToArray();
+        }
+        else
+        {
+            Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
+        }
+    }
+    #endregion
+
+    #region Propriedades Que interagem com os ultimos pedidos
+    int ProgressoFiscal = 0;
+    CancellationTokenSource? _progressCts;
+    private async Task SimulaProgressoAsync(CancellationToken token)
+    {
+        ProgressoFiscal = 0;
+
+        while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(100, token);
+            ProgressoFiscal += Random.Shared.Next(2, 6);
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task EmiteNFCe(ClsPedido Pedido)
+    {
+        ProgressoFiscal = 0;
+        _progressCts = new CancellationTokenSource();
+
+        CarregandoParteFiscal = true;
+        try
+        {
+            #region Verificação de cupom fiscal já emitido
+            bool AlgumTemCupom = Pedido.Pagamentos.Any(p => p.CupomFiscalChave is not null);
+
+            if (AlgumTemCupom)
+            {
+                var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você já tem um cupom emitido para o pedido, deseja prosseguir ?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+                var result = await dialog.Result;
+
+                if (result!.Canceled && result.Data is bool sucesso && !sucesso)
+                {
+                    throw new Exception("Operação de emissão de NF-e cancelada pelo usuário.");
+                }
+            }
+            #endregion
+
+            var EnvNFCeDto = new EnNfCeDto
+            {
+                Pedido = Pedido
+            };
+
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
+
+            var response = await NFService.GeraNFCe(EnvNFCeDto);
+            var message = response.Status == "error" ? string.Join(", ", response.Messages) : string.Join(",", response.Data.Messages);
+            var severity = response.Status == "error" ? Severity.Error : Severity.Success;
+
+            Snackbar.Add($"{message}", severity);
+
+            //baixar o xml e o pdf se sucesso
+            if (response.Status != "error")
+            {
+                bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+
+                if (!ImpressaoDesabilita)
+                {
+                    if (response.Data.ObjetoWhenWriting is not null && response.Data.ObjetoWhenWriting.XmlStringField is not null)
+                        await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField, $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+                }
+                else
+                {
+                    Snackbar.Add("NFC-e Emitida porém a Impressão está desabilitada nas configurações.", Severity.Warning);
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"{ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
+    }
+
+
+    #region Função de impressão do pedido sem valor fiscal
+    private async Task ImprimirPedido(ClsPedido pedido)
+    {
+        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+
+        if (!ImpressaoDesabilita)
+            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+        else
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+    }
+
+    #endregion
+
+    #region Função para cancelamento de pedido
+    private void MostraMensagemDeUpdateDoPedido<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
+    private async Task CancelarPedido(ClsPedido pedido)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var Response = await PedidosService.CancelarPedido(pedido, true);
+
+            if (Response.Status == "success")
+            {
+                pedido.StatusPedido = "CANCELADO";
+                await AtualizaInfosDosPedidos();
+            }
+
+            MostraMensagemDeUpdateDoPedido(Response);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    #endregion
+    #endregion
 }

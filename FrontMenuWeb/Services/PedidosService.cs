@@ -215,13 +215,37 @@ public class PedidosService
         return retorno!;
     }
 
-
     public async Task<ReturnApiRefatored<ClsPedido>> LimparMesa(ClsMesasEComandas mesa) 
     {
         var response = await _http.DeleteAsync($"pedidos/cancelar/itens/{mesa.Id}");
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
         return retorno!;
     }
+
+    public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos()
+    {
+        var response = await _http.GetAsync($"pedidos/estatisticas/itens");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoEstastisticaPorProduto>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeGruposMaisVendidos()
+    {
+        var response = await _http.GetAsync($"pedidos/estatisticas/grupos");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoEstastisticaPorProduto>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeFormasMaisRecebidas()
+    {
+        var response = await _http.GetAsync($"pedidos/estatisticas/formasderecebimento");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoEstastisticaPorProduto>>();
+
+        return retorno!;
+    }
+
 
 }
 
