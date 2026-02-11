@@ -22,12 +22,11 @@
 
             <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5">
                 <MudRadioGroup @bind-Value="NovaPessoa.TipoPessoaId" @bind-Value:after="@(()=> {if(NovaPessoa.TipoPessoaId == 2){ NovoEndereco.TipoEndereco = "Principal"; }else{NovoEndereco.TipoEndereco = "Casa";}})">
-                    @if (!CadastroRapido)
-                    {
-                        <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
-                        <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
-                        <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
-                    }
+
+                    <MudRadio Value="1" Color="Color.Secondary" Dense="false">Cliente</MudRadio>
+                    <MudRadio Value="2" Color="Color.Success" Dense="true">Fornecedor</MudRadio>
+                    <MudRadio Value="3" Color="Color.Secondary" Dense="false">Fornecedor/Cliente</MudRadio>
+
                 </MudRadioGroup>
 
                 <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">

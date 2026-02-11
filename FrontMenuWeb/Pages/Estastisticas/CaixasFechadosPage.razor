@@ -46,7 +46,6 @@
                 <MudTabPanel Text="Semana Passada" />
                 <MudTabPanel Text="Hoje" />
                 <MudTabPanel Text="Esta Semana" />
-                <MudTabPanel Text="Semana Que Vem" />
                 <MudTabPanel Text="Este Mês" />
             </MudTabs>
 
@@ -462,11 +461,7 @@
                 FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
                 FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
                 break;
-            case 4: // Semana Que Vem
-                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
-                break;
-            case 5: // Este Mês
+            case 4: // Este Mês
                 FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
                 FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
                 break;
