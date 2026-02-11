@@ -206,7 +206,7 @@
             </ChildRowContent>
             <PagerContent>
 
-                <MudDataGridPager T="Caixa" RowsPerPageString="Caixas por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 30, 100, 20, 500, 1000, 2000, 5000, 6000, 7000, 10000000 }) />
+                <MudDataGridPager T="Caixa" RowsPerPageString="Caixas por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 5,10, 20, 30, 100}) />
 
             </PagerContent>
         </MudDataGrid>
@@ -256,7 +256,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao carregar NFs: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao carregar Caixas: {ex.Message}", Severity.Error);
             return new GridData<Caixa>
             {
 
