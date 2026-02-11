@@ -77,7 +77,7 @@
             @if (CarregandoParteFiscal)
             {
                 <MudPaper Class="pa-4">
-                    <MudText Typo="Typo.subtitle1">Emitindo NFC-e...</MudText>
+                    <MudText Typo="Typo.subtitle1">@LabelDeCarregamento</MudText>
                     <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
                     <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
                 </MudPaper>
@@ -299,6 +299,7 @@
     #region Propriedades
     public bool Carregando { get; set; } = true;
     public bool CarregandoParteFiscal { get; set; } = false;
+    public string LabelDeCarregamento { get; set; } = "Emitindo NFC-e..";
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
     public List<ClsDeSuporteParaVizualicacaoDePedidos> ListaDeEtapasDosPedidos = new List<ClsDeSuporteParaVizualicacaoDePedidos>
     {
@@ -586,7 +587,7 @@
                 ItensSelecionadosPArAProximaEtapa.Clear();
             }
 
-            await AtualizaPedidosEtapa(ListaDePedidos, Supor);
+            await AtualizaPedidosEtapaComProgresso(ListaDePedidos, Supor);
         }
         catch (Exception ex)
         {
@@ -599,41 +600,55 @@
 
     }
 
-    private async Task AtualizaPedidosEtapa(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
+
+    private async Task AtualizaPedidosEtapaComProgresso(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
+        LabelDeCarregamento = "Enviando Pedidos para proxima etapa...";
+        CarregandoParteFiscal = true;
+        ProgressoFiscal = 0;
+        await InvokeAsync(StateHasChanged);
+
+        int total = ListaDePedidos.Count;
+        int atual = 0;
+
         foreach (var item in ListaDePedidos)
         {
+            atual++;
+
             if (item.Selector == "NOVO")
             {
                 item.Selector = "PREPARANDO";
                 var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
             }
-
-            if (item.Selector == "PREPARANDO")
+            else if (item.Selector == "PREPARANDO")
             {
-                item.Selector = "DESPACHADO"; // Exemplo de mudança de etapa
+                item.Selector = "DESPACHADO";
                 var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
             }
-
-            if (item.Selector == "DESPACHADO")
+            else if (item.Selector == "DESPACHADO")
             {
                 item.Selector = "FINALIZADO";
                 item.UltimaEtapa = true;
                 var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
-                await InvokeAsync(StateHasChanged);
-                return;
             }
+
+            // Atualiza progresso baseado em quantos já foram processados
+            ProgressoFiscal = (int)(((double)atual / total) * 100);
+
+            // Se quiser travar em 98% até terminar tudo:
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
 
             await InvokeAsync(StateHasChanged);
         }
+
+        // Finaliza em 100%
+        ProgressoFiscal = 100;
+        await InvokeAsync(StateHasChanged);
     }
+
 
     private async Task AvisarNovamenteMesmoPedido(ClsPedido pedido)
     {
@@ -718,7 +733,7 @@
     }
 
 
-    //Simula progresso de emissão fiscal
+
     int ProgressoFiscal = 0;
     CancellationTokenSource? _progressCts;
     private async Task SimulaProgressoAsync(CancellationToken token)
@@ -736,6 +751,7 @@
 
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        LabelDeCarregamento = "Emitindo NFC-e..";
         ProgressoFiscal = 0;
         _progressCts = new CancellationTokenSource();
 
