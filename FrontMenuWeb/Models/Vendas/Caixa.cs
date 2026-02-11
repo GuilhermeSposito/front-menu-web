@@ -13,6 +13,13 @@ public class Caixa
     [JsonPropertyName("SangriasValor")] public decimal SangriasValor { get; set; }
     [JsonPropertyName("suprimentos_valor")] public decimal SuprimentoValor { get; set; }
     [JsonPropertyName("ValorEmCaixa")] public decimal ValorEmCaixa { get; set; }
+    [JsonPropertyName("ValorTotalDasVendas")] public decimal ValorTotalDasVendas { get; set; }
+    [JsonPropertyName("FaltouOuSobrou")] public decimal FaltouOuSobrou { get; set; }
+    [JsonPropertyName("ValorTaxasDeEntrega")] public decimal ValorTaxasDeEntrega { get; set; }
+    [JsonPropertyName("ValorDescontos")] public decimal ValorDescontos { get; set; }
+    [JsonPropertyName("ValorAcrescimos")] public decimal ValorAcrescimos { get; set; }
+    [JsonPropertyName("ValorIncentivos")] public decimal ValorIncentivos { get; set; }
+    [JsonPropertyName("ValorTrocos")] public decimal ValorTrocos { get; set; }
     [JsonPropertyName("ValorCaixaEmDinFinal")] public decimal ValorCaixaEmDinFinal { get; set; }
     [JsonPropertyName("TiketMedio")] public decimal TiketMedio { get; set; }
     [JsonPropertyName("Aberto")] public bool Aberto { get; set; }
@@ -24,6 +31,5 @@ public class Caixa
     [JsonPropertyName("Pedidos")] public List<ClsPedido> Pedidos { get; set; } = new List<ClsPedido>();
     [JsonPropertyName("NFS")] public List<NfeReturnDto> NfsEmitidas { get; set; } = new List<NfeReturnDto>();
     [JsonPropertyName("ItensPedido")] public List<ItensPedido> ItensPedido { get; set; } = new List<ItensPedido>();
-    [JsonPropertyName("Resumo")] public ClsFechamentoDeCaixa Resumo { get; set; } = new ClsFechamentoDeCaixa();
-
+    
 }
