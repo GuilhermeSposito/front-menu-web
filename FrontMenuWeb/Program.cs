@@ -58,7 +58,7 @@ builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
 })
 .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 
-void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
+void ConfigureApiFiscalSophosClient(IHttpClientBuilder builder)
 {
     builder.ConfigureHttpClient((sp,client) =>
     {
@@ -68,7 +68,7 @@ void ConfigureApiFiscalSoophosClient(IHttpClientBuilder builder)
     }).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 }
 
-void ConfigureSyslogicaClient(IHttpClientBuilder builder)
+void ConfigureSophosApiWebClient(IHttpClientBuilder builder)
 {
     builder.ConfigureHttpClient((sp, client) =>
     {
@@ -90,25 +90,25 @@ builder.Services.AddHttpClient<CnpjPesquisaService>(client =>
 });
 
 
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<GrupoServices>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<ProdutoService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<AliquotaService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<MerchantServices>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<PessoasService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<ContasService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<CategoriasService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<MetodosDePagMerchantService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<FormasDeRecebimentoService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<LancamentoFinanceiroService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<ComplementosServices>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<FuncionariosService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<MesasServices>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<PedidosService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasMachineService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<DistanciasService>());
-ConfigureSyslogicaClient(builder.Services.AddHttpClient<EntregasService>());
-ConfigureApiFiscalSoophosClient(builder.Services.AddHttpClient<NfService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<GrupoServices>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ProdutoService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<AliquotaService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MerchantServices>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<PessoasService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ContasService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CategoriasService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MetodosDePagMerchantService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<FormasDeRecebimentoService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<LancamentoFinanceiroService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ComplementosServices>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<FuncionariosService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MesasServices>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<PedidosService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<DistanciasService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());
+ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<NfService>());
 
 
 builder.Services.AddMudServices();
