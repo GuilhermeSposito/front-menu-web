@@ -12,4 +12,7 @@ public class NfeReturnDto
     [JsonPropertyName("NmrProtocolo")] public string? NmrProtocolo { get; set; }
     [JsonPropertyName("NmrDaNf")] public int NmrDaNf { get; set; }
     [JsonPropertyName("xml_distri")] public string? XmlStringField { get; set; }
+    [JsonPropertyName("ValorTotalDaNf")] public double ValorTotalDaNf { get; set; }
+    [JsonPropertyName("ValorTotalDosProdutos")] public double ValorTotalDosProdutos { get; set; }
+    [JsonPropertyName("ValorTotalDosTributos")] public double ValorTotalDosTributos { get; set; }
 }

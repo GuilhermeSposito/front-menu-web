@@ -10,6 +10,7 @@ using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Nextended.Core.Extensions;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -299,7 +300,10 @@ public class NfService
 
         var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
 
-        //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta
+
+        double ValorTotalTributos = 0;
+        double ValorTotalProdutos = 0;
+        double ValorTotalDaNf = 0;
 
         string? XmlDeDistribuicao = null;
         switch (autorizacao.Result.ProtNFe.InfProt.CStat)
@@ -311,6 +315,10 @@ public class NfService
             case 301: //Uso Denegado: irreguralirade fiscal do emitente
             case 302: //Uso denegado> irreguralirade fiscal do destinatario
             case 303: //Uso denegado> destinatario na lista de bloqueio
+                ValorTotalDaNf = xml.NFe[0].InfNFe[0].Total.ICMSTot.VNF;
+                ValorTotalTributos = ValorTotalTribNfAtual;
+                ValorTotalProdutos = xml.NFe[0].InfNFe[0].Total.ICMSTot.VProd;
+
                 var ProcNfe = autorizacao.NfeProcResult.GerarXML();
                 XmlDeDistribuicao = ProcNfe.OuterXml;
                 bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
@@ -330,7 +338,10 @@ public class NfService
             Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
             NmrProtocolo = NmrProtocolo,
             NmrDaNf = ProxNmrNfe,
-            XmlStringField = XmlDeDistribuicao
+            XmlStringField = XmlDeDistribuicao,
+            ValorTotalDaNf = ValorTotalDaNf,
+            ValorTotalDosProdutos = ValorTotalProdutos,
+            ValorTotalDosTributos = ValorTotalTributos
         };
 
         await CreateRegistroDaNFInNestApi(token, DataToReturn);
@@ -396,7 +407,10 @@ public class NfService
 
         var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
 
-        //autorizacao.GravarXmlDistribuicao(@"C:\SophosCompany\Tributario\Autorizadas"); //Só usar em dev para gravar o XML na pasta 
+
+        double ValorTotalTributos = 0;
+        double ValorTotalProdutos = 0;
+        double ValorTotalDaNf = 0;
 
         string? XmlDeDistribuicao = null;
         switch (autorizacao.Result.ProtNFe.InfProt.CStat)
@@ -408,6 +422,10 @@ public class NfService
             case 301: //Uso Denegado: irreguralirade fiscal do emitente
             case 302: //Uso denegado> irreguralirade fiscal do destinatario
             case 303: //Uso denegado> destinatario na lista de bloqueio
+                ValorTotalProdutos = autorizacao.NfeProcResult.NFe.InfNFe[0].Total.ICMSTot.VProd;
+                ValorTotalTributos = ValorTotalTribNfAtual;
+                ValorTotalDaNf = autorizacao.NfeProcResult.NFe.InfNFe[0].Total.ICMSTot.VNF;
+
                 var ProcNfe = autorizacao.NfeProcResult.GerarXML();
                 XmlDeDistribuicao = ProcNfe.OuterXml;
                 bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
@@ -427,7 +445,10 @@ public class NfService
             Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
             NmrProtocolo = NmrProtocolo,
             NmrDaNf = ProxNmrNfe,
-            XmlStringField = XmlDeDistribuicao
+            XmlStringField = XmlDeDistribuicao,
+            ValorTotalDaNf = ValorTotalDaNf,
+            ValorTotalDosProdutos = ValorTotalProdutos,
+           ValorTotalDosTributos = ValorTotalTributos
         };
 
         await CreateRegistroDaNFInNestApi(token, DataToReturn);
@@ -753,7 +774,9 @@ public class NfService
 
     private async Task<EnviNFe> CriaXmlDeNfeSN(ClsPedido Pedido, ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, ClsPessoas Destinatario, int ProxNmrNfe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
-        return new EnviNFe
+        var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: Pedido.Itens, Pedido: Pedido, TipoDFe.NFe, tipoAmbiente); //Itens do pedido
+
+        var xml = new EnviNFe
         {
             Versao = "4.00",
             IdLote = "000000000000001",
@@ -809,32 +832,7 @@ public class NfService
                                 CRT = CRT.SimplesNacional
                             },
                             Dest = RetornaDestinatarioDeNFCe(new EnNfCeDto{Pedido = Pedido},Pedido.Cliente ,tipoAmbiente, Destinatario, enderecoMerchant),
-                            Det = await RetornaDetsDosProdutosNoPedido(ItensDoPedido:Pedido.Itens, Pedido: Pedido,TipoDFe.NFe ,tipoAmbiente), //Itens do pedido
-                            Total = new Total
-                            {
-                               ICMSTot = new ICMSTot
-                               {
-                                    VBC = 0.00,
-                                    VICMS = 0.00,
-                                    VICMSDeson = 0.00,
-                                    VFCP = 0.00,
-                                    VFCPST = 0.00,
-                                    VFCPSTRet = 0.00,
-                                    VBCST = 0.00,
-                                    VProd = Convert.ToDouble(Pedido.ValorDosItens + Pedido.AcrescimoValor + Pedido.ServicoValor),
-                                    VFrete = Convert.ToDouble(Pedido.TaxaEntregaValor),
-                                    VSeg = 0.00,
-                                    VDesc = 0.00,
-                                    VII = 0.00,
-                                    VIPI = 0.00,
-                                    VIPIDevol = 0.00,
-                                    VPIS = 0.00,
-                                    VCOFINS = 0.00,
-                                    VOutro = 0.00,
-                                    VNF = Convert.ToDouble(Pedido.ValorTotal),
-                                    VTotTrib = ValorTotalTribNfAtual
-                               }
-                            },
+                            Det = detDosProd,
                             Transp = new Transp
                             {
                                 ModFrete = ModalidadeFrete.ContratacaoFretePorContaRemetente_CIF,
@@ -874,13 +872,47 @@ public class NfService
                             },
                             InfAdic = new InfAdic
                             {
-                                InfCpl = "NFE emitida para teste"
+                                InfCpl = null
                             }
                         },
                     }
                 }
             }
         };
+
+        double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
+        double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
+        double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
+
+        xml.NFe[0].InfNFe[0].Total = new Total
+        {
+            ICMSTot = new ICMSTot
+            {
+                VBC = 0.00,
+                VICMS = 0.00,
+                VICMSDeson = 0.00,
+                VFCP = 0.00,
+                VFCPST = 0.00,
+                VFCPSTRet = 0.00,
+                VBCST = 0.00,
+                VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
+                VFrete = vFrete,
+                VSeg = 0.00,
+                VDesc = 0.00,
+                VII = 0.00,
+                VIPI = 0.00,
+                VIPIDevol = 0.00,
+                VPIS = 0.00,
+                VCOFINS = 0.00,
+                VOutro = 0.00,
+                VNF = ValorNf,
+                VTotTrib = ValorTotalTribNfAtual
+            }
+        };
+
+
+
+        return xml;
     }
 
     private MeioPagamento RetornaIndicadorDePagamento(ClsFormaDeRecebimento Forma)

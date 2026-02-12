@@ -899,7 +899,7 @@ public class ImpressaoService
                     Imprimir = false,
                     LarguraBobina = 210,
                     Impressora = ImpressoraDanfe,
-                    Logotipo = "C:\\SophosCompany\\Sem título.png",
+                    Logotipo = "C:\\SophosCompany\\LogoDanfe.png",
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraDanfe))
@@ -913,9 +913,10 @@ public class ImpressaoService
                     Copias = 1,
                     Visualizar = false,
                     Imprimir = true,
-                    LarguraBobina = 79,
+                    LarguraBobina = 75,
                     Impressora = ImpressoraCaixa,
-                    Logotipo = "C:\\SophosCompany\\Sem título.png"
+                    Logotipo = "C:\\SophosCompany\\LogoCupom.png",
+                
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraCaixa))
