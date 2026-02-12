@@ -370,8 +370,11 @@
                 await CarregarDadosGrafico();
                 await CarregarDadosGraficoDeVendasPorGrupo();
                 await CarregarDadosGraficoDeFormasMaisRecebidas();
+
+                if (dataItensMaisVendidos.Length > 0 || dataGrupoMaisVendidos.Length > 0 || dataFormas.Length > 0)
+                    CarregandoInfosParaOGrafico = false;
+
                 StateHasChanged();
-                CarregandoInfosParaOGrafico = false;
             }
             catch (Exception ex)
             {
