@@ -13,6 +13,10 @@
     background-color: #101628;
 }
 
+#bodyinicial {
+    background-color: #101628;
+}
+
     #app::before {
         content: "";
         position: fixed;
