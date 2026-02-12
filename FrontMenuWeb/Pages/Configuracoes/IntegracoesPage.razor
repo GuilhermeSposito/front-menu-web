@@ -1,0 +1,194 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/config-integracoes"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresasDeEntrega
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.Models.EntregaMachine
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@using MudBlazor.Extensions.Services
+@using System.Text.Json
+@inject MerchantServices MerchantServices
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout Class="P-2">
+
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/ifoodImagem.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">IFOOD</MudText>
+                        <MudText Typo="Typo.body1">Integração com IFOOD (EM BREVE...)</MudText>
+                        <MudText Typo="Typo.body1">  Tenha mais controle, agilidade e organização no seu fluxo de pedidos.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Saber Mais</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/1DELIVERY.PNG" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">1 DELIVERY</MudText>
+                        <MudText Typo="Typo.body1">Parceiro Oficial (Integração em breve)</MudText>
+                        <MudText Typo="Typo.body1"> Conecte sua operação ao 1 DELIVERY e gerencie pedidos de forma automática, rápida e centralizada.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/ANOTAAI.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">ANOTA AÍ</MudText>
+                        <MudText Typo="Typo.body1">Integração Com Anota Aí (Em Breve..)</MudText>
+                        <MudText Typo="Typo.body1">Conecte sua operação ao Anota Aí e organize seus pedidos com mais praticidade, agilidade e controle em um só lugar.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/cardapio_web_logo.jpg" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">CARDAPIO WEB</MudText>
+                        <MudText Typo="Typo.body1">Cardapio Web (Em Breve..)</MudText>
+                        <MudText Typo="Typo.body1">Simplifique sua gestão com o Cardápio Web e receba pedidos online de forma rápida, organizada e totalmente integrada ao seu sistema.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/LogoOnPedido.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">ON PEDIDO</MudText>
+                        <MudText Typo="Typo.body1">On Pedido (Em Breve..)</MudText>
+                        <MudText Typo="Typo.body1">Conecte-se ao On Pedido e tenha seus pedidos integrados automaticamente, garantindo mais agilidade, controle e organização na sua operação.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/aiqfome_logo.jpg" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">AIQFOME</MudText>
+                        <MudText Typo="Typo.body1">AIQFOME (Em Breve..)</MudText>
+                        <MudText Typo="Typo.body1">Conecte-se ao AIQFOME e tenha seus pedidos integrados automaticamente, garantindo mais agilidade, controle e organização na sua operação.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/jumalogo.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">JUMA</MudText>
+                        <MudText Typo="Typo.body1">
+                            Conecte-se à JUMA e agilize suas entregas com motoboys, garantindo mais rapidez, rastreio e controle total dos pedidos em tempo real.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton onclick="IrParaPaginaDeIntegracaoDeEMpresasDeEntrega" Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/delmatchlogo.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">DELMATCH</MudText>
+                        <MudText Typo="Typo.body1">
+                            Conecte-se à DELMATCH e agilize suas entregas com motoboys, garantindo mais rapidez, rastreio e controle total dos pedidos em tempo real.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton onclick="IrParaPaginaDeIntegracaoDeEMpresasDeEntrega" Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/LOGOAPICE.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">ÁPICE</MudText>
+                        <MudText Typo="Typo.body1">
+                            Conecte-se à ÁPICE e agilize suas entregas com motoboys, garantindo mais rapidez, rastreio e controle total dos pedidos em tempo real.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton onclick="IrParaPaginaDeIntegracaoDeEMpresasDeEntrega" Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/ottologo.png" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">OTTO</MudText>
+                        <MudText Typo="Typo.body1">
+                            Conecte-se à OTTO e agilize suas entregas com motoboys, garantindo mais rapidez, rastreio e controle total dos pedidos em tempo real.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton onclick="IrParaPaginaDeIntegracaoDeEMpresasDeEntrega" Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+
+
+        </MudGrid>
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+
+    #region função de abrir modal de criação/edição
+    private async Task IrParaPaginaDeIntegracaoDeEMpresasDeEntrega()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<AddEdiitEmpresaEntrega>("Adicionar Empresa", options: options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            StateHasChanged();
+        }
+    }
+    #endregion
+}
