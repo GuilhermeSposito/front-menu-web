@@ -838,12 +838,26 @@
 
     private async Task ImprimirPedido(ClsPedido pedido)
     {
-        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                     { x => x.ContentText, $"Atenção: Você confirma a impressão do pedido ?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Envio De Pedido", parameters, options);
+        var result = await dialog.Result;
 
-        if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
-        else
-            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+
+            if (!ImpressaoDesabilita)
+                await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+            else
+                Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+
+        }
     }
     #endregion
 
@@ -889,17 +903,30 @@
     {
         if (EmpresasMachine is not null)
         {
-            if (EmpresasMachine.Count == 0)
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                     { x => x.ContentText, $"Atenção: Ao confirmar você estara enviando o pedido para o mapa da {EmpresaEnviada.Nome}. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Envio De Pedido", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Por favor, configure uma integração de entrega para usar esse recurso.", Severity.Warning);
-                return;
+                if (EmpresasMachine.Count == 0)
+                {
+                    Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Por favor, configure uma integração de entrega para usar esse recurso.", Severity.Warning);
+                    return;
+                }
+
+                var empresaSelecionada = EmpresaEnviada;
+
+                Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
+                var primeiro = Reponse.First();
+                Snackbar.Add(primeiro.Key, primeiro.Value);
             }
-
-            var empresaSelecionada = EmpresaEnviada;
-
-            Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
-            var primeiro = Reponse.First();
-            Snackbar.Add(primeiro.Key, primeiro.Value);
         }
     }
 
