@@ -5,13 +5,10 @@ using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Fiscal;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
-using Org.BouncyCastle.Utilities.IO;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Unimake.Business.DFe.Servicos;
-using Unimake.Business.Security;
 using static MudBlazor.CategoryTypes;
 using static System.Net.WebRequestMethods;
 

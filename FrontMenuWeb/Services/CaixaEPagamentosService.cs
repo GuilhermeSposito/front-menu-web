@@ -8,7 +8,6 @@ using SocketIO.Core;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Unimake.Business.DFe.Xml.CTe;
 using static System.Net.WebRequestMethods;
 namespace FrontMenuWeb.Services;
 

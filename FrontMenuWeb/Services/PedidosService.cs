@@ -8,7 +8,6 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
-using Unimake.Business.DFe.Xml.ESocial;
 using YamlDotNet.Core.Tokens;
 
 namespace FrontMenuWeb.Services;
