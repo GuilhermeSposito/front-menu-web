@@ -13,4 +13,7 @@ public class NFEmitidasDto
     [JsonPropertyName("xmotivo")] public string? XMotivo { get; set; }
     [JsonPropertyName("xml_distri")] public string? XmlDistribuicao { get; set; }
     [JsonPropertyName("CriadoEm")] public DateTime? CriadoEm { get; set; }
+    [JsonPropertyName("ValorTotalDaNf")] public double ValorTotalDaNf { get; set; }
+    [JsonPropertyName("ValorTotalDosProdutos")] public double ValorTotalDosProdutos { get; set; }
+    [JsonPropertyName("ValorTotalDosTributos")] public double ValorTotalDosTributos { get; set; }
 }

@@ -91,6 +91,8 @@
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.CriadoEm" Title="Emissão" Format="dd/MM/yyyy"></PropertyColumn>
 
+                <PropertyColumn Property="x => x.ValorTotalDaNf" Title="Id" Format="C">Valor Da NF</PropertyColumn>
+                <PropertyColumn Property="x => x.ValorTotalDosProdutos" Title="Id" Format="C">Valor Dos Prods</PropertyColumn>
 
                 <TemplateColumn T="NFEmitidasDto" Title="Ações">
                     <CellTemplate Context="context">
@@ -221,6 +223,8 @@
 
 
             var result = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, page, pageSize);
+
+            TotalEmNFsValidas = result.ValorTotalDeNfsEmitidas;
 
             StateHasChanged();
 

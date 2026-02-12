@@ -448,7 +448,7 @@ public class NfService
             XmlStringField = XmlDeDistribuicao,
             ValorTotalDaNf = ValorTotalDaNf,
             ValorTotalDosProdutos = ValorTotalProdutos,
-           ValorTotalDosTributos = ValorTotalTributos
+            ValorTotalDosTributos = ValorTotalTributos
         };
 
         await CreateRegistroDaNFInNestApi(token, DataToReturn);
