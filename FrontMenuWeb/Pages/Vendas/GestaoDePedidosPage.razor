@@ -27,6 +27,8 @@
 @inject ComplementosServices ComplementosServices
 @inject PedidosService PedidosService
 @inject NfService NFService
+@inject MachineService MachineService
+@inject EntregasMachineService EmpresasMachineService
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -216,7 +218,10 @@
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                                                                     <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
                                                                     <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
-                                                                    <MudMenuItem Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
+                                                                    @if (pedido.Pedido.TipoDePedido == "DELIVERY")
+                                                                    {
+                                                                        <MudMenuItem OnClick=@(async () => { await EnviarParaEntrega(pedido.Pedido); }) Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
+                                                                    }
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
                                                                     {
                                                                         <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
@@ -866,5 +871,25 @@
         }
 
     }
+    #endregion
+
+    #region Funções para Enviar Pedidos para Entrega
+    private async Task EnviarParaEntrega(ClsPedido pedido)
+    {
+        var Empresas = await EmpresasMachineService.GetEmpresasIntegradas();
+        if (Empresas.Count == 0)
+        {
+            Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Por favor, configure uma integração de entrega para usar esse recurso.", Severity.Warning);
+            return;
+        }
+
+        var empresaSelecionada = Empresas.FirstOrDefault();
+
+        Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
+        var primeiro = Reponse.First();
+        Snackbar.Add(primeiro.Key, primeiro.Value);
+    }
+
+
     #endregion
 }

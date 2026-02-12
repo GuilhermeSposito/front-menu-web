@@ -100,6 +100,14 @@ public class EnderecoMerchant
     [JsonPropertyName("uf")] public string Uf { get; set; } = string.Empty;
     [JsonPropertyName("cidade_id")] public int CidadeId { get; set; } = 1; //São Carlos
 
+    [JsonIgnore] public string? EnderecoFormatado { get
+        {
+            if (string.IsNullOrEmpty(Rua) || string.IsNullOrEmpty(Numero))
+                return null;
+            return $"{Rua}, {Numero}";
+        }
+    }
+
     [JsonIgnore] public bool AdicionandoEsseEndereco { get; set; } = false;
 
 }

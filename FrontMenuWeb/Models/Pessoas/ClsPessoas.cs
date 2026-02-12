@@ -66,4 +66,12 @@ public class EnderecoPessoa
     [JsonPropertyName("obs_endereco")] public string? ObsEndereco { get; set; }
     [JsonPropertyName("tipo_endereco")] public string? TipoEndereco { get; set; }
 
+    [JsonIgnore] public string? EnderecoFormatado
+    {
+        get
+        {
+            return $"{Rua}, {Numero}";
+        }
+    }
+
 }

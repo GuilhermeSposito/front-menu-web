@@ -36,6 +36,7 @@ builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<EntregasService>();
 builder.Services.AddScoped<DistanciasService>();
+builder.Services.AddScoped<MachineService>();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("Api"));
 
@@ -89,6 +90,11 @@ builder.Services.AddHttpClient<CnpjPesquisaService>(client =>
     client.BaseAddress = new Uri("https://brasilapi.com.br/api/cnpj/v1/");
 });
 
+builder.Services.AddHttpClient<MachineService>(client =>
+{
+    client.BaseAddress = new Uri("https://sophos-erp.com.br/api-entregas-sophos/v1/");
+});
+
 
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<GrupoServices>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ProdutoService>());
@@ -109,6 +115,8 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineServic
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<DistanciasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<NfService>());
+
+
 
 
 builder.Services.AddMudServices();
