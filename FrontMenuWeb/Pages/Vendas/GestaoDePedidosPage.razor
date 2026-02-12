@@ -9,6 +9,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Components.Modais.ModalFiscais
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.EntregaMachine
 @using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
@@ -220,7 +221,14 @@
                                                                     <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
                                                                     @if (pedido.Pedido.TipoDePedido == "DELIVERY")
                                                                     {
-                                                                        <MudMenuItem OnClick=@(async () => { await EnviarParaEntrega(pedido.Pedido); }) Icon="@Icons.Material.Filled.LocalShipping" Label="Enviar Para Entrega" />
+                                                                        @if (EmpresasMachine is not null)
+                                                                        {
+                                                                            foreach (var empresa in EmpresasMachine)
+                                                                            {
+                                                                                <MudMenuItem OnClick=@(async () => { await EnviarParaEntrega(empresa, pedido.Pedido); }) Icon="@Icons.Material.Filled.LocalShipping" Label=@($"Enviar Pedido Para {empresa.Nome}") />
+
+                                                                            }
+                                                                        }
                                                                     }
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
                                                                     {
@@ -316,6 +324,7 @@
     public List<ClsDeSuporteParaMostrarPedidos> ItensSelecionadosPArAProximaEtapa = new List<ClsDeSuporteParaMostrarPedidos>();
 
     private string status = "Desconectado";
+    private List<EmpresaMachine>? EmpresasMachine = null;
 
     private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
@@ -340,6 +349,8 @@
                await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
            };
 
+
+            await CarregaEmpresasMachine();
             await CarregarPedidos();
 
             try
@@ -874,22 +885,27 @@
     #endregion
 
     #region Funções para Enviar Pedidos para Entrega
-    private async Task EnviarParaEntrega(ClsPedido pedido)
+    private async Task EnviarParaEntrega(EmpresaMachine EmpresaEnviada, ClsPedido pedido)
     {
-        var Empresas = await EmpresasMachineService.GetEmpresasIntegradas();
-        if (Empresas.Count == 0)
+        if (EmpresasMachine is not null)
         {
-            Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Por favor, configure uma integração de entrega para usar esse recurso.", Severity.Warning);
-            return;
+            if (EmpresasMachine.Count == 0)
+            {
+                Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Por favor, configure uma integração de entrega para usar esse recurso.", Severity.Warning);
+                return;
+            }
+
+            var empresaSelecionada = EmpresaEnviada;
+
+            Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
+            var primeiro = Reponse.First();
+            Snackbar.Add(primeiro.Key, primeiro.Value);
         }
-
-        var empresaSelecionada = Empresas.FirstOrDefault();
-
-        Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
-        var primeiro = Reponse.First();
-        Snackbar.Add(primeiro.Key, primeiro.Value);
     }
 
-
+    private async Task CarregaEmpresasMachine()
+    {
+        EmpresasMachine = await EmpresasMachineService.GetEmpresasIntegradas();
+    }
     #endregion
 }
