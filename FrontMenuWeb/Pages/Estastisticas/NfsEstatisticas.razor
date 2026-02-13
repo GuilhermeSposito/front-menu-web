@@ -6,6 +6,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Components.Uteis
 @using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Fiscal
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -19,7 +20,7 @@
 @inject NfService NfService
 @inject PedidosService PedidosService
 
-<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
+<MudPaper Square="false" Elevation="0" class="@((Carregando ? "wait-cursor gestao-pedido-page" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
     <MudLayout>
         <MudStack Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
             <MudStack>
@@ -52,16 +53,32 @@
         <MudDataGrid T="NFEmitidasDto"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
-                     MultiSelection=false
                      Class="rounded-3 custom-striped mt-2"
                      Loading="Carregando"
                      Hover
                      HorizontalScrollbar="false"
-                     ServerData="LoadServerData">
+                     ServerData="LoadServerData"
+                     MultiSelection=@MultiSelecao
+                     SelectOnRowClick=@MultiSelecao
+                     SelectedItems="NfsSelecionados"
+                     SelectedItemsChanged="SelectedItemsChanged">
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="NF-e NFC-e" />
             </NoRecordsContent>
+            <ToolBarContent>
+                <MudStack Row=true Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                    @if (MultiSelecao)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="() => { MultiSelecao = false; SelectedItemsChanged(new HashSet<NFEmitidasDto> { }); }">Cancelar Seleção</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => InutilizarNFsSelecionadas()">Inutilizar NFs Selecionadas</MudButton>
+                    }
+                </MudStack>
+            </ToolBarContent>
             <Columns>
+                @if (MultiSelecao)
+                {
+                    <SelectColumn T="NFEmitidasDto" />
+                }
                 <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
                 <TemplateColumn T="NFEmitidasDto" Title="Tipo">
                     <CellTemplate Context="context">
@@ -100,6 +117,7 @@
 
                                 <MudMenuItem OnClick=@(async () => { await DeletaRegistro(context.Item); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
 
+                                <MudMenuItem OnClick=@(async () => { MultiSelecao = !MultiSelecao; SelectedItemsChanged(new HashSet<NFEmitidasDto> { context.Item }); }) Icon="@Icons.Material.Filled.Close" IconColor="Color.Error" Label="Inultilizar" />
                             </MudMenu>
                         </MudTooltip>
                     </CellTemplate>
@@ -154,7 +172,7 @@
                         <MudCardContent Class="flex flex-col items-center justify-center h-36">
                             <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
                             <MudText Typo="Typo.h6" Class="opacity-90">Canceladas</MudText>
-                            <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDeNFsCanceladas</MudText>
+                            <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDeNFsCanceladas.ToString("C")</MudText>
                         </MudCardContent>
                     </MudStack>
                 </MudCard>
@@ -207,6 +225,11 @@
     private float TotalDeNFsCanceladas = 0;
     private float TotalDeICMS = 0;
     private float TotalDeTributos = 0;
+
+    //Logica para escolher varias NFs
+    private bool MultiSelecao = false;
+    private HashSet<NFEmitidasDto> NfsSelecionados = new HashSet<NFEmitidasDto>();
+
     #endregion
 
     #region Função de load do Grid
@@ -222,7 +245,8 @@
 
             PaginatedResponse<NFEmitidasDto> result = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, page, pageSize);
             TotalEmNFsValidas = result.ValorTotalDeNfsEmitidas;
-           
+            TotalDeNFsCanceladas = result.ValorTotalDasNfsCanceladas;
+
 
             StateHasChanged();
 
@@ -245,6 +269,7 @@
         finally
         {
             Carregando = false;
+            StateHasChanged();
         }
     }
     #endregion
@@ -322,7 +347,7 @@
                 var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Motivo", parameters, options);
                 var Motivo = await dialogInputText.Result;
 
-                if (!Motivo!.Canceled || (Motivo.Data is string motivo && !string.IsNullOrEmpty(motivo)))
+                if (Motivo!.Canceled || string.IsNullOrWhiteSpace(Motivo.Data as string))
                 {
                     Snackbar.Add("Motivo é obrigatório para exclusão da NF.", Severity.Error);
                     return;
@@ -353,6 +378,125 @@
     {
         await JS.InvokeVoidAsync("baixarXMLNF", registro.XmlDistribuicao, $"{registro.ChaveNf}-procnfe-copia.xml");
     }
+
+    void SelectedItemsChanged(HashSet<NFEmitidasDto> items)
+    {
+        NfsSelecionados = items;
+    }
+
+    private async Task InutilizarNFsSelecionadas()
+    {
+        if (NfsSelecionados.Count == 0)
+        {
+            Snackbar.Add("Nenhuma NF selecionada para inutilização.", Severity.Warning);
+            return;
+        }
+        // Lógica para inutilizar as NFs selecionadas
+        // Exemplo: Chamar um serviço para processar a inutilização
+
+        try
+        {
+            Carregando = true;
+
+            //NFCE separado
+            var NFCesSelecionadasOrganizadas = NfsSelecionados.Where(x => x.NfTipo == 65).OrderBy(x => x.NmrNf).ToList();
+            NFEmitidasDto? PrimeiraNFCe = null;
+            NFEmitidasDto? UltimaNFNfce = null;
+            if (NFCesSelecionadasOrganizadas.Count > 0)
+            {
+                PrimeiraNFCe = NFCesSelecionadasOrganizadas.First();
+                UltimaNFNfce = NFCesSelecionadasOrganizadas.Last();
+            }
+
+            //NFE separado
+            var NFesSelecionadasOrganizadas = NfsSelecionados.Where(x => x.NfTipo == 55).OrderBy(x => x.NmrNf).ToList();
+            NFEmitidasDto? PrimeiraNFe = null;
+            NFEmitidasDto? UltimaNFNfe = null;
+            if (NFesSelecionadasOrganizadas.Count > 0)
+            {
+                PrimeiraNFe = NFesSelecionadasOrganizadas.First();
+                UltimaNFNfe = NFesSelecionadasOrganizadas.Last();
+            }
+
+            string MensagemDeConfirmacao = string.Empty;
+            if (PrimeiraNFCe is not null)
+                MensagemDeConfirmacao = $"Você tem certeza que deseja inutilizar Os Cupons Fiscais de número {PrimeiraNFCe.NmrNf} a {UltimaNFNfce.NmrNf}? Atenção, essa ação não pode ser desfeita";
+
+            if (PrimeiraNFe is not null)
+                MensagemDeConfirmacao += $"\n E Você tem certeza que deseja inutilizar As Notas Fiscais de número {PrimeiraNFe.NmrNf} a {UltimaNFNfe.NmrNf}? Atenção, essa ação não pode ser desfeita";
+
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                    { x => x.ContentText, $"{MensagemDeConfirmacao}" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+            };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Inutilização", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                //Primeiro montar o objeto de inutilização para nfce
+                if (PrimeiraNFCe is not null && UltimaNFNfce is not null)
+                {
+                    InultilizacaoNFDto InuDto = new InultilizacaoNFDto
+                        {
+                            TipoNf = 65,
+                            NumeroInicial = PrimeiraNFCe.NmrNf,
+                            NumeroFinal = UltimaNFNfce.NmrNf,
+                            Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
+                        };
+
+                    ReturnApiRefatored<NFEmitidasDto> respostaApi = await NfService.InultilizaNFCe(InuDto);
+                    MostraMensagemDeRetorno(respostaApi);
+                }
+
+                //Depois montar o objeto de inutilização para nf-e
+                if (PrimeiraNFe is not null && UltimaNFNfe is not null)
+                {
+                    InultilizacaoNFDto InuDto = new InultilizacaoNFDto
+                        {
+                            TipoNf = 55,
+                            NumeroInicial = PrimeiraNFe.NmrNf,
+                            NumeroFinal = UltimaNFNfe.NmrNf,
+                            Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
+                        };
+
+                    ReturnApiRefatored<NFEmitidasDto> respostaApi = await NfService.InultilizaNFCe(InuDto);
+                    MostraMensagemDeRetorno(respostaApi);
+                }
+
+                NfsSelecionados = new HashSet<NFEmitidasDto>();
+                MultiSelecao = false;
+                await dataGridRef?.ReloadServerData()!;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao inutilizar NFs: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        
+        }
+    }
+
+    private void MostraMensagemDeRetorno<T>(ReturnApiRefatored<T> response)
+    {
+        var message = response.Status == "error"
+            ? string.Join(", ", response.Messages)
+            : string.Join(", ", response.Data?.Messages ?? new List<string>());
+
+        var severity = response.Status == "error"
+            ? Severity.Error
+            : Severity.Success;
+
+        Snackbar.Add(message, severity);
+    }
+
     #endregion
 
 }

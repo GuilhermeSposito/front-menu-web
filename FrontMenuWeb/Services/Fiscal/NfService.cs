@@ -88,7 +88,15 @@ public class NfService : INfService
 
     public async Task<ReturnApiRefatored<NFEmitidasDto>> CancelaNFe(string chaveNfe, string Protocolo, int TipoNf ,string Motivo = "Teste de motivo de cancelamento")
     {
-        var response = await _http.PostAsJsonAsync($"nf/cancelar-nfce", new CancelaNFDto { ChNfe = chaveNfe, NumeroProtocolo = Protocolo, Justificativa = Motivo });
+        var response = await _http.PostAsJsonAsync($"nf/cancelar-nfe", new CancelaNFDto { ChNfe = chaveNfe, NumeroProtocolo = Protocolo, Justificativa = Motivo });
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<ReturnApiRefatored<NFEmitidasDto>>(content);
+        return result ?? new ReturnApiRefatored<NFEmitidasDto>();
+    }
+
+    public async Task<ReturnApiRefatored<NFEmitidasDto>> InultilizaNFCe(InultilizacaoNFDto inuDto)
+    {
+        var response = await _http.PostAsJsonAsync($"nf/inutilizar-nfce", inuDto);
         var content = await response.Content.ReadAsStringAsync();
         var result = JsonSerializer.Deserialize<ReturnApiRefatored<NFEmitidasDto>>(content);
         return result ?? new ReturnApiRefatored<NFEmitidasDto>();

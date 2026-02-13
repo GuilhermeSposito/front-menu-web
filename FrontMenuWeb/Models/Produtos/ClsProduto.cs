@@ -229,6 +229,7 @@ public class PaginatedResponse<T>
     public float totalDespesa { get; set; } = 0;
     [JsonPropertyName("totalEmSalarios")]public float totalEmSalarios { get; set; } = 0f;
     [JsonPropertyName("ValorTotalDasNfsEmitidas")]public float ValorTotalDeNfsEmitidas { get; set; } = 0f;
+    [JsonPropertyName("ValorTotalDasNfsCanceladas")]public float ValorTotalDasNfsCanceladas { get; set; } = 0f;
     public int Page { get; set; }
     public int LastPage { get; set; }
     [JsonPropertyName("TiketMedio")] public float TiketMedio { get; set; }

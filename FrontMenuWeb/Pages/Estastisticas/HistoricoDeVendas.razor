@@ -107,12 +107,12 @@
                      EditTrigger="DataGridEditTrigger.Manual"
                      MultiSelection=@MultiSelecao
                      SelectOnRowClick=@MultiSelecao
+                     SelectedItems="PedidosSelecionados"
                      Class="rounded-3 custom-striped"
                      Loading="Carregando"
                      Hover
                      HorizontalScrollbar="false"
                      ServerData="LoadServerData"
-                     SelectedItems="PedidosSelecionados"
                      SelectedItemsChanged="SelectedItemsChanged">
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Pedidos" />

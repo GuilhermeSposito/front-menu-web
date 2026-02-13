@@ -549,10 +549,7 @@ public class NfService
                     return new ReturnApiRefatored<object>
                     {
                         Status = "error",
-                        Data = new Data<object>
-                        {
-                            Messages = new List<string> { $"Evento processado com erro: {RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat} - {RecepçaoEvento.Result.RetEvento[0].InfEvento.XMotivo}" }
-                        }
+                        Messages = new List<string> { $"Evento processado com erro: {RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat} - {RecepçaoEvento.Result.RetEvento[0].InfEvento.XMotivo}" }
                     };
             }
         }
@@ -560,10 +557,7 @@ public class NfService
         return new ReturnApiRefatored<object>
         {
             Status = "error",
-            Data = new Data<object>
-            {
-                Messages = new List<string> { $"{RecepçaoEvento.Result.CStat} - {RecepçaoEvento.Result.XMotivo}" }
-            }
+            Messages = new List<string> { $"{RecepçaoEvento.Result.CStat} - {RecepçaoEvento.Result.XMotivo}" }  
         };
 
 
@@ -584,6 +578,8 @@ public class NfService
             throw new UnauthorizedAccessException("CNPJ informado");
 
         var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        TipoDFe tipoDFe = InuDTO?.TipoNf == 55 ? TipoDFe.NFe : TipoDFe.NFCe;
+        ModeloDFe ModeloDFe = InuDTO?.TipoNf == 55 ? ModeloDFe.NFe : ModeloDFe.NFCe;
 
         var xml = new InutNFe
         {
@@ -595,24 +591,25 @@ public class NfService
                 Ano = "26",
                 CNPJ = LimparCnpj(documentoMerchant.Cnpj),
                 CUF = UFBrasil.SP,
-                Mod = ModeloDFe.NFe,
+                Mod = ModeloDFe,
                 NNFIni = InuDTO.NumeroInicial,
                 NNFFin = InuDTO.NumeroFinal,
                 Serie = 1,
                 TpAmb = TipoHambiente,
-                XJust = "Inultilizado pelo desenvolvedor"
+                XJust = "Ocorreu uma falha no sistema que pulou a sequencia de numeracao"
             }
         };
 
         var config = new Configuracao
         {
-            TipoDFe = TipoDFe.NFe,  
+            TipoDFe = tipoDFe,  
             CertificadoDigital = CertificadoSelecionado,
         };
 
         Inutilizacao initInutilizacao = new Inutilizacao(xml, config);
         initInutilizacao.Executar();
 
+        bool inseriunaapi = false;
         switch (initInutilizacao.Result.InfInut.CStat)
         {
             case 102: //Inutilização Homologada
@@ -632,17 +629,20 @@ public class NfService
                     ValorTotalDosTributos = 0
                 };
 
-                await CreateRegistroDaNFInNestApi(token, DataToReturn);
+                inseriunaapi =  await CreateRegistroDaNFInNestApi(token, DataToReturn);
 
                 break;
+            case 563:
+                return new ReturnApiRefatored<object>
+                {
+                    Status = "error",
+                    Messages = new List<string> { $"Rejeição: Já existe pedido de Inutilização com a mesma faixa de inutilização" }
+                };            
             default:
                 return new ReturnApiRefatored<object>
                 {
                     Status = "error",
-                    Data = new Data<object>
-                    {
-                        Messages = new List<string> { $"Erro na inutilização: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
-                    }
+                    Messages = new List<string> { $"Erro na inutilização: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
                 };
         }
 
@@ -651,7 +651,7 @@ public class NfService
             Status = "success",
             Data = new Data<object>
             {
-                Messages = new List<string> { $"Inutilização processada: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
+                Messages = new List<string> { $"Inutilização processada: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo} --: Inseriu na api ? {inseriunaapi}" }
             }
         };
 

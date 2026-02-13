@@ -74,7 +74,7 @@ public class NfControllers : ControllerBase
     #endregion
 
     #region Cancelamento de NFe e NFCe
-    [HttpPost("cancelar-nfce")]
+    [HttpPost("cancelar-nfe")]
     public async Task<ActionResult> CancelarNFce([FromBody] CancelaNFDto CancelNfDto)
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
