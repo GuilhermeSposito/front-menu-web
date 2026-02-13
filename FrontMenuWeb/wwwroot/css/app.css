@@ -5,16 +5,9 @@
 #bodyinicial {
     background-color: #101628;
     color: white;
-    background-image: url("/images/logo.png");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 80% 80%;
-    opacity: 0.15;
 }
 
-   
-
-
+  
 
 .dialog-fila-digital {
     position: relative;
