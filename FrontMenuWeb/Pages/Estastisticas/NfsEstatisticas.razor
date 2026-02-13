@@ -220,9 +220,9 @@
             int pageSize = itens.PageSize;
 
 
-            var result = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, page, pageSize);
-
+            PaginatedResponse<NFEmitidasDto> result = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, page, pageSize);
             TotalEmNFsValidas = result.ValorTotalDeNfsEmitidas;
+           
 
             StateHasChanged();
 

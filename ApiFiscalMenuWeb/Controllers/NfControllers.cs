@@ -87,5 +87,18 @@ public class NfControllers : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("inutilizar-nfce")]
+    public async Task<ActionResult> InultilizacaoDeNFCe([FromBody] InultilizacaoNFDto InuDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+
+        var result = await _nfService.InultilizacaoDeNFCe(token, InuDto);
+        return Ok(result);
+    }
+
     #endregion
 }

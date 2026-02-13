@@ -11,6 +11,7 @@ using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Nextended.Core.Extensions;
+using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -465,7 +466,7 @@ public class NfService
     }
     #endregion
 
-    #region Funções de Cancelamento da NFe/NFCe
+    #region Funções de Cancelamento da NFe/NFCe e Inutilização
     public async Task<ReturnApiRefatored<object>> CancelamentoDeNFCe(string token, CancelaNFDto cancelaNFDto)
     {
         ClsMerchant? merchant = await GetMerchantFromNestApi(token);
@@ -566,6 +567,93 @@ public class NfService
         };
 
 
+
+    }
+
+    public async Task<ReturnApiRefatored<object>> InultilizacaoDeNFCe(string token, InultilizacaoNFDto InuDTO)
+    {
+        ClsMerchant? merchant = await GetMerchantFromNestApi(token);
+
+        if (merchant is null || (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)))
+            throw new UnauthorizedAccessException("Certificado ou senha não informados");
+
+        //Função auxiliar para carregar o certificado digital
+        var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
+        var documentoMerchant = merchant.Documentos.FirstOrDefault();
+        if (documentoMerchant is null || String.IsNullOrEmpty(documentoMerchant.Cnpj))
+            throw new UnauthorizedAccessException("CNPJ informado");
+
+        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+
+        var xml = new InutNFe
+        {
+
+            Versao = "4.00",
+            InfInut = new InutNFeInfInut
+            {
+
+                Ano = "26",
+                CNPJ = LimparCnpj(documentoMerchant.Cnpj),
+                CUF = UFBrasil.SP,
+                Mod = ModeloDFe.NFe,
+                NNFIni = InuDTO.NumeroInicial,
+                NNFFin = InuDTO.NumeroFinal,
+                Serie = 1,
+                TpAmb = TipoHambiente,
+                XJust = "Inultilizado pelo desenvolvedor"
+            }
+        };
+
+        var config = new Configuracao
+        {
+            TipoDFe = TipoDFe.NFe,  
+            CertificadoDigital = CertificadoSelecionado,
+        };
+
+        Inutilizacao initInutilizacao = new Inutilizacao(xml, config);
+        initInutilizacao.Executar();
+
+        switch (initInutilizacao.Result.InfInut.CStat)
+        {
+            case 102: //Inutilização Homologada
+                var ProcNfe = initInutilizacao.ProcInutNFeResult.GerarXML();
+               
+                var DataToReturn = new NfeReturnDto
+                {
+                    NFTipo = 65,
+                    ChaveNf = $"EVENTO DE INUTILIZAÇÃO PARA AS NFCE {InuDTO.NumeroInicial} ATÉ A {InuDTO.NumeroFinal}",
+                    Cstat = initInutilizacao.Result.InfInut.CStat,
+                    Xmotivo = initInutilizacao.Result.InfInut.XMotivo,
+                    NmrProtocolo = initInutilizacao.Result.InfInut.NProt,
+                    NmrDaNf = 0,
+                    XmlStringField = ProcNfe.OuterXml,
+                    ValorTotalDaNf = 0,
+                    ValorTotalDosProdutos = 0,
+                    ValorTotalDosTributos = 0
+                };
+
+                await CreateRegistroDaNFInNestApi(token, DataToReturn);
+
+                break;
+            default:
+                return new ReturnApiRefatored<object>
+                {
+                    Status = "error",
+                    Data = new Data<object>
+                    {
+                        Messages = new List<string> { $"Erro na inutilização: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
+                    }
+                };
+        }
+
+        return new ReturnApiRefatored<object>
+        {
+            Status = "success",
+            Data = new Data<object>
+            {
+                Messages = new List<string> { $"Inutilização processada: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
+            }
+        };
 
     }
     #endregion
