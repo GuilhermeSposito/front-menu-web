@@ -321,7 +321,8 @@
                 var optionsInputText = new DialogOptions { CloseButton = true, FullScreen = true, FullWidth = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true };
                 var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Motivo", parameters, options);
                 var Motivo = await dialogInputText.Result;
-                if (!Motivo!.Canceled || string.IsNullOrWhiteSpace(Motivo.Data?.ToString()))
+
+                if (!Motivo!.Canceled || (Motivo.Data is string motivo && !string.IsNullOrEmpty(motivo)))
                 {
                     Snackbar.Add("Motivo é obrigatório para exclusão da NF.", Severity.Error);
                     return;
