@@ -34,29 +34,32 @@
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
         <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-            <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                <MudStack Class="w-50" Row=true>
-                    <MudTextField DebounceInterval="1300" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
-                </MudStack>
-                <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                    <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
-                        <MudSelectItem Value="@TiposDePedido.TODOS">Todos</MudSelectItem>
-                        <MudSelectItem Value=@TiposDePedido.BALCÃO>Balcão</MudSelectItem>
-                        <MudSelectItem Value=@TiposDePedido.DELIVERY>Delivery</MudSelectItem>
-                        <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
-                    </MudSelect>
-                </MudStack>
-                <MudStack Row=true Justify="Justify.FlexStart">
+            <MudStack Class="p-3">
 
-                    <MudTooltip Text="Abre Criação de novo Pedido" Color="Color.Primary">
-                        <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
-                    </MudTooltip>
-                    @if (AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
-                    {
-                        <MudTooltip Text="Abre Leitor de código de barras para enviar pedido para proxima etapa" Color="Color.Primary">
-                            <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
+                <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack Class="w-50" Row=true>
+                        <MudTextField DebounceInterval="1300" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
+                    </MudStack>
+                    <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
+                            <MudSelectItem Value="@TiposDePedido.TODOS">Todos</MudSelectItem>
+                            <MudSelectItem Value=@TiposDePedido.BALCÃO>Balcão</MudSelectItem>
+                            <MudSelectItem Value=@TiposDePedido.DELIVERY>Delivery</MudSelectItem>
+                            <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
+                        </MudSelect>
+                    </MudStack>
+                    <MudStack Row=true Justify="Justify.FlexStart">
+
+                        <MudTooltip Text="Abre Criação de novo Pedido" Color="Color.Primary">
+                            <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
                         </MudTooltip>
-                    }
+                        @if (AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
+                        {
+                            <MudTooltip Text="Abre Leitor de código de barras para enviar pedido para proxima etapa" Color="Color.Primary">
+                                <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
+                            </MudTooltip>
+                        }
+                    </MudStack>
                 </MudStack>
             </MudStack>
             @if (PedidosEmAberto.Any())
@@ -784,7 +787,7 @@
                  { x => x.enNfCeDto, EnvNFCeDto  }
              };
 
-            var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge ,FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+            var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
             var result = await dialog.Result;
 

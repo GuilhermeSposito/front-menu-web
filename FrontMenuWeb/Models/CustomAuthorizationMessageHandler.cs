@@ -14,29 +14,12 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
     private readonly ILocalStorageService _localStorage;
     private readonly IHttpClientFactory _factory;
 
+
     public CustomAuthorizationMessageHandler(ILocalStorageService localStorage, IHttpClientFactory factory)
     {
         _localStorage = localStorage;
         _factory = factory;
     }
-
-    /*protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-        var response =  await base.SendAsync(request, cancellationToken);
-
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-        {
-            var refreshClient = _factory.CreateClient("ApiRefresh");
-
-            var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
-            refreshRequest.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
-
-            var refreshResponse = await refreshClient.SendAsync(refreshRequest);
-        }
-
-        return response;
-    }*/
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -59,7 +42,13 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
         var refreshResponse = await refreshClient.SendAsync(refreshRequest, cancellationToken);
 
         if (!refreshResponse.IsSuccessStatusCode)
+        {
+            var RequestLogout = new HttpRequestMessage(HttpMethod.Post, "auth/logout");
+            RequestLogout.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+            var ResponseLogou = await refreshClient.SendAsync(RequestLogout, cancellationToken);
+
             return response;
+        }
 
         // clonar e reenviar request original
         var newRequest = await CloneHttpRequestMessage(request);

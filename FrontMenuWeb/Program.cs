@@ -37,6 +37,7 @@ builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<EntregasService>();
 builder.Services.AddScoped<DistanciasService>();
 builder.Services.AddScoped<MachineService>();
+builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("Api"));
 
