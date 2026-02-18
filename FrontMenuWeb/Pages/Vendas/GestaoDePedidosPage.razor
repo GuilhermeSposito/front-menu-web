@@ -784,7 +784,7 @@
                  { x => x.enNfCeDto, EnvNFCeDto  }
              };
 
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+            var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge ,FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
             var result = await dialog.Result;
 

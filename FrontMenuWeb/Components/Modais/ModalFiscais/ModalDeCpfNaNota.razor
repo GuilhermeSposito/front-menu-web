@@ -1,16 +1,83 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
+@using System.Globalization
 
 <MudDialog tabindex="0" OnKeyDown=OnKeyDown Style="min-width:30vw">
+    <TitleContent>
+        <MudStack Row=true Justify="Justify.FlexEnd">
+            <MudIconButton Color="Color.Primary" OnClick=@(() => { EditandoValorDoCupom = !EditandoValorDoCupom; ItemEditavel = null; }) Icon="@Icons.Material.Filled.Settings" />
+            <MudIconButton Color="Color.Primary" OnClick="Cancel" Icon="@Icons.Material.Filled.Close" />
+        </MudStack>
+    </TitleContent>
     <DialogContent>
         <MudStack>
             <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                <MudTextField T="string" Value="@enNfCeDto.CPF" ValueChanged="OnEscritaChanged" Mask="DocumentoMask" Label="CPF / CNPJ" Immediate="true" @ref="txtCpf" />
-                <MudTextField Label="Nome" @bind-Value=enNfCeDto.NomeCliente Variant="Variant.Filled" />
+                <MudTextField T="string" Value="@enNfCeDto.CPF" ValueChanged="OnEscritaChanged" Mask="DocumentoMask" Label="CPF" Immediate="true" @ref="txtCpf" Variant="Variant.Outlined" />
+                <MudTextField Label="Nome" @bind-Value=enNfCeDto.NomeCliente Variant="Variant.Outlined" />
             </MudFocusTrap>
+
+            @if (EditandoValorDoCupom)
+            {
+                <MudStack Class="w-100 mt-3">
+                    <MudStack Row=true Class="w-100">
+                        <MudSelect Class="w-75" @bind-Value=ItemEditavel ToStringFunc="p => p.Descricao" T="ItensPedido" Variant="Variant.Outlined" Label="Selecione Um Item">
+                            <MudSelectItem Value=ItemRefeicao>REFEIÇÃO</MudSelectItem>
+                            <MudSelectItem Value=ItemMarmita>MARMITA</MudSelectItem>
+                            <MudSelectItem Value=ItemPratoFeito>PRATO FEITO</MudSelectItem>
+                        </MudSelect>
+
+                        @if (ItemEditavel is not null)
+                        {
+                            <MudNumericField Class="w-25" Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             @ref=ValorQtdField
+                                             Format="N3"
+                                             Culture="_pt"
+                                             T="float"
+                                             Value=ItemEditavel.Quantidade
+                                             ValueChanged=EditandoQuantidade
+                                             Label="QTD"
+                                             HideSpinButtons="true"
+                                             Disabled=@(ItemEditavel is null)
+                                             @onfocus="@(async () => { await ValorQtdField.SelectAsync(); })" />
+                        }
+                    </MudStack>
+
+                    @if (ItemEditavel is not null)
+                    {
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudNumericField Immediate="false"
+                                             @ref=ValorTotalField
+                                             Variant="Variant.Outlined"
+                                             Format="N2"
+                                             Culture="_pt"
+                                             T="float"
+                                             Value=ItemEditavel.PrecoTotal
+                                             ValueChanged=EditandoValorTotal
+                                             Label="Preço Total"
+                                             HideSpinButtons="true"
+                                             @onfocus="@(async () => { await ValorTotalField.SelectAsync(); })" />
+
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Format="N2"
+                                             Culture="_pt"
+                                             T="float"
+                                             @bind-Value=ItemEditavel.PrecoUnitario
+                                             Label="Preço Unitário"
+                                             HideSpinButtons="true"
+                                             Disabled=true />
+                        </MudStack>
+
+                    }
+                </MudStack>
+            }
         </MudStack>
     </DialogContent>
     <DialogActions>
@@ -20,18 +87,131 @@
 </MudDialog>
 
 @code {
+    #region Props
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     private MudButton BtnConfirmar;
     private MudTextField<string> txtCpf;
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+    public MudNumericField<float> ValorTotalField;
+    public MudNumericField<float> ValorQtdField = new MudNumericField<float>();
 
     [Parameter] public EnNfCeDto enNfCeDto { get; set; } = new EnNfCeDto();
 
     public PatternMask CpfMask = new PatternMask("000.000.000-00");
-    public PatternMask CnpjMask = new PatternMask("00.000.000/0000-00");
     public PatternMask DocumentoMask = new PatternMask("000.000.000-00");
 
+    private bool EditandoValorDoCupom { get; set; } = false;
+    private ItensPedido? ItemEditavel { get; set; } = null;
 
+    #region itens para selecionar
+    private ItensPedido ItemRefeicao = new ItensPedido()
+    {
+        Id = 1,
+        Descricao = "REFEIÇÃO",
+        Produto = new ClsProduto()
+        {
+            CodigoInterno = "0001",
+            Id = "dsadasdsasdasd",
+            Descricao = "REFEIÇÃO",
+            NCM = "21069090",
+            CEST = "1709700",
+            OrigemProduto = "0",
+            csosn = "102",
+            Aliquota = new ClsAliquota()
+            {
+                Id = 1,
+                Descricao = "REFEIÇÃO",
+                Valor = 11
+            },
+            TribPisCofins = "49",
+
+        },
+        Quantidade = 1,
+        PrecoUnitario = 0,
+        PrecoTotal = 0
+    };
+
+    private ItensPedido ItemMarmita = new ItensPedido()
+    {
+        Id = 1,
+        Descricao = "MARMITA",
+        Produto = new ClsProduto()
+        {
+            CodigoInterno = "0001",
+            Id = "dsadasdsasdasd",
+            Descricao = "MARMITA",
+            NCM = "21069090",
+            CEST = "1709700",
+            OrigemProduto = "0",
+            csosn = "102",
+            Aliquota = new ClsAliquota()
+            {
+                Id = 1,
+                Descricao = "MARMITA",
+                Valor = 11
+            },
+            TribPisCofins = "49",
+
+        },
+        Quantidade = 1,
+        PrecoUnitario = 0,
+        PrecoTotal = 0
+    };
+
+    private ItensPedido ItemPratoFeito = new ItensPedido()
+    {
+        Id = 1,
+        Descricao = "PRATO FEITO",
+        Produto = new ClsProduto()
+        {
+            CodigoInterno = "0001",
+            Id = "dsadasdsasdasd",
+            Descricao = "PRATO FEITO",
+            NCM = "21069090",
+            CEST = "1709700",
+            OrigemProduto = "0",
+            csosn = "102",
+            Aliquota = new ClsAliquota()
+            {
+                Id = 1,
+                Descricao = "PRATO FEITO",
+                Valor = 11
+            },
+            TribPisCofins = "49",
+
+        },
+        Quantidade = 1,
+        PrecoUnitario = 0,
+        PrecoTotal = 0
+    };
+    #endregion
+
+    #endregion
+
+    #region Funções de editar o valor do produto
+    private void EditandoValorTotal(float valor)
+    {
+        if (ItemEditavel is not null)
+        {
+            ItemEditavel.PrecoTotal = valor;
+            ItemEditavel.PrecoUnitario = valor / ItemEditavel.Quantidade;
+        }
+    }
+
+    private void EditandoQuantidade(float valor)
+    {
+        if (ItemEditavel is not null)
+        {
+            ItemEditavel.Quantidade = valor;
+
+            ItemEditavel.PrecoUnitario = ItemEditavel.PrecoTotal / ItemEditavel.Quantidade;
+        }
+    }
+    #endregion
+
+
+    #region Métodos de Adicionar na pagina
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
@@ -47,8 +227,38 @@
         enNfCeDto.CPF = value;
     }
 
-    private void Submit()
+    private async Task Submit()
     {
+        if (ItemEditavel is not null)
+        {
+            enNfCeDto.Pedido.Itens = new List<ItensPedido>() { ItemEditavel };
+
+            enNfCeDto.Pedido.Pagamentos = new List<PagamentoDoPedido>() { };
+
+            var parameters = new DialogParameters
+             {
+                 { "Pedido", enNfCeDto.Pedido }
+             };
+
+            var options = new DialogOptions
+            {
+                Position = DialogPosition.Center,
+                CloseButton = true,
+                MaxWidth = MaxWidth.False,
+                FullWidth = true,
+                CloseOnEscapeKey = true
+            };
+
+   
+            var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+            var result = await dialog.Result;
+
+            if (result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                Snackbar.Add("É obrigatório informar o pagamento se você editou a NFCe.", Severity.Error);
+                return;
+            }
+        }
 
         MudDialog.Close(DialogResult.Ok(enNfCeDto));
     }
@@ -67,4 +277,5 @@
             Cancel();
         }
     }
+    #endregion
 }
