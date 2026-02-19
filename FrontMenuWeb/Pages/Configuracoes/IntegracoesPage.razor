@@ -24,6 +24,21 @@
         <MudGrid>
             <MudItem xs="12" sm="6" md="3" lg="3">
                 <MudCard>
+                    <MudCardMedia Image="images/empresas_integradas/whatsapp.jpg" Height="200" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4">Whats App</MudText>
+                        <MudText Typo="Typo.body1">Integração com Whats App</MudText>
+                        <MudText Typo="Typo.body1">Integração com WhatsApp para envio automático de mensagens aos clientes, atualizando o status do pedido em tempo real e melhorando a comunicação e a experiência de compra.</MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton OnClick=@(() => { Navigation.NavigateTo("/config-geral#WhatsAppSection"); }) Variant="Variant.Text" Color="Color.Primary">Integrar</MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary">Saber Mais</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" lg="3">
+                <MudCard>
                     <MudCardMedia Image="images/empresas_integradas/ifoodImagem.png" Height="200" />
                     <MudCardContent>
                         <MudText Typo="Typo.h4">IFOOD</MudText>

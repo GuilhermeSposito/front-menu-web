@@ -15,6 +15,7 @@
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.Fiscal
+@using FrontMenuWeb.Services.IntegracoesServices
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
 @using MudBlazor.Extensions
@@ -30,6 +31,7 @@
 @inject NfService NFService
 @inject MachineService MachineService
 @inject EntregasMachineService EmpresasMachineService
+@inject MessageWhatsAppService MessageService
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -648,12 +650,15 @@
                 item.Selector = "PREPARANDO";
                 var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
+
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.PREPARANDO);
             }
             else if (item.Selector == "PREPARANDO")
             {
                 item.Selector = "DESPACHADO";
                 var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.DESPACHADO);
             }
             else if (item.Selector == "DESPACHADO")
             {
@@ -661,6 +666,7 @@
                 item.UltimaEtapa = true;
                 var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
                 MostraMensagemDeUpdateDoPedido(Response);
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.FINALIZADO);
             }
 
             // Atualiza progresso baseado em quantos já foram processados
@@ -676,7 +682,6 @@
         ProgressoFiscal = 100;
         await InvokeAsync(StateHasChanged);
     }
-
 
     private async Task AvisarNovamenteMesmoPedido(ClsPedido pedido)
     {
@@ -946,5 +951,20 @@
     {
         EmpresasMachine = await EmpresasMachineService.GetEmpresasIntegradas();
     }
+    #endregion
+
+    #region Funções de Integrações
+    private async void EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
+    {
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+        {
+            if (Pedido.Cliente is null || string.IsNullOrEmpty(Pedido.Cliente.Telefone))
+                return;
+
+            if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
+                await MessageService.EnviarMensagem(Pedido, etapa);
+        }
+    }
+
     #endregion
 }

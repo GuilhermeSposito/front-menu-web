@@ -73,6 +73,15 @@ public class ClsMerchant
     [JsonPropertyName("ControlaEstoque")] public bool ControlaEstoque { get; set; }
     [JsonPropertyName("UsaCodigoDeBarrasParAProximaEtapa")] public bool UsaCodigoDeBarrasParAProximaEtapa { get; set; }
     [JsonPropertyName("ImprimeHorarioLimiteNoPedido")] public bool ImprimeHorarioLimiteNoPedido { get; set; }
+    [JsonPropertyName("UsaIntegracaoDoWhatsApp")] public bool UsaIntegracaoDoWhatsApp { get; set; }
+    [JsonPropertyName("InstanceName")] public string? InstanceName { get; set; }
+    [JsonPropertyName("EnviaMsgWhatsBalcao")] public bool EnviaMsgWhatsBalcao { get; set; }
+    [JsonPropertyName("EnviaMsgWhatsDelivery")] public bool EnviaMsgWhatsDelivery { get; set; }
+    [JsonPropertyName("EnviaMsgWhatsIntegracao")] public bool EnviaMsgWhatsIntegracao { get; set; }
+    [JsonPropertyName("MenssagemDeBalcaoPronto")] public string? MenssagemDeBalcaoPronto { get; set; }
+    [JsonPropertyName("MenssagemDeDeliveryDespachado")] public string? MenssagemDeDeliveryDespachado { get; set; }
+    [JsonPropertyName("MenssagemDeBalcaoFinalizado")] public string? MenssagemDeBalcaoFinalizado { get; set; }
+    [JsonPropertyName("MenssagemDeDeliveryFinalizado")] public string? MenssagemDeDeliveryFinalizado { get; set; }
 }
 
 

@@ -75,13 +75,13 @@
                     <MudStack Class="rounded-2 p-1" style="background-color: var(--mud-palette-background);" AlignItems="AlignItems.Center" Justify="Justify.Center">
                         <MudGrid Class="w-100">
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ReplicaFechamentoParaOFinanceiro ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ReplicaFechamentoParaOFinanceiro = x)) T=bool Color="Color.Primary">Replica Fechamento</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ReplicaFechamentoParaOFinanceiro ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ReplicaFechamentoParaOFinanceiro = x)) T=bool Color="Color.Primary">Replica Fechamento</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.ControlaEstoque ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ControlaEstoque = x)) T=bool Color="Color.Primary">Controla Estoque</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeComandasDelivery ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasDelivery = x)) T=bool Color="Color.Primary">Imprime Comanda no Delivery</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeComandasDelivery ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasDelivery = x)) T=bool Color="Color.Primary">Imprime Comanda no Delivery</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.PerguntaImpressaoBalcao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaoBalcao = x)) T=bool Color="Color.Primary">Pergunta Impressão Balcao</MudCheckBox>
@@ -96,25 +96,25 @@
                                 <MudCheckBox Value=@Merchant.PerguntaImpressaPdv ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.PerguntaImpressaPdv = x)) T=bool Color="Color.Primary">Pergunta Impressão PDV</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeComandasBalcao  ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasBalcao = x)) T=bool Color="Color.Primary">Imprime Comanda no Balcão</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeComandasBalcao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasBalcao = x)) T=bool Color="Color.Primary">Imprime Comanda no Balcão</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeComandasMesas ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasMesas = x)) T=bool Color="Color.Primary">Imprime Comanda das Mesas</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeComandasMesas ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasMesas = x)) T=bool Color="Color.Primary">Imprime Comanda das Mesas</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeComandasSeparadaPorProdutos ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasSeparadaPorProdutos = x)) T=bool Color="Color.Primary">Imprime Comanda separada por produtos</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeComandasSeparadaPorProdutos ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComandasSeparadaPorProdutos = x)) T=bool Color="Color.Primary">Imprime Comanda separada por produtos</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.DestacaObsNaImpressao ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.DestacaObsNaImpressao = x)) T=bool Color="Color.Primary">Destaca Obs na Comanda</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.DestacaObsNaImpressao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.DestacaObsNaImpressao = x)) T=bool Color="Color.Primary">Destaca Obs na Comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeNomeNaComanda ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeNomeNaComanda = x)) T=bool Color="Color.Primary">Imprime Nome na Comanda</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeNomeNaComanda ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeNomeNaComanda = x)) T=bool Color="Color.Primary">Imprime Nome na Comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeEnderecoNaComanda ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeEnderecoNaComanda = x)) T=bool Color="Color.Primary">Imprime Endereço na Comanda</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeEnderecoNaComanda ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeEnderecoNaComanda = x)) T=bool Color="Color.Primary">Imprime Endereço na Comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.ImprimeHorarioNaComanda ValueChanged=@(v=> OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeHorarioNaComanda = x)) T=bool Color="Color.Primary">Imprime Horario na comanda</MudCheckBox>
+                                <MudCheckBox Value=@Merchant.ImprimeHorarioNaComanda ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeHorarioNaComanda = x)) T=bool Color="Color.Primary">Imprime Horario na comanda</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.UsaCodigoDeBarrasParAProximaEtapa ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UsaCodigoDeBarrasParAProximaEtapa = x)) T=bool Color="Color.Primary">Imprime Cod De Barras Para Proxima Etapa</MudCheckBox>
@@ -132,7 +132,7 @@
                                 <MudNumericField Label="Fonte Detalhes" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDetalhesPedido HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
-                                    <MudNumericField Label="Fonte Item" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoItem HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0  T="int" />
+                                <MudNumericField Label="Fonte Item" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoItem HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudNumericField Label="Fonte Item (Comanda)" Variant="Variant.Outlined" @bind-Value=@Merchant.TamFonteDescricaoItemNaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
@@ -282,7 +282,7 @@
                             <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.ValorKmMinimo @onfocusout=SalvarInfosLojaAsync T="float" Immediate=true Label="Valor Km Minimo" Variant="Variant.Outlined" FullWidth="true" AdornmentText="R$" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
                         </MudItem>
                         <MudItem xs="12" md="12" lg="12">
-                            <MudExTextField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.TokenApiEntrega @onfocusout=SalvarInfosLojaAsync T="string" Immediate=true Label="Token Para Entregas Automaticas" Variant="Variant.Outlined" FullWidth="true"  Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                            <MudExTextField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.TokenApiEntrega @onfocusout=SalvarInfosLojaAsync T="string" Immediate=true Label="Token Para Entregas Automaticas" Variant="Variant.Outlined" FullWidth="true" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
                         </MudItem>
                         <MudItem xs="12" md="12" lg="12">
                             <MudCheckBox ValueChanged="@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaPedidoAutTaxyMachine = x))" Value=Merchant.EnviaPedidoAutTaxyMachine Disabled=EditandoInfosEntregaBloq T=bool Color="Color.Primary">Envia Pedido Automatico</MudCheckBox>
@@ -290,6 +290,57 @@
                         <MudItem xs="12" md="12" lg="12">
                             <MudCheckBox ValueChanged="@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaEntregaPorKm = x))" Value=Merchant.UltilizaEntregaPorKm Disabled=EditandoInfosEntregaBloq T=bool Color="Color.Primary">Soma Entregas Por Km</MudCheckBox>
                         </MudItem>
+                    </MudGrid>
+
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack Row=true id="WhatsAppSection">
+                            <MudText Typo="Typo.h5">Whats App</MudText>
+                            <MudImage Src="images/whatsappico.png" Alt="WhatsApp Logo" Width="30" Height="30" Class="ml-2"></MudImage>
+                        </MudStack>
+                        <MudButton OnClick=@(() => { EditandoIntegracaoWhatsApp = !EditandoIntegracaoWhatsApp; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    </MudStack>
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudGrid Class=" p-2 mb-1">
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracaoWhatsApp Value=@Merchant.UsaIntegracaoDoWhatsApp ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UsaIntegracaoDoWhatsApp = x)) T=bool Color="Color.Primary">Usa Integração com Whats App</MudCheckBox>
+                        </MudItem>
+
+                        @if (Merchant.UsaIntegracaoDoWhatsApp)
+                        {
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracaoWhatsApp Label="Nome Da Instancia" Variant="Variant.Outlined" @bind-Value=@Merchant.InstanceName Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Disabled=EditandoIntegracaoWhatsApp Value=@Merchant.EnviaMsgWhatsBalcao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaMsgWhatsBalcao = x)) T=bool Color="Color.Primary">Envia Mensagem Balcão</MudCheckBox>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Disabled=EditandoIntegracaoWhatsApp Value=@Merchant.EnviaMsgWhatsDelivery ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaMsgWhatsDelivery = x)) T=bool Color="Color.Primary">Envia Mensagem Delivery</MudCheckBox>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Disabled=EditandoIntegracaoWhatsApp Value=@Merchant.EnviaMsgWhatsIntegracao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaMsgWhatsIntegracao = x)) T=bool Color="Color.Primary">Envia Mensagem De Apps De Integração</MudCheckBox>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracaoWhatsApp Label="Mensagem De Balcão Pronto" Variant="Variant.Outlined" @bind-Value=@Merchant.MenssagemDeBalcaoPronto Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracaoWhatsApp Label="Mensagem De Balcão Finalizado" Variant="Variant.Outlined" @bind-Value=@Merchant.MenssagemDeBalcaoFinalizado Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracaoWhatsApp Label="Mensagem De Delivery Despachado" Variant="Variant.Outlined" @bind-Value=@Merchant.MenssagemDeDeliveryDespachado Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracaoWhatsApp Label="Mensagem De Delivery Finalizado" Variant="Variant.Outlined" @bind-Value=@Merchant.MenssagemDeDeliveryFinalizado Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" />
+                            </MudItem>
+                        }
+
                     </MudGrid>
                 </MudStack>
             </MudPaper>
@@ -477,6 +528,7 @@
     private bool EditandoInfosLojaBloq = true;
     private bool EditandoInfosFiscaisBloq = true;
     private bool EditandoInfosEntregaBloq = true;
+    private bool EditandoIntegracaoWhatsApp = true;
     private bool CarregouNovoCertificado = false;
     private bool EditandoEnderecosBloq = true;
     private bool EditandoDocumentosBloq = true;
@@ -542,7 +594,7 @@
                 MerchantParaComparacao = Merchant;
 
                 ClsMerchant merchant = await MerchantServices.GetMerchantAsync();
-                if(merchant is not null)
+                if (merchant is not null)
                     AppState.MerchantLogado = merchant;
 
                 StateHasChanged();

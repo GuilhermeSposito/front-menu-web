@@ -77,7 +77,7 @@ public class NfControllers : ControllerBase
     [HttpPost("cancelar-nfe")]
     public async Task<ActionResult> CancelarNFce([FromBody] CancelaNFDto CancelNfDto)
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
         var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
@@ -90,7 +90,7 @@ public class NfControllers : ControllerBase
     [HttpPost("inutilizar-nfce")]
     public async Task<ActionResult> InultilizacaoDeNFCe([FromBody] InultilizacaoNFDto InuDto)
     {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();//var token = authHeader.Replace("Bearer ", "");
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
         var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });

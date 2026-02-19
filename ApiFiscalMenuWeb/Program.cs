@@ -1,7 +1,9 @@
 using ApiFiscalMenuWeb.Controllers;
 using ApiFiscalMenuWeb.Filters;
 using ApiFiscalMenuWeb.Models.Dtos;
+using ApiFiscalMenuWeb.Models.HandlersHttp;
 using ApiFiscalMenuWeb.Services;
+using FrontMenuWeb.Models;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text.Json.Serialization;
 using Unimake.Business.DFe.Servicos;
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<CustomAuthorizationMessageUnimakeHandler>();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<MessageService>();
@@ -21,6 +24,7 @@ string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
 string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
 string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>("UrlApiMessageBroker") ?? "";
+string UrlMessageBrokerWhatsAppUnimakeAuth = builder.Configuration.GetValue<string>("UrlApiMessageBrokerAuth") ?? "";
 
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
@@ -38,8 +42,15 @@ builder.Services.AddHttpClient("ApiIBPT", client =>
 builder.Services.AddHttpClient("ApiMessageBrokerUnimake", client =>
 {
     client.BaseAddress = new Uri(UrlMessageBrokerWhatsAppUnimake); 
-    client.Timeout = TimeSpan.FromSeconds(10);
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<CustomAuthorizationMessageUnimakeHandler>();
+
+builder.Services.AddHttpClient("ApiMessageBrokerUnimakeAuth", client =>
+{
+    client.BaseAddress = new Uri(UrlMessageBrokerWhatsAppUnimakeAuth); 
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
+
 
 builder.Services.AddControllers(option =>
 {

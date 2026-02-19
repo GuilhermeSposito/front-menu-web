@@ -1,46 +1,130 @@
-﻿using Unimake.MessageBroker.Primitives.Model.Messages;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Models.Pedidos;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using Unimake.MessageBroker.Primitives.Model.Messages;
 using Unimake.MessageBroker.Primitives.Model.Notifications;
 using Unimake.MessageBroker.Services;
 using Unimake.Primitives.UDebug;
 namespace ApiFiscalMenuWeb.Services;
 
-
-
 public class MessageService
 {
     private readonly IHttpClientFactory _factory;
-    private readonly Unimake.MessageBroker.Services.MessageService _messageService; 
+    private readonly Unimake.MessageBroker.Services.MessageService _messageService;
     public MessageService(IHttpClientFactory factory)
     {
         _factory = factory;
     }
 
-    public async Task SendMessageAsync(string WhatsAppNumber, string message, string InstanceName = "01KHRKZZ31AK3CBYG8J4Y7B9R2")
+    #region Funções de conexão com a API Nest
+    public async Task<ClsMerchant?> GetMerchantFromNestApi(string token)
     {
+        try
+        {
+            var client = _factory.CreateClient("ApiAutorizada");
+            AdicionaTokenNaRequisicao(client, token);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await client.GetAsync("merchants/details", cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
+
+            return merchant;
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+
+    }
+
+    private void AdicionaTokenNaRequisicao(HttpClient client, string token)
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    #endregion
+
+    public async Task SendMessageAsync(EnviaMsgDto enviaMsgDto, string TokenDaApiNest)
+    {
+        ClsMerchant Merchant = await GetMerchantFromNestApi(TokenDaApiNest) ?? throw new Exception("Não foi possível obter os detalhes do comerciante.");
+
+        string Mensagem = string.Empty;
+        if (enviaMsgDto.EtapaDoPedido == EtapasPedido.DESPACHADO)
+        {
+            if (enviaMsgDto.Pedido.TipoDePedido == "DELIVERY")
+            {
+                Mensagem = Merchant.MenssagemDeDeliveryDespachado ?? "";
+            }
+            else
+            {
+                Mensagem = Merchant.MenssagemDeBalcaoPronto ?? "";
+            }
+        }
+        else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.FINALIZADO)
+        {
+            if (enviaMsgDto.Pedido.TipoDePedido == "DELIVERY")
+            {
+                Mensagem = Merchant.MenssagemDeDeliveryFinalizado ?? "";
+            }
+            else
+            {
+                Mensagem = Merchant.MenssagemDeBalcaoFinalizado ?? "";
+            }
+        }
+        else
+        {
+            throw new Exception("Etapa do pedido não suportada para envio de mensagem.");
+        }
+
+        string NomeDoCliente = enviaMsgDto.Pedido.Cliente?.Nome ?? throw new Exception("Nome do cliente não encontrado");
+        string NumeroDoCliente = enviaMsgDto.Pedido.Cliente?.Telefone ?? throw new Exception("Número do cliente não encontrado");
+        string InstanceName = Merchant.InstanceName ?? throw new Exception("Não foi possível obter o instance name");
+        string NumeroDoClienteFormatado = $"55{NumeroDoCliente}";
+        string MensagemFormatada = Mensagem.Replace("{NomeDoCliente}", NomeDoCliente).Replace("{NumeroDoPedido}", enviaMsgDto.NumeroDoPedido);
+
         TextMessage Message = new TextMessage
         {
-            InstanceName = "InstanceName",
-            Text = $"Olá! Eu sou uma mensagem de teste 🌜☠️. \n Aqui, eu estou em uma nova linha.",
-            To = "5516992366175",
+            InstanceName = InstanceName,
+            Text = MensagemFormatada,
+            To = NumeroDoClienteFormatado,
         };
 
-        
-
-        //_messageService.SendTextMessageAsync(Message);
-
         HttpClient client = _factory.CreateClient("ApiMessageBrokerUnimake");
-        client.DefaultRequestHeaders.Add("Authorization", "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6InVuaW1ha2UtcnNhLWtleS1TYW5kYm94IiwidHlwIjoiSldUIn0.eyJzdWIiOiI1MjAzMTY5NDI1MDEyNyIsInVuaXF1ZV9uYW1lIjoiNTIwMzE2OTQyNTAxMjciLCJpYXQiOjE3NzE0NDM2NDYsInNjb3BlIjoiVU1lc3Nlbmdlci5hbGwiLCJwZXJtcyI6IlJlYWQgV3JpdGUgQ3JlYXRlIERlbGV0ZSIsInJvbGUiOiJVc2VyIEFkbWluIEN1c3RvbWVyIiwianRpIjoiMjYyODkxZGY0YzRkNGFjNjk0OThkZjc3ODkzZTlkODIiLCJ0ZW5hbnQiOiI3MTU4MTE4NzY2NTUwMSIsIkNQRkNOUEoiOiIiLCJuYW1lIjoiVW5pZmFrZSBTb2Z0d2FyZSIsImdyYW50X3R5cGUiOiJDbGllbnRDcmVkZW50aWFscyIsImVudiI6IlNhbmRib3giLCJuYmYiOjE3NzE0NDM1ODUsImV4cCI6MTc3MTQ0NDU0NSwiaXNzIjoiaHR0cHM6Ly9hdXRoLnNhbmRib3gudW5pbWFrZS5zb2Z0d2FyZS8iLCJhdWQiOiJVTWVzc2VuZ2VyIn0.enbYdXCKrjnM1ctZOjNk7OY0N29r6vw5k8TV32PO6VWyThe4MFwyP1I_MD1RlbSuwL5gj4WlfQ71R1e3X-a_QvpBh57n8tC1u8GtQMfNfi_gYVNmNdvVXmbLdKosO4OX4STUXQSY_I8_9x7bk5S3Lr9m-CJzWQ5IzPi6hd3TniO2jlw_xAF22ke6fZbNEJb-jeZtlWa5GuVvv4dH4qb1UPMcDNbmiJrvPUNHEO4qB8opJBl1mvn-KZPT1jLDtF0B42PDRrIPoe-qbjsgTtScuimFFhrwWgT8uUgcArb4pIA1vDl4Etj4OElwWlMEGviiz5f_yVV9Sb8J4gv10dGtSQ"); 
-        
+
         try
         {
             var response = await client.PostAsJsonAsync($"/api/v1/Messages/Publish/{InstanceName}", Message);
+
             if (response.IsSuccessStatusCode)
             {
                 Console.WriteLine("Mensagem enviada com sucesso!");
             }
             else
             {
-                Console.WriteLine($"Falha ao enviar mensagem. Status Code: {response.StatusCode}");
+                Console.WriteLine($"Falha ao enviar mensagem. Status Code: {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
             }
         }
         catch (Exception ex)

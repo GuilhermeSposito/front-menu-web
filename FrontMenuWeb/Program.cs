@@ -5,6 +5,7 @@ using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services;
 using FrontMenuWeb.Services.FinanceroServices;
 using FrontMenuWeb.Services.Fiscal;
+using FrontMenuWeb.Services.IntegracoesServices;
 using FrontMenuWeb.Services.ServicosDeTerceiros;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -40,6 +41,9 @@ builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("Api"));
+
+//Injeções para integrações 
+builder.Services.AddScoped<MessageWhatsAppService>();
 
 builder.Services.AddScoped(sp =>
 {
@@ -116,6 +120,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineServic
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<DistanciasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<NfService>());
+ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<MessageWhatsAppService>());
 
 
 
