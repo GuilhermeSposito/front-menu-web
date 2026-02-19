@@ -17,6 +17,23 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        string? token = Environment.GetEnvironmentVariable("TOKEN_MESSAGE_BROKER");
+        if (token is null)
+        {
+            var AuthMessageBrokerClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
+            var responseAuthToken = await AuthMessageBrokerClient.PostAsJsonAsync("api/auth", new { appId = "086f8e04b6834581ba375f6ca947589b", secret = "ff9165403d9a4d318b5eef2267cce964" }, cancellationToken);
+            var tokenAuthResponse = await responseAuthToken.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
+
+            if (tokenAuthResponse is not null)
+            {
+                Environment.SetEnvironmentVariable("TOKEN_MESSAGE_BROKER", tokenAuthResponse.Token, EnvironmentVariableTarget.Process);
+                Environment.SetEnvironmentVariable("REFRESH_TOKEN_MESSAGE_BROKER", tokenAuthResponse.RefreshToken, EnvironmentVariableTarget.Process);
+                token = tokenAuthResponse.Token;
+            }
+        }
+
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
         var response = await base.SendAsync(request, cancellationToken);
 
         if (response.StatusCode != HttpStatusCode.Unauthorized)
@@ -27,13 +44,17 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
             return response;
 
         var refreshClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
+        Console.WriteLine("Entrou no refresh");
 
         var responseRefresh = await refreshClient.PostAsJsonAsync("api/auth", new { appId = "086f8e04b6834581ba375f6ca947589b", secret = "ff9165403d9a4d318b5eef2267cce964" }, cancellationToken);
         var tokenResponse = await responseRefresh.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
-         if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.Token))
+        if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.Token))
             return response;
 
-         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenResponse.Token);
+        Environment.SetEnvironmentVariable("TOKEN_MESSAGE_BROKER", tokenResponse.Token, EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable("REFRESH_TOKEN_MESSAGE_BROKER", tokenResponse.RefreshToken, EnvironmentVariableTarget.Process);
+
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenResponse.Token);
 
         var newRequest = await CloneHttpRequestMessage(request);
 
