@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
     <PackageReference Include="Unimake.DFe" Version="20251117.2020.2" />
+    <PackageReference Include="Unimake.MessageBroker" Version="20251016.36.37" />
+    <PackageReference Include="Unimake.MessageBroker.Primitives" Version="20250623.1022.24" />
     <PackageReference Include="Unimake.Security.Platform" Version="20230706.1027.33" />
   </ItemGroup>
 

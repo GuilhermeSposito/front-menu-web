@@ -15,22 +15,30 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
+builder.Services.AddScoped<MessageService>();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
 string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
+string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>("UrlApiMessageBroker") ?? "";
 
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
-    client.BaseAddress = new Uri(UrlSophos); //new Uri("https://localhost:3030");//
+    client.BaseAddress = new Uri(UrlSophos);
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {
-    client.BaseAddress = new Uri(UrlIBPT); //new Uri("https://localhost:3030");//
+    client.BaseAddress = new Uri(UrlIBPT); 
     client.Timeout = TimeSpan.FromSeconds(5);
+});
+
+builder.Services.AddHttpClient("ApiMessageBrokerUnimake", client =>
+{
+    client.BaseAddress = new Uri(UrlMessageBrokerWhatsAppUnimake); 
+    client.Timeout = TimeSpan.FromSeconds(10);
 });
 
 builder.Services.AddControllers(option =>

@@ -195,7 +195,7 @@
             {
                 grupo.Grupo.Complementos = grupo.Grupo.Complementos?.OrderBy(c => c.Id).ToList()!;
             }
-            
+
 
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
@@ -293,8 +293,8 @@
 
     private void AtualizarPrecoTotal()
     {
-        Item.PrecoTotal = (Item.PrecoUnitario * Item.Quantidade)
-                          + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade);
+        Item.PrecoTotal = (Item.PrecoUnitario + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade)) * Item.Quantidade;
+
     }
 
     private void RemoverComplemento(ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento, ClsComplemento complemento)

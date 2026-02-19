@@ -149,7 +149,7 @@
                                                     <MudCardContent>
                                                         @foreach (var item in pedido.Pedido.Itens)
                                                         {
-                                                            <MudStack Class="p-2 mt-1 rounded-2" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                            <MudStack @key="item.Id" Class="p-2 mt-1 rounded-2" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
                                                                 <MudStack Class="w-100" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                     <MudText>@($"{item.Quantidade}X {item.Descricao}")</MudText>
                                                                     <MudText>Valor Unitario: @($"{item.PrecoUnitario.ToString("C")}")</MudText>
@@ -165,7 +165,7 @@
                                                                     </MudStack>
                                                                     foreach (var complemento in item.Complementos)
                                                                     {
-                                                                        <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
+                                                                        <MudStack @key="complemento.Id" Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.End">
                                                                             <MudText Typo="Typo.caption">@($"{complemento.Quantidade}X {complemento.Descricao} - {complemento.PrecoUnitario.ToString("C")}")</MudText>
                                                                         </MudStack>
                                                                     }
@@ -560,6 +560,15 @@
 
             if (result?.Data?.Any() == true)
             {
+                foreach (var pedido in result.Data)
+                {
+                    foreach (var item in pedido.Itens)
+                    {
+                        if (item.Complementos?.Count > 1)
+                            item.Complementos = item.Complementos.OrderBy(x => x.Id).ToList();
+                    }
+                }
+
                 _items = result.Data.Select(p => new ClsDeSuporteParaMostrarPedidos
                 {
                     Pedido = p,
