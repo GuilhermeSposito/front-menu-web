@@ -449,11 +449,11 @@
 </MudPaper>
 
 
-
-
 @code {
+    #region Propriedades
     private bool CarregandoLancamentos = false;
     private IEnumerable<ClsLancamentoFinanceiro> LancamentosFinanceiros = new List<ClsLancamentoFinanceiro>();
+    private HashSet<ClsLancamentoFinanceiro> LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
     private MudDataGrid<ClsLancamentoFinanceiro>? dataGridRef = new();
 
     private IEnumerable<ClsFiltros> FiltrosSelecionados { get; set; } = new HashSet<ClsFiltros>() { Filtros.filtros.FirstOrDefault(x => x.NomeDoFiltro == "Periodo")! };
@@ -481,8 +481,9 @@
     private float TotalGeral = 0;
     private float TotalDespesas = 0;
     private float TotalReceitas = 0;
+    #endregion
 
-
+    #region Função de inicializar o grid
     private async Task<GridData<ClsLancamentoFinanceiro>> LoadServerData(GridState<ClsLancamentoFinanceiro> lancamentos)
     {
         try
@@ -540,7 +541,9 @@
         }
 
     }
+    #endregion
 
+    #region Funções de Página
     protected override async Task OnInitializedAsync()
     {
         try
@@ -590,44 +593,6 @@
                 await dataGridRef?.ReloadServerData()!;
 
             StateHasChanged();
-        }
-    }
-
-    private async Task DeletaLancamento(ClsLancamentoFinanceiro Lancamento)
-    {
-        try
-        {
-            bool TemPermissao = await VerificaPermissao();
-            if (!TemPermissao)
-            {
-                await AbreMensagemDeAcessoNegado();
-                return;
-            }
-
-            var parameters = new DialogParameters<ModalDeExcluir>
-                {
-                    { x => x.ContentText, $"Você tem certeza que deseja excluir o lançamento {Lancamento.Descricao}? Atenção, essa ação não pode ser desfeita" },
-                    { x => x.ButtonText, "Sim" },
-                    { x => x.Color, Color.Error}
-                };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
-            var result = await dialog.Result;
-
-            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-            {
-                var respostaApi = await LancamentoFinanceiroService.DeleteLancamentoAsync(Lancamento);
-
-                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
-                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
-
-                if (respostaApi.Status == "success")
-                    await dataGridRef!.ReloadServerData();
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao excluir Lançamento: {ex.Message}", Severity.Error);
         }
     }
 
@@ -691,6 +656,158 @@
         }
     }
 
+    private async Task GerarPdf()
+    {
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdf", "RelatorioPedidos.pdf");
+    }
+
+    void SelectedItemsChanged(HashSet<ClsLancamentoFinanceiro> items)
+    {
+        LancamentosSelecionados = items;
+
+        ContaMaisUsada = LancamentosSelecionados
+      .GroupBy(l => l.Conta)
+      .OrderByDescending(g => g.Count())
+      .Select(g => new ClsConta
+      {
+          NomeConta = g.Key.NomeConta
+      })
+      .FirstOrDefault();
+    }
+
+    private async Task OnPessoaSelecionada(ClsPessoas? pessoa)
+    {
+        PessoaSelecionadaParaOFiltro = pessoa;
+        await dataGridRef!.ReloadServerData();
+    }
+
+    private async Task OnMetodoSelecionado(ClsMetodosDePagMerchant? metodo)
+    {
+        MetodoSelecionadoraOFiltro = metodo;
+        await dataGridRef!.ReloadServerData();
+    }
+
+    private async Task<IEnumerable<ClsPessoas>> Search(string value, CancellationToken token)
+    {
+        try
+        {
+            if (value is null)
+                value = string.Empty;
+
+            // sempre busca na API, mesmo se value estiver vazio
+            var returnApiRefatored = await PessoasService.GetPessoasPaginado(value);
+
+            PessoasParaOFiltro = returnApiRefatored.Data.Lista ?? new List<ClsPessoas>();
+
+            return PessoasParaOFiltro.Where(x => (x.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) || (x.NomeFantasia?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao pesquisar Pessoas: {ex.Message}", Severity.Error);
+            return Enumerable.Empty<ClsPessoas>();
+        }
+    }
+
+    private async Task AbreMensagemDeAcessoNegado()
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeAcessoNegado>
+            {
+                  { x => x.ContentText, $"Desculpe. Infelizmente você não tem acesso a essa ação." },
+                  { x => x.ButtonText, "OK" },
+                  { x => x.Color, Color.Success}
+             };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
+            var result = await dialog.Result;
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao declarar acesso negado: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task AtualizarPeriodoRapido(int index)
+    {
+
+        switch (index)
+        {
+            case 0: // Mês Passado
+                var mesPassado = DateTime.Today.AddMonths(-1);
+                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+            case 1: // Semana Passada
+                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
+                FiltroDateTimeInicial = lastWeekStart;
+                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
+                break;
+            case 2: // Hoje
+                FiltroDateTimeInicial = DateTime.Today;
+                FiltroDateTimeFinal = DateTime.Today;
+                break;
+            case 3: // Esta Semana
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 4: // Semana Que Vem
+                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
+                break;
+            case 5: // Este Mês
+                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
+                break;
+        }
+
+        StateHasChanged();
+        await dataGridRef!.ReloadServerData();
+    }
+    #endregion
+
+    #region Funções de Ações
+    private async Task DeletaLancamento(ClsLancamentoFinanceiro Lancamento)
+    {
+        try
+        {
+            bool TemPermissao = await VerificaPermissao();
+            if (!TemPermissao)
+            {
+                await AbreMensagemDeAcessoNegado();
+                return;
+            }
+
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, $"Você tem certeza que deseja excluir o lançamento {Lancamento.Descricao}? Atenção, essa ação não pode ser desfeita" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await LancamentoFinanceiroService.DeleteLancamentoAsync(Lancamento);
+
+                string MensagemDeRetorno = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(MensagemDeRetorno, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    await dataGridRef!.ReloadServerData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir Lançamento: {ex.Message}", Severity.Error);
+        }
+    }
 
     private async Task AtualizaLancamnto(ClsLancamentoFinanceiro lancamento, bool atualizandoPago = false)
     {
@@ -801,124 +918,6 @@
 
     }
 
-
-    private async Task GerarPdf()
-    {
-        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdf", "RelatorioPedidos.pdf");
-    }
-
-
-
-    private HashSet<ClsLancamentoFinanceiro> LancamentosSelecionados = new HashSet<ClsLancamentoFinanceiro>();
-    void SelectedItemsChanged(HashSet<ClsLancamentoFinanceiro> items)
-    {
-        LancamentosSelecionados = items;
-
-        ContaMaisUsada = LancamentosSelecionados
-      .GroupBy(l => l.Conta)
-      .OrderByDescending(g => g.Count())
-      .Select(g => new ClsConta
-      {
-          NomeConta = g.Key.NomeConta
-      })
-      .FirstOrDefault();
-    }
-
-    private async Task AtualizarPeriodoRapido(int index)
-    {
-
-        switch (index)
-        {
-            case 0: // Mês Passado
-                var mesPassado = DateTime.Today.AddMonths(-1);
-                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
-                break;
-            case 1: // Semana Passada
-                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
-                FiltroDateTimeInicial = lastWeekStart;
-                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
-                break;
-            case 2: // Hoje
-                FiltroDateTimeInicial = DateTime.Today;
-                FiltroDateTimeFinal = DateTime.Today;
-                break;
-            case 3: // Esta Semana
-                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
-                break;
-            case 4: // Semana Que Vem
-                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(7);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
-                break;
-            case 5: // Este Mês
-                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
-                break;
-        }
-
-        StateHasChanged();
-        await dataGridRef!.ReloadServerData();
-    }
-
-    private async Task<IEnumerable<ClsPessoas>> Search(string value, CancellationToken token)
-    {
-        try
-        {
-            if (value is null)
-                value = string.Empty;
-
-            // sempre busca na API, mesmo se value estiver vazio
-            var returnApiRefatored = await PessoasService.GetPessoasPaginado(value);
-
-            PessoasParaOFiltro = returnApiRefatored.Data.Lista ?? new List<ClsPessoas>();
-
-            return PessoasParaOFiltro.Where(x => (x.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) || (x.NomeFantasia?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao pesquisar Pessoas: {ex.Message}", Severity.Error);
-            return Enumerable.Empty<ClsPessoas>();
-        }
-    }
-
-    private async Task OnPessoaSelecionada(ClsPessoas? pessoa)
-    {
-        PessoaSelecionadaParaOFiltro = pessoa;
-        await dataGridRef!.ReloadServerData();
-    }
-
-
-    private async Task OnMetodoSelecionado(ClsMetodosDePagMerchant? metodo)
-    {
-        MetodoSelecionadoraOFiltro = metodo;
-        await dataGridRef!.ReloadServerData();
-    }
-
-    private async Task AbreMensagemDeAcessoNegado()
-    {
-        try
-        {
-            var parameters = new DialogParameters<ModalDeAcessoNegado>
-            {
-                  { x => x.ContentText, $"Desculpe. Infelizmente você não tem acesso a essa ação." },
-                  { x => x.ButtonText, "OK" },
-                  { x => x.Color, Color.Success}
-             };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
-            var result = await dialog.Result;
-
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao declarar acesso negado: {ex.Message}", Severity.Error);
-        }
-
-    }
-
     private async Task<bool> VerificaPermissao()
     {
         if (AppState.MerchantLogado.FuncionarioLogado is not null)
@@ -931,6 +930,8 @@
 
         return true;
     }
+
+    #endregion
 
 }
 

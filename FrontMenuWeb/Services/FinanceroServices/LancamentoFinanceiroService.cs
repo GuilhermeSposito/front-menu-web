@@ -31,7 +31,6 @@ public class LancamentoFinanceiroService
         if (DataInicial is not null && DataFinal is not null && TiposDeFiltrosDePeriodo!.Any(x => x.Id == 3)) //aqui define se o filtro de periodo é pela data de vencimento
         {
             QuerysStrings += $"&DataVencimentoInicio={DataInicial?.ToString("yyyy-MM-ddTHH:mm:ssZ")}&DataVencimentoFinal={DataFinal?.ToString("yyyy-MM-ddTHH:mm:ssZ")}";
-
         }
 
         if (DataEmissao is not null)
