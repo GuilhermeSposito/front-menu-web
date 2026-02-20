@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Produtos;
+﻿using FrontMenuWeb.Models.Integracoes;
+using FrontMenuWeb.Models.Produtos;
 using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Models.Merchant;
@@ -16,6 +17,7 @@ public class ClsMerchant
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
     [JsonPropertyName("EmitindoNfeProd")] public bool EmitindoNfeProd { get; set; }
     [JsonPropertyName("FuncionarioLogado")] public ClsFuncionario? FuncionarioLogado { get; set; }
+    [JsonPropertyName("EmpresasIfoodIntegradas")] public List<ClsEmpresaIfood> EmpresasIfood { get; set; } = new List<ClsEmpresaIfood>();
     [JsonPropertyName("CertificadoBase64")] public string? CertificadoBase64 { get; set; }
     [JsonPropertyName("SenhaCertificado")] public string? SenhaCertificado { get; set; }
     [JsonPropertyName("UltimoNmrSerieNFe")] public int UltimoNmrSerieNFe { get; set; }

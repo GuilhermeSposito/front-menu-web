@@ -1,0 +1,161 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/empresas-ifood-integradas"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresasDeEntrega
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.EntregaMachine
+@using FrontMenuWeb.Models.Integracoes
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Services
+@using Microsoft.AspNetCore.Components
+@using System.Globalization;
+@using MudBlazor.Extensions
+@using MudBlazor.Services
+@using MudBlazor.Extensions.Components
+@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JS
+@inject EmpresaIfoodService EmpresaIfoodService
+@using MudBlazor.Extensions.Services
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Empresas Ifood</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de empresas do ifood Integradas.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { })">Nova Empresa</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsEmpresaIfood"
+                     @ref="dataGridRef"
+                     EditTrigger="DataGridEditTrigger.Manual"
+                     MultiSelection="false"
+                     SelectOnRowClick=true
+                     Class="rounded-3 custom-striped"
+                     Loading="Carregando"
+                     Hover
+                     ServerData="LoadServerData">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Ifood" />
+            </NoRecordsContent>
+            <ToolBarContent>
+            </ToolBarContent>
+            <Columns>
+                <TemplateColumn T="ClsEmpresaIfood" Title="Empresa">
+                    <CellTemplate Context="context">
+                        <MudTooltip Color="Color.Primary" Text="IFOOD">
+                            <MudImage Style="width:32px;height:32px;" Src="@AppState.GetIconeDoApp("IFOOD")"></MudImage>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.NomeEmpresa" Title="Nome"></PropertyColumn>
+                <PropertyColumn Property="x => x.MerchantIdIfood" Title="Id Ifood"></PropertyColumn>
+                <PropertyColumn Property="x => x.VenceTokenIfood" Title="Data Vencimento" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
+                <TemplateColumn T="ClsEmpresaIfood" Title="Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para ativar/desativar a integração com a empresa" Color="Color.Primary">
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsEmpresaIfood" Title="Ações">
+                    <CellTemplate Context="context">
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                            <MudMenuItem OnClick=@(async () => { await CopiarToken(context.Item.AccessTokenIfood); }) Icon="@Icons.Material.Filled.CopyAll" Label="Copiar Token" />
+                            <MudMenuItem OnClick=@(async () => { await DeletarEmpresa(context.Item); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Deletar" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    </MudLayout>
+</MudPaper>
+
+@code {
+    #region Propiedades e Injeções
+    public bool Carregando { get; set; } = false;
+    private MudDataGrid<ClsEmpresaIfood> dataGridRef;
+    #endregion
+
+    #region Função de inicialização do grid
+    private async Task<GridData<ClsEmpresaIfood>> LoadServerData(GridState<ClsEmpresaIfood> state)
+    {
+        try
+        {
+            Carregando = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+
+            var result = await EmpresaIfoodService.GetEmpresasIntegradas();
+
+            return new GridData<ClsEmpresaIfood>
+            {
+                Items = result,
+                TotalItems = result.Count()
+            };
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar empresas: {ex.Message}", Severity.Error);
+            return new GridData<ClsEmpresaIfood> { };
+        }
+        finally
+        {
+            Carregando = false;
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+    #endregion
+
+    #region função de abrir modal de criação/edição
+
+    #endregion
+
+    #region Funções de Ações
+    private void MostraMensagem<T>(ReturnApiRefatored<T> Response)
+    {
+        var sucesso = Response.Status == "success";
+        var Mensagem = sucesso ? Response.Data.Messages : Response.Messages;
+
+        Snackbar.Add(string.Join(",", Mensagem), sucesso ? Severity.Success : Severity.Error);
+
+    }
+
+    private async Task CopiarToken(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            Snackbar.Add("Token inválido.", Severity.Error);
+            return;
+        }
+
+        await JS.InvokeVoidAsync("copyToClipboard", token);
+
+        Snackbar.Add("Token copiado para a área de transferência!", Severity.Success);
+    }
+
+    private async Task OnSaveChanges(ClsEmpresaIfood empresaIfood)
+    {
+        var retorno  = await EmpresaIfoodService.UpdateEmpresa(empresaIfood);
+        MostraMensagem(retorno);
+    }
+
+    private async Task DeletarEmpresa(ClsEmpresaIfood empresaIfood)
+    {
+        var response = await EmpresaIfoodService.DeleteEmpresa(empresaIfood.Id);
+        MostraMensagem(response);
+
+        await dataGridRef.ReloadServerData();
+    }
+    #endregion
+
+}

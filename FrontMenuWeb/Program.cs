@@ -37,6 +37,7 @@ builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<EntregasService>();
 builder.Services.AddScoped<DistanciasService>();
+builder.Services.AddScoped<EmpresaIfoodService>();
 builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.Configure<ApiSettings>(
@@ -119,6 +120,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CaixaEPagamentosServi
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<DistanciasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EmpresaIfoodService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<NfService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<MessageWhatsAppService>());
 
