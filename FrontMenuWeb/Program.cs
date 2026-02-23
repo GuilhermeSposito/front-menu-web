@@ -43,6 +43,8 @@ builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("Api"));
 
+string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
+
 //Injeções para integrações 
 builder.Services.AddScoped<MessageWhatsAppService>();
 
@@ -50,6 +52,12 @@ builder.Services.AddScoped(sp =>
 {
     var clientFactory = sp.GetRequiredService<IHttpClientFactory>();
     return clientFactory.CreateClient("ApiAutorizada");
+});
+
+builder.Services.AddHttpClient("ApiIfood", client =>
+{
+    client.BaseAddress = new Uri("https://merchant-api.ifood.com.br/");
+    client.Timeout = TimeSpan.FromSeconds(10);
 });
 
 builder.Services.AddHttpClient("ApiRefresh", (sp, client) =>

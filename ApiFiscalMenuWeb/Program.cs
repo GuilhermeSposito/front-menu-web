@@ -27,7 +27,7 @@ string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
 string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
 string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>("UrlApiMessageBroker") ?? "";
 string UrlMessageBrokerWhatsAppUnimakeAuth = builder.Configuration.GetValue<string>("UrlApiMessageBrokerAuth") ?? "";
-string UrlApiIfoodOrders = builder.Configuration.GetValue<string>("UrlApiIfoodOrders") ?? "";
+string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
 
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
@@ -42,9 +42,9 @@ builder.Services.AddHttpClient("ApiIBPT", client =>
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
-builder.Services.AddHttpClient("ApiIfoodOrders", client =>
+builder.Services.AddHttpClient("ApiIfood", client =>
 {
-    client.BaseAddress = new Uri(UrlApiIfoodOrders); 
+    client.BaseAddress = new Uri(UrlApiIfood); 
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 

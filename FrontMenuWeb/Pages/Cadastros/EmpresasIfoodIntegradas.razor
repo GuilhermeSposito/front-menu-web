@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/empresas-ifood-integradas"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresasDeEntrega
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
@@ -27,7 +28,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de empresas do ifood Integradas.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { })">Nova Empresa</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando" OnClick="@(async () => { await AbrirModalDeEmpresa(); })">Nova Empresa</MudButton>
             </div>
         </div>
 
@@ -39,7 +40,9 @@
                      Class="rounded-3 custom-striped"
                      Loading="Carregando"
                      Hover
-                     ServerData="LoadServerData">
+                     ServerData="LoadServerData"
+                     ShowFilterIcons=false
+                     ShowColumnOptions=false>
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Ifood" />
             </NoRecordsContent>
@@ -53,9 +56,9 @@
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
-                <PropertyColumn Property="x => x.NomeEmpresa" Title="Nome"></PropertyColumn>
-                <PropertyColumn Property="x => x.MerchantIdIfood" Title="Id Ifood"></PropertyColumn>
-                <PropertyColumn Property="x => x.VenceTokenIfood" Title="Data Vencimento" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
+                <PropertyColumn Sortable="false" Property="x => x.NomeEmpresa" Title="Nome"></PropertyColumn>
+                <PropertyColumn Sortable="false" Property="x => x.MerchantIdIfood" Title="Id Ifood"></PropertyColumn>
+                <PropertyColumn Sortable="false" Property="x => x.VenceTokenIfood" Title="Data Vencimento" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
                 <TemplateColumn T="ClsEmpresaIfood" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar a integração com a empresa" Color="Color.Primary">
@@ -117,7 +120,19 @@
     #endregion
 
     #region função de abrir modal de criação/edição
+    public async Task AbrirModalDeEmpresa()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true };
+           
+        var dialog = await DialogService.ShowAsync<EditarEAdicionarEmpresaIfood>("Nova Empresa Ifood", options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await dataGridRef.ReloadServerData();
+            StateHasChanged();
+        }
 
+    }
     #endregion
 
     #region Funções de Ações

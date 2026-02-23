@@ -1,0 +1,67 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Integracoes
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject IJSRuntime JS
+@inject EmpresaIfoodService EmpresasIfoodServices
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12" sm="12" md="12" lg="12">
+               <MudTextField @bind-Value=Empresa.NomeEmpresa Label="Nome Identificador" Variant="Variant.Outlined"/>
+            </MudItem>
+
+            <MudItem xs="12" sm="12" md="12" lg="12">
+                <MudTextField @bind-Value=Empresa.MerchantIdIfood Label="ID Empresa Ifood" Variant="Variant.Outlined" />
+            </MudItem>
+           
+            <MudItem xs="12" sm="12" md="12" lg="12">
+              <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudButton Color="Color.Primary" OnClick=GerarCodigoDeAutorizacao Variant="Variant.Filled">Gerar Código de Autorização</MudButton>
+              </MudStack>
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+</MudDialog>
+
+
+@code{
+    #region Propriedades
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ClsEmpresaIfood Empresa { get; set; } = new ClsEmpresaIfood();
+    #endregion
+
+
+    #region Funções de Ações
+    private async Task GerarCodigoDeAutorizacao()
+    {
+        if (string.IsNullOrEmpty(Empresa.MerchantIdIfood))
+        {
+            Snackbar.Add("O campo 'ID Empresa Ifood' é obrigatório para gerar o código de autorização.", Severity.Error);
+            return;
+        }
+        else if (string.IsNullOrEmpty(Empresa.NomeEmpresa))
+        {
+            Snackbar.Add("O campo 'Nome Identificador' é obrigatório para gerar o código de autorização.", Severity.Error);
+            return;
+        }
+
+        string UrlAutorizacao = await EmpresasIfoodServices.GerarAutorizacao();
+        if (string.IsNullOrEmpty(UrlAutorizacao))
+        {
+            Snackbar.Add("Ocorreu um erro ao gerar o código de autorização. Por favor, tente novamente.", Severity.Error);
+            return;
+        }
+
+        Navigation.NavigateTo(UrlAutorizacao, true);
+    }
+    #endregion
+}
