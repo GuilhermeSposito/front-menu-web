@@ -20,6 +20,7 @@ builder.Services.AddScoped<CustomAuthorizationMessageUnimakeHandler>();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<MessageService>();
+builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";

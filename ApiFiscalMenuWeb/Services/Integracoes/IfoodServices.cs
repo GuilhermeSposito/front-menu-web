@@ -1,4 +1,7 @@
-﻿using FrontMenuWeb.Models.Merchant;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Merchant;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiFiscalMenuWeb.Services.Integracoes;
@@ -14,6 +17,27 @@ public class IfoodServices
         _factory = factory;
         _nestApiService = nestApiService;
     }
+    #endregion
+
+    #region Autorização Region
+    public async Task<ReturnApiRefatored<object>> GetAutorizationCode()
+    {
+        var HttpIfood = _factory.CreateClient("ApiIfood");
+        FormUrlEncodedContent formData = new FormUrlEncodedContent(new[]
+        {
+              new KeyValuePair<string, string>("clientId", "7e476dce-79fa-4a7e-a605-aa2a1a40b803")
+        });
+        var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);
+        var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfoodDto>();
+
+        return new ReturnApiRefatored<object>
+        {
+            Status = response.IsSuccessStatusCode ? "success" : "error",
+            Messages = new List<string> { result.VerificationUrlComplete ?? "" },
+            Data = new Data<object> { ObjetoWhenWriting = result }
+        };
+    }
+
     #endregion
 
     #region Pooling Region

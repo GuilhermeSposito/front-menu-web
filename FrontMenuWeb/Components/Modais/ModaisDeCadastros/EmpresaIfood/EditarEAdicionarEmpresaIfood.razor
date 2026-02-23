@@ -54,7 +54,8 @@
             return;
         }
 
-        string UrlAutorizacao = await EmpresasIfoodServices.GerarAutorizacao();
+        string? UrlAutorizacao = await EmpresasIfoodServices.GerarAutorizacao();
+
         if (string.IsNullOrEmpty(UrlAutorizacao))
         {
             Snackbar.Add("Ocorreu um erro ao gerar o código de autorização. Por favor, tente novamente.", Severity.Error);

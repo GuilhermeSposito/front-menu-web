@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models;
+﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Integracoes;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -47,38 +48,20 @@ public class EmpresaIfoodService
 
 
     //Funções de Integrações com Api Ifood
-    public async Task<string> GerarAutorizacao()
+    public async Task<string?> GerarAutorizacao()
     {
-        Console.WriteLine("TESTEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-        var HttpIfood = _factory.CreateClient("ApiIfood");
-
-        FormUrlEncodedContent formData = new FormUrlEncodedContent(new[]
+        var HttpIntegracoes = _factory.CreateClient("ApiIntegracoes");
+        var response = await HttpIntegracoes.GetAsync("ifood/authorization");
+        if (response.IsSuccessStatusCode)
         {
-              new KeyValuePair<string, string>("clientId", "7e476dce-79fa-4a7e-a605-aa2a1a40b803")
-        });
-        var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);   
-        Console.WriteLine(await response.Content.ReadAsStringAsync());
-        var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfood>();
-
-
-        if(result is null)
-            return "";
-
-        string? UrlDeVerificacao = result?.VerificationUrlComplete;
-
-        return UrlDeVerificacao ?? "";
+            var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<UserCodeReturnFromAPIIfoodDto>>();
+            return result?.Data.Objeto?.VerificationUrlComplete ?? string.Empty;
+        }
+        else
+        {
+            throw new Exception("Erro ao obter autorização do iFood.");
+        }
     }
 
 }
 
-internal class UserCodeReturnFromAPIIfood
-{
-
-    [JsonPropertyName("userCode")]public string? UserCode { get; set; }
-    [JsonPropertyName("authorizationCodeVerifier")] public string? AuthorizationCodeVerifier { get; set; }
-    [JsonPropertyName("verificationUrl")] public string? VerificationUrl { get; set; }
-    [JsonPropertyName("verificationUrlComplete")] public string? VerificationUrlComplete { get; set; }
-    [JsonPropertyName("expiresIn")] public int ExpiresIn { get; set; }
-
-
-}

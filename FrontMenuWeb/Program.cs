@@ -54,9 +54,11 @@ builder.Services.AddScoped(sp =>
     return clientFactory.CreateClient("ApiAutorizada");
 });
 
-builder.Services.AddHttpClient("ApiIfood", client =>
+builder.Services.AddHttpClient("ApiIntegracoes", (sp, client) =>
 {
-    client.BaseAddress = new Uri("https://merchant-api.ifood.com.br/");
+    var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrlAPiFiscal);
+
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
