@@ -4,7 +4,10 @@ using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Integracoes;
 using FrontMenuWeb.Models.Merchant;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Net.Http.Headers;
+using Unimake.MessageBroker.Primitives.Contract.Response;
 
 namespace ApiFiscalMenuWeb.Services.Integracoes;
 
@@ -13,11 +16,13 @@ public class IfoodServices
     #region Propriedades
     private readonly IHttpClientFactory _factory;
     private readonly NestApiServices _nestApiService;
+    private readonly ILogger<IfoodServices> _logger;
 
-    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService)
+    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger)
     {
         _factory = factory;
         _nestApiService = nestApiService;
+        _logger = logger;
     }
     #endregion
 
@@ -89,14 +94,138 @@ public class IfoodServices
     #endregion
 
     #region Pooling Region
-    public async Task Pooling(string MerchantId, string TokenNestApi)
+    public async Task<ReturnApiRefatored<object>> Polling(string TokenNestApi)
     {
-        ClsMerchant? Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestApi);
-        if (Merchant is null)
-            throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
+        try
+        {
+            ClsMerchant? Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestApi);
+            if (Merchant is null)
+                throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
 
+            List<string> Messages = new List<string>();
+            if (Merchant.EmpresasIfood.Count() > 0)
+            {
+                var IfoodClient = _factory.CreateClient("ApiIfood");
+                foreach (var merchantsIfood in Merchant.EmpresasIfood)
+                {
+                    string AccessToken = merchantsIfood.AccessTokenIfood;
+                    AdicionaTokenNaRequisicao(IfoodClient, AccessToken);
 
+                    var PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
+                    if (PoolingResponse.IsSuccessStatusCode)
+                    {
+                        //Aqui você pode processar a resposta do pooling, por exemplo, lendo os pedidos e salvando no banco de dados
+                        int statusCode = (int)PoolingResponse.StatusCode;
+                        if (statusCode != 200)
+                            continue;
+
+                        List<PollingIfoodDto> Poolings = JsonConvert.DeserializeObject<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
+                        foreach (var P in Poolings)
+                        {
+                            switch (P.Code)
+                            {
+                                case "PLC": //caso entre aqui é porque é um novo pedido     
+                                    Messages.Add($"Pedido de ID: {P.OrderId} está sendo aguardado para ser aceito!");
+                                    break;
+                                case "CFM":
+                                    break;
+                                case "CAR":
+                                    break;
+                                case "CAN":
+                                    break;
+                                case "CANF":
+                                    break;
+                                case "CON":
+                                    break;
+                                case "DDCR":
+                                    break;
+                                case "DSP":
+                                    break;
+                                case "RDR":
+                                    break;
+                                case "RDS":
+                                    break;
+                                case "RTP":
+                                    break;
+                                case "HSD":
+                                    break;
+                                case "HSS":
+                                    break;
+                                case "GTO":
+                                    break;
+                                case "AAD":
+                                    break;
+                                case "DRGO":
+                                    break;
+                                case "DCR":
+                                    break;
+                                case "AAO":
+                                    break;
+                                case "DDCS":
+                                    break;
+                                case "ADR":
+                                    break;
+                                default:
+                                    _logger.LogInformation($"Evento {P.Code} recebido para o pedido {P.OrderId}, mas não é tratado no momento.");
+                                    break;
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}");
+                        return new ReturnApiRefatored<object>
+                        {
+                            Status = "error",
+                            Messages = new List<string> { $"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}" }
+                        };
+                    }
+                }
+            }
+            else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
+            {
+                return new ReturnApiRefatored<object>
+                {
+                    Status = "error",
+                    Messages = new List<string> { "Nenhuma Empresa Ifood Encontrada para esse Estabelecimento!" }
+                };
+
+            }
+
+            return new ReturnApiRefatored<object>
+            {
+                Status = "success",
+                Messages = Messages
+            };
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogWarning(ex, "Pooling do iFood cancelado. Endpoint: {Pooling}", "Pooling");
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "A requisição para leitura de pedidos demorou muito e foi cancelada." } };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao chamar API do iFood. Endpoint: {Pooling}", "Polling");
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
+        }
     }
+    #endregion
+
+    #region Funções de Ação dos Pedidos Do Ifood
+
+
+    #endregion
+
+    #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
+    #endregion
+
+    #region Funções Auxiliares
+    private void AdicionaTokenNaRequisicao(HttpClient client, string token)
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
     #endregion
 }
 

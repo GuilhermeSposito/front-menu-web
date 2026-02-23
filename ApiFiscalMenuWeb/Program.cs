@@ -72,7 +72,7 @@ builder.Services.AddControllers(option =>
 #endregion
 
 #region Configurações de CORS
-builder.Services.AddCors(options =>
+/*builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsLiberado", policy =>
     {
@@ -81,6 +81,25 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); 
+    });
+});*/
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsLiberado", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrEmpty(origin))
+                    return false;
+
+                return origin.EndsWith(".sophos-erp.com.br")
+                       || origin == UrlCors;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
