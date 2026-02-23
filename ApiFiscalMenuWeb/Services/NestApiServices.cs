@@ -1,4 +1,7 @@
-﻿using FrontMenuWeb.Models.Merchant;
+﻿using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood;
+using FrontMenuWeb.Models.Integracoes;
+using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Services;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -58,6 +61,17 @@ public class NestApiServices
     private void AdicionaTokenNaRequisicao(HttpClient client, string token)
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    public async Task<bool> EditarEAdicionarEmpresaIfood(ClsEmpresaIfood empresa, string TokenNestApi)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestApi);
+        var EmpresaServiceNest = new EmpresaIfoodService(client, _factory);
+
+        var RetornoDoCreate = await EmpresaServiceNest.CreateEmpresa(empresa);
+
+        return RetornoDoCreate.Status == "success" ? true : false;
     }
 
 }

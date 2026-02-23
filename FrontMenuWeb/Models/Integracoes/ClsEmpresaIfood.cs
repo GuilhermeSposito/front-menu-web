@@ -12,5 +12,6 @@ public class ClsEmpresaIfood
     [JsonPropertyName("VenceTokenIfood")] public DateTime VenceTokenIfood { get; set; }
     [JsonPropertyName("online")] public bool Online { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("CodigoDeAutorizacaoDoIfood")] public string? CodigoDeAutorizacaoDoIfood { get; set; }
 
 }

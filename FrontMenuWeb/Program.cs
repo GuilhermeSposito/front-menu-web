@@ -58,9 +58,8 @@ builder.Services.AddHttpClient("ApiIntegracoes", (sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrlAPiFiscal);
-
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 
 builder.Services.AddHttpClient("ApiRefresh", (sp, client) =>
 {
