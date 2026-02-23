@@ -7,24 +7,24 @@ using Microsoft.AspNetCore.Mvc;
 namespace ApiFiscalMenuWeb.Controllers;
 
 [ApiController]
-[Route("ifood")]
-public class IfoodController : Controller
+[Route("integracoes")]
+public class IntegracoesController : Controller
 {
     private readonly IfoodServices _ifoodService;
 
-    public IfoodController(IfoodServices ifoodService)
+    public IntegracoesController(IfoodServices ifoodService)
     {
         _ifoodService = ifoodService;
     }
 
     #region Região de Autenticacao e Autorização
-    [HttpGet("authorization-code")]
+    [HttpGet("ifood/authorization-code")]
     public async Task<ActionResult<ReturnApiRefatored<object>>> GetAuthorization()
     {
         return await _ifoodService.GetAutorizationCode();
     }
 
-    [HttpPost("autenticar")]
+    [HttpPost("ifood/autenticar")]
     public async Task<ActionResult<ReturnApiRefatored<object>>> Autenticar([FromBody] InformacoesParaAutenticarEmpresaIfoodDto infos)
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();

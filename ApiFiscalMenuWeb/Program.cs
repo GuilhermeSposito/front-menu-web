@@ -72,17 +72,6 @@ builder.Services.AddControllers(option =>
 #endregion
 
 #region Configurações de CORS
-/*builder.Services.AddCors(options =>
-{
-    options.AddPolicy("CorsLiberado", policy =>
-    {
-        policy
-            .WithOrigins(UrlCors)
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials(); 
-    });
-});*/
 
 builder.Services.AddCors(options =>
 {

@@ -103,6 +103,7 @@ public class IfoodServices
                 throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
 
             List<string> Messages = new List<string>();
+            List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
             if (Merchant.EmpresasIfood.Count() > 0)
             {
                 var IfoodClient = _factory.CreateClient("ApiIfood");
@@ -125,7 +126,9 @@ public class IfoodServices
                             switch (P.Code)
                             {
                                 case "PLC": //caso entre aqui é porque é um novo pedido     
-                                    Messages.Add($"Pedido de ID: {P.OrderId} está sendo aguardado para ser aceito!");
+                                    var Pedido = await GetPedido(P.OrderId, IfoodClient);
+                                    Messages.Add($"{Pedido}");
+                                    PollingsToAcknowledge.Add(P);
                                     break;
                                 case "CFM":
                                     break;
@@ -182,6 +185,9 @@ public class IfoodServices
                         };
                     }
                 }
+
+                await Acknowledge(IfoodClient, PollingsToAcknowledge);
+
             }
             else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
             {
@@ -192,6 +198,7 @@ public class IfoodServices
                 };
 
             }
+
 
             return new ReturnApiRefatored<object>
             {
@@ -213,7 +220,21 @@ public class IfoodServices
     #endregion
 
     #region Funções de Ação dos Pedidos Do Ifood
+    private async Task<string> GetPedido(string OrderId, HttpClient IfoodClient)
+    {
+        var PedidoResponse = await IfoodClient.GetAsync($"order/v1.0/orders/{OrderId}");
+        if (PedidoResponse.IsSuccessStatusCode)
+        {
+            int statusCode = (int)PedidoResponse.StatusCode;
 
+
+            return await PedidoResponse.Content.ReadAsStringAsync();
+        }
+        else
+        {
+            return await PedidoResponse.Content.ReadAsStringAsync() + $"{OrderId}";
+        }
+    }
 
     #endregion
 
@@ -226,6 +247,10 @@ public class IfoodServices
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
+    private async Task Acknowledge(HttpClient IfoodClient, List<PollingIfoodDto> Pollings)
+    {
+        await IfoodClient.PostAsJsonAsync($"order/v1.0/events/acknowledgment", Pollings);
+    }
     #endregion
 }
 
