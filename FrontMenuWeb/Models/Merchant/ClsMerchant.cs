@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Models.Integracoes;
+﻿using FrontMenuWeb.Models.Financeiro;
+using FrontMenuWeb.Models.Integracoes;
 using FrontMenuWeb.Models.Produtos;
 using System.Text.Json.Serialization;
 
@@ -14,6 +15,7 @@ public class ClsMerchant
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Grupos")] public List<ClsGrupo> Grupos { get; set; } = new List<ClsGrupo>();
     [JsonPropertyName("marcaDepartamento")] public string? MarcaDepartamento { get; set; } = string.Empty;
     [JsonPropertyName("legendaDoVoluma")] public string? LegendaDoVolume { get; set; } = string.Empty;
+    [JsonPropertyName("FormasDeRecebimento")] public List<ClsFormaDeRecebimento> FormasDeRecebimento { get; set; } = new List<ClsFormaDeRecebimento>();
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
     [JsonPropertyName("EmitindoNfeProd")] public bool EmitindoNfeProd { get; set; }
     [JsonPropertyName("FuncionarioLogado")] public ClsFuncionario? FuncionarioLogado { get; set; }
@@ -46,6 +48,7 @@ public class ClsMerchant
     [JsonPropertyName("AceitaFiado")] public bool AceitaFiado { get; set; }
     [JsonPropertyName("EnviaPedidoAutTaxyMachine")] public bool EnviaPedidoAutTaxyMachine { get; set; }
     [JsonPropertyName("IntegraIfood")] public bool IntegraIfood { get; set; }
+    [JsonPropertyName("AceitaPedidoAutDeIntegracoes")] public bool AceitaPedidoAutDeIntegracoes { get; set; }
     [JsonPropertyName("ReplicaFechamentoParaOFinanceiro")] public bool ReplicaFechamentoParaOFinanceiro { get; set; }
     [JsonPropertyName("TempoDeEntregaEMmin")] public int TempoDeEntregaEMmin { get; set; }
     [JsonPropertyName("TempoDeRetiradaEMmin")] public int TempoDeRetiradaEMmin { get; set; }

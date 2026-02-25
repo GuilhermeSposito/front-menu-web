@@ -203,7 +203,7 @@
 
             if (!ECriacao)
             {
-                Complemento = await ComplementosServices.GetComplemento(IdDoComplemento);
+                Complemento = await ComplementosServices.GetComplemento(IdDoComplemento)!;
 
                 if (Complemento.EProduto)
                 {

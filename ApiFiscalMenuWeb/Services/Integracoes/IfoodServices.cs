@@ -1,12 +1,18 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Financeiro;
 using FrontMenuWeb.Models.Integracoes;
 using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Pessoas;
+using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using Unimake.Business.DFe.Servicos;
 using Unimake.MessageBroker.Primitives.Contract.Response;
 
 namespace ApiFiscalMenuWeb.Services.Integracoes;
@@ -120,54 +126,54 @@ public class IfoodServices
                         if (statusCode != 200)
                             continue;
 
-                        List<PollingIfoodDto> Poolings = JsonConvert.DeserializeObject<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
+                        List<PollingIfoodDto> Poolings = JsonSerializer.Deserialize<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
                         foreach (var P in Poolings)
                         {
                             switch (P.Code)
                             {
                                 case "PLC": //caso entre aqui é porque é um novo pedido     
-                                    var Pedido = await GetPedido(P.OrderId, IfoodClient);
-                                    Messages.Add($"{Pedido}");
-                                    PollingsToAcknowledge.Add(P);
-                                    break;
+                                    string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(P.OrderId, IfoodClient, TokenNestApi, Merchant, PollingsToAcknowledge, P);
+                                    Messages.Add(MensagemDeTentativaDeAddPedido);
+
+                                    continue;
                                 case "CFM":
-                                    break;
+                                    continue;
                                 case "CAR":
-                                    break;
+                                    continue;
                                 case "CAN":
-                                    break;
+                                    continue;
                                 case "CANF":
-                                    break;
+                                    continue;
                                 case "CON":
-                                    break;
+                                    continue;
                                 case "DDCR":
-                                    break;
+                                    continue;
                                 case "DSP":
-                                    break;
+                                    continue;
                                 case "RDR":
-                                    break;
+                                    continue;
                                 case "RDS":
-                                    break;
+                                    continue;
                                 case "RTP":
-                                    break;
+                                    continue;
                                 case "HSD":
-                                    break;
+                                    continue;
                                 case "HSS":
-                                    break;
+                                    continue;
                                 case "GTO":
-                                    break;
+                                    continue;
                                 case "AAD":
-                                    break;
+                                    continue;
                                 case "DRGO":
-                                    break;
+                                    continue;
                                 case "DCR":
-                                    break;
+                                    continue;
                                 case "AAO":
-                                    break;
+                                    continue;
                                 case "DDCS":
-                                    break;
+                                    continue;
                                 case "ADR":
-                                    break;
+                                    continue;
                                 default:
                                     _logger.LogInformation($"Evento {P.Code} recebido para o pedido {P.OrderId}, mas não é tratado no momento.");
                                     break;
@@ -206,39 +212,278 @@ public class IfoodServices
                 Messages = Messages
             };
         }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Conversão do pedido Ifood não válida. Endpoint: {Pooling}", "Pooling");
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Não Foi possivel ler o pedido do ifood" } };
+        }
         catch (OperationCanceledException ex)
         {
-            _logger.LogWarning(ex, "Pooling do iFood cancelado. Endpoint: {Pooling}", "Pooling");
+            _logger.LogError(ex, "Pooling do iFood cancelado. Endpoint: {Pooling}", "Pooling");
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "A requisição para leitura de pedidos demorou muito e foi cancelada." } };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erro ao chamar API do iFood. Endpoint: {Pooling}", "Polling");
+            _logger.LogError("Tipo real da exception: {Type}", ex.GetType().FullName);
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
         }
     }
     #endregion
 
     #region Funções de Ação dos Pedidos Do Ifood
-    private async Task<string> GetPedido(string OrderId, HttpClient IfoodClient)
+    private async Task<PedidoIfoodDto?> GetPedidoIfood(string OrderId, HttpClient IfoodClient)
     {
         var PedidoResponse = await IfoodClient.GetAsync($"order/v1.0/orders/{OrderId}");
         if (PedidoResponse.IsSuccessStatusCode)
         {
-            int statusCode = (int)PedidoResponse.StatusCode;
+            int StatusCode = (int)PedidoResponse.StatusCode;
+            if (StatusCode != 200)
+                return null;
 
+            PedidoIfoodDto? PedidoIfood = JsonSerializer.Deserialize<PedidoIfoodDto>(await PedidoResponse.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            return await PedidoResponse.Content.ReadAsStringAsync();
+            return PedidoIfood;
         }
         else
         {
-            return await PedidoResponse.Content.ReadAsStringAsync() + $"{OrderId}";
+            return null;
         }
     }
 
+    private async Task<bool> AceitaPedido(string PedidoId, HttpClient IfoodClient)
+    {
+        var ResponseConfirm = await IfoodClient.PostAsync($"order/v1.0/orders/{PedidoId}/confirm", null);
+        return ResponseConfirm.IsSuccessStatusCode;
+    }
     #endregion
 
     #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
+    private async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, string TokenNestApi, ClsMerchant MerchantSophos)
+    {
+        ClsPedido PedidoSophos = new ClsPedido
+        {
+            IfoodID = PedidoIfood.Id,
+            CriadoEm = PedidoIfood.CreatedAt.AddHours(-3), // Porque é retornado o horário em UTC, então subtraio 3 horas para converter para horário de Brasília
+            CriadoPor = "IFOOD",
+            TipoDePedido = RetornaTipoDoPedidoSophos(PedidoIfood.OrderType),
+            EtapaPedido = "PREPARANDO",
+            DisplayId = PedidoIfood.DisplayId,
+            StatusPedido = "FECHADO",
+            ValorDosItens = (float)PedidoIfood.Total.SubTotal,
+            ValorTotal = (float)PedidoIfood.Total.OrderAmount,
+            AcrescimoValor = (float)PedidoIfood.Total.AddtionalFees,
+            TaxaEntregaValor = (float)PedidoIfood.Total.DeliveryFee,
+            ObservacaoDoPedido = PedidoIfood.ExtraInfo
+        };
+
+        PedidoSophos.Itens = await RetornaItensSophos(PedidoIfood.Items, TokenNestApi);
+
+        //Definir Pagamento
+        PedidoSophos.Pagamentos = RetornaPagamentosDoPedido(PedidoIfood, PedidoSophos, MerchantSophos);
+        //Definir o clitente 
+        PedidoSophos.Cliente = RetornaClienteSophos(PedidoIfood.Customer);
+        //Definir o Endereço de Entrega
+        PedidoSophos.Endereco = RetornaEnderecoDoClienteSophos(PedidoIfood.Delivery.DeliveryAddress);
+
+        var json = JsonSerializer.Serialize(PedidoIfood);
+        PedidoSophos.JsonPedidoDeIntegracao = json;
+
+        //DEFINIR PEDIDOS AGENDADOS
+        if (PedidoIfood.OrderTiming == "SCHEDULED")
+        {
+            PedidoSophos.PedidoAgendado = true;
+            if (PedidoIfood.OrderType == "DELIVERY")
+            {
+                PedidoSophos.HorarioDataAgendamento = PedidoIfood.Delivery.DeliveryDateTime.AddHours(-3);
+            }
+            else if (PedidoIfood.OrderType == "TAKEOUT")
+            {
+                PedidoSophos.HorarioDataAgendamento = PedidoIfood.Takeout.TakeoutDateTime.AddHours(-3);
+            }
+        }
+
+        return PedidoSophos;
+    }
+
+    private async Task<List<ItensPedido>> RetornaItensSophos(List<ItemIfoodDto> ItensIfood, string TokenNestApi)
+    {
+        //Fazer integração depois para buscar o produto no banco de dados do sophos e preencher o Id do produto e o Id do preço, por enquanto vai ser só a descrição mesmo
+
+        var ItensSophos = new List<ItensPedido>();
+
+        foreach (var item in ItensIfood)
+        {
+            var ResultadoConversaoCodPdv = EditaCodigoPdvIfoodParaPadroSophos(item);
+
+            ClsProduto? ProdutoSophos = await _nestApiService.RetornaProdutoEncontrado(ResultadoConversaoCodPdv.Codigo, TokenNestApi);
+            ItensPedido ItemSophos = new ItensPedido
+            {
+                Descricao = item.Name,
+                Quantidade = (float)item.Quantity,
+                PrecoUnitario = (float)item.UnitPrice,
+                PrecoTotal = (float)item.TotalPrice,
+                Observacoes = item.Observations,
+                LegTamanhoEscolhido = ResultadoConversaoCodPdv.Legenda
+            };
+
+            //Aqui se o produto foi encontrado
+            if (ProdutoSophos is not null)
+            {
+                ItemSophos.ProdutoId = ProdutoSophos.Id;
+                ItemSophos.Produto = ProdutoSophos;
+                ItemSophos.Descricao = ProdutoSophos.Descricao;
+            }
+
+            foreach (var complemento in item.Options)
+            {
+                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode, TokenNestApi);
+
+                ComplementoNoItem ComplementoSophos = new ComplementoNoItem
+                {
+                    Descricao = complemento.Name,
+                    Quantidade = (float)complemento.Quantity,
+                    PrecoUnitario = (float)complemento.UnitPrice,
+                    PrecoTotal = (float)complemento.Price,
+                };
+
+                if (ComplementoSophosEncontrado is not null)
+                {
+                    ComplementoSophos.ComplementoId = ComplementoSophosEncontrado.Id;
+                    ComplementoSophos.Complemento = ComplementoSophosEncontrado;
+                    ComplementoSophos.Descricao = ComplementoSophosEncontrado.Descricao;
+                }
+
+                ItemSophos.Complementos.Add(ComplementoSophos);
+            }
+
+            ItensSophos.Add(ItemSophos);
+        }
+
+        return ItensSophos;
+    }
+
+    private List<PagamentoDoPedido> RetornaPagamentosDoPedido(PedidoIfoodDto PedidoIfood, ClsPedido PedidoSophosAtual, ClsMerchant MerchantSophos)
+    {
+        //Primeiro Definir os Descontos, (Se foram descontos do Ifood Ou se Foram Descontos do Merchant)
+        foreach (var Desconto in PedidoIfood.Benefits)
+        {
+            float ValorTotalEmDesconto = 0f;
+            float ValorTotalEmIncentivoExterno = 0f;
+            foreach (var InformacoesDoDesconto in Desconto.Description)
+            {
+                if (InformacoesDoDesconto.Name == "IFOOD")
+                {
+                    ValorTotalEmIncentivoExterno += (float)InformacoesDoDesconto.Value;
+                }
+                else
+                {
+                    ValorTotalEmDesconto += (float)InformacoesDoDesconto.Value;
+                }
+            }
+
+            PedidoSophosAtual.DescontoValor += ValorTotalEmDesconto;
+            PedidoSophosAtual.IncentivosExternosValor += ValorTotalEmIncentivoExterno;
+        }
+
+        //Definir os Pagamentos
+        var PagamentosDoPedido = new List<PagamentoDoPedido>();
+        foreach (var Metodo in PedidoIfood.Payments.Methods)
+        {
+            PagamentoDoPedido Pagamento = new PagamentoDoPedido
+            {
+                ValorTotal = (float)Metodo.Value,
+                CriadoEm = DateTime.Now
+            };
+
+            if (Metodo.Type == "ONLINE")
+            {
+                var PagamentosOnline = MerchantSophos.FormasDeRecebimento.Where(f => f.PagamentoOnline).ToList();
+                Pagamento.FormaDePagamento = RetornaTipoDePagamentoQueBataComCodeDoCardapioIntegrado(PagamentosOnline, Metodo.Method, PagOnline: true) ?? PagamentosOnline.FirstOrDefault();
+            }
+            else
+            {
+                Pagamento.FormaDePagamento = RetornaTipoDePagamentoQueBataComCodeDoCardapioIntegrado(MerchantSophos.FormasDeRecebimento, Metodo.Method) ?? MerchantSophos.FormasDeRecebimento.FirstOrDefault();
+            }
+
+            if (Metodo.Type == "CASH")
+            {
+                var Troco = Metodo.Cash.ChangeFor - Metodo.Value;
+                Pagamento.Troco = (float)Troco;
+            }
+
+            Pagamento.formaDeRecebimentoId = Pagamento.FormaDePagamento?.Id ?? 0;
+            PagamentosDoPedido.Add(Pagamento);
+        }
+
+        return PagamentosDoPedido;
+    }
+
+    public ClsPessoas? RetornaClienteSophos(CustomerIfoodDto? ClienteIfood)
+    {
+        if (ClienteIfood is null)
+            return null;
+
+        return new ClsPessoas
+        {
+            Nome = ClienteIfood.Name,
+            Cpf = ClienteIfood.DocumentType == "CPF" ? ClienteIfood.DocumentNumber : null,
+            Cnpj = ClienteIfood.DocumentType == "CNPJ" ? ClienteIfood.DocumentNumber : null,
+            Telefone = ClienteIfood.Phone?.Localizer
+        };
+    }
+
+    public EnderecoPessoa? RetornaEnderecoDoClienteSophos(DeliveryAddresIfoodDto? EnderecoIfood)
+    {
+        if (EnderecoIfood is null)
+            return null;
+
+        return new EnderecoPessoa
+        {
+            Rua = EnderecoIfood.StreetName,
+            Numero = EnderecoIfood.StreetNumber,
+            Bairro = EnderecoIfood.Neighborhood,
+            Complemento = EnderecoIfood.Complement,
+            Referencia = EnderecoIfood.Reference,
+            Cep = EnderecoIfood.PostalCode,
+            Cidade = EnderecoIfood.City,
+            Estado = EnderecoIfood.State,
+            ObsEndereco = EnderecoIfood.FormattedAddress,
+            TipoEndereco = "ENTREGA IFOOD"
+        };
+    }
+
+    private async Task<string> AdicionaPedidoAoSophos(string OrderId, HttpClient IfoodClient, string TokenNestApi, ClsMerchant Merchant, List<PollingIfoodDto> PollingsToAcknowledge, PollingIfoodDto P)
+    {
+        PedidoIfoodDto? PedidoIFood = await GetPedidoIfood(OrderId, IfoodClient);
+        if (PedidoIFood is null)
+        {
+            return $"Falha ao obter os detalhes do pedido {OrderId} para o merchant {Merchant.NomeFantasia}";
+
+        }
+
+        ClsPedido? PedidoSophos = await ConvertePedidoDoIfoodParaPedidoSophos(PedidoIFood, TokenNestApi, Merchant);
+        if (PedidoSophos is null)
+        {
+            return $"Falha ao converter o pedido {OrderId} para o formato do Sophos para o merchant {Merchant.NomeFantasia}";
+        }
+
+        bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(TokenNestApi, PedidoSophos);
+        if (AdicionouOPedido)
+        {
+            if (Merchant.AceitaPedidoAutDeIntegracoes && Merchant.EmitindoNfeProd) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
+            {
+                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id, IfoodClient);
+                if (AceitouPedido)
+                    PollingsToAcknowledge.Add(P);
+
+            }
+            return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
+        }
+        else
+        {
+            return $"Falha ao adicionar o pedido {P.OrderId} para o merchant {Merchant.NomeFantasia}";
+        }
+    }
     #endregion
 
     #region Funções Auxiliares
@@ -250,6 +495,115 @@ public class IfoodServices
     private async Task Acknowledge(HttpClient IfoodClient, List<PollingIfoodDto> Pollings)
     {
         await IfoodClient.PostAsJsonAsync($"order/v1.0/events/acknowledgment", Pollings);
+    }
+
+    private string RetornaTipoDoPedidoSophos(string tipoIfood)
+    {
+        switch (tipoIfood)
+        {
+            case "DELIVERY":
+                return "DELIVERY";
+            case "TAKEOUT":
+                return "BALCÃO";
+            case "INDOOR":
+                return "MESA";
+            case "DINE_IN":
+                return "BALCÃO";
+            default:
+                return "BALCÃO";
+        }
+    }
+
+    private string? RetornaTamanhoDoItem(string legendaTamnho)
+    {
+        switch (legendaTamnho)
+        {
+            case "P":
+                return "PEQUENO";
+            case "M":
+                return "MÉDIO";
+            case "G":
+                return "GRANDE";
+            case "B":
+                return "BROTINHO";
+            case "LAN":
+                return "LANCHE";
+            case "PRC":
+                return "PORÇÃO";
+            case "C":
+                return "CENTO";
+            case "MC":
+                return "MEIO CENTO";
+            case "F":
+                return "FOGAZZA";
+            case "MIN":
+                return "MINI";
+            case "S":
+                return "SUPER";
+            default:
+                return null;
+        }
+    }
+
+    private (string? Codigo, string? Legenda) EditaCodigoPdvIfoodParaPadroSophos(ItemIfoodDto itemIfoodDto)
+    {
+        if (string.IsNullOrEmpty(itemIfoodDto.ExternalCode))
+            return (null, null);
+
+        bool eCodigoSimples = int.TryParse(itemIfoodDto.ExternalCode, out _);
+        if (eCodigoSimples)
+            return (itemIfoodDto.ExternalCode, null);
+
+        List<string> legendasExistentes = ["G", "M", "P", "B", "LAN", "PRC", "C", "MC", "F", "MIN", "S"];
+
+        foreach (var legenda in legendasExistentes)
+        {
+            if (itemIfoodDto.ExternalCode.Contains(legenda))
+            {
+                var codigoLimpo = itemIfoodDto.ExternalCode.Replace(legenda, "");
+                string? LegendaFormatada = RetornaTamanhoDoItem(legenda);
+                return (codigoLimpo, LegendaFormatada);
+            }
+        }
+
+        return (itemIfoodDto.ExternalCode, null);
+    }
+
+    private ClsFormaDeRecebimento? RetornaTipoDePagamentoQueBataComCodeDoCardapioIntegrado(List<ClsFormaDeRecebimento> formas, string CodeIfood, bool PagOnline = false)
+    {
+        if (formas == null || !formas.Any() || string.IsNullOrWhiteSpace(CodeIfood))
+            return null;
+
+        CodeIfood = CodeIfood.Trim().ToUpperInvariant();
+
+        if (PagOnline)
+        {
+            var FormaDePagamentoOnlineIfood = formas.FirstOrDefault(f => f.Descricao.Contains("ONLINE IFOOD", StringComparison.OrdinalIgnoreCase));
+            if (FormaDePagamentoOnlineIfood is not null)
+                return FormaDePagamentoOnlineIfood;
+        }
+
+        return CodeIfood switch
+        {
+            "DIGITAL_WALLET" => formas.FirstOrDefault(f => f.Descricao.Contains("ONLINE", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("ONLINE IFOOD", StringComparison.OrdinalIgnoreCase)),
+
+            "CASH" => formas.FirstOrDefault(f => f.EDinheiro || f.Descricao.Contains("DINHEIRO", StringComparison.OrdinalIgnoreCase)),
+
+            "CREDIT" => formas.FirstOrDefault(f => f.ECredito || f.Descricao.Contains("CRÉDITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("CREDITO", StringComparison.OrdinalIgnoreCase)),
+
+            "DEBIT" => formas.FirstOrDefault(f => f.EDEbito || f.Descricao.Contains("DÉBITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("DEBITO", StringComparison.OrdinalIgnoreCase)),
+
+            "MEAL_VOUCHER" => formas.FirstOrDefault(f => f.Descricao.Contains("REFEI", StringComparison.OrdinalIgnoreCase)),
+
+            "FOOD_VOUCHER" => formas.FirstOrDefault(f => f.Descricao.Contains("ALIMENT", StringComparison.OrdinalIgnoreCase)),
+
+            "GIFT_CARD" => formas.FirstOrDefault(f => f.Descricao.Contains("PRESENTE", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("GIFT", StringComparison.OrdinalIgnoreCase)),
+
+
+            "PIX" => formas.FirstOrDefault(f => f.EPix || f.Descricao.Contains("PIX", StringComparison.OrdinalIgnoreCase)),
+
+            _ => formas.FirstOrDefault()
+        };
     }
     #endregion
 }

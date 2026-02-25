@@ -204,7 +204,12 @@
                 <PropertyColumn Property="x => x.StatusPedido" Title="Status"></PropertyColumn>
                 <TemplateColumn T="ClsPedido" Title="Formas de pag">
                     <CellTemplate Context="context">
-                        <MudText Style="font-weight:600" Color=Color.Success>@string.Join(", ", context.Item.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</MudText>
+                        <MudText Style="font-weight:600" Color="Color.Success">
+                            @string.Join(", ",
+                            context?.Item?.Pagamentos?
+                            .Select(p => p?.FormaDePagamento?.Descricao ?? "Outros")
+                            ?? Enumerable.Empty<string>())
+                        </MudText>
                     </CellTemplate>
                 </TemplateColumn>
 

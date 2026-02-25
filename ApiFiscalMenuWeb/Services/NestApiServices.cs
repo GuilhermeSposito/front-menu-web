@@ -1,6 +1,8 @@
 ﻿using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood;
 using FrontMenuWeb.Models.Integracoes;
 using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -74,4 +76,52 @@ public class NestApiServices
         return RetornoDoCreate.Status == "success" ? true : false;
     }
 
+    public async Task<bool> CriarPedidoSophos(string TokenNestApi, ClsPedido NovoPedido)
+    {
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestApi);
+        var PedidoServiceNest = new PedidosService(client);
+
+        var RetornoDoCreate = await PedidoServiceNest.CreatePedido(NovoPedido, cts.Token);
+        if(RetornoDoCreate.Status == "error")
+        {
+            Console.WriteLine(string.Join(",", RetornoDoCreate.Messages));
+            return false;
+        }
+
+        return RetornoDoCreate.Status == "success" ? true : false;
+    }
+
+    public async Task<ClsProduto?> RetornaProdutoEncontrado(string? CodigoPdv, string TokenNestApi)
+    {
+        if(string.IsNullOrEmpty(CodigoPdv))
+            return null;
+
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestApi);    
+        var ProdutoServiceNest = new ProdutoService(client);
+        ClsProduto? prod = await ProdutoServiceNest.GetProdutoPorCodigoInternoAsync(CodigoPdv);
+
+        return prod;
+    }
+
+    public async Task<ClsComplemento?> RetornaComplementoEncontrado(string? CodigoPdv, string TokenNestApi)
+    {
+        if (string.IsNullOrEmpty(CodigoPdv))
+            return null;
+
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestApi);
+        var ProdutoServiceNest = new ComplementosServices(client);
+
+        bool CodigoPdvEUmNumeroValido = int.TryParse(CodigoPdv, out int codigoPdvNumerico);
+        if(!CodigoPdvEUmNumeroValido)
+        {
+            return null;
+        }
+
+        var complemento = await ProdutoServiceNest.GetComplemento(codigoPdvNumerico);
+        return complemento;
+    }
 }

@@ -52,6 +52,20 @@ public class ProdutoService
         return response;
     }
 
+    public async Task<ClsProduto?> GetProdutoPorCodigoInternoAsync(string cod)
+    {
+        try
+        {
+            ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/codigo-interno/{cod}") ?? new ClsProduto();
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+    }
+
     public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaAsync(int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
     {
 
@@ -166,11 +180,18 @@ public class ComplementosServices
     //Parte de complementos
 
 
-    public async Task<ClsComplemento> GetComplemento(int IdDoComplemento)
+    public async Task<ClsComplemento?> GetComplemento(int IdDoComplemento)
     {
-        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}") ?? new ReturnApiRefatored<ClsComplemento>();
+        try
+        {
+            var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}") ?? new ReturnApiRefatored<ClsComplemento>();
 
-        return response.Data.Objeto ?? new ClsComplemento();
+            return response.Data.Objeto ?? new ClsComplemento();
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
     }
 
     public async Task<PaginatedResponse<ClsComplemento>> GetComplementosPagineted(int page, int pageSize)

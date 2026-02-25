@@ -86,7 +86,7 @@ public class ClsPedido
     [JsonPropertyName("CriadoPor")] public string CriadoPor { get; set; } = "SOPHOS";
     [JsonPropertyName("TipoPedido")] public string TipoDePedido { get; set; } = "BALCÃO";
     [JsonPropertyName("Etapa")] public string EtapaPedido { get; set; } = "PREPARANDO";
-    [JsonPropertyName("DisplayId")] public string DisplayId { get; set; } = "0000";
+    [JsonPropertyName("DisplayId")] public string DisplayId { get; set; } = "";
     [JsonPropertyName("Status")] public string StatusPedido { get; set; } = "FECHADO";
     [JsonPropertyName("Itens")] public List<ItensPedido> Itens { get; set; } = new List<ItensPedido>();
     private ClsPessoas? _cliente;
@@ -128,6 +128,12 @@ public class ClsPedido
     [JsonPropertyName("MesaComandaId")] public int MesaComandaId { get; set; }
     [JsonPropertyName("CodigoExternoMesa")] public string? CodigoExternoMesa { get; set; }
     [JsonPropertyName("ObservacaoDoPedido")] public string? ObservacaoDoPedido { get; set; } = string.Empty;
+    [JsonPropertyName("IfoodID")] public string? IfoodID { get; set; }
+    [JsonPropertyName("Imprimiu")] public bool Imprimiu { get; set; }
+    [JsonPropertyName("JsonPedidoDeIntegracao")] public string? JsonPedidoDeIntegracao { get; set; }
+    [JsonPropertyName("PedidoAgendado")] public bool PedidoAgendado { get; set; } = false;
+    [JsonPropertyName("HorarioDataAgendamento")] public DateTime? HorarioDataAgendamento { get; set; }
+
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

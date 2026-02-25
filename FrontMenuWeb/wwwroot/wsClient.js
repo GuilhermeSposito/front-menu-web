@@ -12,7 +12,7 @@ window.socketIO = {
         }
 
         //https://sophos-erp.com.br
-        const socket = io("https://sophos-erp.com.br", {
+        const socket = io("http://localhost:3030", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
@@ -115,6 +115,15 @@ window.socketIO = {
 //Função para reproduzir som de notificação
 window.playNotificationSound = () => {
     const audio = new Audio('/sounds/notify.mp3');
+    audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
+
+    audio.addEventListener('ended', () => {
+        audio.src = ''; // limpa referência
+    });
+};
+
+window.playNotificationSoundPedidoIntegracao = () => {
+    const audio = new Audio('/sounds/notifyPedidoIntegracao.mp3');
     audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
 
     audio.addEventListener('ended', () => {

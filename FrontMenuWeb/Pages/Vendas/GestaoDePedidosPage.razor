@@ -421,10 +421,30 @@
 
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
-        await CarregarPedidos();
-        await InvokeAsync(StateHasChanged);
-        Snackbar.Add("Novo pedido recebido!", Severity.Info);
+        bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
+
+        if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor == "IFOOD")
+        {
+            var Pedidos = _items;
+            if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
+            {
+                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                return;
+            }
+
+            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+            Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+            await CarregarPedidos();
+            await InvokeAsync(StateHasChanged);
+            await ImprimirPedido(novoPedido, false);
+            return;
+        }
+
         await JS.InvokeVoidAsync("playNotificationSound");
+        await InvokeAsync(StateHasChanged);
+        await CarregarPedidos();
+        Snackbar.Add("Novo pedido recebido!", Severity.Info);
     }
 
     private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
@@ -853,19 +873,26 @@
         status = "Conectado";
     }
 
-    private async Task ImprimirPedido(ClsPedido pedido)
+    private async Task ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true)
     {
-        var parameters = new DialogParameters<ModalDeExcluir>
+        bool confirmaImpressao = true;
+
+        if (PerguntaImpressao)
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
                 {
                      { x => x.ContentText, $"Atenção: Você confirma a impressão do pedido ?" },
                     { x => x.ButtonText, "Sim" },
                     { x => x.Color, Color.Error}
                 };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Envio De Pedido", parameters, options);
-        var result = await dialog.Result;
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Envio De Pedido", parameters, options);
+            var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            confirmaImpressao = !result!.Canceled && result.Data is bool sucesso && sucesso;
+
+        }
+        if (confirmaImpressao)
         {
             bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
 
@@ -875,6 +902,7 @@
                 Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
 
         }
+
     }
     #endregion
 

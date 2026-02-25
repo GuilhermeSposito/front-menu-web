@@ -1,10 +1,12 @@
 ﻿@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services.IntegracoesServices
 @using MudBlazor;
 @using System.Text.Json
 @inject IJSRuntime JS
 @inject PedidosService PedidoService
+@inject IntegracoesSophosService IntegracoesSophos
 
 @inherits LayoutComponentBase
 
@@ -67,7 +69,7 @@
                     </MudMenuItem>
 
                     <!-- Ifood -->
-                    @*<MudMenuItem>
+                    <MudMenuItem>
                         <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
                             <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
@@ -76,14 +78,14 @@
                                     </MudAvatar>
                                     <MudText Typo="Typo.h6">Ifood</MudText>
                                 </MudStack>
-                                <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
+                                <MudSwitch T="bool" @bind-Value=IntegraIfoodSettingsLocalStoragePreference @onclick="OnIfoodChanged" UncheckedColor="Color.Error" Color="Color.Success" />
                             </MudStack>
                             <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
-                                Seu ifood está ativo/online e esperando por pedidos!
+                                @(IntegraIfoodSettingsLocalStoragePreference ? "Seu iFood está ativo e esperando pedidos!" : "Seu iFood está desativado.")
                             </MudText>
                         </MudPaper>
                     </MudMenuItem>
-                    *@
+
 
                     <!-- Entregas -->
                     @if (AppState.MerchantLogado is not null && AppState.MerchantLogado.EnviaPedidoAutTaxyMachine)
@@ -154,7 +156,7 @@
                     </MudNavGroup>
 
                     <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">
-                        <MudNavLink Href="/config-integracoes" Icon="@Icons.Material.Filled.Settings">Integrações</MudNavLink>
+                        <MudNavLink Href="/config-integracoes" Icon="@Icons.Material.Filled.SettingsInputComponent">Integrações</MudNavLink>
                         <MudNavLink OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/config-geral", AppState.MerchantLogado.FuncionarioLogado?.AcessoConfiguracoes); })" Icon="@Icons.Material.Filled.Settings">Geral</MudNavLink>
                     </MudNavGroup>
 
@@ -187,6 +189,7 @@
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
     private string ProgramName = "Sophos";
     private const string ThemePreferenceKey = "themePreference"; // chave no localStorage
+    private bool IntegraIfoodSettingsLocalStoragePreference = false;
 
     private string MensagemDeCaixa = "Carregando status do caixa...";
     private Color ColorStatusCaixa = Color.Error;
@@ -208,10 +211,30 @@
     #endregion
 
 
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _cts;
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
+            if (IntegraIfood is null)
+            {
+                IntegraIfoodSettingsLocalStoragePreference = false;
+                await LocalStorage.SetItemAsync("IntegraIfood", false);
+            }
+
+            if (IntegraIfood is not null && IntegraIfood == true)
+            {
+                _cts = new CancellationTokenSource();
+                _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+                _ = StartPollingAsync(_cts.Token);
+                IntegraIfoodSettingsLocalStoragePreference = true;
+            }
+
+
+
             if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
             {
                 bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
@@ -284,6 +307,50 @@
 
     }
 
+    private async Task OnIfoodChanged()
+    {
+        bool IntegraIfood = await LocalStorage.GetItemAsync<bool>("IntegraIfood");
+        IntegraIfood = !IntegraIfood;
+        bool value = IntegraIfood;
+
+        IntegraIfood = value;
+        await LocalStorage.SetItemAsync("IntegraIfood", value);
+
+        if (value)
+        {
+
+            _cts = new CancellationTokenSource();
+            _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+            _ = StartPollingAsync(_cts.Token);
+        }
+        else
+        {
+            Dispose();
+        }
+        IntegraIfoodSettingsLocalStoragePreference = value;
+        StateHasChanged();
+
+    }
+
+    private async Task StartPollingAsync(CancellationToken token)
+    {
+        try
+        {
+            while (await _timer!.WaitForNextTickAsync(token))
+            {
+                await InvokeAsync(async () =>
+                {
+                    await IntegracoesSophos.PollingParaVisualizacaoDeNovosPedidos();
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Snackbar.Add("Visualização de Novos Pedidos Ifood Pausada.", Severity.Info);
+        }
+    }
+
     private async Task AlteraImpressaoDesabilita()
     {
         ImpressaoDesabilita = !ImpressaoDesabilita;
@@ -308,6 +375,13 @@
         await LocalStorage.SetItemAsync(ThemePreferenceKey, isDarkMode);
 
     }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _timer?.Dispose();
+    }
+
 
     private async Task AtualizaStatusDoCaixa()
     {
