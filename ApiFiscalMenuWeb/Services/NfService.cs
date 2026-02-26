@@ -445,7 +445,7 @@ public class NfService
             Cstat = autorizacao.Result.ProtNFe.InfProt.CStat,
             Xmotivo = autorizacao.Result.ProtNFe.InfProt.XMotivo,
             NmrProtocolo = NmrProtocolo,
-            NmrDaNf = ProxNmrNfe,
+            NmrDaNf = ProxNmrNFCe,
             XmlStringField = XmlDeDistribuicao,
             ValorTotalDaNf = ValorTotalDaNf,
             ValorTotalDosProdutos = ValorTotalProdutos,
