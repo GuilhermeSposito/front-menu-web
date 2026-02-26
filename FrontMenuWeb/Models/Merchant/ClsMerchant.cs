@@ -13,6 +13,7 @@ public class ClsMerchant
     [JsonPropertyName("ImagemLogo")] public string? ImagemLogo { get; set; }
     [JsonPropertyName("NomeFantasia")] public string NomeFantasia { get; set; } = string.Empty;
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)][JsonPropertyName("Grupos")] public List<ClsGrupo> Grupos { get; set; } = new List<ClsGrupo>();
+    [JsonPropertyName("EmailParaEnvioFiscais")] public string? EmailParaEnvioFiscais { get; set; } = string.Empty;
     [JsonPropertyName("marcaDepartamento")] public string? MarcaDepartamento { get; set; } = string.Empty;
     [JsonPropertyName("legendaDoVoluma")] public string? LegendaDoVolume { get; set; } = string.Empty;
     [JsonPropertyName("FormasDeRecebimento")] public List<ClsFormaDeRecebimento> FormasDeRecebimento { get; set; } = new List<ClsFormaDeRecebimento>();

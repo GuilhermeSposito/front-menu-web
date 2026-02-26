@@ -38,11 +38,13 @@
     [Parameter]
     public Color Color { get; set; }
 
+    [Parameter] public bool TamanhoMinimo { get; set; } = true;    
+
     public string Texto { get; set; } = string.Empty;
 
     public void Confirmar()
     {
-        if(string.IsNullOrEmpty(Texto) || Texto.Length < 15)
+        if (TamanhoMinimo && (string.IsNullOrEmpty(Texto) || Texto.Length < 15))
         {
             Snackbar.Add("O texto deve conter ao menos 15 caracteres.", Severity.Error);
             return;

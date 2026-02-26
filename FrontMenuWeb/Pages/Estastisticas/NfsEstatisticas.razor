@@ -19,15 +19,37 @@
 @using MudBlazor.Extensions.Services
 @inject NfService NfService
 @inject PedidosService PedidosService
+@inject MerchantServices MerchantServices
 
 <MudPaper Square="false" Elevation="0" class="@((Carregando ? "wait-cursor gestao-pedido-page" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
     <MudLayout>
-        <MudStack Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
-            <MudStack>
+        <MudStack Row=true Wrap="Wrap.Wrap" Justify="Justify.SpaceBetween" Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="p-2">
                 <MudText Typo="Typo.h4">NF-e NFC-e</MudText>
                 <MudText Class="mb-3" Typo="Typo.body1">NF-e NFC-e Emitidas (Posição Físcal)</MudText>
             </MudStack>
+            <MudStack Class="p-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadArquivo">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.CloudUpload">
+                            Enviar Arquivos por Email Para Contabilidade
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+            </MudStack>
         </MudStack>
+
+
+        @if (CarregandoEnvioDeEMail)
+        {
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1">Enviando Email...</MudText>
+                <MudProgressLinear Value="ProgressoFiscal" Color="Color.Primary" />
+                <MudText Typo="Typo.caption">@ProgressoFiscal%</MudText>
+            </MudPaper>
+        }
 
         <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
@@ -230,6 +252,7 @@
     private bool MultiSelecao = false;
     private HashSet<NFEmitidasDto> NfsSelecionados = new HashSet<NFEmitidasDto>();
 
+    private bool CarregandoEnvioDeEMail = false;
     #endregion
 
     #region Função de load do Grid
@@ -441,12 +464,12 @@
                 if (PrimeiraNFCe is not null && UltimaNFNfce is not null)
                 {
                     InultilizacaoNFDto InuDto = new InultilizacaoNFDto
-                        {
-                            TipoNf = 65,
-                            NumeroInicial = PrimeiraNFCe.NmrNf,
-                            NumeroFinal = UltimaNFNfce.NmrNf,
-                            Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
-                        };
+                    {
+                        TipoNf = 65,
+                        NumeroInicial = PrimeiraNFCe.NmrNf,
+                        NumeroFinal = UltimaNFNfce.NmrNf,
+                        Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
+                    };
 
                     ReturnApiRefatored<NFEmitidasDto> respostaApi = await NfService.InultilizaNFCe(InuDto);
                     MostraMensagemDeRetorno(respostaApi);
@@ -456,12 +479,12 @@
                 if (PrimeiraNFe is not null && UltimaNFNfe is not null)
                 {
                     InultilizacaoNFDto InuDto = new InultilizacaoNFDto
-                        {
-                            TipoNf = 55,
-                            NumeroInicial = PrimeiraNFe.NmrNf,
-                            NumeroFinal = UltimaNFNfe.NmrNf,
-                            Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
-                        };
+                    {
+                        TipoNf = 55,
+                        NumeroInicial = PrimeiraNFe.NmrNf,
+                        NumeroFinal = UltimaNFNfe.NmrNf,
+                        Justificativa = "Inutilização em Lote pelo Sistema - Erro de Emissão"
+                    };
 
                     ReturnApiRefatored<NFEmitidasDto> respostaApi = await NfService.InultilizaNFCe(InuDto);
                     MostraMensagemDeRetorno(respostaApi);
@@ -480,7 +503,7 @@
         finally
         {
             Carregando = false;
-        
+
         }
     }
 
@@ -499,4 +522,75 @@
 
     #endregion
 
+    #region Função de envio de email para contabilidade
+
+    private async void UploadArquivo(IBrowserFile file)
+    {
+        try
+        {
+            string? EmailCadastrado = AppState.MerchantLogado?.EmailParaEnvioFiscais;
+
+            ProgressoFiscal = 0;
+            _progressCts = new CancellationTokenSource();
+
+            using var stream = file.OpenReadStream();
+            using var ms = new MemoryStream();
+
+            if (string.IsNullOrEmpty(EmailCadastrado))
+            {
+                Snackbar.Add("Nenhum email cadastrado para envio. Por favor, informe um email.", Severity.Warning);
+
+                var optionsInputText = new DialogOptions { CloseButton = true, FullScreen = false, FullWidth = false, MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true };
+                var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Email para Envio", parameters: new DialogParameters<Components.Modais.ModaisGenericos.InputText>
+                {
+                    { x => x.ContentText, "Por favor, informe o email para envio dos arquivos de contabilidade." },
+                    { x => x.ButtonText, "Salvar" },
+                    { x => x.Color, Color.Primary },
+                    { x => x.TamanhoMinimo, false }
+                }, optionsInputText);
+                var result = await dialogInputText.Result;
+
+                if (result?.Data is string email)
+                    EmailCadastrado = email;
+
+
+            }
+
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
+            CarregandoEnvioDeEMail = true;
+
+            await stream.CopyToAsync(ms);
+
+            var returno = await MerchantServices.EnviarArquicosParaContabilidadeEmail(ms, file.Name, EmailCadastrado);
+            MostraMensagemDeRetorno(returno);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar email: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoEnvioDeEMail = false;
+            _progressCts?.Cancel();
+            StateHasChanged();
+        }
+
+    }
+
+    int ProgressoFiscal = 0;
+    CancellationTokenSource? _progressCts;
+    private async Task SimulaProgressoAsync(CancellationToken token)
+    {
+        ProgressoFiscal = 0;
+
+        while (ProgressoFiscal < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(30, token);
+            ProgressoFiscal += Random.Shared.Next(2, 6);
+            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    #endregion
 }

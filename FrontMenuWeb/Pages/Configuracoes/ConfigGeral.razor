@@ -204,6 +204,9 @@
                         <MudItem xs="12" md="4" lg="4">
                             <MudTextField Disabled=EditandoInfosFiscaisBloq @onfocusout=SalvarInfosLojaAsync T="string" @bind-Value=@Merchant.NcmDeServico Immediate=true Label="NCM De Serviço" Variant="Variant.Outlined" FullWidth="true" />
                         </MudItem>
+                        <MudItem xs="12" md="12" lg="12">
+                            <MudTextField Disabled=EditandoInfosFiscaisBloq @onfocusout=SalvarInfosLojaAsync T="string" @bind-Value=@Merchant.EmailParaEnvioFiscais Immediate=true Label="Email Para Envios Fiscais" Variant="Variant.Outlined" FullWidth="true" />
+                        </MudItem>
                         <MudItem xs="12" sm="12" md="12">
                             <MudStack AlignItems=AlignItems.Center Row=true>
                                 <MudTextField Disabled=EditandoInfosFiscaisBloq @bind-Value="CertificadoCarregado" Label="Certificado Digital" T="string" InputType="InputType.Password" Variant="Variant.Outlined" FullWidth="true" Immediate=true />

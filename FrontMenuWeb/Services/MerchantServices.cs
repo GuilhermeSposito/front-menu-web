@@ -77,5 +77,32 @@ public class MerchantServices
         var Resultado = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DocumentosMerchant>>();
         return Resultado ?? new ReturnApiRefatored<DocumentosMerchant>() { Status = "error", Messages = new List<string> { "Erro desconhecido" } };
     }
+
+    public async Task<ReturnApiRefatored<ClsMerchant>> EnviarArquicosParaContabilidadeEmail(MemoryStream ms,string filename , string? emailSelecionado = "guilhermesposito14@gmail.com")
+    {
+        using var content = new MultipartFormDataContent();
+
+        // Arquivo
+        var fileContent = new ByteArrayContent(ms.ToArray());
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+        content.Add(fileContent, "arquivos", filename);
+
+        var response = await _HttpClient.PostAsync(
+            $"envios-email/arquivos-fiscais?email={emailSelecionado}",
+            content
+        );
+
+        var resultado =
+            await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMerchant>>();
+
+        return resultado ??
+            new ReturnApiRefatored<ClsMerchant>
+            {
+                Status = "error",
+                Messages = new List<string> { "Erro desconhecido" }
+            };
+    }
 }
 
