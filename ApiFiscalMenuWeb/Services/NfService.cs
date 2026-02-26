@@ -36,6 +36,7 @@ public class NfService
     private ClsMerchant? _merchantAtual { get; set; }
     private string CnpjMerchantAtual { get; set; } = string.Empty;
     private double ValorTotalTribNfAtual = 0;
+    private double ValorTrocoNfAtual = 0;
 
     public NfService(IHttpClientFactory factory, IBPTServices iBPTServices)
     {
@@ -81,7 +82,7 @@ public class NfService
         }
         catch (Exception ex)
         {
-          return null;
+            return null;
         }
 
     }
@@ -557,7 +558,7 @@ public class NfService
         return new ReturnApiRefatored<object>
         {
             Status = "error",
-            Messages = new List<string> { $"{RecepçaoEvento.Result.CStat} - {RecepçaoEvento.Result.XMotivo}" }  
+            Messages = new List<string> { $"{RecepçaoEvento.Result.CStat} - {RecepçaoEvento.Result.XMotivo}" }
         };
 
 
@@ -602,7 +603,7 @@ public class NfService
 
         var config = new Configuracao
         {
-            TipoDFe = tipoDFe,  
+            TipoDFe = tipoDFe,
             CertificadoDigital = CertificadoSelecionado,
         };
 
@@ -614,7 +615,7 @@ public class NfService
         {
             case 102: //Inutilização Homologada
                 var ProcNfe = initInutilizacao.ProcInutNFeResult.GerarXML();
-               
+
                 var DataToReturn = new NfeReturnDto
                 {
                     NFTipo = 65,
@@ -629,7 +630,7 @@ public class NfService
                     ValorTotalDosTributos = 0
                 };
 
-                inseriunaapi =  await CreateRegistroDaNFInNestApi(token, DataToReturn);
+                inseriunaapi = await CreateRegistroDaNFInNestApi(token, DataToReturn);
 
                 break;
             case 563:
@@ -637,7 +638,7 @@ public class NfService
                 {
                     Status = "error",
                     Messages = new List<string> { $"Rejeição: Já existe pedido de Inutilização com a mesma faixa de inutilização" }
-                };            
+                };
             default:
                 return new ReturnApiRefatored<object>
                 {
@@ -766,7 +767,8 @@ public class NfService
 
         xml.NFe[0].InfNFe[0].Pag = new Pag
         {
-            DetPag = ReturnInfosDePags(pedido: enNfCeDto.Pedido)
+            DetPag = ReturnInfosDePags(pedido: enNfCeDto.Pedido),
+            VTroco = ValorTrocoNfAtual
         };
 
 
@@ -956,7 +958,8 @@ public class NfService
                             },
                             Pag = new Pag
                             {
-                                DetPag = ReturnInfosDePags(pedido: Pedido)
+                                DetPag = ReturnInfosDePags(pedido: Pedido),
+                                VTroco = ValorTrocoNfAtual
                             },
                             InfAdic = new InfAdic
                             {
@@ -1039,8 +1042,14 @@ public class NfService
             {
                 IndPag = IndicadorPagamento.PagamentoVista,
                 TPag = tipoPag,
-                VPag = pag.ValorTotal
+                VPag = pag.ValorTotal,
+
             };
+
+            if (pag.Troco > 0)
+            {
+                ValorTrocoNfAtual += pag.Troco;
+            }
 
             if (tipoPag == MeioPagamento.CartaoCredito || tipoPag == MeioPagamento.CartaoDebito)
             {
@@ -1340,7 +1349,7 @@ public class NfService
 
     public static string LimparCnpj(string? cnpj)
     {
-        if(cnpj is null)
+        if (cnpj is null)
         {
             return string.Empty;
         }
