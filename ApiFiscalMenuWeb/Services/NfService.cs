@@ -377,15 +377,14 @@ public class NfService
         if (DocumentoMerchant is null || string.IsNullOrEmpty(DocumentoMerchant.CSC))
             throw new BadHttpRequestException("Documento Incompleto ou faltando para emissão da NFe");
 
-        int ProxNmrNFCe = merchant.UltimoNmrSerieNFCe + 1;
-        merchant.UltimoNmrSerieNFCe = ProxNmrNFCe; //atrubuir novo valor para atualizarmos o banco de dados
-
+ 
         ClsPessoas? Destinatario = Pedido.Cliente;
         #endregion
         CnpjMerchantAtual = LimparCnpj(DocumentoMerchant.Cnpj);
+
         #region Incrementação do numero da NFCe
-        int ProxNmrNfe = merchant.UltimoNmrSerieNFCe + 1;
-        merchant.UltimoNmrSerieNFCe = ProxNmrNfe; //atrubuir novo valor para atualizarmos o banco de dados
+        int ProxNmrNFCe = merchant.UltimoNmrSerieNFCe + 1;
+        merchant.UltimoNmrSerieNFCe = ProxNmrNFCe; //atrubuir novo valor para atualizarmos o banco de dados
         #endregion
 
         var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
