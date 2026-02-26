@@ -33,7 +33,7 @@ public class IntegracoesController : Controller
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
 
-        var Return =  await _ifoodService.AutenticarEmpresa(infos, token);
+        var Return =  await _ifoodService.AutenticarEmpresa(infos, token, false, null, 0);
         return Ok(Return);
     }
     #endregion

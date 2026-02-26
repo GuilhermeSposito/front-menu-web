@@ -1,6 +1,7 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Integracoes;
+using SixLabors.ImageSharp;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
@@ -20,6 +21,12 @@ public class EmpresaIfoodService
     {
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>("empresas-ifood");
         return response?.Data.Lista ?? new List<ClsEmpresaIfood>();
+    }
+
+    public async Task<ClsEmpresaIfood> GetEmpresaIntegradaAsync(int idEmpresa)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>($"empresas-ifood/{idEmpresa}");
+        return response?.Data.Objeto ?? new ClsEmpresaIfood();
     }
 
     public async Task<ReturnApiRefatored<ClsEmpresaIfood>> CreateEmpresa(ClsEmpresaIfood empresa)
