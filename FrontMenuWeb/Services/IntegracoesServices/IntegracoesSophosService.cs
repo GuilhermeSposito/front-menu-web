@@ -12,7 +12,7 @@ public class IntegracoesSophosService
     {
         try
         {
-            await _httpClient.GetAsync("/integracoes/polling");
+            await _httpClient.GetAsync("integracoes/polling");
         }
         catch (Exception ex)
         {
