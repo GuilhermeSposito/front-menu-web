@@ -550,9 +550,17 @@
                 }, optionsInputText);
                 var result = await dialogInputText.Result;
 
-                if (result?.Data is string email)
+                if (result?.Data is string email && !string.IsNullOrEmpty(email)){
                     EmailCadastrado = email;
 
+                    if(AppState.MerchantLogado is not null)
+                    {
+                        AppState.MerchantLogado.EmailParaEnvioFiscais = email;
+                        var retorno = await MerchantServices.UpdateMerchantAsync(AppState.MerchantLogado);
+                        if (retorno.Status == "success")
+                            AppState.MerchantLogado = retorno.Data.Objeto!;
+                    }
+                }
 
             }
 
