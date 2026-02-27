@@ -1,4 +1,5 @@
-﻿using ApiFiscalMenuWeb.Services.Integracoes;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using ApiFiscalMenuWeb.Services.Integracoes;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
@@ -52,4 +53,20 @@ public class IntegracoesController : Controller
         return Ok(Return);
     }
     #endregion
+
+    #region Região de Ações dos pedidos
+    [HttpPost("despachado")]
+    public async Task<ActionResult<ReturnApiRefatored<object>>> DespachaPedido([FromBody] UpdatePedidosDto UpdateDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+
+        var Return = await _ifoodService.MudaStatusPedidoDespachado(UpdateDto);
+        return Ok(Return);
+    }
+
+    #endregion 
 }

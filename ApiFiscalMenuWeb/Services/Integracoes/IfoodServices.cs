@@ -196,6 +196,7 @@ public class IfoodServices
                                 case "DDCR":
                                     continue;
                                 case "DSP":
+                                    await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi });
                                     continue;
                                 case "RDR":
                                     continue;
@@ -302,6 +303,31 @@ public class IfoodServices
     {
         var ResponseConfirm = await IfoodClient.PostAsync($"order/v1.0/orders/{PedidoId}/confirm", null);
         return ResponseConfirm.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> MudaStatusPedidoDespachado(UpdatePedidosDto UpdateDto)
+    {
+        HttpClient? HttpIntegracaoCliente = null;
+        if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
+        {
+            HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
+            AdicionaTokenNaRequisicao(HttpIntegracaoCliente, UpdateDto.MerchantIfood.AccessTokenIfood);
+            string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
+            var response = await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/dispatch", null);
+        }
+
+        if(UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi ,UpdateDto.PedidoIdIntegracao);
+            if(PedidoSophos is not null)
+            {
+                await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+            }
+        }
+        
+
+
+            return true;
     }
     #endregion
 
@@ -532,6 +558,8 @@ public class IfoodServices
             return $"Falha ao adicionar o pedido {P.OrderId} para o merchant {Merchant.NomeFantasia}";
         }
     }
+    
+
     #endregion
 
     #region Funções Auxiliares

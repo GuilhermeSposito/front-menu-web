@@ -136,6 +136,14 @@ public class PedidosService
         return retorno?.Data?.Objeto;
     }
 
+    public async Task<ClsPedido?> GetPedidoByIntegracaoId(string IdPedido, CancellationToken cancellationToken = default)
+    {
+        var response = await _http.GetAsync($"pedidos/ped-integracao/{IdPedido}");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno?.Data?.Objeto;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> FechaMesa(ClsPedido Pedido)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/mesa", Pedido);

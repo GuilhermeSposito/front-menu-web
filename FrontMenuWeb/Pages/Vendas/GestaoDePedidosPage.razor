@@ -984,13 +984,16 @@
     #region Funções de Integrações
     private async void EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
     {
-        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+        if (Pedido.CriadoPor == "SOPHOS")
         {
-            if (Pedido.Cliente is null || string.IsNullOrEmpty(Pedido.Cliente.Telefone))
-                return;
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+            {
+                if (Pedido.Cliente is null || string.IsNullOrEmpty(Pedido.Cliente.Telefone))
+                    return;
 
-            if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
-                await MessageService.EnviarMensagem(Pedido, etapa);
+                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
+                    await MessageService.EnviarMensagem(Pedido, etapa);
+            }
         }
     }
 

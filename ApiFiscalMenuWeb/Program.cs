@@ -84,7 +84,7 @@ builder.Services.AddCors(options =>
                     return false;
 
                 return origin.EndsWith(".sophos-erp.com.br")
-                       || origin == UrlCors;
+                       || origin == UrlCors || origin == UrlSophos;
             })
             .AllowAnyMethod()
             .AllowAnyHeader()

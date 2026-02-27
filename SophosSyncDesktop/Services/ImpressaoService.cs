@@ -1,7 +1,6 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
-using Org.BouncyCastle.Crypto;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using System;
@@ -439,8 +438,8 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta, eObs: true);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
 

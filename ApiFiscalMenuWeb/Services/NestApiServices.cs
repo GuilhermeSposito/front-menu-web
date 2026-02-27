@@ -146,4 +146,26 @@ public class NestApiServices
         var complemento = await ProdutoServiceNest.GetComplemento(codigoPdvNumerico);
         return complemento;
     }
+
+ 
+    public async Task<ClsPedido?> GetPedidoPeloIntegracaoIdAsync(string TokenNestAPi, string integracaoId)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+
+        PedidosService PedidoServiceNest = new PedidosService(client);
+        var response = await PedidoServiceNest.GetPedidoByIntegracaoId(integracaoId);
+      
+        return response;
+    }
+    public async Task<bool> UpdatePedidoDespachadoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+
+        PedidosService PedidoServiceNest = new PedidosService(client);
+        var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido);
+      
+        return true;
+    }
 }
