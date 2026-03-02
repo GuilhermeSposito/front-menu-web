@@ -25,6 +25,7 @@ public class IfoodServices
     private readonly IHttpClientFactory _factory;
     private readonly NestApiServices _nestApiService;
     private readonly ILogger<IfoodServices> _logger;
+    private List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
 
     public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger)
     {
@@ -145,115 +146,89 @@ public class IfoodServices
                 throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
 
             List<string> Messages = new List<string>();
-            List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
-            if (Merchant.EmpresasIfood.Count() > 0)
-            {
-                var IfoodClient = _factory.CreateClient("ApiIfood");
-                foreach (var merchantsIfood in Merchant.EmpresasIfood)
+            if (Merchant.IntegraIfood)
+                if (Merchant.EmpresasIfood.Count() > 0)
                 {
-                    string AccessToken = merchantsIfood.AccessTokenIfood;
-                    AdicionaTokenNaRequisicao(IfoodClient, AccessToken);
-
-                    var PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
-                    if (PoolingResponse.StatusCode == HttpStatusCode.Unauthorized)
+                    var IfoodClient = _factory.CreateClient("ApiIfood");
+                    foreach (var merchantsIfood in Merchant.EmpresasIfood)
                     {
-                        var result = await AutenticarEmpresa(null, TokenNestApi, true, merchantsIfood.RefreshTokenIfood, merchantsIfood.Id);
-                        if (result.Status == "success" && result.Data.ObjetoWhenWriting is ClsEmpresaIfood empresaAtualizada)
-                            AdicionaTokenNaRequisicao(IfoodClient, empresaAtualizada.AccessTokenIfood);
+                        if (!merchantsIfood.Ativo)
+                            continue;
 
-                        PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
+                        string AccessToken = merchantsIfood.AccessTokenIfood;
+                        AdicionaTokenNaRequisicao(IfoodClient, AccessToken);
+
+                        var PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
                         if (PoolingResponse.StatusCode == HttpStatusCode.Unauthorized)
-                            continue;
-                    }
-
-                    if (PoolingResponse.IsSuccessStatusCode)
-                    {
-                        //Aqui você pode processar a resposta do pooling, por exemplo, lendo os pedidos e salvando no banco de dados
-                        int statusCode = (int)PoolingResponse.StatusCode;
-                        if (statusCode != 200)
-                            continue;
-
-                        List<PollingIfoodDto> Poolings = JsonSerializer.Deserialize<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
-                        foreach (var P in Poolings)
                         {
-                            switch (P.Code)
-                            {
-                                case "PLC": //caso entre aqui é porque é um novo pedido     
-                                    string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(P.OrderId, IfoodClient, TokenNestApi, Merchant, PollingsToAcknowledge, P);
-                                    Messages.Add(MensagemDeTentativaDeAddPedido);
+                            var result = await AutenticarEmpresa(null, TokenNestApi, true, merchantsIfood.RefreshTokenIfood, merchantsIfood.Id);
+                            if (result.Status == "success" && result.Data.ObjetoWhenWriting is ClsEmpresaIfood empresaAtualizada)
+                                AdicionaTokenNaRequisicao(IfoodClient, empresaAtualizada.AccessTokenIfood);
 
-                                    continue;
-                                case "CFM":
-                                    continue;
-                                case "CAR":
-                                    continue;
-                                case "CAN":
-                                    continue;
-                                case "CANF":
-                                    continue;
-                                case "CON":
-                                    continue;
-                                case "DDCR":
-                                    continue;
-                                case "DSP":
-                                    await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi });
-                                    continue;
-                                case "RDR":
-                                    continue;
-                                case "RDS":
-                                    continue;
-                                case "RTP":
-                                    continue;
-                                case "HSD":
-                                    continue;
-                                case "HSS":
-                                    continue;
-                                case "GTO":
-                                    continue;
-                                case "AAD":
-                                    continue;
-                                case "DRGO":
-                                    continue;
-                                case "DCR":
-                                    continue;
-                                case "AAO":
-                                    continue;
-                                case "DDCS":
-                                    continue;
-                                case "ADR":
-                                    continue;
-                                default:
-                                    _logger.LogInformation($"Evento {P.Code} recebido para o pedido {P.OrderId}, mas não é tratado no momento.");
-                                    break;
-                            }
+                            PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
+                            if (PoolingResponse.StatusCode == HttpStatusCode.Unauthorized)
+                                continue;
                         }
 
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}");
-                        return new ReturnApiRefatored<object>
+                        if (PoolingResponse.IsSuccessStatusCode)
                         {
-                            Status = "error",
-                            Messages = new List<string> { $"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}" }
-                        };
+                            //Aqui você pode processar a resposta do pooling, por exemplo, lendo os pedidos e salvando no banco de dados
+                            int statusCode = (int)PoolingResponse.StatusCode;
+                            if (statusCode != 200)
+                                continue;
+
+                            List<PollingIfoodDto> Poolings = JsonSerializer.Deserialize<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
+                            foreach (var P in Poolings)
+                            {
+                                switch (P.Code)
+                                {
+                                    case "PLC": //caso entre aqui é porque é um novo pedido     
+                                        string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(P.OrderId, IfoodClient, TokenNestApi, Merchant, P);
+                                        Messages.Add(MensagemDeTentativaDeAddPedido);
+                                        continue;
+                                    case "CFM":
+                                        //Aqui qunado for aceito o pedido e vier a confimação
+                                        continue;
+                                    case "DSP":
+                                        await MudaStatusPedidoDespachado(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
+                                        continue;
+                                    case "CON":
+                                        await MudaStatusPedidoConcluido(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
+                                        continue;
+                                    case "CAN":
+                                        await MudaStatusPedidoCancelado(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
+                                        continue;
+                                    default:
+                                        await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
+                                        break;
+                                }
+                            }
+
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}");
+                            return new ReturnApiRefatored<object>
+                            {
+                                Status = "error",
+                                Messages = new List<string> { $"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}" }
+                            };
+                        }
                     }
+
+                    if (PollingsToAcknowledge.Count() > 0 && Merchant.EmitindoNfeProd)
+                        await Acknowledge(IfoodClient, PollingsToAcknowledge);
+
                 }
-
-                if (PollingsToAcknowledge.Count() > 0)
-                    await Acknowledge(IfoodClient, PollingsToAcknowledge);
-
-            }
-            else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
-            {
-                return new ReturnApiRefatored<object>
+                else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
                 {
-                    Status = "error",
-                    Messages = new List<string> { "Nenhuma Empresa Ifood Encontrada para esse Estabelecimento!" }
-                };
+                    return new ReturnApiRefatored<object>
+                    {
+                        Status = "error",
+                        Messages = new List<string> { "Nenhuma Empresa Ifood Encontrada para esse Estabelecimento!" }
+                    };
 
-            }
-
+                }
 
             return new ReturnApiRefatored<object>
             {
@@ -305,7 +280,7 @@ public class IfoodServices
         return ResponseConfirm.IsSuccessStatusCode;
     }
 
-    public async Task<bool> MudaStatusPedidoDespachado(UpdatePedidosDto UpdateDto)
+    public async Task<bool> MudaStatusPedidoDespachado(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
     {
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
@@ -314,20 +289,113 @@ public class IfoodServices
             AdicionaTokenNaRequisicao(HttpIntegracaoCliente, UpdateDto.MerchantIfood.AccessTokenIfood);
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
             var response = await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/dispatch", null);
-        }
-
-        if(UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
-        {
-            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi ,UpdateDto.PedidoIdIntegracao);
-            if(PedidoSophos is not null)
+            if (Polling is not null)
             {
-                await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+                if (response.IsSuccessStatusCode)
+                    PollingsToAcknowledge.Add(Polling);
             }
         }
-        
+
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            if (PedidoSophos is not null)
+            {
+                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+
+                if (Polling is not null)
+                {
+                    if (response)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+            }
 
 
-            return true;
+        }
+
+
+
+        return true;
+    }
+
+    public async Task<bool> MudaStatusPedidoConcluido(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
+    {
+        HttpClient? HttpIntegracaoCliente = null;
+
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            if (PedidoSophos is not null)
+            {
+                var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+
+                if (Polling is not null)
+                {
+                    if (response)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+            }
+
+
+        }
+
+        return true;
+    }
+
+    public async Task<bool> MudaStatusPedidoCancelado(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
+    {
+        HttpClient? HttpIntegracaoCliente = null;
+        if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
+        {
+            HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
+            AdicionaTokenNaRequisicao(HttpIntegracaoCliente, UpdateDto.MerchantIfood.AccessTokenIfood);
+            string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
+
+        }
+
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            if (PedidoSophos is not null)
+            {
+                var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+
+                if (Polling is not null)
+                {
+                    if (response)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+            }
+
+
+        }
+
+
+
+        return true;
+    }
+    public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, PollingIfoodDto Polling)
+    {
+        HttpClient? HttpIntegracaoCliente = null;
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            if (PedidoSophos is not null)
+            {
+                string infoAdicional = RetornaStatusCompletoAtualizado(Polling.Code);
+
+                var response = await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
+
+                if (Polling is not null)
+                {
+                    PollingsToAcknowledge.Add(Polling);
+                }
+            }
+
+
+        }
+
+        return true;
     }
     #endregion
 
@@ -526,7 +594,7 @@ public class IfoodServices
         };
     }
 
-    private async Task<string> AdicionaPedidoAoSophos(string OrderId, HttpClient IfoodClient, string TokenNestApi, ClsMerchant Merchant, List<PollingIfoodDto> PollingsToAcknowledge, PollingIfoodDto P)
+    private async Task<string> AdicionaPedidoAoSophos(string OrderId, HttpClient IfoodClient, string TokenNestApi, ClsMerchant Merchant, PollingIfoodDto P)
     {
         PedidoIfoodDto? PedidoIFood = await GetPedidoIfood(OrderId, IfoodClient);
         if (PedidoIFood is null)
@@ -558,7 +626,7 @@ public class IfoodServices
             return $"Falha ao adicionar o pedido {P.OrderId} para o merchant {Merchant.NomeFantasia}";
         }
     }
-    
+
 
     #endregion
 
@@ -618,6 +686,47 @@ public class IfoodServices
                 return "SUPER";
             default:
                 return null;
+        }
+    }
+
+    private string RetornaStatusCompletoAtualizado(string legendaTamnho)
+    {
+        switch (legendaTamnho)
+        {
+            case "CAR":
+                return "Solicitação de cancelamento feita pelo Merchant (loja) ou pelo iFood de maneira automática (pedidos não confirmados dentro do prazo) ou de maneira manual através do nosso time de atendimento";
+            case "CARF":
+                return "Solicitação de cancelamento negada";
+            case "HSD":
+                return "Pedido com solicitação de alteração ou cancelamento. Entre em contato com o cliente para negociar.";
+            case "HSS":
+                return "Disputa Resolvida e Formalizada";
+            case "DAR":
+                return "Cliente solicitou alteração do endereço de entrega do pedido";
+            case "DAU":
+                return "Cliente confirmou o endereço de entrega";
+            case "DAA":
+                return "A alteração do endereço de entrega foi aprovada pelo parceiro";
+            case "DAD":
+                return "A alteração do endereço de entrega foi negada pelo parceiro";
+            case "CLT":
+                return "Entregador coletou o pedido";
+            case "AAD":
+                return "Entregador chegou no endereço de destino";
+            case "DRGO":
+                return "Entregador está retornando ao local de origem(coleta) do pedido";
+            case "DRDO":
+                return "Entregador já retornou ao local de origem(coleta) do pedido";
+            case "DCR":
+                return "Solicitação de cancelamento de entregador";
+            case "DDCR":
+                return "Informe o código de confirmação na entrega do pedido";
+            case "DDCS":
+                return "O código de confirmação de entrega foi validado com sucesso";
+            case "DPCS":
+                return "O código de confirmação de coleta foi validado com sucesso";
+            default:
+                return string.Empty;
         }
     }
 

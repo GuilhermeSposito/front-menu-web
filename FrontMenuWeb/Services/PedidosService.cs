@@ -25,6 +25,7 @@ public class PedidosService
     public static event Action<PedidoMesaDto>? PedidoMesaRecebido;
     public static event Action<ClsMesasEComandas>? PedidoMesaFechada;
     public static event Action<ClsPedido>? PedidoMudouEtapa;
+    public static event Action<ClsPedido>? PedidoMudouInfoAdicional;
 
     [JSInvokable]
     public static Task ReceivePedido(string msg)
@@ -41,6 +42,15 @@ public class PedidosService
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
         PedidoMudouEtapa?.Invoke(pedido);
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public static Task ReceiveInfoAdicionalDoPedido(string msg)
+    {
+        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
+
+        PedidoMudouInfoAdicional?.Invoke(pedido);
         return Task.CompletedTask;
     }
 
@@ -187,6 +197,14 @@ public class PedidosService
     public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoFinalizadoo(ClsPedido Pedido)
     {
         var response = await _http.PutAsJsonAsync($"pedidos/finalizado/{Pedido.Id}", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoInfosAdicionaisOuStatus(UpdatePedidoInfosAdicionaisDto updatDto, ClsPedido pedido)
+    {
+        var response = await _http.PutAsJsonAsync($"pedidos/info-adicional/{pedido.Id}", updatDto);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;

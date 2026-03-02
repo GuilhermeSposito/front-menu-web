@@ -69,6 +69,16 @@ window.socketIO = {
             }
         });
 
+        //Quando Atualiza a info adicional de um pedido
+        socket.on("pedido-mudou-info", (msg) => {
+            // Avisando o Blazor
+            if (window.DotNet) {
+                DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveInfoAdicionalDoPedido", JSON.stringify(msg))
+                    .then(() => { })
+                    .catch(err => console.error("Erro ao notificar Blazor:", err));
+            }
+        });
+
         socket.on("disconnect", () => {
 
         });

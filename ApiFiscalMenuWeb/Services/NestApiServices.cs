@@ -1,4 +1,5 @@
 ﻿using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood;
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Integracoes;
 using FrontMenuWeb.Models.Merchant;
@@ -166,6 +167,39 @@ public class NestApiServices
         PedidosService PedidoServiceNest = new PedidosService(client);
         var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido);
       
+        return true;
+    }
+
+    public async Task<bool> UpdatePedidoConcluidodoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+
+        PedidosService PedidoServiceNest = new PedidosService(client);
+        var response = await PedidoServiceNest.UpdatePedidoFinalizadoo(Pedido);
+
+        return true;
+    }
+
+    public async Task<bool> UpdatePedidoCanceladodoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+
+        PedidosService PedidoServiceNest = new PedidosService(client);
+        var response = await PedidoServiceNest.CancelarPedido(Pedido);
+
+        return true;
+    }
+
+    public async Task<bool> UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido, UpdatePedidoInfosAdicionaisDto UpdateDto)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+
+        PedidosService PedidoServiceNest = new PedidosService(client);
+        var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto,Pedido);
+
         return true;
     }
 }

@@ -140,6 +140,10 @@
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                             }
                                                             <MudText>@pedido.Pedido.CriadoEm</MudText>
+                                                            @if (!string.IsNullOrEmpty(pedido.Pedido.InfosPedidoIntegradoStatusAdicionais))
+                                                            {
+                                                                <MudText>@pedido.Pedido.InfosPedidoIntegradoStatusAdicionais</MudText>
+                                                            }
                                                         </CardHeaderContent>
                                                         <CardHeaderActions>
                                                             @if (!pedido.UltimaEtapa)
@@ -350,9 +354,14 @@
             };
 
             PedidosService.PedidoMudouEtapa += async pedido =>
-           {
-               await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
-           };
+            {
+                await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
+            };
+
+            PedidosService.PedidoMudouInfoAdicional += async pedido =>
+            {
+                await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
+            };
 
 
             await CarregaEmpresasMachine();
@@ -376,6 +385,14 @@
     private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
     {
         await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnInfoAdicionalPedidoMudou(ClsPedido Pedido)
+    {
+        await CarregarPedidos();
+
+        Snackbar.Add($"Atenção ao pedido {Pedido.DisplayId} criado por {Pedido.CriadoPor}, Temos novas informações sobre ele!", Severity.Info);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -580,10 +597,12 @@
         {
             var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido });
 
+
             if (result?.Data?.Any() == true)
             {
                 foreach (var pedido in result.Data)
                 {
+
                     foreach (var item in pedido.Itens)
                     {
                         if (item.Complementos?.Count > 1)
@@ -608,6 +627,8 @@
         }
         finally
         {
+            CarregandoParteFiscal = false;
+            ProgressoFiscal = 100;
             Carregando = false;
             await InvokeAsync(StateHasChanged);
         }
@@ -757,8 +778,20 @@
 
     private async Task OnPesquisaChanged(string value)
     {
-        pesquisaTexto = value;
-        await BuscarPedidos(); // atualiza a lista conforme digita
+        try
+        {
+            pesquisaTexto = value;
+            await BuscarPedidos(); // atualiza a lista conforme digita
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao buscar Pedidos", Severity.Error);
+        }
+        finally
+        {
+
+        }
+
     }
 
     private async Task BuscarPedidos()

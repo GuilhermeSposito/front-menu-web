@@ -79,7 +79,7 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
-                        <MudText>Delivery - @($"{PercentualPedidosDelivery:F1}")% </MudText>
+                        <MudText>Delivery - @($"{PercentualPedidosDelivery:F1}")%   - (@QtdPedidosDelivery/@NumeroTotalDePedidos)</MudText>
                     </MudStack>
                     <MudProgressLinear Color="Color.Primary" Value="PercentualPedidosDelivery" Rounded />
                 </MudCardContent>
@@ -91,7 +91,7 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.Storefront" Color="Color.Info" />
-                        <MudText>Balcão - @($"{PercentualPedidosBalcao:F1}")%</MudText>
+                        <MudText>Balcão - @($"{PercentualPedidosBalcao:F1}")%  - (@QtdPedidosBalcao/@NumeroTotalDePedidos)</MudText>
                     </MudStack>
                     <MudProgressLinear Color="Color.Info" Value="PercentualPedidosBalcao" Rounded />
                 </MudCardContent>
@@ -103,7 +103,7 @@
                 <MudCardContent>
                     <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                         <MudIcon Icon="@Icons.Material.Filled.Restaurant" Color="Color.Secondary" />
-                        <MudText>Mesas - @($"{PercentualPedidosMesa:F1}")% </MudText>
+                        <MudText>Mesas - @($"{PercentualPedidosMesa:F1}")%   - (@QtdlPedidosMesa/@NumeroTotalDePedidos)</MudText>
                     </MudStack>
                     <MudProgressLinear Color="Color.Secondary" Value="PercentualPedidosMesa" Rounded />
                 </MudCardContent>
@@ -294,6 +294,9 @@
     private float PercentualPedidosMesa = 0.0f;
     private float PercentualPedidosBalcao = 0.0f;
     private float PercentualPedidosDelivery = 0.0f;
+    private float QtdPedidosDelivery = 0.0f;
+    private float QtdlPedidosMesa = 0.0f;
+    private float QtdPedidosBalcao = 0.0f;
 
     // Lista de pedidos
     private List<ClsPedido> pedidos = new List<ClsPedido>();
@@ -448,7 +451,14 @@
             PercentualPedidosMesa = retornoPedidosTotal.PercentualDePedidos.Mesa;
         }
 
-        var retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 1, Status = StatusPedidos.ABERTO });
+        if (retornoPedidosTotal.QtdDePedidos is not null)
+        {
+            QtdlPedidosMesa = retornoPedidosTotal.QtdDePedidos.Mesa;
+            QtdPedidosBalcao = retornoPedidosTotal.QtdDePedidos.Balcao;
+            QtdPedidosDelivery = retornoPedidosTotal.QtdDePedidos.Delivery;
+        }
+
+        PaginatedResponse<ClsPedido> retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 1, Status = StatusPedidos.ABERTO });
         if (retornoPedidosAbertos.Total > 0)
         {
             NumeroDePedidosAbertos = retornoPedidosAbertos.Total;

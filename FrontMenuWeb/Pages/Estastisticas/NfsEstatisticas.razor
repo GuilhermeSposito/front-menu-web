@@ -533,7 +533,8 @@
             ProgressoFiscal = 0;
             _progressCts = new CancellationTokenSource();
 
-            using var stream = file.OpenReadStream();
+            const long maxFileSize = 20 * 1024 * 1024; // 20MB
+            using var stream = file.OpenReadStream(maxFileSize);
             using var ms = new MemoryStream();
 
             if (string.IsNullOrEmpty(EmailCadastrado))
