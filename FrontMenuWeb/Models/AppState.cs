@@ -1,14 +1,17 @@
 ﻿using FrontMenuWeb.Components.Modais.ModaisGenericos;
 using FrontMenuWeb.Models.Merchant;
+using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace FrontMenuWeb.Models;
 
 public class AppState
 {
-   public ClsMerchant MerchantLogado { get; set; } = new ClsMerchant();
-   public bool CaixaAberto { get; set; } = false;
+    public ClsMerchant MerchantLogado { get; set; } = new ClsMerchant();
+    public bool CaixaAberto { get; set; } = false;
 
+   
 
     public string GetBancoIcon(int codBanco)
     {
@@ -72,6 +75,6 @@ public class AppState
 
     }
 
-   
+
 
 }

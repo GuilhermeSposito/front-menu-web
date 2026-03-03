@@ -1,4 +1,5 @@
 ﻿@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Integracoes
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services.IntegracoesServices
@@ -211,6 +212,8 @@
     #endregion
 
 
+
+
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _cts;
     protected override async Task OnInitializedAsync()
@@ -224,14 +227,6 @@
                 await LocalStorage.SetItemAsync("IntegraIfood", false);
             }
 
-            if (IntegraIfood is not null && IntegraIfood == true)
-            {
-                _cts = new CancellationTokenSource();
-                _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
-
-                _ = StartPollingAsync(_cts.Token);
-                IntegraIfoodSettingsLocalStoragePreference = true;
-            }
 
 
 
@@ -282,6 +277,20 @@
                 }
             }
 
+
+            if (IntegraIfood is not null && IntegraIfood == true)
+            {
+
+
+                _cts = new CancellationTokenSource();
+                _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+                await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
+                _ = StartPollingAsync(_cts.Token);
+                IntegraIfoodSettingsLocalStoragePreference = true;
+            }
+
+
             await AtualizaStatusDoCaixa();
 
 
@@ -299,9 +308,9 @@
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-
+            Console.WriteLine(ex.Message);
             Snackbar.Add("Ocorreu um erro ao carregar as preferências do tema ou o status do caixa. As configurações padrão serão usadas.", Severity.Error);
         }
 
@@ -309,6 +318,12 @@
 
     private async Task OnIfoodChanged()
     {
+        if (AppState.MerchantLogado.EmpresasIfood.Count == 0)
+        {
+            Snackbar.Add("Nenhuma empresa iFood configurada. Por favor, configure uma empresa iFood para ativar esta funcionalidade.", Severity.Warning);
+            return;
+        }
+
         bool IntegraIfood = await LocalStorage.GetItemAsync<bool>("IntegraIfood");
         IntegraIfood = !IntegraIfood;
         bool value = IntegraIfood;
@@ -322,6 +337,7 @@
             _cts = new CancellationTokenSource();
             _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
 
+            await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
             _ = StartPollingAsync(_cts.Token);
         }
         else
@@ -338,12 +354,14 @@
     {
         try
         {
+
             while (await _timer!.WaitForNextTickAsync(token))
             {
                 await InvokeAsync(async () =>
                 {
                     await IntegracoesSophos.PollingParaVisualizacaoDeNovosPedidos();
                 });
+
             }
         }
         catch (OperationCanceledException)
@@ -534,6 +552,30 @@
             Snackbar.Add($"Erro ao declarar acesso negado: {ex.Message}", Severity.Error);
         }
 
+    }
+
+
+    public async Task IniciarWidget(List<ClsEmpresaIfood> Empresas)
+    {
+        List<string> MerchantsId = Empresas
+     .Where(x => !string.IsNullOrEmpty(x.MerchantIdIfood) && x.Ativo)
+     .Select(x => x.MerchantIdIfood!)
+     .ToList();
+
+        if (MerchantsId.Count > 0)
+        {
+            var result = await JS.InvokeAsync<WidgetResult>("startIfoodWidget", MerchantsId);
+
+            if (!result.Success)
+            {
+                Console.WriteLine($"Erro ao iniciar widget: {result.Message}");
+            }
+        }
+    }
+    public class WidgetResult
+    {
+        public bool Success { get; set; }
+        public string? Message { get; set; }
     }
 }
 

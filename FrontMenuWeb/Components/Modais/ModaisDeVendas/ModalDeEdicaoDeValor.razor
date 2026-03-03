@@ -28,6 +28,7 @@
                                          @bind-Value="ValorAtual"
                                          @onfocus="OnValorFocus"
                                          Label="Valor"
+                                         Format="F2"
                                          Variant="Variant.Filled"
                                          HideSpinButtons="true"
                                          Class="mud-width-full mud-elevation-1"
@@ -35,7 +36,7 @@
                                          AdornmentText="R$" 
                                          Margin="Margin.Dense"
                                          Style="font-size:1.5rem; height:70px; text-align:center;"
-                                         Immediate=true />
+                                         Immediate=false />
                     </MudItem>
                 </MudGrid>
             </MudFocusTrap>
@@ -66,7 +67,6 @@
         {
             await AtualizaValor();
         }
-
     }
 
     private async Task AtualizaValor()

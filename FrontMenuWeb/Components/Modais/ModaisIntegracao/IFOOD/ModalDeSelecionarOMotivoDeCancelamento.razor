@@ -11,18 +11,13 @@
 
 <MudDialog>
     <DialogContent >
-    
-
-
+   
             <MudSelect Class="w-100" T="ClsCancelationReasons" Label="Selecione o motivo do cancelamento" Placeholder="Selecione um motivo para o cancelamento desse pedido" ToStringFunc="c => c.Description" @bind-Value=motivoSelecionado>
                     @foreach (var motivo in MotivosDisponiveis)
                     {
                         <MudSelectItem T="ClsCancelationReasons" Value="@motivo">@motivo.Description</MudSelectItem>
                     }
             </MudSelect>
-
-
-
 
     </DialogContent>
     <DialogActions>

@@ -9,6 +9,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Components.Modais.ModaisIntegracao.IFOOD
 @using FrontMenuWeb.Components.Modais.ModalFiscais
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.EntregaMachine
 @using FrontMenuWeb.Models.Financeiro
@@ -796,11 +797,26 @@
                             { x => x.MotivosDisponiveis, retorno.Data.ListWhenWriting  }
                      };
 
-                    var optionsDialogDeSelecionarMotivos = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true, FullWidth=true};
+                    var optionsDialogDeSelecionarMotivos = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, CloseOnEscapeKey = true, FullWidth = true };
                     var DialogDeSelecionarMotivos = await DialogService.ShowAsync<ModalDeSelecionarOMotivoDeCancelamento>("Confirmar Cancelamento", parametersCancelamento, optionsDialogDeSelecionarMotivos);
-                    var resultMotivos = await dialog.Result;
+                    var resultMotivos = await DialogDeSelecionarMotivos.Result;
 
+                    if (!resultMotivos!.Canceled && resultMotivos.Data is ClsCancelationReasons MotivoSelecionado)
+                    {
+                        var CancelarDto = new CancelationIfoodObjectDto
+                        {
+                            Pedido = pedido,
+                            CancalationComfirmation = new ClsCancalationComfirmation
+                            {
+                                Reason = MotivoSelecionado.Description,
+                                CancellationCode = MotivoSelecionado.CancelCodeId
+                            }
+                        };
 
+                        var RetornoDoCancelamento = await IntegracoesSophosService.CancelationIfood(CancelarDto);
+                        MostraMensagemDeUpdateDoPedido(RetornoDoCancelamento);
+
+                    }
                 }
             }
         }
@@ -1053,7 +1069,7 @@
     #region Funções de Integrações
     private async void EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
     {
-        if (Pedido.CriadoPor == "SOPHOS")
+        if ((Pedido.CriadoPor == "SOPHOS") || (AppState.MerchantLogado.EnviaMsgWhatsIntegracao && Pedido.CriadoPor != "IFOOD")) //Envia para a integração menos ifood
         {
             if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
             {

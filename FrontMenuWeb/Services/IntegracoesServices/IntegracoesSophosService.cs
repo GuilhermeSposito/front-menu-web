@@ -40,4 +40,21 @@ public class IntegracoesSophosService
 
         return RetornoDeserializado ?? new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Erro ao obter motivos para cancelamento."} };
     }
+
+    public async Task<ReturnApiRefatored<object>> CancelationIfood(CancelationIfoodObjectDto Dto)
+    {
+        if(string.IsNullOrEmpty(Dto.Pedido?.IfoodID))
+            return new ReturnApiRefatored<object>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não Foi possivel encontrar o identificador do pedido ifood referente." },
+            };
+
+        var Retorno = await _httpClient.PostAsJsonAsync($"integracoes/ifood/cancelation", Dto);
+        var RetornoDeserializado = await Retorno.Content.ReadFromJsonAsync<ReturnApiRefatored<object>>();
+
+        return RetornoDeserializado ?? new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao obter motivos para cancelamento."} };
+    }
+
+
 }

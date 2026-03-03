@@ -12,7 +12,7 @@ window.socketIO = {
         }
 
         //https://sophos-erp.com.br
-        const socket = io("https://sophos-erp.com.br", {
+        const socket = io("http://localhost:3030", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
@@ -85,40 +85,40 @@ window.socketIO = {
 
     },
 
-   /* connectSocketIOMesa: async (url) => {
-        const rawToken = localStorage.getItem("authToken");
-        const token = rawToken ? rawToken.replaceAll('"', '') : null;
+    /* connectSocketIOMesa: async (url) => {
+         const rawToken = localStorage.getItem("authToken");
+         const token = rawToken ? rawToken.replaceAll('"', '') : null;
+ 
+         if (!window.socketIO.socket) {
+             await window.socketIO.connectSocketIO();
+         }
+ 
+ 
+         const socket = io("https://sophos-erp.com.br", {
+             path: "/socket.io/",
+             transports: ["websocket"],
+             withCredentials: true
+         });
+ 
+         socket.on("connect", () => {
+ 
+         });
+ 
+         socket.emit("registrar-merchant");
+ 
+         // Quando o servidor envia algo para o cliente
+         socket.on("registrado", (msg) => {
+         });
+ 
+       
+ 
+         socket.on("disconnect", () => {
+ 
+         });
+ 
+     },*/
 
-        if (!window.socketIO.socket) {
-            await window.socketIO.connectSocketIO();
-        }
 
-
-        const socket = io("https://sophos-erp.com.br", {
-            path: "/socket.io/",
-            transports: ["websocket"],
-            withCredentials: true
-        });
-
-        socket.on("connect", () => {
-
-        });
-
-        socket.emit("registrar-merchant");
-
-        // Quando o servidor envia algo para o cliente
-        socket.on("registrado", (msg) => {
-        });
-
-      
-
-        socket.on("disconnect", () => {
-
-        });
-
-    },*/
-
-   
 
 };
 
@@ -252,7 +252,7 @@ window.selectAllInput = (id) => {
         if (el) {
             el.select();
         }
-    },0);
+    }, 0);
 }
 
 window.FocoNoProximoCampoDeEstoque = (name) => {
@@ -264,3 +264,29 @@ window.FocoNoProximoCampoDeEstoque = (name) => {
         }
     }, 0);
 }
+
+
+window.startIfoodWidget = async function (merchantIds) {
+    try {
+
+        if (!merchantIds) {
+            return { success: false, message: "MerchantId inválido" };
+        }
+
+        if (typeof iFoodWidget === "undefined") {
+            return { success: false, message: "iFoodWidget não carregado" };
+        }
+
+      
+        iFoodWidget.init({
+            widgetId: 'b1d473d7-d4b1-4ac8-a9ca-935686090095',
+            merchantIds: merchantIds,
+        });
+
+        return { success: true, message: "Widget iniciado com sucesso" };
+    }
+    catch (e) {
+        console.error(e);
+        return { success: false, message: e.message };
+    }
+};

@@ -79,5 +79,19 @@ public class IntegracoesController : Controller
         var Return = await _ifoodService.GetCanceletionReasons(token, IdPedidoIfood);
         return Ok(Return);
     }
+
+    [HttpPost("ifood/cancelation")]
+    public async Task<ActionResult<ReturnApiRefatored<List<ClsCancelationReasons>>>> GetCancelationReasons([FromBody] CancelationIfoodObjectDto Dto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<List<ClsCancelationReasons>> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        var Return = await _ifoodService.EnviaCancelamentoDePedido(token, Dto);
+        return Ok(Return);
+    }
+
+
     #endregion
 }

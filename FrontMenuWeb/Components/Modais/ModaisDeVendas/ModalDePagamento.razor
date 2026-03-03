@@ -295,9 +295,17 @@
         }
     }
 
-    private void SomaValorTotal()
+    /*private void SomaValorTotal()
     {
         ValorTotal = ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega;
+    }*/
+
+    private void SomaValorTotal()
+    {
+        ValorTotal = (float)Math.Round(
+            ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega,
+            2
+        );
     }
 
     private async Task ConcluirPagamento()
