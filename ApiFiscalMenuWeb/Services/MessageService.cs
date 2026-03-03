@@ -116,7 +116,7 @@ public class MessageService
 
         try
         {
-            var response = await client.PostAsJsonAsync($"/api/v1/Messages/Publish/{InstanceName}", Message);
+            var response = await client.PostAsJsonAsync($"/umessenger/api/v1/Messages/Publish/{InstanceName}", Message);
 
             if (response.IsSuccessStatusCode)
             {

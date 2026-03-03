@@ -30,8 +30,6 @@ string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>(
 string UrlMessageBrokerWhatsAppUnimakeAuth = builder.Configuration.GetValue<string>("UrlApiMessageBrokerAuth") ?? "";
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
 
-Console.WriteLine($"ENV: {builder.Environment.EnvironmentName}");
-Console.WriteLine($"AUTH URL: {UrlMessageBrokerWhatsAppUnimakeAuth}");
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
