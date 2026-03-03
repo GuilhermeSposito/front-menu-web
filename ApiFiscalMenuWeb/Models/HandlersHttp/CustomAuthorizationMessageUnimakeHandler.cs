@@ -21,7 +21,7 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
         if (token is null)
         {
             var AuthMessageBrokerClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
-            var responseAuthToken = await AuthMessageBrokerClient.PostAsJsonAsync("api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
+            var responseAuthToken = await AuthMessageBrokerClient.PostAsJsonAsync("/auth/api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
             var tokenAuthResponse = await responseAuthToken.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
 
             if (tokenAuthResponse is not null)
@@ -40,7 +40,7 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
             return response;
 
         // não entra em loop no refresh
-        if (request.RequestUri!.AbsolutePath.Contains("/auth/refresh"))
+        if (request.RequestUri!.AbsolutePath.Contains("/auth/auth/refresh"))
             return response;
 
         var refreshClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
