@@ -21,7 +21,7 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
         if (token is null)
         {
             var AuthMessageBrokerClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
-            var responseAuthToken = await AuthMessageBrokerClient.PostAsJsonAsync("api/auth", new { appId = "086f8e04b6834581ba375f6ca947589b", secret = "ff9165403d9a4d318b5eef2267cce964" }, cancellationToken);
+            var responseAuthToken = await AuthMessageBrokerClient.PostAsJsonAsync("api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
             var tokenAuthResponse = await responseAuthToken.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
 
             if (tokenAuthResponse is not null)
@@ -45,7 +45,7 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
 
         var refreshClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
 
-        var responseRefresh = await refreshClient.PostAsJsonAsync("api/auth", new { appId = "086f8e04b6834581ba375f6ca947589b", secret = "ff9165403d9a4d318b5eef2267cce964" }, cancellationToken);
+        var responseRefresh = await refreshClient.PostAsJsonAsync("api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
         var tokenResponse = await responseRefresh.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
         if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.Token))
             return response;
