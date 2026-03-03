@@ -790,6 +790,62 @@ public class IfoodServices
             _ => formas.FirstOrDefault()
         };
     }
+
+    public async Task<ReturnApiRefatored<ClsCancelationReasons>> GetCanceletionReasons(string TokenNestApi, string IdPedidoIfood)
+    {
+        try
+        {
+            ClsMerchant? Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestApi);
+            if (Merchant is null)
+                throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
+
+            ClsPedido? PedidoReferente = null;
+
+            ClsEmpresaIfood? EmpresaIfood = null;
+            if (Merchant.EmpresasIfood.Count == 1)
+                EmpresaIfood = Merchant.EmpresasIfood.FirstOrDefault();
+
+            if (EmpresaIfood is null)
+            {
+                try
+                {
+                    PedidoReferente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(TokenNestApi, IdPedidoIfood);
+                    if(PedidoReferente is null)
+                        throw new Exception("Não Foi possivel ler os dados do pedido referente para obter o motivo de cancelamento");
+
+                    PedidoIfoodDto? PedidoIfood = JsonSerializer.Deserialize<PedidoIfoodDto>(PedidoReferente.JsonPedidoDeIntegracao ?? " ", new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (PedidoIfood is null)
+                        throw new Exception("Não Foi possivel ler os dados do pedido referente para obter o motivo de cancelamento");
+
+                    EmpresaIfood = Merchant.EmpresasIfood.FirstOrDefault(e => e.MerchantIdIfood == PedidoIfood.Merchant.MerchantId);
+                    if (EmpresaIfood is null)
+                        throw new Exception("Não Foi possivel ler os dados do pedido referente para obter o motivo de cancelamento");
+                }
+                catch (Exception ex)
+                {
+                    return new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Não Foi possivel ler os dados do pedido referente para obter o motivo de cancelamento" } };
+                }
+
+            }
+
+            var IfoodClient = _factory.CreateClient("ApiIfood");
+            AdicionaTokenNaRequisicao(IfoodClient, EmpresaIfood.AccessTokenIfood);
+
+            var Response = await IfoodClient.GetAsync($"order/v1.0/orders/{PedidoReferente?.IfoodID ?? IdPedidoIfood}/cancellationReasons");
+            List<ClsCancelationReasons>? CancelationReasons = await Response.Content.ReadFromJsonAsync<List<ClsCancelationReasons>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if(CancelationReasons is null)
+                return new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Erro ao obter os motivos de cancelamento do ifood" } };
+
+
+            return new ReturnApiRefatored<ClsCancelationReasons> { Status = "success", Messages = new List<string> { "Motivos De cancelamento encontrado com sucesso!"}, Data = new Data<ClsCancelationReasons> { ListWhenWriting = CancelationReasons, Messages = new List<string> { "Motivos De cancelamento encontrado com sucesso!" } } };
+        }
+        catch (Exception ex)
+        {
+            return new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Erro ao obter os motivos de cancelamento do ifood" } };
+        }
+
+
+    }
     #endregion
 }
 

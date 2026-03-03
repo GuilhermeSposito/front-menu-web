@@ -141,6 +141,15 @@ window.playNotificationSoundPedidoIntegracao = () => {
     });
 };
 
+window.playNotificationSoundPedidoIfoodstatusNovo = () => {
+    const audio = new Audio('/sounds/toqueifood.mp3');
+    audio.play().catch(err => console.warn("Falha ao reproduzir som:", err));
+
+    audio.addEventListener('ended', () => {
+        audio.src = ''; // limpa referência
+    });
+};
+
 //Função para reproduzir som de notificação da fila
 window.playNotificationSoundFila = () => {
     const audio = new Audio('/sounds/dingdong.mp3');

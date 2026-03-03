@@ -1,4 +1,9 @@
-﻿namespace FrontMenuWeb.Services.IntegracoesServices;
+﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Pedidos;
+using System.Net.Http.Json;
+
+namespace FrontMenuWeb.Services.IntegracoesServices;
 
 public class IntegracoesSophosService
 {
@@ -19,6 +24,20 @@ public class IntegracoesSophosService
 
             Console.WriteLine(ex.Message);
         }
-     
+    }
+
+    public async Task<ReturnApiRefatored<ClsCancelationReasons>> CancelationReasonsIfood(ClsPedido Pedido)
+    {
+        if(string.IsNullOrEmpty(Pedido.IfoodID))
+            return new ReturnApiRefatored<ClsCancelationReasons>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não Foi possivel encontrar o identificador do pedido ifood referente." },
+            };
+
+        var Retorno = await _httpClient.GetAsync($"integracoes/ifood/cancelation-reasons?IdPedidoIfood={Pedido.IfoodID}");
+        var RetornoDeserializado = await Retorno.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsCancelationReasons>>();
+
+        return RetornoDeserializado ?? new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Erro ao obter motivos para cancelamento."} };
     }
 }

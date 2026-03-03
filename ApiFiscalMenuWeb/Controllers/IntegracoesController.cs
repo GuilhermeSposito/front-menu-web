@@ -34,7 +34,7 @@ public class IntegracoesController : Controller
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
 
-        var Return =  await _ifoodService.AutenticarEmpresa(infos, token, false, null, 0);
+        var Return = await _ifoodService.AutenticarEmpresa(infos, token, false, null, 0);
         return Ok(Return);
     }
     #endregion
@@ -68,5 +68,16 @@ public class IntegracoesController : Controller
         return Ok(Return);
     }
 
-    #endregion 
+    [HttpGet("ifood/cancelation-reasons")]
+    public async Task<ActionResult<ReturnApiRefatored<List<ClsCancelationReasons>>>> GetCancelationReasons([FromQuery] string IdPedidoIfood)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<List<ClsCancelationReasons>> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        var Return = await _ifoodService.GetCanceletionReasons(token, IdPedidoIfood);
+        return Ok(Return);
+    }
+    #endregion
 }

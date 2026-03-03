@@ -1,0 +1,53 @@
+﻿@rendermode RenderMode.InteractiveWebAssembly
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using System.Globalization
+
+<MudDialog>
+    <DialogContent >
+    
+
+
+            <MudSelect Class="w-100" T="ClsCancelationReasons" Label="Selecione o motivo do cancelamento" Placeholder="Selecione um motivo para o cancelamento desse pedido" ToStringFunc="c => c.Description" @bind-Value=motivoSelecionado>
+                    @foreach (var motivo in MotivosDisponiveis)
+                    {
+                        <MudSelectItem T="ClsCancelationReasons" Value="@motivo">@motivo.Description</MudSelectItem>
+                    }
+            </MudSelect>
+
+
+
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @ref=BtnConfirmar OnClick="Submit">Enviar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    #region Props
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private MudButton BtnConfirmar;
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    [Parameter] public List<ClsCancelationReasons> MotivosDisponiveis { get; set; } = new List<ClsCancelationReasons>();
+    private ClsCancelationReasons motivoSelecionado = new ClsCancelationReasons();
+  
+
+    private async Task Submit()
+    {   
+        MudDialog.Close(DialogResult.Ok(motivoSelecionado));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    #endregion
+}
