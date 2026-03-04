@@ -309,14 +309,13 @@ public class IfoodServices
             {
                 var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
 
-                if (Polling is not null)
-                {
-                    if (response)
-                        PollingsToAcknowledge.Add(Polling);
-                }
+
             }
 
-
+            if (Polling is not null)
+            {
+                PollingsToAcknowledge.Add(Polling);
+            }
         }
 
 
@@ -335,13 +334,13 @@ public class IfoodServices
             {
                 var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
 
-                if (Polling is not null)
-                {
-                    if (response)
-                        PollingsToAcknowledge.Add(Polling);
-                }
             }
 
+            if (Polling is not null)
+            {
+
+                PollingsToAcknowledge.Add(Polling);
+            }
 
         }
 
@@ -366,13 +365,12 @@ public class IfoodServices
             {
                 var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
 
-                if (Polling is not null)
-                {
-                    if (response)
-                        PollingsToAcknowledge.Add(Polling);
-                }
             }
 
+            if (Polling is not null)
+            {
+                PollingsToAcknowledge.Add(Polling);
+            }
 
         }
 
@@ -922,7 +920,7 @@ public class IfoodServices
 
     public async Task EnviaEmailDeErro(string erro)
     {
-                    var html = $"""
+        var html = $"""
                 <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
         
                     <div style="max-width:800px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">

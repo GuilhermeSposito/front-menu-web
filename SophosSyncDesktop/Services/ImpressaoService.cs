@@ -414,7 +414,7 @@ public class ImpressaoService
     #region Definição do pedido para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
     {
-        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>(); //Teste kk 
 
         AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : "R E T I R A D A", FonteLegendaDoTamanho);
         if (AppState.MerchantLogado is not null)
@@ -547,11 +547,11 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"TOTAL DA CONTA .  : {pedido.ValorTotal:F2}", FonteTotaisNovo);
 
         //------------------------------------------------------------------------------------------
-       
 
-            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        
-        
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+
 
         foreach (var pagamento in pedido.Pagamentos)
         {
@@ -575,11 +575,10 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
-        if (pedido.TipoDePedido != "DELIVERY")
-        {
-            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
-                AdicionaConteudo(Conteudo, $"*{pedido.Id}*", FonteCódigoDeBarras, Alinhamentos.Centro);
-        }
+
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaCodigoDeBarrasParAProximaEtapa)
+            AdicionaConteudo(Conteudo, $"*{pedido.Id}*", FonteCódigoDeBarras, Alinhamentos.Centro);
+
 
         return Conteudo;
     }
@@ -915,7 +914,7 @@ public class ImpressaoService
                     LarguraBobina = 75,
                     Impressora = ImpressoraCaixa,
                     Logotipo = "C:\\SophosCompany\\LogoCupom.png",
-                
+
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraCaixa))
