@@ -45,6 +45,7 @@ public class ClsMerchant
     [JsonPropertyName("DestacaObsNaImpressao")] public bool DestacaObsNaImpressao { get; set; }
     [JsonPropertyName("ImprimeNomeNaComanda")] public bool ImprimeNomeNaComanda { get; set; }
     [JsonPropertyName("ImprimeEnderecoNaComanda")] public bool ImprimeEnderecoNaComanda { get; set; }
+    [JsonPropertyName("ImprimeSenhaBalcao")] public bool ImprimeSenhaBalcao { get; set; }
     [JsonPropertyName("ImprimeHorarioNaComanda")] public bool ImprimeHorarioNaComanda { get; set; }
     [JsonPropertyName("AceitaFiado")] public bool AceitaFiado { get; set; }
     [JsonPropertyName("EnviaPedidoAutTaxyMachine")] public bool EnviaPedidoAutTaxyMachine { get; set; }

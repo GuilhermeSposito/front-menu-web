@@ -38,6 +38,7 @@ builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<EntregasService>();
 builder.Services.AddScoped<DistanciasService>();
 builder.Services.AddScoped<EmpresaIfoodService>();
+builder.Services.AddScoped<PedidosService>();
 builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<IntegracoesSophosService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();

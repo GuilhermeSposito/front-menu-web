@@ -21,11 +21,11 @@ public class PedidosService
         _http = http; 
     }
 
-    public static event Action<ClsPedido>? PedidoRecebido;
-    public static event Action<PedidoMesaDto>? PedidoMesaRecebido;
-    public static event Action<ClsMesasEComandas>? PedidoMesaFechada;
-    public static event Action<ClsPedido>? PedidoMudouEtapa;
-    public static event Action<ClsPedido>? PedidoMudouInfoAdicional;
+    public static Action<ClsPedido>? PedidoRecebido;
+    public static  Action<PedidoMesaDto>? PedidoMesaRecebido;
+    public static  Action<ClsMesasEComandas>? PedidoMesaFechada;
+    public static  Action<ClsPedido>? PedidoMudouEtapa;
+    public static  Action<ClsPedido>? PedidoMudouInfoAdicional;
 
     [JSInvokable]
     public static Task ReceivePedido(string msg)

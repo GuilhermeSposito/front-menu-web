@@ -360,9 +360,6 @@ public partial class PaginaInicial : Form
         }
     }
 
-
-
-
     private void pictureBox2_Click(object sender, EventArgs e)
     {
         this.Hide();
@@ -611,7 +608,6 @@ public partial class PaginaInicial : Form
         LoginForm loginForm = new LoginForm();
         loginForm.ShowDialog();
     }
-
     private void comboBoxImpressoraDanfe_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBoxImpressoraDanfe.SelectedItem?.ToString();

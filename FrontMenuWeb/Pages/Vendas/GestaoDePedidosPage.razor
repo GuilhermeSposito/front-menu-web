@@ -351,20 +351,9 @@
     {
         try
         {
-            PedidosService.PedidoRecebido += async pedido =>
-            {
-                await InvokeAsync(() => OnPedidoRecebido(pedido));
-            };
-
-            PedidosService.PedidoMudouEtapa += async pedido =>
-            {
-                await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
-            };
-
-            PedidosService.PedidoMudouInfoAdicional += async pedido =>
-            {
-                await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
-            };
+            PedidosService.PedidoRecebido = PedidoRecebidoHandler;
+            PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
+            PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
 
             await CarregaEmpresasMachine();
             await CarregarPedidos();
@@ -383,6 +372,9 @@
             Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
         }
     }
+
+   
+
 
     private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
     {
@@ -954,7 +946,7 @@
     #region Funções de Impressão e WebSocket
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "https://syslogicadev.com/api/v1/");
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
         status = "Conectado";
     }
 
@@ -989,6 +981,20 @@
         }
 
     }
+
+    private async void PedidoRecebidoHandler(ClsPedido pedido)
+    {
+        await InvokeAsync(() => OnPedidoRecebido(pedido));
+    }
+    private async void PedidoMudouDeEtapaHandler(ClsPedido pedido)
+    {
+        await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
+    }
+    private async void PedidoMudouInfoAdicionalHandler(ClsPedido pedido)
+    {
+        await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
+    }
+
     #endregion
 
     #region Funções de edicao do pedido

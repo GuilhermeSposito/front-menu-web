@@ -416,13 +416,19 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>(); //Teste kk 
 
+        if (pedido.CriadoPor != "SOPHOS")
+        {
+            AdicionaConteudo(Conteudo, pedido.CriadoPor, FonteLegendaDoTamanho, Alinhamentos.Centro);
+        }
+
         AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : "R E T I R A D A", FonteLegendaDoTamanho);
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido);
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        //========================================================================================       
-        if (pedido.TipoDePedido != "DELIVERY")
+        //========================================================================================
+        
+        if (pedido.TipoDePedido != "DELIVERY" && AppState.MerchantLogado is not null && AppState.MerchantLogado.ImprimeSenhaBalcao)
         {
             int seed = pedido.Id;
             var random = new Random(seed);

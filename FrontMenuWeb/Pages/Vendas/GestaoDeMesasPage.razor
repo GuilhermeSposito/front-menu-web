@@ -117,12 +117,12 @@
     {
         try
         {
-            PedidosService.PedidoMesaRecebido += async pedido =>
+            PedidosService.PedidoMesaRecebido = async pedido =>
             {
                 await InvokeAsync(() => OnPedidoRecebido(pedido));
             };
 
-            PedidosService.PedidoMesaFechada += async pedido =>
+            PedidosService.PedidoMesaFechada = async pedido =>
             {
                 await InvokeAsync(() => PedidoMesaFechada(pedido));
             };

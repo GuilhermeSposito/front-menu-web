@@ -6,14 +6,15 @@ window.socketIO = {
         const rawToken = localStorage.getItem("authToken");
         const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
-        if (window.socketIO.socket && window.socketIO.socket.connected) {
+        if (window.socketIO.socket && window.socketIO.socket.connected ) {
             console.log("Socket já conectado.");
             return;
         }
 
+
         //http://localhost:3030
         //https://sophos-erp.com.br
-        const socket = io("https://sophos-erp.com.br", {
+        const socket = io("http://localhost:3030", {
             path: "/socket.io/",
             transports: ["websocket"],
             withCredentials: true
@@ -21,17 +22,13 @@ window.socketIO = {
 
         window.socketIO.socket = socket;
 
-        socket.on("connect", () => {
-
-        });
+        socket.on("connect", () => {});
 
         socket.emit("registrar-merchant");
 
-        // Quando o servidor envia algo para o cliente
         socket.on("registrado", (msg) => {
         });
 
-        // Quando o servidor envia algo para o cliente
         socket.on("pedido-recebido", (msg) => {
             // Avisando o Blazor
             if (window.DotNet) {
@@ -40,6 +37,8 @@ window.socketIO = {
                     .catch(err => console.error("Erro ao notificar Blazor:", err));
             }
         });
+
+
 
         // Quando o servidor envia algo para o cliente
         socket.on("pedido-recebido-mesa", (msg) => {
