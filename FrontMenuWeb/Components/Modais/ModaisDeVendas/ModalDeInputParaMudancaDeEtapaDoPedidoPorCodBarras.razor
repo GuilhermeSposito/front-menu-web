@@ -3,8 +3,11 @@
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.IntegracoesServices
 @inject PedidosService PedidosService
 @inject AppState AppState
+@inject MessageWhatsAppService MessageService
+@inject IntegracoesSophosService IntegracoesSophosService
 
 <MudDialog tabindex="0" OnKeyDown=OnKeyDown Style="min-width:60vw">
     <DialogContent>
@@ -111,12 +114,17 @@
         switch (pedido.EtapaPedido)
         {
             case "NOVO":
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
                 return await PedidosService.UpdatePedidoPreparando(pedido);
 
+
             case "PREPARANDO":
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.DESPACHADO);
                 return await PedidosService.UpdatePedidoDespachadoEPronto(pedido);
 
+
             case "DESPACHADO":
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.FINALIZADO);
                 return await PedidosService.UpdatePedidoFinalizadoo(pedido);
             default:
                 return new ReturnApiRefatored<ClsPedido>
@@ -126,4 +134,20 @@
                 };
         }
     }
+
+    private async void EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
+    {
+        if ((Pedido.CriadoPor == "SOPHOS") || (AppState.MerchantLogado.EnviaMsgWhatsIntegracao && Pedido.CriadoPor != "IFOOD")) //Envia para a integração menos ifood
+        {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+            {
+                if (Pedido.Cliente is null || string.IsNullOrEmpty(Pedido.Cliente.Telefone))
+                    return;
+
+                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
+                    await MessageService.EnviarMensagem(Pedido, etapa);
+            }
+        }
+    }
+
 }
