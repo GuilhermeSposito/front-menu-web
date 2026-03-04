@@ -940,12 +940,14 @@ public class IfoodServices
 
                             <pre style="
                                 background:#1e1e1e;
-                                color:#f8f8f2;
+                                color:#FFFFFF;
                                 padding:15px;
                                 border-radius:5px;
                                 overflow:auto;
                                 font-size:13px;
                             ">
+
+                            {erro}
                             </pre>
 
                         </div>
