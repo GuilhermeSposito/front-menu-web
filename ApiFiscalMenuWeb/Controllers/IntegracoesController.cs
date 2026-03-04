@@ -1,9 +1,11 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
+using ApiFiscalMenuWeb.Services;
 using ApiFiscalMenuWeb.Services.Integracoes;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
+using Unimake.Business.DFe.Xml.CTe;
 
 namespace ApiFiscalMenuWeb.Controllers;
 
@@ -12,10 +14,12 @@ namespace ApiFiscalMenuWeb.Controllers;
 public class IntegracoesController : Controller
 {
     private readonly IfoodServices _ifoodService;
+    private readonly EmailService emailService;
 
-    public IntegracoesController(IfoodServices ifoodService)
+    public IntegracoesController(IfoodServices ifoodService, EmailService email)
     {
         _ifoodService = ifoodService;
+        emailService = email;
     }
 
     #region Região de Autenticacao e Autorização
@@ -91,7 +95,6 @@ public class IntegracoesController : Controller
         var Return = await _ifoodService.EnviaCancelamentoDePedido(token, Dto);
         return Ok(Return);
     }
-
 
     #endregion
 }

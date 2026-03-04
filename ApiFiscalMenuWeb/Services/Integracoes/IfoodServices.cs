@@ -26,13 +26,15 @@ public class IfoodServices
     private readonly IHttpClientFactory _factory;
     private readonly NestApiServices _nestApiService;
     private readonly ILogger<IfoodServices> _logger;
+    private readonly EmailService _emailService;
     private List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
 
-    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger)
+    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger, EmailService emailService)
     {
         _factory = factory;
         _nestApiService = nestApiService;
         _logger = logger;
+        _emailService = emailService;
     }
     #endregion
 
@@ -240,16 +242,19 @@ public class IfoodServices
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Conversão do pedido Ifood não válida. Endpoint: {Pooling}", "Pooling");
+            await EnviaEmailDeErro(ex.ToString());
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Não Foi possivel ler o pedido do ifood" } };
         }
         catch (OperationCanceledException ex)
         {
             _logger.LogError(ex, "Pooling do iFood cancelado. Endpoint: {Pooling}", "Pooling");
+            await EnviaEmailDeErro(ex.ToString());
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "A requisição para leitura de pedidos demorou muito e foi cancelada." } };
         }
         catch (Exception ex)
         {
             _logger.LogError("Tipo real da exception: {Type}", ex.GetType().FullName);
+            await EnviaEmailDeErro(ex.ToString());
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
         }
     }
@@ -459,6 +464,7 @@ public class IfoodServices
         }
         catch (Exception ex)
         {
+            await EnviaEmailDeErro(ex.ToString());
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao obter os motivos de cancelamento do ifood" } };
         }
 
@@ -907,10 +913,53 @@ public class IfoodServices
         }
         catch (Exception ex)
         {
+            await EnviaEmailDeErro(ex.ToString());
             return new ReturnApiRefatored<ClsCancelationReasons> { Status = "error", Messages = new List<string> { "Erro ao obter os motivos de cancelamento do ifood" } };
         }
 
 
+    }
+
+    public async Task EnviaEmailDeErro(string erro)
+    {
+                    var html = $"""
+                <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
+        
+                    <div style="max-width:800px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            
+                        <div style="background-color:#c62828; color:white; padding:15px;">
+                            <h2 style="margin:0;">🚨 Erro na API De Integrações</h2>
+                        </div>
+
+                        <div style="padding:20px; color:#333;">
+                
+                            <p><strong>Data:</strong> {DateTime.Now:dd/MM/yyyy HH:mm:ss}</p>
+                            <p><strong>Servidor:</strong> {Environment.MachineName}</p>
+
+                            <hr style="margin:20px 0;" />
+
+                            <h3 style="color:#c62828;">Detalhes do Erro</h3>
+
+                            <pre style="
+                                background:#1e1e1e;
+                                color:#f8f8f2;
+                                padding:15px;
+                                border-radius:5px;
+                                overflow:auto;
+                                font-size:13px;
+                            ">
+                            </pre>
+
+                        </div>
+                    </div>
+                </div>
+                """;
+
+        await _emailService.EnviarAsync(
+            "guilhermesposito14@gmail.com",
+            $"Erro de Exceção na API De Integrações {DateTime.Now:g}",
+            html
+        );
     }
     #endregion
 }
