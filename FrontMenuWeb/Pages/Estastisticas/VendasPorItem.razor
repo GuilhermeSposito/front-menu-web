@@ -62,6 +62,14 @@
                 }
             </MudStack>
 
+            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+
+                  
+                    <MudChart ChartType="ChartType.Bar" ChartSeries="@_series" @bind-SelectedIndex="_index"  ChartOptions="_axisChartOptions"
+              Width="100%" Height="@($"{350}px")" ></MudChart>
+
+            </MudStack>
+
         </MudStack>
     </MudLayout>
 </MudPaper>
@@ -79,6 +87,16 @@
     int dataSize = 4;
     double[] dataItensMaisVendidos = { };
     string[] labelsItensMaisVendidos = { };
+
+    private int _index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    ChartOptions _axisChartOptions = new()
+    {
+       
+    };
+    private List<ChartSeries> _series = new()
+    {
+      
+    };
     #endregion
 
     #region Funções da Pagina
@@ -143,7 +161,16 @@
     #region Funções Que Carregam o Graficos
     private async Task CarregarDadosGrafico()
     {
-        var retorno = await PedidosService.EstastisticaDeItensMaisVendidos();
+
+        QueryDeHistoricoDePedidos Dto = new()
+        {
+            DataInicio = FiltroDateTimeInicial,
+            DataFinal = FiltroDateTimeFinal,
+            Limit = limit,
+            Page = page
+        };
+
+        var retorno = await PedidosService.EstastisticaDeItensMaisVendidos(Dto);
         if (retorno.Status == "success" && retorno.Data != null)
         {
             List<double> dataList = new();
@@ -151,20 +178,15 @@
 
             if (retorno.Data.Lista is not null)
             {
-                var top6 = retorno.Data.Lista.Take(6).ToList();
-
-                foreach (var item in top6)
+                foreach (var item in retorno.Data.Lista)
                 {
+                    _series = new List<ChartSeries>()
+                    {
+                        new() { Name = item.Descricao, Data = new double[] { item.Porcentagem } },
+                    };
+
                     dataList.Add(item.Porcentagem);
                     labelsList.Add(item.Descricao);
-                }
-
-                var outros = retorno.Data.Lista.Skip(6).Sum(i => i.Porcentagem);
-                outros = Math.Round(outros, 2, MidpointRounding.AwayFromZero);
-                if (outros > 0)
-                {
-                    dataList.Add(outros);
-                    labelsList.Add("Outros");
                 }
             }
 

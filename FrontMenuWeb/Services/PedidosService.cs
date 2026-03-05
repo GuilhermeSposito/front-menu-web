@@ -18,14 +18,14 @@ public class PedidosService
 
     public PedidosService(HttpClient http)
     {
-        _http = http; 
+        _http = http;
     }
 
     public static Action<ClsPedido>? PedidoRecebido;
-    public static  Action<PedidoMesaDto>? PedidoMesaRecebido;
-    public static  Action<ClsMesasEComandas>? PedidoMesaFechada;
-    public static  Action<ClsPedido>? PedidoMudouEtapa;
-    public static  Action<ClsPedido>? PedidoMudouInfoAdicional;
+    public static Action<PedidoMesaDto>? PedidoMesaRecebido;
+    public static Action<ClsMesasEComandas>? PedidoMesaFechada;
+    public static Action<ClsPedido>? PedidoMudouEtapa;
+    public static Action<ClsPedido>? PedidoMudouInfoAdicional;
 
     [JSInvokable]
     public static Task ReceivePedido(string msg)
@@ -240,16 +240,35 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> LimparMesa(ClsMesasEComandas mesa) 
+    public async Task<ReturnApiRefatored<ClsPedido>> LimparMesa(ClsMesasEComandas mesa)
     {
         var response = await _http.DeleteAsync($"pedidos/cancelar/itens/{mesa.Id}");
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos()
+    public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos(QueryDeHistoricoDePedidos? QueryDeHistorico = null)
     {
-        var response = await _http.GetAsync($"pedidos/estatisticas/itens");
+        string url = "pedidos/estatisticas/itens";
+
+        if (QueryDeHistorico is not null)
+        {
+            var parametros = new List<string>();
+
+            if (QueryDeHistorico.DataInicio != null)
+                parametros.Add($"DataInicio={QueryDeHistorico.DataInicio:yyyy-MM-dd}");
+
+            if (QueryDeHistorico.DataFinal != null)
+                parametros.Add($"DataFinal={QueryDeHistorico.DataFinal:yyyy-MM-dd}");
+
+            parametros.Add($"limit={QueryDeHistorico.Limit}");
+            parametros.Add($"page={QueryDeHistorico.Page}");
+
+            if (parametros.Count > 0)
+                url += "?" + string.Join("&", parametros);
+        }
+
+        var response = await _http.GetAsync(url);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoEstastisticaPorProduto>>();
 
         return retorno!;
@@ -292,4 +311,13 @@ public class QuerysDePedidos
     public string CriadoPor = string.Empty;
 
     [JsonPropertyName("pesquisa")] public string Pesquisa { get; set; } = string.Empty;
+}
+
+public class QueryDeHistoricoDePedidos
+{
+    [JsonPropertyName("limit")] public int Limit { get; set; }
+    [JsonPropertyName("page")] public int Page { get; set; }
+    [JsonPropertyName("DataInicio")] public DateTime? DataInicio { get; set; }
+    [JsonPropertyName("DataFinal")] public DateTime? DataFinal { get; set; }
+
 }

@@ -45,7 +45,7 @@ public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
 
         var refreshClient = _factory.CreateClient("ApiMessageBrokerUnimakeAuth");
 
-        var responseRefresh = await refreshClient.PostAsJsonAsync("api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
+        var responseRefresh = await refreshClient.PostAsJsonAsync("auth/api/auth", new { appId = "18983fb6cf0943fe8951567a87a76a36", secret = "8f328955743740d3b1122473e13391d4" }, cancellationToken);
         var tokenResponse = await responseRefresh.Content.ReadFromJsonAsync<TokenMessageBrokerResponse>(cancellationToken: cancellationToken);
         if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.Token))
             return response;
