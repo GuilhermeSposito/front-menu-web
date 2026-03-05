@@ -21,8 +21,6 @@ public class ProdutoService
     {
         _http = http;
     }
-
-
     public async Task<ReturnApiRefatored<ClsProduto>> GetProdutoAutoComplete(string? queryName)
     {
         ReturnApiRefatored<ClsProduto>? response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsProduto>>($"produtos/find/auto-complete?queryName={queryName}");

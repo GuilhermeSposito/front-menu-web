@@ -42,8 +42,10 @@
             <MudStack Class="p-3">
 
                 <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                    <MudStack Class="w-50" Row=true>
-                        <MudTextField DebounceInterval="1300" Value="pesquisaTexto" ValueChanged="OnPesquisaChanged" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=false></MudTextField>
+                    <MudStack Class="w-75" Row=true>
+                        <MudTextField  @onkeydown=HandleKeyDownTextDeBucarPedido OnClearButtonClick="BuscarPedidos" @bind-Value="pesquisaTexto" Clearable=true Class="w-50 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                        <MudButton OnClick="BuscarPedidos" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2 w-25">Buscar Pedidos</MudButton>
+                        <MudNumericField T="int" Min="0" @bind-Value="PedidosPorVez" Class="mt-2" Variant="Variant.Filled"/>
                     </MudStack>
                     <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
                         <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
@@ -344,6 +346,8 @@
 
     //Propriedade Para Manter pedidos em aberto
     private List<ClsPedido> PedidosEmAberto { get; set; } = new List<ClsPedido>();
+
+    private int PedidosPorVez = 50;
     #endregion
 
     #region Funções de Enventos de Página
@@ -373,7 +377,7 @@
         }
     }
 
-   
+
 
 
     private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
@@ -431,6 +435,26 @@
 
     }
 
+    private async Task HandleKeyDownTextDeBucarPedido(KeyboardEventArgs e)
+    {
+        try
+        {
+
+            if (e.Key == "Enter")
+            {
+                await BuscarPedidos();
+            }
+           
+
+        }
+        catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
+        {
+            Snackbar.Add("Erro Ao buscar Pedido", Severity.Error);
+        }
+
+
+    }
+
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
         bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
@@ -449,6 +473,9 @@
             Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
             await CarregarPedidos();
             await ImprimirPedido(novoPedido, false);
+
+            await PedidosService.UpdatePedidoImpresso(novoPedido);
+
             await InvokeAsync(StateHasChanged);
             return;
         }
@@ -590,7 +617,7 @@
     {
         try
         {
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido });
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = PedidosPorVez, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido });
 
 
             if (result?.Data?.Any() == true)
@@ -974,7 +1001,7 @@
             bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
 
             if (!ImpressaoDesabilita)
-                await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+                await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
             else
                 Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
 

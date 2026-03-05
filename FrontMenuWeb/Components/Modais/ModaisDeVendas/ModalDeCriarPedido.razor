@@ -941,7 +941,12 @@
     private async Task ChamaImpressao(ReturnApiRefatored<ClsPedido> ResponseAPi)
     {
         if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
-            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.Id}-SOPHOS-WEB.json");
+        {
+            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
+            await PedidosService.UpdatePedidoImpresso(ResponseAPi.Data.Objeto);
+
+        }
+
     }
 
     private async Task<bool> PerguntaSeImprime()

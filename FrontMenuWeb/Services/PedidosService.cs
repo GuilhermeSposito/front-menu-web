@@ -179,6 +179,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoImpresso(ClsPedido Pedido)
+    {
+        var response = await _http.PutAsJsonAsync($"pedidos/impresso/{Pedido.Id}", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido)
     {
         var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}", Pedido);
@@ -270,8 +278,6 @@ public class PedidosService
 
             if (parametros.Count > 0)
                 url += "?" + string.Join("&", parametros);
-
-            Console.WriteLine(url);
         }
 
         var response = await _http.GetAsync(url);
