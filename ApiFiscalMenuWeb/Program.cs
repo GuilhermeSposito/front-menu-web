@@ -51,13 +51,13 @@ builder.Services.AddHttpClient("ApiIfood", client =>
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimake", client =>
 {
-    client.BaseAddress = new Uri(UrlMessageBrokerWhatsAppUnimake); 
+    client.BaseAddress = new Uri("https://unimake.app/umessenger"); 
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<CustomAuthorizationMessageUnimakeHandler>();
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimakeAuth", client =>
 {
-    client.BaseAddress = new Uri(UrlMessageBrokerWhatsAppUnimakeAuth); 
+    client.BaseAddress = new Uri("https://unimake.app/auth"); 
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 

@@ -154,6 +154,7 @@
                     <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                         <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/nfs-estatisticas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">NF-e NFC-e Emitidas</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/vendas/historico-de-vendas", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Vendas Realizadas</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.Assessment" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/vendas/vendas-por-item", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Vendas Por Item</MudNavLink>
                         <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixas-fechados", AppState.MerchantLogado.FuncionarioLogado?.AcessoEstatisticas); })">Caixas Fechados</MudNavLink>
                     </MudNavGroup>
 
