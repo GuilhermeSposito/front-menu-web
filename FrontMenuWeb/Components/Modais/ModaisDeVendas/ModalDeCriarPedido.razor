@@ -111,7 +111,7 @@
                                                                     @item.produto.CodigoInterno - @item.produto.Descricao
                                                                 </MudText>
                                                                 <MudText Style="opacity: 0.7;" Typo="Typo.body2">
-                                                                    @($"A Partir de: {item.produto.Precos.Min(p => p.Valor):C}")
+                                                                    @($"A Partir de: {item.produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
                                                                 </MudText>
                                                             </MudItem>
                                                         </MudGrid>
