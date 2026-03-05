@@ -43,9 +43,9 @@
 
                 <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
                     <MudStack Class="w-75" Row=true>
-                        <MudTextField  @onkeydown=HandleKeyDownTextDeBucarPedido OnClearButtonClick="BuscarPedidos" @bind-Value="pesquisaTexto" Clearable=true Class="w-50 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                        <MudTextField @onkeydown=HandleKeyDownTextDeBucarPedido OnClearButtonClick="BuscarPedidos" @bind-Value="pesquisaTexto" Clearable=true Class="w-50 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
                         <MudButton OnClick="BuscarPedidos" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2 w-25">Buscar Pedidos</MudButton>
-                        <MudNumericField T="int" Min="0" @bind-Value="PedidosPorVez" Class="mt-2" Variant="Variant.Filled"/>
+                        <MudNumericField T="int" Min="0" @bind-Value="PedidosPorVez" Class="mt-2" Variant="Variant.Filled" />
                     </MudStack>
                     <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
                         <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
@@ -102,7 +102,7 @@
                     <MudGrid Class="w-100 mt-2">
                         @foreach (var etapa in ListaDeEtapasDosPedidos)
                         {
-                            <MudItem xs="12" md="4" xl="4">
+                            <MudItem xs="12" md="@(int.Parse((12 / ListaDeEtapasDosPedidos.Count).ToString()))" xl="@(int.Parse((12 / ListaDeEtapasDosPedidos.Count).ToString()))">
                                 <MudCard Class="h-100 ma-1 rounded-3"
                                          Style="min-height: 520px; max-height: 900px;">
                                     <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
@@ -330,7 +330,7 @@
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
     public List<ClsDeSuporteParaVizualicacaoDePedidos> ListaDeEtapasDosPedidos = new List<ClsDeSuporteParaVizualicacaoDePedidos>
     {
-        //new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "NOVOS", Selector = "NOVO" },
+
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "PREPARANDO", Selector = "PREPARANDO" },
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "DESPACHADOS / PRONTOS", Selector = "DESPACHADO" },
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "FINALIZADOS", Selector = "FINALIZADO" },
@@ -348,6 +348,10 @@
     private List<ClsPedido> PedidosEmAberto { get; set; } = new List<ClsPedido>();
 
     private int PedidosPorVez = 25;
+
+    //Propriedades para fazer o ping pro servidor verificando os pedidos n impressos
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource _cts = new();
     #endregion
 
     #region Funções de Enventos de Página
@@ -355,12 +359,27 @@
     {
         try
         {
+
             PedidosService.PedidoRecebido = PedidoRecebidoHandler;
             PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
             PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
 
             await CarregaEmpresasMachine();
             await CarregarPedidos();
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
 
             try
             {
@@ -370,13 +389,10 @@
             {
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
             }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
+
+            _ = IniciarTimer();
         }
     }
-
 
 
 
@@ -395,13 +411,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
-        }
-    }
 
 
     private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
@@ -444,7 +453,7 @@
             {
                 await BuscarPedidos();
             }
-           
+
 
         }
         catch (Exception ex) when (ex.Message.Contains("out of range", StringComparison.OrdinalIgnoreCase))
@@ -1022,23 +1031,79 @@
         await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
     }
 
+
+    private async Task IniciarTimer()
+    {
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
+
+        while (await _timer.WaitForNextTickAsync(_cts.Token))
+        {
+            await VerificaPedidosNaoImpressos();
+        }
+    }
+
+
+    private async Task VerificaPedidosNaoImpressos()
+    {
+        try
+        {
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = 10, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido, Imprimiu = false });
+
+
+            if (result?.Data?.Any() == true)
+            {
+                List<ClsPedido> pedidosNaoImpressos = result.Data.Where(p => !p.Imprimiu).ToList();
+                if (pedidosNaoImpressos.Count > 0)
+                {
+                    foreach (var pedido in pedidosNaoImpressos)
+                    {
+                        if (pedido.CriadoPor != "SOPHOS")
+                        {
+                            await ImprimirPedido(pedido, false);
+                            await PedidosService.UpdatePedidoImpresso(pedido);
+
+                            if (_items.Any(x => x.Pedido.Id == pedido.Id))
+                            {
+                                _items.Add(new ClsDeSuporteParaMostrarPedidos
+                                {
+                                    Pedido = pedido,
+                                    Selector = pedido.EtapaPedido
+                                });
+
+                                StateHasChanged();
+                            }
+                        } //Só os integrações
+                        else
+                        {
+                            await PedidosService.UpdatePedidoImpresso(pedido);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao verificar pedidos não impressos: {ex.Message}", Severity.Error);
+        }
+    }
     #endregion
 
     #region Funções de edicao do pedido
     private async Task EditarPedido(ClsPedido pedido)
     {
         //Primeiro fazer a requisição para ver se existe pagamentos para ser editado
-        ReturnApiRefatored<PagamentoDoPedido> ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
+        ReturnApiRefatored<PagamentoDoPedido>
+    ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
         MostraMensagemDeUpdateDoPedido(ReturnFromApi);
         if (ReturnFromApi.Status == "eror")
             return;
 
         pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
         var parameters = new DialogParameters
-         {
-             { "Pedido", pedido },
-             {"Editando", true}
-         };
+    {
+    { "Pedido", pedido },
+    {"Editando", true}
+    };
 
         var options = new DialogOptions
         {
@@ -1050,7 +1115,8 @@
             CloseOnEscapeKey = false
         };
 
-        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>
+            ("Pagamento", parameters, options);
         var result = await dialog.Result;
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
@@ -1067,13 +1133,14 @@
         if (EmpresasMachine is not null)
         {
             var parameters = new DialogParameters<ModalDeExcluir>
-                {
-                     { x => x.ContentText, $"Atenção: Ao confirmar você estara enviando o pedido para o mapa da {EmpresaEnviada.Nome}. Deseja continuar?" },
-                    { x => x.ButtonText, "Sim" },
-                    { x => x.Color, Color.Error}
-                };
+            {
+            { x => x.ContentText, $"Atenção: Ao confirmar você estara enviando o pedido para o mapa da {EmpresaEnviada.Nome}. Deseja continuar?" },
+            { x => x.ButtonText, "Sim" },
+            { x => x.Color, Color.Error}
+            };
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Envio De Pedido", parameters, options);
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>
+                ("Confirmar Envio De Pedido", parameters, options);
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
@@ -1086,7 +1153,8 @@
 
                 var empresaSelecionada = EmpresaEnviada;
 
-                Dictionary<string, Severity> Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
+                Dictionary<string, Severity>
+                    Reponse = await MachineService.EnviaPedidoParaOMapa(empresaSelecionada!, pedido, AppState);
                 var primeiro = Reponse.First();
                 Snackbar.Add(primeiro.Key, primeiro.Value);
             }

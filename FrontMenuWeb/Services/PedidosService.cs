@@ -93,6 +93,13 @@ public class PedidosService
                 QueryDeFiltros += $"&TipoPedido={QueryDePedido.TipoPedido}";
         }
 
+        if(QueryDePedido.Imprimiu is not null)
+        {
+                QueryDeFiltros += $"&Imprimiu={QueryDePedido.Imprimiu}";
+
+        }
+
+
         var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsPedido>>(
            $"pedidos?limit={QueryDePedido.PageSize}&page={QueryDePedido.Page}{QueryDeFiltros}");
 
@@ -321,6 +328,7 @@ public class QuerysDePedidos
     public DateTime? DataCriadoEmFinal = null;
 
     public string CriadoPor = string.Empty;
+    public bool? Imprimiu = null;
 
     [JsonPropertyName("pesquisa")] public string Pesquisa { get; set; } = string.Empty;
 }
