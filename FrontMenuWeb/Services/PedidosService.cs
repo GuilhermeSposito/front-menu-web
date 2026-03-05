@@ -6,6 +6,7 @@ using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services.Fiscal;
 using Microsoft.JSInterop;
 using MudBlazor;
+using Nextended.Core.Extensions;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using YamlDotNet.Core.Tokens;
@@ -261,11 +262,16 @@ public class PedidosService
             if (QueryDeHistorico.DataFinal != null)
                 parametros.Add($"DataFinal={QueryDeHistorico.DataFinal:yyyy-MM-dd}");
 
+            if(!string.IsNullOrEmpty(QueryDeHistorico.Descricao))
+                parametros.Add($"Descricao={QueryDeHistorico.Descricao}");
+
             parametros.Add($"limit={QueryDeHistorico.Limit}");
             parametros.Add($"page={QueryDeHistorico.Page}");
 
             if (parametros.Count > 0)
                 url += "?" + string.Join("&", parametros);
+
+            Console.WriteLine(url);
         }
 
         var response = await _http.GetAsync(url);
@@ -319,5 +325,6 @@ public class QueryDeHistoricoDePedidos
     [JsonPropertyName("page")] public int Page { get; set; }
     [JsonPropertyName("DataInicio")] public DateTime? DataInicio { get; set; }
     [JsonPropertyName("DataFinal")] public DateTime? DataFinal { get; set; }
+    [JsonPropertyName("Descricao")] public string? Descricao { get; set; }
 
 }

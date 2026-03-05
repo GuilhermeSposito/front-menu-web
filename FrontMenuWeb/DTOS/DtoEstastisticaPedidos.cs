@@ -12,7 +12,7 @@ public class DtoEstastisticaPedidos
 public class DtoEstastisticaPorProduto
 {
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
-    [JsonPropertyName("Quantidade")] public double Quantidade { get; set; }
+    [JsonPropertyName("QuantidadeVendida")] public double Quantidade { get; set; }
     [JsonPropertyName("ValorTotalDasVendas")] public double ValorTotalDasVendas { get; set; }
     [JsonPropertyName("Porcentagem")] public double Porcentagem { get; set; }
 }

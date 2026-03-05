@@ -448,8 +448,8 @@
             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
             Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
             await CarregarPedidos();
-            await InvokeAsync(StateHasChanged);
             await ImprimirPedido(novoPedido, false);
+            await InvokeAsync(StateHasChanged);
             return;
         }
 

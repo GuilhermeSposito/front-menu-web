@@ -8,6 +8,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
@@ -35,11 +36,10 @@
                 <MudText Typo="Typo.h5">Estatística  de Vendas Por Item</MudText>
             </MudStack>
             <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
-                <MudStack Class="w-50" Row=true AlignItems="AlignItems.Center">
-                    <MudTextField DebounceInterval="500" Value="pesquisaTexto" Clearable=true Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome do item" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
-                    <MudNumericField Label="Itens Por Vez" Min="0" T="int" @bind-Value="limit" Variant="Variant.Filled"></MudNumericField>
-                </MudStack>
-                <MudStack Justify="Justify.FlexStart">
+                <MudStack Class="w-75" Row=true AlignItems="AlignItems.Center">
+                    <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged=OnPesquisaDeItemPorDescricaoChenged Clearable=true Class="w-50 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome do item" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                    <MudNumericField Label="Itens Por Vez" Min="0" T="int" @bind-Value="limit" Variant="Variant.Filled" @onfocusout=CarregarDadosGrafico Class="w-25"></MudNumericField>
+                    <MudButton OnClick=GerarPdf Color="Color.Primary" Variant="Variant.Filled" Class="w-25">Gerar Relatorio</MudButton>
                 </MudStack>
             </MudStack>
         </MudStack>
@@ -62,14 +62,63 @@
                 }
             </MudStack>
 
-            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+        </MudStack>
 
-                  
-                    <MudChart ChartType="ChartType.Bar" ChartSeries="@_series" @bind-SelectedIndex="_index"  ChartOptions="_axisChartOptions"
-              Width="100%" Height="@($"{350}px")" ></MudChart>
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+            <MudStack Class="pa-4 w-100">
+                @foreach (var item in Produtos)
+                {
+                    <MudTooltip Color=Color.Primary Text="@($"Total De Item Vendido: {item.Quantidade} <--//--> Valor Total Vendido: {item.ValorTotalDasVendas:C}")">
+                        <MudStack Class="mb-2">
 
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText>@item.Descricao</MudText>
+                                <MudText>@item.Quantidade</MudText>
+                            </MudStack>
+
+                            <MudProgressLinear Value="@item.Porcentagem" Color="Color.Primary" />
+
+                        </MudStack>
+                    </MudTooltip>
+                }
             </MudStack>
+        </MudStack>
 
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudDataGrid T="DtoEstastisticaPorProduto"
+                         EditTrigger="DataGridEditTrigger.Manual"
+                         MultiSelection=false
+                         Class="rounded-3 custom-striped mt-2"
+                         Loading="Carregando"
+                         Hover
+                         HorizontalScrollbar="false"
+                         Items="@Produtos">
+
+                <NoRecordsContent>
+                    <AvisoDeDadosVazios ReferenciaDados="Itens" />
+                </NoRecordsContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Descricao" Title="Descrição"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Quantidade" Title="Quantidade Vendida"></PropertyColumn>
+                    <PropertyColumn Property="x => x.ValorTotalDasVendas" Format="C" Title="Valor Total Vendido"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Porcentagem" Title="Porcentagem"></PropertyColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudStack>
+
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+
+            @if (_series?.Count > 0)
+            {
+                <MudStack AlignItems=AlignItems.Center Justify=Justify.Center style="flex:1; width:100%">
+                    <MudChart ChartType="ChartType.Bar"
+                              ChartSeries="@_series"
+                              ChartOptions="_axisChartOptions"
+                              Height="350px" />
+                </MudStack>
+            }
         </MudStack>
     </MudLayout>
 </MudPaper>
@@ -80,23 +129,15 @@
     private string pesquisaTexto = string.Empty;
 
     private int limit = 10;
-    private int page = 0;
+    private int page = 1;
 
     //Grafico de Itens mais Vendidos
-    private int Index = -1;
-    int dataSize = 4;
-    double[] dataItensMaisVendidos = { };
-    string[] labelsItensMaisVendidos = { };
+    private int _index = -1;
+    ChartOptions _axisChartOptions = new() { ShowLegend = true, };
+    private List<ChartSeries> _series = new() { };
 
-    private int _index = -1; //default value cannot be 0 -> first selectedindex is 0.
-    ChartOptions _axisChartOptions = new()
-    {
-       
-    };
-    private List<ChartSeries> _series = new()
-    {
-      
-    };
+    private List<DtoEstastisticaPorProduto> Produtos = new();
+    private bool Carregando = true;
     #endregion
 
     #region Funções da Pagina
@@ -108,6 +149,17 @@
             StateHasChanged();
         }
     }
+
+    private async Task GerarPdf()
+    {
+        if (Produtos.Count == 0)
+        {
+            Snackbar.Add("Não há dados para gerar o relatório.", Severity.Warning);
+            return;
+        }
+
+        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfVendasPorIten", "Relatorioitens.pdf");
+    }
     #endregion
 
     #region Filtros
@@ -116,7 +168,6 @@
 
     private async Task AtualizarPeriodoRapido(int index)
     {
-
         switch (index)
         {
             case 0: // Mês Passado
@@ -143,61 +194,172 @@
                 break;
         }
 
+        await AplicarFiltros();
         StateHasChanged();
 
     }
 
     private async Task AplicarFiltros()
     {
-
+        await CarregarDadosGrafico();
     }
     private async Task LimparFiltros()
     {
         FiltroDateTimeInicial = null;
         FiltroDateTimeFinal = null;
+        await CarregarDadosGrafico();
+    }
+
+    private async Task OnPesquisaDeItemPorDescricaoChenged(string value)
+    {
+        pesquisaTexto = value;
+        await CarregarDadosGrafico();
     }
     #endregion
 
     #region Funções Que Carregam o Graficos
     private async Task CarregarDadosGrafico()
     {
-
-        QueryDeHistoricoDePedidos Dto = new()
+        try
         {
-            DataInicio = FiltroDateTimeInicial,
-            DataFinal = FiltroDateTimeFinal,
-            Limit = limit,
-            Page = page
-        };
+            Carregando = true;
 
-        var retorno = await PedidosService.EstastisticaDeItensMaisVendidos(Dto);
-        if (retorno.Status == "success" && retorno.Data != null)
-        {
-            List<double> dataList = new();
-            List<string> labelsList = new();
+            _series.Clear();
 
-            if (retorno.Data.Lista is not null)
+            QueryDeHistoricoDePedidos Dto = new()
             {
-                foreach (var item in retorno.Data.Lista)
+                DataInicio = FiltroDateTimeInicial,
+                DataFinal = FiltroDateTimeFinal,
+                Limit = limit,
+                Page = page,
+                Descricao = pesquisaTexto
+            };
+
+            var retorno = await PedidosService.EstastisticaDeItensMaisVendidos(Dto);
+            if (retorno.Status == "success" && retorno.Data != null)
+            {
+                Produtos = retorno.Data.Lista ?? new List<DtoEstastisticaPorProduto>();
+
+                List<double> dataList = new();
+                List<string> labelsList = new();
+
+                if (retorno.Data.Lista is not null)
                 {
-                    _series = new List<ChartSeries>()
+                    foreach (var item in retorno.Data.Lista)
                     {
-                        new() { Name = item.Descricao, Data = new double[] { item.Porcentagem } },
-                    };
-
-                    dataList.Add(item.Porcentagem);
-                    labelsList.Add(item.Descricao);
+                        _series.Add(new() { Name = item.Descricao, Data = new double[] { item.Quantidade } });
+                    }
                 }
+                StateHasChanged();
             }
-
-            dataItensMaisVendidos = dataList.ToArray();
-            labelsItensMaisVendidos = labelsList.ToArray();
-
+            else
+            {
+                Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
+            Snackbar.Add("Erro ao carregar dados do gráfico: " + ex.Message, Severity.Error);
         }
+        {
+            Carregando = false;
+        }
+
     }
     #endregion
 }
+
+
+@*Relatório dos itens*@
+<div id="conteudoPdfVendasPorIten" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
+    <div class="d-flex flex-column">
+        <img src="/images/SOPHOS.png" alt="Logo SOPHOS" style="display: block; margin: 20px auto; width: 150px;" />
+
+        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">
+            Relatório de Vendas Por Item
+        </h2>
+
+        <p style="text-align: center; font-size: 14px; margin: 0;">
+            @AppState.MerchantLogado.NomeFantasia
+        </p>
+
+        @if (AppState.MerchantLogado.FuncionarioLogado is not null)
+        {
+            <p style="text-align: center; font-size: 14px; margin: 0;">
+                Colaborador: @AppState.MerchantLogado.FuncionarioLogado.Nome
+            </p>
+
+        }
+    </div>
+
+
+    <!-- Cabeçalho de informações -->
+    <div style="text-align: center; margin-bottom: 15px;">
+        <span style="font-weight: bold;">Data de emissão:</span>
+        @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+
+        @if (FiltroDateTimeInicial is not null && FiltroDateTimeFinal is not null)
+        {
+            <div>
+                <span style="font-weight: bold;">Período:</span>
+                @FiltroDateTimeInicial?.ToString("dd/MM/yyyy")
+                até
+                @FiltroDateTimeFinal?.ToString("dd/MM/yyyy")
+            </div>
+        }
+    </div>
+
+    <table border="0" cellspacing="0" cellpadding="6" style="width:100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color:#34495e; color:white; text-align:center;">
+                <th>Descrição</th>
+                <th>Valor Total em Vendas</th>
+                <th>Porcentagem</th>
+                <th>Total Vendido</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Produtos)
+            {
+                <tr style="border-bottom: 1px solid #ddd; text-align:center;">
+                    <td style="text-align:left;">@item.Descricao</td>
+                    <td style="text-align:center;">@item.ValorTotalDasVendas.ToString("C")</td>
+                    <td>@item.Porcentagem</td>
+                    <td>@item.Quantidade</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            @{
+                var totalDeItensVendidos = Produtos.Sum(p => p.Quantidade);
+
+                var ValorTotal = Produtos.Sum(p => p.ValorTotalDasVendas);
+
+            }
+
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Total De Itens Vendidos:</td>
+                <td style="text-align:right; color:#27ae60;">
+                    @totalDeItensVendidos
+                </td>
+                <td colspan="4"></td>
+            </tr>
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="3" style="text-align:right;">Total Em R$:</td>
+                <td style="text-align:right; color:#c0392b;">
+                    @ValorTotal.ToString("C")
+                </td>
+                <td colspan="4"></td>
+            </tr>
+
+        </tfoot>
+    </table>
+
+    <!-- Rodapé -->
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #777;">
+        <hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">
+        <p>Relatório gerado Manualmente pelo SOPHOS - Sistema de Gestão Financeira</p>
+    </div>
+
+    <div style="page-break-after: always;"></div>
+</div>
