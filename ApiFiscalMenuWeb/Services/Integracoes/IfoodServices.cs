@@ -219,7 +219,7 @@ public class IfoodServices
                         }
                     }
 
-                    if (PollingsToAcknowledge.Count() > 0 && Merchant.EmitindoNfeProd)
+                    if (PollingsToAcknowledge.Count() > 0)
                         await Acknowledge(IfoodClient, PollingsToAcknowledge);
 
                 }
@@ -682,7 +682,7 @@ public class IfoodServices
         bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(TokenNestApi, PedidoSophos);
         if (AdicionouOPedido)
         {
-            if (Merchant.AceitaPedidoAutDeIntegracoes && Merchant.EmitindoNfeProd) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
+            if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
             {
                 bool AceitouPedido = await AceitaPedido(PedidoIFood.Id, IfoodClient);
                 if (AceitouPedido)

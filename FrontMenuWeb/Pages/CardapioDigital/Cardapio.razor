@@ -1,0 +1,458 @@
+﻿@page "/cardapio"
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@layout CardapioDigitalLayout
+@inject MesasServices MesasServices
+@inject MerchantServices MerchantService
+@inject ProdutoService ProdutoService
+@inject PedidosService PedidosService
+@inject GrupoServices GrupoServices
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px">
+    <MudLayout Class="h-100">
+
+        <MudPaper Class="w-100 rounded-2 mt-2" Style="background-color: var(--mud-palette-primary);">
+            <MudGrid Class="mt-1">
+                <MudItem xs="12" md="4" lg="4">
+                    <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudImage Src="@(string.IsNullOrEmpty(Merchant.ImagemLogo) ? "images/SOPHOSLOGOLOGIN.jpg" : Merchant.ImagemLogo)" Alt="Logo" Width="200" Height="200" Class="m-4 rounded-circle" />
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="8" lg="8" Class="d-flex align-items-center">
+                    <MudStack Class="w-100 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                        <MudText Typo="Typo.h3" Align="Align.Center" Class="text-white mt-2">@Merchant.NomeFantasia</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="text-white">Mesa: @Mesa.CodigoExterno.ToString().PadLeft(2, '0')</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-white">*Tempo de preparo em até @Merchant.TempoDePreparacaoEmMin Minutos</MudText>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+            <MudTabs Centered=true SliderAnimation=true>
+                <MudTabPanel OnClick=@(async () => { await FiltrarProdutosPorGrupo(null); }) Text=@(Carregando ? "" : "Todos") />
+                @foreach (var grupo in Grupos)
+                {
+                    <MudTabPanel OnClick=@(async () => { await FiltrarProdutosPorGrupo(grupo.Id); }) Text="@grupo.Descricao" />
+                }
+            </MudTabs>
+            <MudStack Class="p-2" Style="background-color: var(--mud-palette-surface);">
+                <MudTextField Value=FiltroDeBusca ValueChanged=OnPesquisaChanged @ref=TextFieldProd Clearable=true ClearIcon="@Icons.Material.Filled.Close" Class="w-100 rounded-2 mt-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto" Variant="Variant.Outlined" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true DebounceInterval="500"></MudTextField>
+            </MudStack>
+        </MudPaper>
+
+
+
+        <MudPaper Class="w-100 rounded-2 mt-2 h-100" Style="background-color: var(--mud-palette-background);">
+            @if (Carregando)
+            {
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 300px;">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+                </MudStack>
+            }
+            else
+            {
+                if (Produtos.Count > 0)
+                {
+                    <MudGrid Class="mt-2">
+                        @foreach (var produto in Produtos)
+                        {
+                            <MudItem xs="12" md="4" lg="3">
+                                <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                                    <MudGrid Class="h-100">
+                                        <MudItem xs="3" Class="d-flex justify-center align-center">
+                                            <MudAvatar Size="Size.Large"
+                                                       Color="Color.Primary"
+                                                       Square="true"
+                                                       Class="fw-bold text-white">
+                                                <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
+                                            </MudAvatar>
+                                        </MudItem>
+
+                                        <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                            <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
+                                                @produto.Descricao
+                                            </MudText>
+                                            <MudText Typo="Typo.body2">
+                                                @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudStack AlignItems="AlignItems.Center"
+                              Justify="Justify.Center"
+                              Style="width: 100%; height: 450px; opacity: 0.4;">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mb-2" />
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                            Nenhum item
+                        </MudText>
+                        <MudText Typo="Typo.caption" Align="Align.Center">
+                            Os produtos aparecerão aqui quando existirem.
+                        </MudText>
+                    </MudStack>
+                }
+            }
+        </MudPaper>
+
+        @if (NovoPedido.Itens.Count > 0 && !_open)
+        {
+            <MudFab Class="floating-green-dot" OnClick=@(() => { OpenDrawer(); }) Color="Color.Tertiary" StartIcon="@Icons.Material.Filled.ShoppingCart" DropShadow="false" />
+        }
+
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+
+    #region Propriedades da Página
+    //Query Strings de entrada
+    [SupplyParameterFromQuery] public string? MesaId { get; set; }
+    [SupplyParameterFromQuery] public string? MerchantId { get; set; }
+
+    //props de inicialização
+    private bool Carregando { get; set; } = true;
+
+    //Propriedades de dados
+    private ClsMesasEComandas Mesa = new ClsMesasEComandas();
+    private ClsMerchant Merchant = new ClsMerchant();
+    private List<ClsProduto> Produtos = new List<ClsProduto>();
+    private List<ClsGrupo> Grupos = new List<ClsGrupo>();
+    private ClsPedido NovoPedido = new();
+
+    //Propriedades de Filtro
+    private MudTextField<string> TextFieldProd = new MudTextField<string>();
+    private string? FiltroDeBusca { get; set; } = null;
+    private int? GrupoSelecionadoId { get; set; } = null;
+    #endregion
+
+    #region Funções de Inicialização
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregaMesa();
+        await CarregaMerchant();
+        await CarregaProdutos();
+        await CarregaGrupos();
+    }
+
+    private async Task CarregaMesa()
+    {
+        try
+        {
+            if (MesaId is null)
+            {
+                Snackbar.Add("MesaId não informada.", Severity.Error);
+                return;
+            }
+
+            if (MerchantId is null)
+            {
+                Snackbar.Add("Estabelecimento não informado.", Severity.Error);
+                return;
+            }
+
+            var Response = await MesasServices.GetMesaPublic(MerchantId, MesaId);
+            if (Response.Status == "success")
+            {
+                Mesa = Response.Data.Objeto ?? new ClsMesasEComandas() { CodigoExterno = 0 };
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao carregar mesa: {string.Join(",", Response.Messages)}", Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar mesa", Severity.Error);
+        }
+    }
+
+    private async Task CarregaMerchant()
+    {
+        try
+        {
+            if (MesaId is null)
+            {
+                Snackbar.Add("MesaId não informada.", Severity.Error);
+                return;
+            }
+
+            if (MerchantId is null)
+            {
+                Snackbar.Add("Estabelecimento não informado.", Severity.Error);
+                return;
+            }
+
+            var Response = await MerchantService.GetMerchantPublicAsync(MerchantId);
+            if (Response.Status == "success")
+            {
+                Merchant = Response.Data.Objeto ?? new ClsMerchant();
+                Carregando = false;
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao carregar Estabelecimento: {string.Join(",", Response.Messages)}", Severity.Error);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar Estabelecimento", Severity.Error);
+        }
+    }
+
+    private async Task CarregaProdutos()
+    {
+        try
+        {
+            var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, FiltroDeBusca, GrupoSelecionadoId);
+            Produtos = PaginatedResponse.Data ?? new List<ClsProduto>();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar produtos", Severity.Error);
+        }
+    }
+
+    private async Task CarregaGrupos()
+    {
+        try
+        {
+            Grupos = await GrupoServices.GetGruposPublicAsync(MerchantId!);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar grupos", Severity.Error);
+        }
+    }
+    #endregion
+
+    #region Funções de interação com item
+    public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
+    {
+        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+        {
+            var parameters = new DialogParameters
+            {
+               { "AtualizandoItem",AtualizandoItem},
+               { "Produto", produto}
+            };
+
+            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is ItensPedido itemPedido)
+            {
+                //Verifica se já existe o produto no pedido
+                if (NovoPedido.Itens.Any(x => x.Produto?.Id == produto.Id &&
+                    x.Complementos.SequenceEqual(itemPedido.Complementos) &&
+                    x.Preco.Id == itemPedido.Preco.Id &&
+                    x.Observacoes == itemPedido.Observacoes))
+                {
+                    var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
+                    itemExistente.Quantidade += 1;
+                    itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+
+                NovoPedido.Itens.Add(itemPedido);
+                Snackbar.Add($"Item adicionado {itemPedido.Descricao} ao pedido com sucesso", Severity.Success);
+                return;
+            }
+            else
+            {
+                Snackbar.Add("Produtos com informações obrigatórias não informadas", Severity.Error);
+                return;
+            }
+
+        }
+
+        //Verifica se já existe o produto no pedido
+        if (NovoPedido.Itens.Any(x => x.Produto == produto))
+        {
+            var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
+            itemExistente.Quantidade += 1;
+            itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        ItensPedido ItemParaAdicionarNoPedido = new()
+        {
+            Descricao = produto.Descricao,
+            Produto = produto,
+            Quantidade = 1,
+            PrecoUnitario = produto.Precos.Min(p => p.Valor),
+            PrecoTotal = produto.Precos.Min(p => p.Valor)
+        };
+
+        NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
+        Snackbar.Add($"Item adicionado {ItemParaAdicionarNoPedido.Descricao} ao pedido com sucesso", Severity.Success);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EnviarItensParaMesa()
+    {
+        NovoPedido.MesaComandaId = Mesa.Id;
+        NovoPedido.TipoDePedido = "MESA";
+        NovoPedido.EtapaPedido = "PREPARANDO";
+
+        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesaPublic(MerchantId!, NovoPedido);
+
+        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+        if (ResponseAPi.Status != "success")
+        {
+            return;
+        }
+
+        NovoPedido.Itens.Clear();
+        Snackbar.Add("Pedido enviado para a mesa com sucesso!", Severity.Success);
+        _open = false;
+
+    }
+    #endregion
+
+    #region Funções de Filtro
+    private async Task FiltrarProdutosPorGrupo(int? grupoId)
+    {
+        Carregando = true;
+        GrupoSelecionadoId = grupoId;
+        await CarregaProdutos();
+        Carregando = false;
+    }
+
+    private async void OnPesquisaChanged(string valor)
+    {
+        FiltroDeBusca = valor;
+
+        Carregando = true;
+        await CarregaProdutos();
+        Carregando = false;
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Logica do Drawer
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "40%";
+    private bool CarregandoPessoaParaEdicao = false;
+    //*****************************************************************************/
+
+    private void OpenDrawer(Anchor anchor = Anchor.Right)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "80%" : "45%";
+
+        return InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
+}
+
+
+@**************************************************DRAWER NOP FRONTEND********************************************************************************@
+<MudDrawer Style="background-color: var(--mud-palette-background);" @bind-Open="@_open" Width="@_drawerWidth" Height="@_height" Anchor="@_anchor" Elevation="1" Variant="@DrawerVariant.Temporary">
+    <MudDrawerHeader>
+        <MudStack Class="w-100" Justify="Justify.SpaceBetween" Row=true>
+            <MudText Typo="Typo.h6">Carrinho</MudText>
+
+            <MudTooltip Text="Fechar" Color="Color.Primary">
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="@(() => _open = false)" Color="Color.Primary" />
+            </MudTooltip>
+        </MudStack>
+    </MudDrawerHeader>
+    <MudDrawerContainer Class="h-100">
+        <MudStack Class="w-100 h-100">
+            @*Carrinho*@
+            <MudStack class="p-1" Row=true Justify="Justify.FlexEnd">
+                <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar Carrinho</MudButton>
+            </MudStack>
+
+            @*itens*@
+            <MudStack>
+                @foreach (var produtoNoPedido in NovoPedido.Itens)
+                {
+                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                        <MudStack>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="@(async () => { NovoPedido.Itens.Remove(produtoNoPedido); })" />
+                            </MudStack>
+                            <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
+                            @if (produtoNoPedido.Complementos.Count > 0)
+                            {
+                                <MudDivider Light=true Class="w-100" />
+                                @foreach (var complemento in produtoNoPedido.Complementos)
+                                {
+                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                        <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                    </MudStack>
+                                }
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        </MudStack>
+        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                  Style="position: sticky; bottom: 0; z-index: 9999; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+            <MudStack AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Total dos Itens: @NovoPedido.Itens.Sum(i => i.PrecoTotal).ToString("C")</MudText>
+            </MudStack>
+
+            <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
+                Enviar Itens Para a Mesa
+            </MudButton>
+        </MudPaper>
+    </MudDrawerContainer>
+</MudDrawer>
+@**************************************************DRAWER NOP FRONTEND********************************************************************************@
