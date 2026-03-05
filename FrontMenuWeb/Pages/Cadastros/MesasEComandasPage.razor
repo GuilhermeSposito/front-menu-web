@@ -222,7 +222,7 @@
         foreach (var mesa in MesasSelecionadas)
         {
             using var generator = new QRCodeGenerator();
-            using QRCodeData qrCodeData = generator.CreateQrCode($"https://syslogicadev.com/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
+            using QRCodeData qrCodeData = generator.CreateQrCode($"https://sophos-erp.com.br/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
             SvgQRCode qrCode = new SvgQRCode(qrCodeData);
             string svgText = qrCode.GetGraphic(5);
             qrCodeMarkup = new MarkupString(svgText);
