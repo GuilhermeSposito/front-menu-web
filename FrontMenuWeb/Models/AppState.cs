@@ -44,6 +44,8 @@ public class AppState
         {
             case "SOPHOS":
                 return "/images/SOPHOSLOGOLOGIN.jpg";
+            case "SOPHOS CARDAPIO":
+                return "/images/SOPHOSLOGOLOGIN.jpg";
             case "IFOOD":
                 return "/images/ifoodImagem.png";
             default:

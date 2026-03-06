@@ -124,21 +124,13 @@
                                                         <MudCardHeader>
                                                             <CardHeaderAvatar>
                                                                 <MudAvatar Color="Color.Primary">
-                                                                    @if (pedido.Pedido.CriadoPor == "SOPHOS")
-                                                                    {
-                                                                        <MudImage Src="/images/SOPHOSLOGOLOGIN.jpg"></MudImage>
-                                                                    }
-                                                                    else if (pedido.Pedido.CriadoPor == "IFOOD")
-                                                                    {
-                                                                        <MudImage Src="/images/ifoodImagem.png"></MudImage>
-                                                                    }
+                                                                    <MudImage Src="@AppState.GetIconeDoApp(pedido.Pedido.CriadoPor)"></MudImage>
                                                                 </MudAvatar>
                                                             </CardHeaderAvatar>
                                                             <CardHeaderContent>
                                                                 <MudText Color="Color.Primary" Typo="Typo.body1">
                                                                     @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId - @pedido.Pedido.Id @if(pedido.Pedido.StatusPedido == "CANCELADO"){
-                                                                    @(" - Cancelado")
-                                                                }
+                                                                    @(" - Cancelado")}
                                                             </MudText>
                                                             @if (pedido.Pedido.Cliente is not null)
                                                             {
@@ -395,24 +387,6 @@
     }
 
 
-
-    private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
-    {
-        await CarregarPedidos();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnInfoAdicionalPedidoMudou(ClsPedido Pedido)
-    {
-        await CarregarPedidos();
-
-        Snackbar.Add($"Atenção ao pedido {Pedido.DisplayId} criado por {Pedido.CriadoPor}, Temos novas informações sobre ele!", Severity.Info);
-        await JS.InvokeVoidAsync("playNotificationSoundPedidoIfoodstatusNovo");
-        await InvokeAsync(StateHasChanged);
-    }
-
-
-
     private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
     {
         try
@@ -464,42 +438,10 @@
 
     }
 
-    private async Task OnPedidoRecebido(ClsPedido novoPedido)
-    {
-        bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
-
-        if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor == "IFOOD")
-        {
-            var Pedidos = _items;
-            if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
-            {
-                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
-                return;
-            }
-
-            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-            Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
-            await CarregarPedidos();
-            await ImprimirPedido(novoPedido, false);
-
-            await PedidosService.UpdatePedidoImpresso(novoPedido);
-
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
-
-        await JS.InvokeVoidAsync("playNotificationSound");
-        await InvokeAsync(StateHasChanged);
-        await CarregarPedidos();
-        Snackbar.Add("Novo pedido recebido!", Severity.Info);
-    }
-
     private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
     {
         sup.Expandido = !sup.Expandido;
     }
-
 
     private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
     {
@@ -899,8 +841,6 @@
         }
     }
 
-
-
     int ProgressoFiscal = 0;
     CancellationTokenSource? _progressCts;
     private async Task SimulaProgressoAsync(CancellationToken token)
@@ -1031,7 +971,6 @@
         await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
     }
 
-
     private async Task IniciarTimer()
     {
         _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
@@ -1042,13 +981,18 @@
         }
     }
 
-
     private async Task VerificaPedidosNaoImpressos()
     {
         try
         {
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = 10, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido, Imprimiu = false });
+            bool IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood") ?? false;
+            if (!IntegraIfood)
+            {
+                _cts.Cancel();
+                return;
+            }
 
+            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = 10, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido, Imprimiu = false });
 
             if (result?.Data?.Any() == true)
             {
@@ -1062,16 +1006,8 @@
                             await ImprimirPedido(pedido, false);
                             await PedidosService.UpdatePedidoImpresso(pedido);
 
-                            if (_items.Any(x => x.Pedido.Id == pedido.Id))
-                            {
-                                _items.Add(new ClsDeSuporteParaMostrarPedidos
-                                {
-                                    Pedido = pedido,
-                                    Selector = pedido.EtapaPedido
-                                });
+                            VizualizaSeNaoExistePedidoNaTela(pedido);
 
-                                StateHasChanged();
-                            }
                         } //Só os integrações
                         else
                         {
@@ -1084,6 +1020,63 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao verificar pedidos não impressos: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnInfoAdicionalPedidoMudou(ClsPedido Pedido)
+    {
+        await CarregarPedidos();
+
+        Snackbar.Add($"Atenção ao pedido {Pedido.DisplayId} criado por {Pedido.CriadoPor}, Temos novas informações sobre ele!", Severity.Info);
+        await JS.InvokeVoidAsync("playNotificationSoundPedidoIfoodstatusNovo");
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
+    {
+        await CarregarPedidos();
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task OnPedidoRecebido(ClsPedido novoPedido)
+    {
+        bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
+
+        if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor != "SOPHOS")
+        {
+            var Pedidos = _items;
+            if (Pedidos.Any(x => x.Pedido.Id == novoPedido.Id))
+            {
+                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                return;
+            }
+
+            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+            Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
+            VizualizaSeNaoExistePedidoNaTela(novoPedido);
+            await ImprimirPedido(novoPedido, false);
+
+            await PedidosService.UpdatePedidoImpresso(novoPedido);
+
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        await JS.InvokeVoidAsync("playNotificationSound");
+        VizualizaSeNaoExistePedidoNaTela(novoPedido);
+        Snackbar.Add("Novo pedido recebido!", Severity.Info);
+    }
+
+    private void VizualizaSeNaoExistePedidoNaTela(ClsPedido pedido)
+    {
+        if (!_items.Any(x => x.Pedido.Id == pedido.Id))
+        {
+            _items.Add(new ClsDeSuporteParaMostrarPedidos
+            {
+                Pedido = pedido,
+                Selector = pedido.EtapaPedido
+            });
+
+            StateHasChanged();
         }
     }
     #endregion

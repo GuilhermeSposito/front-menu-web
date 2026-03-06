@@ -60,50 +60,50 @@
             }
             else
             {
-
                 if (Produtos.Count > 0)
                 {
                     foreach (var amostra in GruposComSeusProdutos)
                     {
-                        <MudCard Class="w-100 mt-3">
-                            <MudCardHeader Style="background-color:  var(--mud-palette-primary);">
-                                <MudText Typo="Typo.h6">@amostra.Grupo.Descricao</MudText>
-                            </MudCardHeader>
-                            <MudCardContent>
-                                <MudGrid Class="mt-2">
-                                    @foreach (var produto in amostra.Produtos)
-                                    {
-                                        <MudItem xs="12" md="4" lg="3">
-                                            <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
-                                                <MudGrid Class="h-100">
-                                                    <MudItem xs="3" Class="d-flex justify-center align-center">
-                                                        <MudAvatar Size="Size.Large"
-                                                                   Color="Color.Primary"
-                                                                   Square="true"
-                                                                   Class="fw-bold text-white">
-                                                            <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
-                                                        </MudAvatar>
-                                                    </MudItem>
+                        if (amostra.Produtos.Count > 0)
+                        {
+                            <MudCard Class="w-100 mt-3">
+                                <MudCardHeader Style="background-color:  var(--mud-palette-primary);">
+                                    <MudText Typo="Typo.h6">@amostra.Grupo.Descricao</MudText>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudGrid Class="mt-2">
+                                        @foreach (var produto in amostra.Produtos)
+                                        {
+                                            <MudItem xs="12" md="4" lg="3">
+                                                <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                                                    <MudGrid Class="h-100">
+                                                        <MudItem xs="3" Class="d-flex justify-center align-center">
+                                                            <MudAvatar Size="Size.Large"
+                                                                       Color="Color.Primary"
+                                                                       Square="true"
+                                                                       Class="fw-bold text-white">
+                                                                <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
+                                                            </MudAvatar>
+                                                        </MudItem>
 
-                                                    <MudItem xs="9" Class="d-flex flex-column justify-center">
-                                                        <MudText Typo="Typo.subtitle1" Class="fw-semibold">
-                                                            @produto.Descricao
-                                                        </MudText>
-                                                        <MudText Typo="Typo.body2">
-                                                            @($"A Partir de: {produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
-                                                        </MudText>
-                                                    </MudItem>
-                                                </MudGrid>
-                                            </MudPaper>
-                                        </MudItem>
-                                    }
-                                </MudGrid>
-                            </MudCardContent>
-                        </MudCard>
+                                                        <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                                            <MudText Typo="Typo.subtitle1" Class="fw-semibold">
+                                                                @produto.Descricao
+                                                            </MudText>
+                                                            <MudText Typo="Typo.body2">
+                                                                @($"A Partir de: {produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
+                                                            </MudText>
+                                                        </MudItem>
+                                                    </MudGrid>
+                                                </MudPaper>
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
+                        }
 
                     }
-
-
 
                 }
                 else
@@ -147,7 +147,7 @@
     private List<ClsProduto> Produtos = new List<ClsProduto>();
     private List<ClsGrupo> Grupos = new List<ClsGrupo>();
     private List<ClsFormaDeRecebimento> FormasDeRecebimento = new List<ClsFormaDeRecebimento>();
-    private ClsPedido NovoPedido = new();
+    private ClsPedido NovoPedido = new() { CriadoPor = "SOPHOS CARDAPIO" };
 
     //Propriedades de Filtro
     private MudTextField<string> TextFieldProd = new MudTextField<string>();

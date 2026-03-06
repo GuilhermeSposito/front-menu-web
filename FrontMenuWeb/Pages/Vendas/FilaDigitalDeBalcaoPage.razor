@@ -203,37 +203,38 @@
         await CarregarPedidos();
         await InvokeAsync(StateHasChanged);
 
-        if (novoPedido.EtapaPedido == "DESPACHADO")
-        {
-            await JS.InvokeVoidAsync("playNotificationSoundFila");
-         
-            var parameters = new DialogParameters
+        if (novoPedido.TipoDePedido == "BALCÃO")
+            if (novoPedido.EtapaPedido == "DESPACHADO")
+            {
+                await JS.InvokeVoidAsync("playNotificationSoundFila");
+
+                var parameters = new DialogParameters
                 {
                     { "Pedido", novoPedido }
                 };
 
-            var options = new DialogOptions
-            {
-                MaxWidth = MaxWidth.False,
-                FullWidth = false,
-                FullScreen = false,
-                CloseOnEscapeKey = true,
-                BackdropClick = false
-            };
+                var options = new DialogOptions
+                {
+                    MaxWidth = MaxWidth.False,
+                    FullWidth = false,
+                    FullScreen = false,
+                    CloseOnEscapeKey = true,
+                    BackdropClick = false
+                };
 
-            var dialog = await DialogService.ShowAsync<ModalDePedidoProntoParaAFila>(
-                "Pedido Pronto",
-                parameters,
-                options
-            );
+                var dialog = await DialogService.ShowAsync<ModalDePedidoProntoParaAFila>(
+                    "Pedido Pronto",
+                    parameters,
+                    options
+                );
 
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(8000);
-                await InvokeAsync(() => dialog.Close());
-            });
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(8000);
+                    await InvokeAsync(() => dialog.Close());
+                });
 
-        }
+            }
     }
 
 

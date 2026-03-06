@@ -1,10 +1,12 @@
 ﻿@page "/cardapio-conclusao"
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModaisDoCardapio.Cadastros
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Cardapio
 @using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services.FinanceroServices
 @layout CardapioDigitalLayout
 @inject MesasServices MesasServices
@@ -58,7 +60,7 @@
             </MudStack>
 
             <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudCard Class="bg-danger w-50" Style="cursor:pointer">
+                <MudCard @onclick=@(() => { SelecionarTipoDePedido("BALCÃO"); }) Class="bg-danger w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "BALCÃO" ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
                     <MudCardContent>
                         <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <MudText>Retirada</MudText>
@@ -66,7 +68,7 @@
                     </MudCardContent>
                 </MudCard>
 
-                <MudCard Class="bg-success w-50" Style="cursor:pointer">
+                <MudCard @onclick=@(() => { SelecionarTipoDePedido("DELIVERY"); }) Class="bg-success w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "DELIVERY" ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
                     <MudCardContent>
                         <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                             <MudText>Entrega</MudText>
@@ -112,7 +114,28 @@
             </MudButton>
         </footer>
 
-      
+        <!-- OVERLAY -->
+        <MudOverlay Visible="@CarregandoEnvioDoPedido"
+                    Absolute="true"
+                    DarkBackground="true"
+                    ZIndex="9999"
+                    Class="w-100 h-100 blur-overlay">
+
+            <MudStack AlignItems="AlignItems.Center"
+                      Justify="Justify.Center"
+                      Class="w-100 h-100">
+                <MudProgressCircular Indeterminate="true"
+                                     Size="Size.Large"
+                                     Color="Color.Primary" />
+                <MudText Class="mt-3"
+                         Typo="Typo.h6"
+                         Color="Color.Primary">
+                    Enviando pedido...
+                </MudText>
+            </MudStack>
+
+        </MudOverlay>
+
     </MudLayout>
 </MudPaper>
 
@@ -126,6 +149,7 @@
 
     //props de inicialização
     private bool Carregando { get; set; } = true;
+    private bool CarregandoEnvioDoPedido { get; set; } = false;
 
     //Propriedades de dados
     private ClsMerchant Merchant = new ClsMerchant();
@@ -152,12 +176,19 @@
 
 
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
 
         Merchant = PedidoState.Merchant!;
         FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
         NovoPedido = PedidoState.NovoPedido!;
+
+        ClsPessoas? pessoa = await LocalStorage.GetItemAsync<ClsPessoas?>("Pessoa");
+        EnderecoPessoa? endereco = await LocalStorage.GetItemAsync<EnderecoPessoa?>("Endereco");
+        if (pessoa is not null)
+            NovoPedido.Cliente = pessoa;
+        if (endereco is not null)
+            NovoPedido.Endereco = endereco;
 
         foreach (var item in NovoPedido.Itens)
         {
@@ -167,7 +198,6 @@
         SomaValorTotal();
 
     }
-
 
     private async void SelecionarFormaDePagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
     {
@@ -236,8 +266,6 @@
         StateHasChanged();
     }
 
-
-
     private async Task VoltarParaCardapio()
     {
         NovoPedido.Pagamentos.Clear();
@@ -245,7 +273,6 @@
         var url = $"/cardapio?MerchantId={Merchant.Id}";
         Navigation.NavigateTo(url);
     }
-
 
     private async Task EnviarPedido()
     {
@@ -256,7 +283,7 @@
         }
 
         await Submit();
- 
+
     }
 
     private void SomaValorTotal()
@@ -266,13 +293,64 @@
             2
         );
     }
+
+    private void SelecionarTipoDePedido(string tipo)
+    {
+        NovoPedido.TipoDePedido = tipo;
+
+        AbreModalDeAdicionarPessoa();
+
+        StateHasChanged();
+    }
+
+    private async void AbreModalDeAdicionarPessoa()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+
+        string? NumeroDeTelefoneValido = null;
+        string? NomeValido = null;
+
+        var parameters = new DialogParameters
+        {
+            { "TelefoneEnviado", NumeroDeTelefoneValido},
+            { "NomeEnviado", NomeValido},
+            { "CadastroRapido", true},
+            { "Pedido", NovoPedido},
+            {"Pessoa", NovoPedido.Cliente},
+            {"Endereco", NovoPedido.Endereco}
+        };
+
+        var dialog = await DialogService.ShowAsync<CadastroDeClienteCardapio>("Informações Pessoais", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool adicionou)
+        {
+            Snackbar.Add($"Cliente {NovoPedido.Cliente?.Nome} adicionado ao pedido.", Severity.Success);
+        }
+    }
     #endregion
 
     private async Task Submit()
     {
         try
         {
-            // CarregandoEnvioDoPedido = true;
+            if (NovoPedido.Cliente is null || string.IsNullOrEmpty(NovoPedido.Cliente.Nome))
+            {
+                Snackbar.Add("Adicione um cliente ao pedido para continuar.", Severity.Warning);
+                return;
+            }
+
+            if (NovoPedido.TipoDePedido == "DELIVERY")
+            {
+                if (NovoPedido.Endereco is null || string.IsNullOrEmpty(NovoPedido.Endereco.Rua) || string.IsNullOrEmpty(NovoPedido.Endereco.Rua) || string.IsNullOrEmpty(NovoPedido.Endereco.Bairro))
+                {
+                    Snackbar.Add("Adicione um endereço de entrega válido para continuar.", Severity.Warning);
+                    return;
+                }
+            }
+
+
+            CarregandoEnvioDoPedido = true;
             StateHasChanged();
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
@@ -281,7 +359,23 @@
             string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
             Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
 
-            Navigation.NavigateTo($"/cardapio?MerchantId={Merchant.Id}");
+            if (ResponseAPi.Status == "success")
+            {
+                Snackbar.Add("Pedido Enviado Com Sucesso", Severity.Success);
+
+                await LocalStorage.SetItemAsync("UltimoPedido", ResponseAPi.Data);
+                await LocalStorage.SetItemAsync("Pessoa", NovoPedido.Cliente);
+                await LocalStorage.SetItemAsync("Endereco", NovoPedido.Endereco);
+
+                NovoPedido = new ClsPedido() { TipoDePedido = "BALCÃO"};
+         
+                FormasDeRecebimento = null;
+                PedidoState.NovoPedido = NovoPedido;
+
+                Navigation.NavigateTo($"/cardapio?MerchantId={Merchant.Id}");
+
+            }
+
 
         }
         catch (OperationCanceledException)
@@ -298,13 +392,10 @@
         }
         finally
         {
-            //CarregandoEnvioDoPedido = false;
+            CarregandoEnvioDoPedido = false;
         }
 
     }
-
-
-
 
 
     #region Logica do Drawer
