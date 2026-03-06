@@ -1042,8 +1042,7 @@
 
         if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor != "SOPHOS")
         {
-            var Pedidos = _items;
-            if (Pedidos.Any(x => x.Pedido.Id == novoPedido.Id))
+            if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
             {
                 await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
                 Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
@@ -1052,7 +1051,7 @@
 
             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
             Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
-            VizualizaSeNaoExistePedidoNaTela(novoPedido);
+            await VizualizaSeNaoExistePedidoNaTela(novoPedido);
             await ImprimirPedido(novoPedido, false);
 
             await PedidosService.UpdatePedidoImpresso(novoPedido);
@@ -1062,11 +1061,11 @@
         }
 
         await JS.InvokeVoidAsync("playNotificationSound");
-        VizualizaSeNaoExistePedidoNaTela(novoPedido);
+        await VizualizaSeNaoExistePedidoNaTela(novoPedido);
         Snackbar.Add("Novo pedido recebido!", Severity.Info);
     }
 
-    private void VizualizaSeNaoExistePedidoNaTela(ClsPedido pedido)
+    private async Task VizualizaSeNaoExistePedidoNaTela(ClsPedido pedido)
     {
         if (!_items.Any(x => x.Pedido.Id == pedido.Id))
         {
@@ -1076,7 +1075,7 @@
                 Selector = pedido.EtapaPedido
             });
 
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
     #endregion
