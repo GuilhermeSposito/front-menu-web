@@ -307,13 +307,11 @@
     {
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
-        string? NumeroDeTelefoneValido = null;
-        string? NomeValido = null;
 
         var parameters = new DialogParameters
         {
-            { "TelefoneEnviado", NumeroDeTelefoneValido},
-            { "NomeEnviado", NomeValido},
+            { "TelefoneEnviado", NovoPedido.Cliente?.Telefone},
+            { "NomeEnviado", null},
             { "CadastroRapido", true},
             { "Pedido", NovoPedido},
             {"Pessoa", NovoPedido.Cliente},
@@ -362,8 +360,7 @@
             if (ResponseAPi.Status == "success")
             {
                 Snackbar.Add("Pedido Enviado Com Sucesso", Severity.Success);
-
-                await LocalStorage.SetItemAsync("UltimoPedido", ResponseAPi.Data);
+ 
                 await LocalStorage.SetItemAsync("Pessoa", NovoPedido.Cliente);
                 await LocalStorage.SetItemAsync("Endereco", NovoPedido.Endereco);
 
