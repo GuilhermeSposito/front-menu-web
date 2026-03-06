@@ -60,36 +60,51 @@
             }
             else
             {
+
                 if (Produtos.Count > 0)
                 {
-                    <MudGrid Class="mt-2">
-                        @foreach (var produto in Produtos)
-                        {
-                            <MudItem xs="12" md="4" lg="3">
-                                <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
-                                    <MudGrid Class="h-100">
-                                        <MudItem xs="3" Class="d-flex justify-center align-center">
-                                            <MudAvatar Size="Size.Large"
-                                                       Color="Color.Primary"
-                                                       Square="true"
-                                                       Class="fw-bold text-white">
-                                                <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
-                                            </MudAvatar>
-                                        </MudItem>
+                    foreach (var amostra in GruposComSeusProdutos)
+                    {
+                        <MudCard Class="w-100 mt-3">
+                            <MudCardHeader Style="background-color:  var(--mud-palette-primary);">
+                                <MudText Typo="Typo.h6">@amostra.Grupo.Descricao</MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudGrid Class="mt-2">
+                                    @foreach (var produto in amostra.Produtos)
+                                    {
+                                        <MudItem xs="12" md="4" lg="3">
+                                            <MudPaper @onclick=@(async () => { await AdicionarProdutoNoPedido(produto); }) Elevation="6" Class="d-flex align-center pa-2 transition-all product-card" Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
+                                                <MudGrid Class="h-100">
+                                                    <MudItem xs="3" Class="d-flex justify-center align-center">
+                                                        <MudAvatar Size="Size.Large"
+                                                                   Color="Color.Primary"
+                                                                   Square="true"
+                                                                   Class="fw-bold text-white">
+                                                            <MudImage Src="@(string.IsNullOrEmpty(produto.ImgProduto) ? "images/no-image.jpg" : produto.ImgProduto)" Alt="Imagem do Produto" Width="80" Height="80" />
+                                                        </MudAvatar>
+                                                    </MudItem>
 
-                                        <MudItem xs="9" Class="d-flex flex-column justify-center">
-                                            <MudText Typo="Typo.subtitle1" Class="fw-semibold text-truncate">
-                                                @produto.Descricao
-                                            </MudText>
-                                            <MudText Typo="Typo.body2">
-                                                @($"A Partir de: {produto.Precos.Min(p => p.Valor):C}")
-                                            </MudText>
+                                                    <MudItem xs="9" Class="d-flex flex-column justify-center">
+                                                        <MudText Typo="Typo.subtitle1" Class="fw-semibold">
+                                                            @produto.Descricao
+                                                        </MudText>
+                                                        <MudText Typo="Typo.body2">
+                                                            @($"A Partir de: {produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
+                                                        </MudText>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudPaper>
                                         </MudItem>
-                                    </MudGrid>
-                                </MudPaper>
-                            </MudItem>
-                        }
-                    </MudGrid>
+                                    }
+                                </MudGrid>
+                            </MudCardContent>
+                        </MudCard>
+
+                    }
+
+
+
                 }
                 else
                 {
@@ -138,17 +153,20 @@
     private MudTextField<string> TextFieldProd = new MudTextField<string>();
     private string? FiltroDeBusca { get; set; } = null;
     private int? GrupoSelecionadoId { get; set; } = null;
+
+    //Propriedades para amostra
+    private List<ClsAmostraEstilizadaDeProdutoPorGrupo> GruposComSeusProdutos = new List<ClsAmostraEstilizadaDeProdutoPorGrupo>();
     #endregion
 
     #region Funções de Pagina
     protected override async Task OnInitializedAsync()
     {
         await CarregaMerchant();
-        await CarregaProdutos();
         await CarregaGrupos();
+        await CarregaProdutos();
         await CarregaFormasDeRecebimento();
 
-        if(PedidoState.Merchant is not null)
+        if (PedidoState.Merchant is not null)
         {
             Merchant = PedidoState.Merchant;
             FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
@@ -191,6 +209,17 @@
             var PaginatedResponse = await ProdutoService.GetProdutosPorPaginaPublicAsync(MerchantId!, 1, 1000, FiltroDeBusca, GrupoSelecionadoId);
             Produtos = PaginatedResponse.Data ?? new List<ClsProduto>();
             StateHasChanged();
+
+            foreach (var grupo in Grupos)
+            {
+                var produtosDoGrupo = Produtos.Where(p => p.Grupo.Id == grupo.Id).ToList();
+                var amostra = GruposComSeusProdutos.FirstOrDefault(g => g.Grupo.Id == grupo.Id);
+                if (amostra != null)
+                {
+                    amostra.Produtos = produtosDoGrupo;
+                }
+            }
+
         }
         catch (Exception ex)
         {
@@ -203,6 +232,11 @@
         try
         {
             Grupos = await GrupoServices.GetGruposPublicAsync(MerchantId!);
+
+            foreach (var grupo in Grupos)
+            {
+                GruposComSeusProdutos.Add(new ClsAmostraEstilizadaDeProdutoPorGrupo { Grupo = grupo });
+            }
         }
         catch (Exception ex)
         {
@@ -224,7 +258,7 @@
 
     private async Task NavegaParaFinalizacaoDoPedido()
     {
-        PedidoState.Merchant =  Merchant;
+        PedidoState.Merchant = Merchant;
         PedidoState.FormasDeRecebimento = FormasDeRecebimento;
         PedidoState.NovoPedido = NovoPedido;
 
@@ -415,6 +449,12 @@
     }
     #endregion
 
+    public class ClsAmostraEstilizadaDeProdutoPorGrupo
+    {
+        public List<ClsProduto> Produtos { get; set; } = new();
+        public ClsGrupo Grupo { get; set; } = new();
+
+    }
 }
 
 
@@ -469,7 +509,7 @@
             </MudStack>
 
             <MudButton Variant="Variant.Filled" OnClick="NavegaParaFinalizacaoDoPedido" Color="Color.Primary" Class="w-100">
-               Continuar Para Pagamento
+                Continuar Para Pagamento
             </MudButton>
         </MudPaper>
     </MudDrawerContainer>

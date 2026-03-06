@@ -96,14 +96,12 @@
 
         </MudStack>
 
-
-        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center w-100" Style="position: fixed; bottom: 0; z-index: 9999; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-            <MudStack AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
-
-                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Troco: @ValorTroco.ToString("C")</MudText>
-                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Taxa de Entrega @TaxaDeEntrega.ToString("C")</MudText>
-                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Restante @ValorRestante.ToString("C")</MudText>
-                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Total Do Pedido: @ValorTotal.ToString("C")</MudText>
+        <footer class="p-2">
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="mt-2 p-2" Style="background-color: var(--mud-palette-surface);">
+                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Troco: @ValorTroco.ToString("C")</MudText>
+                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Taxa de Entrega @TaxaDeEntrega.ToString("C")</MudText>
+                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Restante @ValorRestante.ToString("C")</MudText>
+                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Total Do Pedido: @ValorTotal.ToString("C")</MudText>
             </MudStack>
 
             <MudButton Variant="Variant.Filled" OnClick="VoltarParaCardapio" Color="Color.Primary" Class="w-100">
@@ -112,7 +110,9 @@
             <MudButton Variant="Variant.Filled" OnClick="EnviarPedido" Color="Color.Success" Class="w-100">
                 Enviar Pedido
             </MudButton>
-        </MudPaper>
+        </footer>
+
+      
     </MudLayout>
 </MudPaper>
 
