@@ -366,7 +366,11 @@
 
                 NovoPedido = new ClsPedido() { TipoDePedido = "BALCÃO"};
          
-                FormasDeRecebimento = null;
+                
+                foreach(var formas in FormasDeRecebimento)
+                    formas.Selecionada = false;
+
+                PedidoState.FormasDeRecebimento = FormasDeRecebimento;
                 PedidoState.NovoPedido = NovoPedido;
 
                 Navigation.NavigateTo($"/cardapio?MerchantId={Merchant.Id}");
