@@ -22,6 +22,12 @@ public class FormasDeRecebimentoService
         return response?.Data.Lista ?? new List<ClsFormaDeRecebimento>();
     }
 
+    public async Task<List<ClsFormaDeRecebimento>> GetFormasDeRecebimentoPublicAsync(string IdMerchant)
+    {
+        var response = await HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsFormaDeRecebimento>>($"financeiro/formas-recebimento/public/{IdMerchant}");
+        return response?.Data.Lista ?? new List<ClsFormaDeRecebimento>();
+    }
+
     public async Task<ClsFormaDeRecebimento?> GetFormaDeRecebimentoAsync(int IdDaForma)
     {
         var response = await HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsFormaDeRecebimento>>($"financeiro/formas-recebimento/{IdDaForma}");

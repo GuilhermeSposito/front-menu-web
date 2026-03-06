@@ -146,6 +146,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedidoPublicAsync(ClsPedido Pedido,ClsMerchant Merchant ,CancellationToken cancellationToken = default)
+    {
+        var response = await _http.PostAsJsonAsync($"pedidos/public/{Merchant.Id}", Pedido, cancellationToken);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
     public async Task<ClsPedido?> GetPedidoById(int IdPedido, CancellationToken cancellationToken = default)
     {
         var response = await _http.GetAsync($"pedidos/{IdPedido}");

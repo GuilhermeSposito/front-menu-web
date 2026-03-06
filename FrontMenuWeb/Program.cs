@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 using FrontMenuWeb;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Cardapio;
 using FrontMenuWeb.Models.Produtos;
 using FrontMenuWeb.Services;
 using FrontMenuWeb.Services.FinanceroServices;
@@ -36,6 +37,7 @@ builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<AppState>();
 builder.Services.AddScoped<EntregasMachineService>();
 builder.Services.AddScoped<EntregasService>();
+builder.Services.AddScoped<PedidoState>();
 builder.Services.AddScoped<DistanciasService>();
 builder.Services.AddScoped<EmpresaIfoodService>();
 builder.Services.AddScoped<PedidosService>();

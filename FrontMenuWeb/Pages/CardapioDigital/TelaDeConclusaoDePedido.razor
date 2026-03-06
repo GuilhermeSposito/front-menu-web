@@ -1,0 +1,358 @@
+﻿@page "/cardapio-conclusao"
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Cardapio
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services.FinanceroServices
+@layout CardapioDigitalLayout
+@inject MesasServices MesasServices
+@inject MerchantServices MerchantService
+@inject ProdutoService ProdutoService
+@inject PedidosService PedidosService
+@inject GrupoServices GrupoServices
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
+@inject PedidosService PedidosService
+@implements IBrowserViewportObserver
+@implements IAsyncDisposable
+
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px; width:100%">
+    <MudLayout Class="h-100 w-100">
+
+        <MudStack Class="w-100 p-3 h-100 mt-2 rounded-2" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudText>Resumo do carrinho</MudText>
+            </MudStack>
+            @*itens*@
+            <MudStack>
+                @foreach (var produtoNoPedido in NovoPedido.Itens)
+                {
+                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                        <MudStack>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="@(async () => { NovoPedido.Itens.Remove(produtoNoPedido); })" />
+                            </MudStack>
+                            <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
+                            @if (produtoNoPedido.Complementos.Count > 0)
+                            {
+                                <MudDivider Light=true Class="w-100" />
+                                @foreach (var complemento in produtoNoPedido.Complementos)
+                                {
+                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                        <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                    </MudStack>
+                                }
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        </MudStack>
+
+        <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudText>Tipo de Pedido</MudText>
+            </MudStack>
+
+            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudCard Class="bg-danger w-50" Style="cursor:pointer">
+                    <MudCardContent>
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText>Retirada</MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+
+                <MudCard Class="bg-success w-50" Style="cursor:pointer">
+                    <MudCardContent>
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText>Entrega</MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+
+            </MudStack>
+
+        </MudStack>
+
+        <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudText>Selecione a Forma de Pagamento</MudText>
+            </MudStack>
+
+            @foreach (var forma in FormasDeRecebimento)
+            {
+                <MudCard @onclick=@(async () => { SelecionarFormaDePagamento(forma); }) Class="bg-primary bg-opacity-10 w-100 rounded-2" Style=@($"cursor:pointer; {(forma.Selecionada ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
+                    <MudCardContent>
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText>@forma.Descricao</MudText>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            }
+
+        </MudStack>
+
+
+        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center w-100" Style="position: fixed; bottom: 0; z-index: 9999; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+            <MudStack AlignItems="AlignItems.Start" Justify="Justify.FlexStart">
+
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Troco: @ValorTroco.ToString("C")</MudText>
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Taxa de Entrega @TaxaDeEntrega.ToString("C")</MudText>
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Restante @ValorRestante.ToString("C")</MudText>
+                <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Valor Total Do Pedido: @ValorTotal.ToString("C")</MudText>
+            </MudStack>
+
+            <MudButton Variant="Variant.Filled" OnClick="VoltarParaCardapio" Color="Color.Primary" Class="w-100">
+                Adicionar Mais Itens
+            </MudButton>
+            <MudButton Variant="Variant.Filled" OnClick="EnviarPedido" Color="Color.Success" Class="w-100">
+                Enviar Pedido
+            </MudButton>
+        </MudPaper>
+    </MudLayout>
+</MudPaper>
+
+
+@code {
+
+    #region Propriedades da Página
+    //Query Strings de entrada
+    [SupplyParameterFromQuery] public string? MerchantId { get; set; }
+    [Inject] PedidoState PedidoState { get; set; }
+
+    //props de inicialização
+    private bool Carregando { get; set; } = true;
+
+    //Propriedades de dados
+    private ClsMerchant Merchant = new ClsMerchant();
+    private List<ClsFormaDeRecebimento> FormasDeRecebimento = new List<ClsFormaDeRecebimento>();
+    private ClsPedido NovoPedido = new();
+
+    //Propriedades de Filtro
+    private MudTextField<string> TextFieldProd = new MudTextField<string>();
+    private string? FiltroDeBusca { get; set; } = null;
+    private int? GrupoSelecionadoId { get; set; } = null;
+
+    //Soma do Total
+    private float ValorDosItens = 0f;
+    private float ValorDoDesconto = 0f;
+    private float TaxaAdicional = 0f;
+    private float TaxaDeEntrega = 0f;
+    private float ValorTotal = 0f;
+    private float ValorTroco = 0f;
+    private float ValorRestante = 0f;
+    private float TotalKms = 0f;
+    #endregion
+
+    #region Funções de Pagina
+
+
+
+    protected override void OnInitialized()
+    {
+
+        Merchant = PedidoState.Merchant!;
+        FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
+        NovoPedido = PedidoState.NovoPedido!;
+
+        foreach (var item in NovoPedido.Itens)
+        {
+            ValorDosItens += item.PrecoTotal;
+        }
+
+        SomaValorTotal();
+
+    }
+
+
+    private async void SelecionarFormaDePagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
+    {
+        var formaJaSelecionada = NovoPedido.Pagamentos.FirstOrDefault(x => x.FormaDePagamento?.Id == clsFormaDeRecebimento.Id);
+        if (formaJaSelecionada is not null)
+        {
+            NovoPedido.Pagamentos.Remove(formaJaSelecionada);
+            clsFormaDeRecebimento.Selecionada = false;
+            return;
+        }
+
+
+        var ValorAtual = ValorTotal - NovoPedido.Pagamentos.Sum(x => x.ValorTotal);
+        float valorRestante = ValorAtual;
+
+        var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Declarar Valor", new DialogParameters { { "ValorAtual", ValorAtual }, { "ValorTotalDoPedido", ValorTotal } });
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is float novoValor)
+        {
+            ValorAtual = novoValor;
+        }
+
+        if (NovoPedido.Pagamentos.Sum(x => x.ValorTotal) >= ValorTotal)
+        {
+            Snackbar.Add("O valor total do pedido já foi pago.", Severity.Warning);
+            return;
+        }
+
+        if (((NovoPedido.Pagamentos.Sum(x => x.ValorTotal) + ValorAtual) > ValorTotal) && !clsFormaDeRecebimento.EDinheiro)
+        {
+            Snackbar.Add("O valor declarado não pode ultrapassar o valor total do pedido.", Severity.Error);
+            return;
+        }
+
+
+        PagamentoDoPedido clsPagamentoDoPedido = new PagamentoDoPedido
+        {
+            ValorTotal = ValorAtual,
+            formaDeRecebimentoId = clsFormaDeRecebimento.Id,
+            FormaDePagamento = clsFormaDeRecebimento
+        };
+
+
+        NovoPedido.Pagamentos.Add(clsPagamentoDoPedido);
+
+        if (clsFormaDeRecebimento.EDinheiro)
+        {
+            if (clsFormaDeRecebimento.EDinheiro)
+            {
+                var troco = ValorAtual - valorRestante;
+
+                ValorTroco += troco;
+
+                if (troco < 0)
+                    troco = 0;
+
+                clsPagamentoDoPedido.Troco = troco;
+
+            }
+        }
+
+        clsFormaDeRecebimento.Selecionada = true;
+
+        Snackbar.Add($"Forma de pagamento {clsFormaDeRecebimento.Descricao} adicionada ao pedido.", Severity.Success);
+        StateHasChanged();
+    }
+
+
+
+    private async Task VoltarParaCardapio()
+    {
+        NovoPedido.Pagamentos.Clear();
+
+        var url = $"/cardapio?MerchantId={Merchant.Id}";
+        Navigation.NavigateTo(url);
+    }
+
+
+    private async Task EnviarPedido()
+    {
+        if (NovoPedido.Pagamentos.Count == 0)
+        {
+            Snackbar.Add("Selecione ao menos uma forma de pagamento para enviar o pedido.", Severity.Warning);
+            return;
+        }
+
+        await Submit();
+ 
+    }
+
+    private void SomaValorTotal()
+    {
+        ValorTotal = (float)Math.Round(
+            ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega,
+            2
+        );
+    }
+    #endregion
+
+    private async Task Submit()
+    {
+        try
+        {
+            // CarregandoEnvioDoPedido = true;
+            StateHasChanged();
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedidoPublicAsync(NovoPedido, Merchant, cts.Token);
+
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+            Navigation.NavigateTo($"/cardapio?MerchantId={Merchant.Id}");
+
+        }
+        catch (OperationCanceledException)
+        {
+            Snackbar.Add("Tempo limite excedido. Tente novamente.", Severity.Warning);
+        }
+        catch (HttpRequestException ex)
+        {
+            Snackbar.Add("Erro de comunicação com o servidor.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro inesperado: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            //CarregandoEnvioDoPedido = false;
+        }
+
+    }
+
+
+
+
+
+    #region Logica do Drawer
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
+    private bool _open;
+    private Anchor _anchor;
+    private string _height = "100%";
+    private int _width = 0;
+    private string _drawerWidth = "40%";
+    private bool CarregandoPessoaParaEdicao = false;
+    //*****************************************************************************/
+
+    private void OpenDrawer(Anchor anchor = Anchor.Right)
+    {
+        _open = true;
+        _anchor = anchor;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+        => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
+    {
+        ReportRate = 50,
+        NotifyOnBreakpointOnly = false
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        _width = args.BrowserWindowSize.Width;
+
+        // Atualiza o tamanho do drawer com base na largura
+        _drawerWidth = _width < 768 ? "80%" : "45%";
+
+        return InvokeAsync(StateHasChanged);
+    }
+    #endregion
+
+}
+

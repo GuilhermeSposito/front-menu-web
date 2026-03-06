@@ -20,6 +20,7 @@ public class ClsFormaDeRecebimento
     [JsonPropertyName("ContasDeFormaDeRecebimento")] public List<ClsDeContasDasFormasDeRecebimento> ListasDeContasDaForma { get; set; } = new List<ClsDeContasDasFormasDeRecebimento>();
     [JsonPropertyName("chave_pix")] public string? ChavePix { get; set; }
     [JsonPropertyName("contasIds")] public List<int> ContasIds { get; set; } = new List<int>();
+    [JsonIgnore] public bool Selecionada { get; set; } = false;
 
 }
 

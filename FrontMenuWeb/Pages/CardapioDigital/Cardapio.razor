@@ -1,14 +1,18 @@
 ﻿@page "/cardapio"
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Cardapio
+@using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services.FinanceroServices
 @layout CardapioDigitalLayout
 @inject MesasServices MesasServices
 @inject MerchantServices MerchantService
 @inject ProdutoService ProdutoService
 @inject PedidosService PedidosService
 @inject GrupoServices GrupoServices
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
@@ -27,8 +31,9 @@
                 <MudItem xs="12" md="8" lg="8" Class="d-flex align-items-center">
                     <MudStack Class="w-100 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
                         <MudText Typo="Typo.h3" Align="Align.Center" Class="text-white mt-2">@Merchant.NomeFantasia</MudText>
-                        <MudText Typo="Typo.subtitle1" Class="text-white">Mesa: @Mesa.CodigoExterno.ToString().PadLeft(2, '0')</MudText>
                         <MudText Typo="Typo.subtitle2" Class="text-white">*Tempo de preparo em até @Merchant.TempoDePreparacaoEmMin Minutos</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-white">*Tempo de Entrega em até @Merchant.TempoDeEntregaEMmin Minutos</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-white">*Tempo de Retirada em até @Merchant.TempoDeRetiradaEMmin Minutos</MudText>
                     </MudStack>
                 </MudItem>
             </MudGrid>
@@ -116,17 +121,17 @@
 
     #region Propriedades da Página
     //Query Strings de entrada
-    [SupplyParameterFromQuery] public string? MesaId { get; set; }
     [SupplyParameterFromQuery] public string? MerchantId { get; set; }
+    [Inject] PedidoState PedidoState { get; set; }
 
     //props de inicialização
     private bool Carregando { get; set; } = true;
 
     //Propriedades de dados
-    private ClsMesasEComandas Mesa = new ClsMesasEComandas();
     private ClsMerchant Merchant = new ClsMerchant();
     private List<ClsProduto> Produtos = new List<ClsProduto>();
     private List<ClsGrupo> Grupos = new List<ClsGrupo>();
+    private List<ClsFormaDeRecebimento> FormasDeRecebimento = new List<ClsFormaDeRecebimento>();
     private ClsPedido NovoPedido = new();
 
     //Propriedades de Filtro
@@ -135,45 +140,19 @@
     private int? GrupoSelecionadoId { get; set; } = null;
     #endregion
 
-    #region Funções de Inicialização
+    #region Funções de Pagina
     protected override async Task OnInitializedAsync()
     {
-        await CarregaMesa();
         await CarregaMerchant();
         await CarregaProdutos();
         await CarregaGrupos();
-    }
+        await CarregaFormasDeRecebimento();
 
-    private async Task CarregaMesa()
-    {
-        try
+        if(PedidoState.Merchant is not null)
         {
-            if (MesaId is null)
-            {
-                Snackbar.Add("MesaId não informada.", Severity.Error);
-                return;
-            }
-
-            if (MerchantId is null)
-            {
-                Snackbar.Add("Estabelecimento não informado.", Severity.Error);
-                return;
-            }
-
-            var Response = await MesasServices.GetMesaPublic(MerchantId, MesaId);
-            if (Response.Status == "success")
-            {
-                Mesa = Response.Data.Objeto ?? new ClsMesasEComandas() { CodigoExterno = 0 };
-            }
-            else
-            {
-                Snackbar.Add($"Erro ao carregar mesa: {string.Join(",", Response.Messages)}", Severity.Error);
-            }
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao carregar mesa", Severity.Error);
+            Merchant = PedidoState.Merchant;
+            FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
+            NovoPedido = PedidoState.NovoPedido!;
         }
     }
 
@@ -181,12 +160,6 @@
     {
         try
         {
-            if (MesaId is null)
-            {
-                Snackbar.Add("MesaId não informada.", Severity.Error);
-                return;
-            }
-
             if (MerchantId is null)
             {
                 Snackbar.Add("Estabelecimento não informado.", Severity.Error);
@@ -236,12 +209,34 @@
             Snackbar.Add($"Erro ao carregar grupos", Severity.Error);
         }
     }
+
+    private async Task CarregaFormasDeRecebimento()
+    {
+        try
+        {
+            FormasDeRecebimento = await FormasDeRecebimentoService.GetFormasDeRecebimentoPublicAsync(MerchantId!);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar grupos", Severity.Error);
+        }
+    }
+
+    private async Task NavegaParaFinalizacaoDoPedido()
+    {
+        PedidoState.Merchant =  Merchant;
+        PedidoState.FormasDeRecebimento = FormasDeRecebimento;
+        PedidoState.NovoPedido = NovoPedido;
+
+        Navigation.NavigateTo("/cardapio-conclusao");
+    }
     #endregion
 
     #region Funções de interação com item
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
-        if (produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0)
+
+        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) || (!produto.TamanhoUnico && produto.Precos.Count > 0))
         {
             var parameters = new DialogParameters
             {
@@ -249,28 +244,31 @@
                { "Produto", produto}
             };
 
-            var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
-
-            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+            var options = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
             var result = await dialog.Result;
 
             if (!result!.Canceled && result.Data is ItensPedido itemPedido)
             {
+
                 //Verifica se já existe o produto no pedido
-                if (NovoPedido.Itens.Any(x => x.Produto?.Id == produto.Id &&
-                    x.Complementos.SequenceEqual(itemPedido.Complementos) &&
-                    x.Preco.Id == itemPedido.Preco.Id &&
-                    x.Observacoes == itemPedido.Observacoes))
+                var itemExistente = NovoPedido.Itens.FirstOrDefault(x =>
+                      x.Produto?.Id == produto.Id &&
+                      x.PrecoId == itemPedido.PrecoId &&
+                      x.Observacoes == itemPedido.Observacoes &&
+                      x.Complementos.SequenceEqual(itemPedido.Complementos.OrderBy(c => c.Id))
+                  );
+
+                if (itemExistente != null)
                 {
-                    var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
-                    itemExistente.Quantidade += 1;
+                    itemExistente.Quantidade += itemPedido.Quantidade;
                     itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
-                    await InvokeAsync(StateHasChanged);
+                    StateHasChanged();
                     return;
                 }
 
                 NovoPedido.Itens.Add(itemPedido);
-                Snackbar.Add($"Item adicionado {itemPedido.Descricao} ao pedido com sucesso", Severity.Success);
+                await TextFieldProd.FocusAsync();
                 return;
             }
             else
@@ -281,51 +279,72 @@
 
         }
 
-        //Verifica se já existe o produto no pedido
-        if (NovoPedido.Itens.Any(x => x.Produto == produto))
+        //Aqui chama o modal Caso o produto seja cadastrado pra venda por peso
+        float QtdAdicionado = 1f;
+        if (produto.UltilizaProdutoNaBalanca)
         {
-            var itemExistente = NovoPedido.Itens.First(x => x.Produto == produto);
-            itemExistente.Quantidade += 1;
-            itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
-            await InvokeAsync(StateHasChanged);
-            return;
+            var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+            var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
+            var resultInput = await dialogInput.Result;
+
+            if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+            {
+                QtdAdicionado = ValorQtd;
+            }
+        }
+
+        //Aqui chama o modal Caso o produto seja cadastrado pra venda por valor
+        float ValorDoProduto = produto.Precos.Min(p => p.Valor);
+        if (produto.TipoDeVenda == "V")
+        {
+            var parameters = new DialogParameters
+            {
+               { "Valor",ValorDoProduto}
+            };
+
+            var optionsDoInputValor = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+            var dialogInputValor = await DialogService.ShowAsync<InputFloatN3>("Valor do Item", parameters, optionsDoInputValor);
+            var resultInputValor = await dialogInputValor.Result;
+
+            if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
+            {
+                ValorDoProduto = Valor;
+            }
+        }
+
+        //Verifica se já existe o produto no pedido
+        if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V"))
+        {
+            var itemExistente = NovoPedido.Itens.Where(p => string.IsNullOrEmpty(p.Observacoes)).FirstOrDefault(x => x.Produto == produto);
+
+            if (itemExistente is not null)
+            {
+                itemExistente.Quantidade += QtdAdicionado;
+                itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+
+                await TextFieldProd.FocusAsync();
+                StateHasChanged();
+                return;
+            }
         }
 
         ItensPedido ItemParaAdicionarNoPedido = new()
         {
             Descricao = produto.Descricao,
             Produto = produto,
-            Quantidade = 1,
-            PrecoUnitario = produto.Precos.Min(p => p.Valor),
-            PrecoTotal = produto.Precos.Min(p => p.Valor)
+            Quantidade = QtdAdicionado,
+            PrecoUnitario = ValorDoProduto,
+            PrecoTotal = ValorDoProduto * QtdAdicionado
         };
 
+
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
-        Snackbar.Add($"Item adicionado {ItemParaAdicionarNoPedido.Descricao} ao pedido com sucesso", Severity.Success);
-        await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
+        await TextFieldProd.FocusAsync();
+        StateHasChanged();
     }
 
-    private async Task EnviarItensParaMesa()
-    {
-        NovoPedido.MesaComandaId = Mesa.Id;
-        NovoPedido.TipoDePedido = "MESA";
-        NovoPedido.EtapaPedido = "PREPARANDO";
 
-        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesaPublic(MerchantId!, NovoPedido);
-
-        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
-        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
-
-        if (ResponseAPi.Status != "success")
-        {
-            return;
-        }
-
-        NovoPedido.Itens.Clear();
-        Snackbar.Add("Pedido enviado para a mesa com sucesso!", Severity.Success);
-        _open = false;
-
-    }
     #endregion
 
     #region Funções de Filtro
@@ -449,8 +468,8 @@
                 <MudText Align="Align.Left" Typo="Typo.subtitle1" Class="text-white">Total dos Itens: @NovoPedido.Itens.Sum(i => i.PrecoTotal).ToString("C")</MudText>
             </MudStack>
 
-            <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
-                Enviar Itens Para a Mesa
+            <MudButton Variant="Variant.Filled" OnClick="NavegaParaFinalizacaoDoPedido" Color="Color.Primary" Class="w-100">
+               Continuar Para Pagamento
             </MudButton>
         </MudPaper>
     </MudDrawerContainer>
