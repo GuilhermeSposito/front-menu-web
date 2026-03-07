@@ -789,8 +789,6 @@ public class IfoodServices
                 return "Entregador já retornou ao local de origem(coleta) do pedido";
             case "DCR":
                 return "Solicitação de cancelamento de entregador";
-            case "DDCR":
-                return "Informe o código de confirmação na entrega do pedido";
             case "DDCS":
                 return "O código de confirmação de entrega foi validado com sucesso";
             case "DPCS":

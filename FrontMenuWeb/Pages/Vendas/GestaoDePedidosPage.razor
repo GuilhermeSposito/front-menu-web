@@ -1069,7 +1069,7 @@
     {
         if (!_items.Any(x => x.Pedido.Id == pedido.Id))
         {
-            _items.Insert(_items.Count(),new ClsDeSuporteParaMostrarPedidos
+            _items.Insert(0,new ClsDeSuporteParaMostrarPedidos
             {
                 Pedido = pedido,
                 Selector = pedido.EtapaPedido
