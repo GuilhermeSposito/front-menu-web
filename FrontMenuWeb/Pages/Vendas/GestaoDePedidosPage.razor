@@ -1006,7 +1006,7 @@
                             await ImprimirPedido(pedido, false);
                             await PedidosService.UpdatePedidoImpresso(pedido);
 
-                            VizualizaSeNaoExistePedidoNaTela(pedido);
+                            await VizualizaSeNaoExistePedidoNaTela(pedido);
 
                         } //Só os integrações
                         else
@@ -1069,7 +1069,7 @@
     {
         if (!_items.Any(x => x.Pedido.Id == pedido.Id))
         {
-            _items.Add(new ClsDeSuporteParaMostrarPedidos
+            _items.Insert(_items.Count(),new ClsDeSuporteParaMostrarPedidos
             {
                 Pedido = pedido,
                 Selector = pedido.EtapaPedido
