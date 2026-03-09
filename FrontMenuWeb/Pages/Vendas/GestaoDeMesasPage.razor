@@ -117,6 +117,8 @@
     {
         try
         {
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+
             PedidosService.PedidoMesaRecebido = async pedido =>
             {
                 await InvokeAsync(() => OnPedidoRecebido(pedido));

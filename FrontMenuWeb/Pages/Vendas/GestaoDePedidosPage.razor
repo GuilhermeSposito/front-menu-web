@@ -42,12 +42,11 @@
             <MudStack Class="p-3">
 
                 <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                    <MudStack Class="w-75" Row=true>
-                        <MudTextField @onkeydown=HandleKeyDownTextDeBucarPedido OnClearButtonClick="BuscarPedidos" @bind-Value="pesquisaTexto" Clearable=true Class="w-50 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente, número ou pedido" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
-                        <MudButton OnClick="BuscarPedidos" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2 w-25">Buscar Pedidos</MudButton>
-                        <MudNumericField T="int" Min="0" @bind-Value="PedidosPorVez" Class="mt-2" Variant="Variant.Filled" />
-                    </MudStack>
-                    <MudStack Class="m-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudStack Class="w-75" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudTextField Value=pesquisaTexto Clearable="true" OnClearButtonClick=BuscarPedidos Variant="Variant.Filled" AdornmentIcon="@Icons.Material.Filled.Search" Label="Pesquise Por Número do pedido / Número Do cliente" AdornmentColor=Color.Primary Adornment="Adornment.Start" T="string" ValueChanged="OnPesquisaTextoChenged" />
+                     
+
+                        <MudNumericField T="int" Min="0" Label="Pedidos Por Vez" @bind-Value="PedidosPorVez" Variant="Variant.Filled" />
                         <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
                             <MudSelectItem Value="@TiposDePedido.TODOS">Todos</MudSelectItem>
                             <MudSelectItem Value=@TiposDePedido.BALCÃO>Balcão</MudSelectItem>
@@ -55,8 +54,11 @@
                             <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
                         </MudSelect>
                     </MudStack>
-                    <MudStack Row=true Justify="Justify.FlexStart">
 
+                    <MudStack Row=true Justify="Justify.FlexStart">
+                        <MudTooltip Text="Busca Pedidos" Color="Color.Primary">
+                            <MudButton StartIcon="@Icons.Material.Filled.Search" OnClick="BuscarPedidos" Variant="Variant.Filled" Color="Color.Primary">Buscar Pedidos</MudButton>
+                        </MudTooltip>
                         <MudTooltip Text="Abre Criação de novo Pedido" Color="Color.Primary">
                             <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbrirCriacaoDePedido(); })">Novo Pedido (F1 / F2 / F3)</MudButton>
                         </MudTooltip>
@@ -120,7 +122,7 @@
                                             {
                                                 foreach (var pedido in Pedidos)
                                                 {
-                                                    <MudCard Class="rounded-3 mb-3" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
+                                                    <MudCard @key="pedido.Pedido.Id" Class="rounded-3 mb-3" Style=@($"background-color: {(pedido.Pedido.StatusPedido == "CANCELADO" ? "var(--mud-palette-error);" : "var(--mud-palette-background)")}; border: 2px dashed {(pedido.Pedido.StatusPedido == "FECHADO" ? "var(--mud-palette-primary)" : "var(--mud-palette-error)")};")>
                                                         <MudCardHeader>
                                                             <CardHeaderAvatar>
                                                                 <MudAvatar Color="Color.Primary">
@@ -130,7 +132,8 @@
                                                             <CardHeaderContent>
                                                                 <MudText Color="Color.Primary" Typo="Typo.body1">
                                                                     @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId - @pedido.Pedido.Id @if(pedido.Pedido.StatusPedido == "CANCELADO"){
-                                                                    @(" - Cancelado")}
+                                                                    @(" - Cancelado")
+                                                                }
                                                             </MudText>
                                                             @if (pedido.Pedido.Cliente is not null)
                                                             {
@@ -352,6 +355,8 @@
         try
         {
 
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+
             PedidosService.PedidoRecebido = PedidoRecebidoHandler;
             PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
             PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
@@ -443,7 +448,13 @@
         sup.Expandido = !sup.Expandido;
     }
 
-    private async void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
+    private async Task<IEnumerable<string>> DevolveValorEmListParaMudAutoComplete(string valor, CancellationToken cancellationToken)
+    {
+        IEnumerable<string> RetornoParAMudAutoComplete = new List<string>() { valor };
+        return RetornoParAMudAutoComplete;
+    }
+
+    private void SelecionaPedidosParaProximaEtapaNoCabecalho(ClsDeSuporteParaVizualicacaoDePedidos etapa)
     {
         var pedidosNaEtapa = _items.Where(p => p.Selector == etapa.Selector).ToList();
 
@@ -624,6 +635,7 @@
             if (Supor is not null)
             {
                 ListaDePedidos.Add(Supor);
+                Supor.Selecionado = false;
             }
             else if (ItensSelecionadosPArAProximaEtapa.Count > 0)
             {
@@ -637,64 +649,73 @@
         {
             Snackbar.Add($"Erro ao atualizar etapa do pedido", Severity.Error);
         }
-        finally
-        {
-            CarregandoParteFiscal = false;
-        }
+
 
     }
 
 
     private async Task AtualizaPedidosEtapaComProgresso(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
-        LabelDeCarregamento = "Enviando Pedidos para proxima etapa...";
-        CarregandoParteFiscal = true;
-        ProgressoFiscal = 0;
-        await InvokeAsync(StateHasChanged);
-
-        int total = ListaDePedidos.Count;
-        int atual = 0;
-
-        foreach (var item in ListaDePedidos)
+        try
         {
-            atual++;
+            LabelDeCarregamento = "Enviando Pedidos para proxima etapa...";
+            CarregandoParteFiscal = true;
+            ProgressoFiscal = 0;
+            await InvokeAsync(StateHasChanged);
 
-            if (item.Selector == "NOVO")
+            int total = ListaDePedidos.Count;
+            int atual = 0;
+
+            foreach (var item in ListaDePedidos)
             {
-                item.Selector = "PREPARANDO";
-                var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
+                atual++;
 
-                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.PREPARANDO);
+                if (item.Selector == "NOVO")
+                {
+                    item.Selector = "PREPARANDO";
+                    var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
+                    MostraMensagemDeUpdateDoPedido(Response);
+
+                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.PREPARANDO);
+                }
+                else if (item.Selector == "PREPARANDO")
+                {
+                    item.Selector = "DESPACHADO";
+                    var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
+                    MostraMensagemDeUpdateDoPedido(Response);
+                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.DESPACHADO);
+                }
+                else if (item.Selector == "DESPACHADO")
+                {
+                    item.Selector = "FINALIZADO";
+                    item.UltimaEtapa = true;
+                    var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
+                    MostraMensagemDeUpdateDoPedido(Response);
+                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.FINALIZADO);
+                }
+
+                // Atualiza progresso baseado em quantos já foram processados
+                ProgressoFiscal = (int)(((double)atual / total) * 100);
+
+                // Se quiser travar em 98% até terminar tudo:
+                ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
+
+                await InvokeAsync(StateHasChanged);
             }
-            else if (item.Selector == "PREPARANDO")
-            {
-                item.Selector = "DESPACHADO";
-                var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
-                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.DESPACHADO);
-            }
-            else if (item.Selector == "DESPACHADO")
-            {
-                item.Selector = "FINALIZADO";
-                item.UltimaEtapa = true;
-                var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
-                MostraMensagemDeUpdateDoPedido(Response);
-                EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.FINALIZADO);
-            }
 
-            // Atualiza progresso baseado em quantos já foram processados
-            ProgressoFiscal = (int)(((double)atual / total) * 100);
-
-            // Se quiser travar em 98% até terminar tudo:
-            ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
-
+            // Finaliza em 100%
+            ProgressoFiscal = 100;
             await InvokeAsync(StateHasChanged);
         }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar etapa do pedido", Severity.Error);
+        }
+        finally
+        {
+            CarregandoParteFiscal = false;
+        }
 
-        // Finaliza em 100%
-        ProgressoFiscal = 100;
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AvisarNovamenteMesmoPedido(ClsPedido pedido)
@@ -799,23 +820,12 @@
     }
 
 
-    private async Task OnPesquisaChanged(string value)
+    private async void OnPesquisaTextoChenged(string value)
     {
-        try
-        {
-            pesquisaTexto = value;
-            await BuscarPedidos(); // atualiza a lista conforme digita
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao buscar Pedidos", Severity.Error);
-        }
-        finally
-        {
-
-        }
-
+        pesquisaTexto = value;
+        await BuscarPedidos();
     }
+
 
     private async Task BuscarPedidos()
     {
@@ -1069,7 +1079,7 @@
     {
         if (!_items.Any(x => x.Pedido.Id == pedido.Id))
         {
-            _items.Insert(0,new ClsDeSuporteParaMostrarPedidos
+            _items.Insert(0, new ClsDeSuporteParaMostrarPedidos
             {
                 Pedido = pedido,
                 Selector = pedido.EtapaPedido
@@ -1078,7 +1088,7 @@
             await InvokeAsync(StateHasChanged);
         }
     }
-    #endregion  
+    #endregion
 
     #region Funções de edicao do pedido
     private async Task EditarPedido(ClsPedido pedido)
