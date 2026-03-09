@@ -44,7 +44,7 @@
                 <MudStack Class="w-100 p-3 rounded-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
                     <MudStack Class="w-75" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
                         <MudTextField Value=pesquisaTexto Clearable="true" OnClearButtonClick=BuscarPedidos Variant="Variant.Filled" AdornmentIcon="@Icons.Material.Filled.Search" Label="Pesquise Por Número do pedido / Número Do cliente" AdornmentColor=Color.Primary Adornment="Adornment.Start" T="string" ValueChanged="OnPesquisaTextoChenged" />
-                     
+
 
                         <MudNumericField T="int" Min="0" Label="Pedidos Por Vez" @bind-Value="PedidosPorVez" Variant="Variant.Filled" />
                         <MudSelect Label="Tipo De Pedidos" ValueChanged=OnFiltroChanged Value="FiltroPorTipoDePedido" T="TiposDePedido" Variant="Variant.Filled" AdornmentColor="Color.Primary">
@@ -185,40 +185,55 @@
                                                                 <MudDivider />
                                                                 <MudCollapse Expanded="@pedido.Expandido">
                                                                     <MudStack Class="w-100">
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.ValorDosItens.ToString("C")</MudText>
-                                                                        </MudStack>
+                                                                        @if (pedido.Pedido.ValorDosItens > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Subtotal:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.ValorDosItens.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
 
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Desconto:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.DescontoValor.ToString("C")</MudText>
-                                                                        </MudStack>
+                                                                        @if (pedido.Pedido.DescontoValor > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Desconto:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.DescontoValor.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
 
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
-                                                                        </MudStack>
+                                                                        @if ((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor) > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
+                                                                            </MudStack>
+                                                                        }
 
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
-                                                                        </MudStack>
+                                                                        @if (pedido.Pedido.IncentivosExternosValor > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Incentivos:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.IncentivosExternosValor.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
 
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
-                                                                            <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
-                                                                        </MudStack>
+                                                                        @if (pedido.Pedido.TaxaEntregaValor > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Taxa Entrega:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.TaxaEntregaValor.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
 
                                                                         <MudDivider />
 
-                                                                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
-                                                                            <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
-                                                                        </MudStack>
 
                                                                     </MudStack>
                                                                 </MudCollapse>
+                                                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                    <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
+                                                                    <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
+                                                                </MudStack>
                                                             </MudStack>
                                                         </MudStack>
                                                     </MudCardContent>

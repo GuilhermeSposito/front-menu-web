@@ -228,6 +228,7 @@
     private float ValorTotal = 0f;
     private float ValorTroco = 0f;
     private float ValorRestante = 0f;
+    private float ValorTaxaDeServico = 0f;
     private float TotalKms = 0f;
 
     //Lógica para editar o pagamento
@@ -321,7 +322,7 @@
         Pedido.DescontoValor = ValorDoDesconto;
         Pedido.AcrescimoValor = TaxaAdicional;
         Pedido.TaxaEntregaValor = TaxaDeEntrega;
-        Pedido.ServicoValor = TaxaAdicional;
+        Pedido.ServicoValor = ValorTaxaDeServico;
 
 
         MudDialog.Close(DialogResult.Ok(true));
