@@ -74,18 +74,20 @@
             </MudStack>
             @if (PedidosEmAberto.Any())
             {
-                <MudStack Class="w-100 p-3 rounded-2 mt-1 mb-1" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                    <MudText>Pedidos Abertos</MudText>
-                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                        @{
-                            int ReferenciaDoPedido = 1;
-                            foreach (var pedido in PedidosEmAberto)
-                            {
-                                var referenciaAtual = ReferenciaDoPedido;
-                                <MudChip Value=@pedido OnClose="Closed" OnClick="@(async () => { await AbrirCriacaoDePedido(PedidoAberto: pedido); })" T="ClsPedido" Color="Color.Error" Variant="Variant.Filled" Class="m-1 p-2">Pedido @referenciaAtual</MudChip>
-                                ReferenciaDoPedido++;
+                <MudStack Class="p-3">
+                    <MudStack Class="w-100 p-3 rounded-2 mt-1 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                        <MudText>Pedidos Abertos</MudText>
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            @{
+                                int ReferenciaDoPedido = 1;
+                                foreach (var pedido in PedidosEmAberto)
+                                {
+                                    var referenciaAtual = ReferenciaDoPedido;
+                                    <MudChip Value=@pedido OnClose="Closed" OnClick="@(async () => { await AbrirCriacaoDePedido(PedidoAberto: pedido); })" T="ClsPedido" Color="Color.Error" Variant="Variant.Filled" Class="m-1 p-2">Pedido @referenciaAtual</MudChip>
+                                    ReferenciaDoPedido++;
+                                }
                             }
-                        }
+                        </MudStack>
                     </MudStack>
                 </MudStack>
             }
