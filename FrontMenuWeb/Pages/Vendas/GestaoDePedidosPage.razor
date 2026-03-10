@@ -102,7 +102,7 @@
             @if (!Carregando)
             {
                 <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                    <MudGrid Class="w-100 mt-2">
+                    <MudGrid Class="w-100">
                         @foreach (var etapa in ListaDeEtapasDosPedidos)
                         {
                             <MudItem xs="12" md="@(int.Parse((12 / ListaDeEtapasDosPedidos.Count).ToString()))" xl="@(int.Parse((12 / ListaDeEtapasDosPedidos.Count).ToString()))">
