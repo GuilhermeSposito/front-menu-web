@@ -388,7 +388,8 @@ public class IfoodServices
             {
                 string infoAdicional = RetornaStatusCompletoAtualizado(Polling.Code);
 
-                var response = await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
+                if (!string.IsNullOrEmpty(infoAdicional))
+                    await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
 
                 if (Polling is not null)
                 {

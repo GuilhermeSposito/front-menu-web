@@ -74,15 +74,15 @@
                         <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
                             <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudAvatar Color="Color.Success" Size="Size.Medium">
-                                        <MudIcon Icon="@Icons.Material.Filled.Fastfood" />
+                                    <MudAvatar Color="Color.Primary">
+                                        <MudImage Src="@AppState.GetIconeDoApp("IFOOD")"></MudImage>
                                     </MudAvatar>
-                                    <MudText Typo="Typo.h6">Ifood</MudText>
+                                    <MudText Typo="Typo.h6">Impressão Ifood</MudText>
                                 </MudStack>
                                 <MudSwitch T="bool" @bind-Value=IntegraIfoodSettingsLocalStoragePreference @onclick="OnIfoodChanged" UncheckedColor="Color.Error" Color="Color.Success" />
                             </MudStack>
                             <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
-                                @(IntegraIfoodSettingsLocalStoragePreference ? "Seu iFood está ativo e esperando pedidos!" : "Seu iFood está desativado.")
+                                @(IntegraIfoodSettingsLocalStoragePreference ? "Sua impressão do ifood esta ativa" : "Sua Impressão do iFood está desativado.")
                             </MudText>
                         </MudPaper>
                     </MudMenuItem>
