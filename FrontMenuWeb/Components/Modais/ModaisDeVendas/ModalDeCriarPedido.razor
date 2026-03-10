@@ -472,6 +472,12 @@
 
             if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
             {
+                //Faz Soma do Peso Dependendo do Valor do produto cadastrado
+                if(ValorDoProduto > 0)
+                {
+                    QtdAdicionado = (float)Math.Round(Valor / ValorDoProduto, 3);
+                }
+
                 ValorDoProduto = Valor;
             }
         }
@@ -492,13 +498,15 @@
             }
         }
 
+        float PrecoTotal = produto.TipoDeVenda != "V" ? ValorDoProduto * QtdAdicionado : ValorDoProduto;
+
         ItensPedido ItemParaAdicionarNoPedido = new()
         {
             Descricao = produto.Descricao,
             Produto = produto,
             Quantidade = QtdAdicionado,
             PrecoUnitario = ValorDoProduto,
-            PrecoTotal = ValorDoProduto * QtdAdicionado
+            PrecoTotal = produto.TipoDeVenda != "V" ? ValorDoProduto * QtdAdicionado : ValorDoProduto //Valor do produto cadastrado, caso seja venda por valor
         };
 
 
