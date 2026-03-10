@@ -8,6 +8,8 @@
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services.FinanceroServices
+@using FrontMenuWeb.Services.ServicosDeTerceiros
+@using System.Text.Json
 @layout CardapioDigitalLayout
 @inject MesasServices MesasServices
 @inject MerchantServices MerchantService
@@ -16,6 +18,7 @@
 @inject GrupoServices GrupoServices
 @inject FormasDeRecebimentoService FormasDeRecebimentoService
 @inject PedidosService PedidosService
+@inject DistanciasService DistanciasService
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
@@ -23,97 +26,98 @@
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:0px; width:100%">
     <MudLayout Class="h-100 w-100">
 
-        <MudStack Class="w-100 p-3 h-100 mt-2 rounded-2" Style="background-color: var(--mud-palette-surface);">
-            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudText>Resumo do carrinho</MudText>
-            </MudStack>
-            @*itens*@
-            <MudStack>
-                @foreach (var produtoNoPedido in NovoPedido.Itens)
-                {
-                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
-                        <MudStack>
-                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
-                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="@(async () => { NovoPedido.Itens.Remove(produtoNoPedido); })" />
-                            </MudStack>
-                            <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
-                            @if (produtoNoPedido.Complementos.Count > 0)
-                            {
-                                <MudDivider Light=true Class="w-100" />
-                                @foreach (var complemento in produtoNoPedido.Complementos)
+        @if (!Carregando)
+        {
+            <MudStack Class="w-100 p-3 h-100 mt-2 rounded-2" Style="background-color: var(--mud-palette-surface);">
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudText>Resumo do carrinho</MudText>
+                </MudStack>
+                @*itens*@
+                <MudStack>
+                    @foreach (var produtoNoPedido in NovoPedido.Itens)
+                    {
+                        <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                            <MudStack>
+                                <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" OnClick="@(async () => { NovoPedido.Itens.Remove(produtoNoPedido); })" />
+                                </MudStack>
+                                <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
+                                @if (produtoNoPedido.Complementos.Count > 0)
                                 {
-                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
-                                        <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
-                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                    @foreach (var complemento in produtoNoPedido.Complementos)
+                                    {
+                                        <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                            <MudText Color="Color.Primary" Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                        </MudStack>
+                                    }
                                 }
-                            }
-                        </MudStack>
-                    </MudPaper>
+                            </MudStack>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudStack>
+
+            <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudText>Tipo de Pedido</MudText>
+                </MudStack>
+
+                <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudCard @onclick=@(() => { SelecionarTipoDePedido("BALCÃO"); }) Class="bg-danger w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "BALCÃO" ? "border: 2px dashed blue;" : "")}")>
+                        <MudCardContent>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText>Retirada</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+
+                    <MudCard @onclick=@(() => { SelecionarTipoDePedido("DELIVERY"); }) Class="bg-success w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "DELIVERY" ? "border: 2px dashed blue;" : "")}")>
+                        <MudCardContent>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText>Entrega</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+
+                </MudStack>
+
+            </MudStack>
+
+            <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
+                <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudText>Selecione a Forma de Pagamento</MudText>
+                </MudStack>
+
+                @foreach (var forma in FormasDeRecebimento)
+                {
+                    <MudCard @onclick=@(async () => { SelecionarFormaDePagamento(forma); }) Class="bg-primary bg-opacity-10 w-100 rounded-2" Style=@($"cursor:pointer; {(forma.Selecionada ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
+                        <MudCardContent>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText>@forma.Descricao</MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
                 }
-            </MudStack>
-        </MudStack>
-
-        <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
-            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudText>Tipo de Pedido</MudText>
-            </MudStack>
-
-            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudCard @onclick=@(() => { SelecionarTipoDePedido("BALCÃO"); }) Class="bg-danger w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "BALCÃO" ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
-                    <MudCardContent>
-                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                            <MudText>Retirada</MudText>
-                        </MudStack>
-                    </MudCardContent>
-                </MudCard>
-
-                <MudCard @onclick=@(() => { SelecionarTipoDePedido("DELIVERY"); }) Class="bg-success w-50" Style=@($"cursor:pointer; {(NovoPedido.TipoDePedido == "DELIVERY" ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
-                    <MudCardContent>
-                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                            <MudText>Entrega</MudText>
-                        </MudStack>
-                    </MudCardContent>
-                </MudCard>
 
             </MudStack>
 
-        </MudStack>
+            <footer class="p-2">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="mt-2 p-2 rounded-2" Style="background-color: var(--mud-palette-surface);">
+                    <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Troco: @ValorTroco.ToString("C")</MudText>
+                    <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Taxa de Entrega @TaxaDeEntrega.ToString("C")</MudText>
+                    <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Total Do Pedido: @ValorTotal.ToString("C")</MudText>
+                </MudStack>
 
-        <MudStack Class="w-100 p-3 mt-2 h-100 rounded-2" Style="background-color: var(--mud-palette-surface);">
-            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudText>Selecione a Forma de Pagamento</MudText>
-            </MudStack>
-
-            @foreach (var forma in FormasDeRecebimento)
-            {
-                <MudCard @onclick=@(async () => { SelecionarFormaDePagamento(forma); }) Class="bg-primary bg-opacity-10 w-100 rounded-2" Style=@($"cursor:pointer; {(forma.Selecionada ? "border: 2px dashed var(--mud-palette-primary);" : "")}")>
-                    <MudCardContent>
-                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                            <MudText>@forma.Descricao</MudText>
-                        </MudStack>
-                    </MudCardContent>
-                </MudCard>
-            }
-
-        </MudStack>
-
-        <footer class="p-2">
-            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="mt-2 p-2" Style="background-color: var(--mud-palette-surface);">
-                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Troco: @ValorTroco.ToString("C")</MudText>
-                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Taxa de Entrega @TaxaDeEntrega.ToString("C")</MudText>
-                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Restante @ValorRestante.ToString("C")</MudText>
-                <MudText Align="Align.Center" Typo="Typo.subtitle1" Class="text-white">Valor Total Do Pedido: @ValorTotal.ToString("C")</MudText>
-            </MudStack>
-
-            <MudButton Variant="Variant.Filled" OnClick="VoltarParaCardapio" Color="Color.Primary" Class="w-100">
-                Adicionar Mais Itens
-            </MudButton>
-            <MudButton Variant="Variant.Filled" OnClick="EnviarPedido" Color="Color.Success" Class="w-100">
-                Enviar Pedido
-            </MudButton>
-        </footer>
-
+                <MudButton Variant="Variant.Filled" OnClick="VoltarParaCardapio" Color="Color.Primary" Class="w-100">
+                    Adicionar Mais Itens
+                </MudButton>
+                <MudButton Variant="Variant.Filled" OnClick="EnviarPedido" Color="Color.Success" Class="w-100">
+                    Enviar Pedido
+                </MudButton>
+            </footer>
+        }
         <!-- OVERLAY -->
         <MudOverlay Visible="@CarregandoEnvioDoPedido"
                     Absolute="true"
@@ -179,28 +183,42 @@
     protected override async Task OnInitializedAsync()
     {
 
-        Merchant = PedidoState.Merchant!;
-        FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
-        NovoPedido = PedidoState.NovoPedido!;
-
-        ClsPessoas? pessoa = await LocalStorage.GetItemAsync<ClsPessoas?>("Pessoa");
-        EnderecoPessoa? endereco = await LocalStorage.GetItemAsync<EnderecoPessoa?>("Endereco");
-        if (pessoa is not null)
-            NovoPedido.Cliente = pessoa;
-        if (endereco is not null)
-            NovoPedido.Endereco = endereco;
-
-        foreach (var item in NovoPedido.Itens)
+        try
         {
-            ValorDosItens += item.PrecoTotal;
+            Carregando = true;
+
+            Merchant = PedidoState.Merchant!;
+            FormasDeRecebimento = PedidoState.FormasDeRecebimento!;
+            NovoPedido = PedidoState.NovoPedido!;
+
+
+            ClsPessoas? pessoa = await LocalStorage.GetItemAsync<ClsPessoas?>("Pessoa");
+            EnderecoPessoa? endereco = await LocalStorage.GetItemAsync<EnderecoPessoa?>("Endereco");
+            if (pessoa is not null)
+                NovoPedido.Cliente = pessoa;
+            if (endereco is not null)
+                NovoPedido.Endereco = endereco;
+
+            foreach (var item in NovoPedido.Itens)
+            {
+                ValorDosItens += item.PrecoTotal;
+            }
+
+            Carregando = false;
+            SomaValorTotal();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Ocorreu um erro ao carregar a página. Tente novamente mais tarde.", Severity.Error);
         }
 
-        SomaValorTotal();
 
     }
 
     private async void SelecionarFormaDePagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
     {
+
         var formaJaSelecionada = NovoPedido.Pagamentos.FirstOrDefault(x => x.FormaDePagamento?.Id == clsFormaDeRecebimento.Id);
         if (formaJaSelecionada is not null)
         {
@@ -208,6 +226,8 @@
             clsFormaDeRecebimento.Selecionada = false;
             return;
         }
+
+        SomaValorTotal();
 
 
         var ValorAtual = ValorTotal - NovoPedido.Pagamentos.Sum(x => x.ValorTotal);
@@ -288,10 +308,8 @@
 
     private void SomaValorTotal()
     {
-        ValorTotal = (float)Math.Round(
-            ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega,
-            2
-        );
+        ValorTotal = (float)Math.Round(((ValorDosItens + TaxaAdicional +TaxaDeEntrega) - ValorDoDesconto), 2);
+        StateHasChanged();
     }
 
     private void SelecionarTipoDePedido(string tipo)
@@ -324,7 +342,20 @@
         if (!result!.Canceled && result.Data is bool adicionou)
         {
             Snackbar.Add($"Cliente {NovoPedido.Cliente?.Nome} adicionado ao pedido.", Severity.Success);
+
+            if (NovoPedido.TipoDePedido == "DELIVERY")
+            {
+                await SomaValorDeEntrega();
+            }
+            else
+            {
+                TaxaDeEntrega = 0f;
+                TotalKms = 0f;
+                SomaValorTotal();
+            }
         }
+
+
     }
     #endregion
 
@@ -351,6 +382,11 @@
             CarregandoEnvioDoPedido = true;
             StateHasChanged();
 
+            NovoPedido.ValorDosItens = ValorDosItens;
+            NovoPedido.DescontoValor = ValorDoDesconto;
+            NovoPedido.AcrescimoValor = TaxaAdicional;
+            NovoPedido.TaxaEntregaValor = TaxaDeEntrega;
+
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedidoPublicAsync(NovoPedido, Merchant, cts.Token);
 
@@ -360,14 +396,13 @@
             if (ResponseAPi.Status == "success")
             {
                 Snackbar.Add("Pedido Enviado Com Sucesso", Severity.Success);
- 
+
                 await LocalStorage.SetItemAsync("Pessoa", NovoPedido.Cliente);
                 await LocalStorage.SetItemAsync("Endereco", NovoPedido.Endereco);
 
-                NovoPedido = new ClsPedido() { TipoDePedido = "BALCÃO"};
-         
-                
-                foreach(var formas in FormasDeRecebimento)
+                NovoPedido = new ClsPedido() { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS CARDAPIO" };
+
+                foreach (var formas in FormasDeRecebimento)
                     formas.Selecionada = false;
 
                 PedidoState.FormasDeRecebimento = FormasDeRecebimento;
@@ -398,6 +433,51 @@
 
     }
 
+    private async Task SomaValorDeEntrega()
+    {
+        if (NovoPedido.TipoDePedido == "DELIVERY" && NovoPedido.Endereco is not null)
+        {
+            try
+            {
+                var EnderecoInicial = Merchant.EnderecosMerchant.FirstOrDefault();
+                if (EnderecoInicial is null)
+                {
+                    Snackbar.Add("Ocorreu um erro ao calcular a taxa de entrega. Tente novamente mais tarde.", Severity.Error);
+                    return;
+                }
+
+
+                var EnderecoFormatadoDeOrigem = $"{EnderecoInicial.Rua}, {EnderecoInicial.Numero} - {EnderecoInicial.Cidade?.Descricao}";
+                var EnderecoFormatadoDeDestino = $"{NovoPedido.Endereco?.Rua}, {NovoPedido.Endereco?.Numero} - {NovoPedido.Endereco?.Cidade}";
+
+                ReturnApiRefatored<ClsRetornoDeSomaDaDistancia> ValoresRetornados = await DistanciasService
+                                                   .ConsultarDistanciaPublicAsync(Merchant.Id, EnderecoFormatadoDeOrigem, EnderecoFormatadoDeDestino);
+
+                if (ValoresRetornados.Data.Objeto is not null && ValoresRetornados.Status == "success")
+                {
+                    TotalKms = ValoresRetornados.Data.Objeto.DistanciaTotalEmKm;
+                    TaxaDeEntrega = ValoresRetornados.Data.Objeto.ValorTotal;
+                    SomaValorTotal();
+                }
+                else
+                {
+                    string Mensagem = string.Join(",", ValoresRetornados.Status != "success" ? ValoresRetornados.Messages : ValoresRetornados.Data.Messages);
+                    Snackbar.Add(Mensagem, Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add("Informe um Endereço valido para a entrega!", Severity.Error);
+            }
+        }
+        else
+        {
+            TaxaDeEntrega = 0f;
+            SomaValorTotal();
+            StateHasChanged();
+        }
+
+    }
 
     #region Logica do Drawer
     [Inject] private IBrowserViewportService BrowserViewportService { get; set; }

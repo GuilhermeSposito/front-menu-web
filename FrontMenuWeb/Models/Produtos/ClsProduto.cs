@@ -35,6 +35,7 @@ public class ClsProduto
     [JsonPropertyName("oculta_tablet")] public bool OcultaTablet { get; set; }
     [JsonPropertyName("ultiliza_produto_balanca")] public bool UltilizaProdutoNaBalanca { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
+    [JsonPropertyName("UltilizaProdutoOnline")] public bool UltilizaProdutoOnline { get; set; } = false;
     [JsonPropertyName("precos")] public List<Preco> Precos { get; set; } = new List<Preco>();
     [JsonPropertyName("grupo")] public ClsGrupo Grupo { get; set; } = new ClsGrupo();
     [JsonPropertyName("csosn")] public string? csosn { get; set; } = "102";

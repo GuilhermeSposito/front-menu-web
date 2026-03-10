@@ -22,6 +22,16 @@ public class DistanciasService
 
         return ResponseApi;
     }
+
+    public async Task<ReturnApiRefatored<ClsRetornoDeSomaDaDistancia>> ConsultarDistanciaPublicAsync(string MErchantId,string origem, string destino)
+    {
+        var queryDestinationAndOrigins = $"api-entregas/public/{MErchantId}?origem={origem}&destino={destino}";
+        var response = await _http.GetAsync(queryDestinationAndOrigins);
+
+        var ResponseApi = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsRetornoDeSomaDaDistancia>>();
+
+        return ResponseApi;
+    }
 }
 
 public class ClsRetornoDeSomaDaDistancia
