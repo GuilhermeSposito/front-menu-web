@@ -67,12 +67,15 @@
                             <MudNumericField Immediate="false"
                                              Variant="Variant.Outlined"
                                              Format="N2"
+                                             @ref=ValorPrecoUnitario
                                              Culture="_pt"
                                              T="float"
-                                             @bind-Value=ItemEditavel.PrecoUnitario
+                                             Value=ItemEditavel.PrecoUnitario
+                                             ValueChanged="EditandoValorQuanidade"
                                              Label="Preço Unitário"
                                              HideSpinButtons="true"
-                                             Disabled=true />
+                                             Disabled=false
+                                             @onfocus="@(async () => { await ValorPrecoUnitario.SelectAsync(); })" />
                         </MudStack>
 
                     }
@@ -95,6 +98,7 @@
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
     public MudNumericField<float> ValorTotalField;
     public MudNumericField<float> ValorQtdField = new MudNumericField<float>();
+    public MudNumericField<float> ValorPrecoUnitario = new MudNumericField<float>();
 
     [Parameter] public EnNfCeDto enNfCeDto { get; set; } = new EnNfCeDto();
 
@@ -199,6 +203,15 @@
         }
     }
 
+    private void EditandoValorQuanidade(float valor)
+    {
+        if (ItemEditavel is not null)
+        {
+            ItemEditavel.PrecoUnitario = valor;
+            ItemEditavel.PrecoTotal = valor * ItemEditavel.Quantidade;
+        }
+    }
+
     private void EditandoQuantidade(float valor)
     {
         if (ItemEditavel is not null)
@@ -206,6 +219,7 @@
             ItemEditavel.Quantidade = valor;
 
             ItemEditavel.PrecoUnitario = ItemEditavel.PrecoTotal / ItemEditavel.Quantidade;
+            ItemEditavel.PrecoTotal = ItemEditavel.PrecoUnitario * ItemEditavel.Quantidade;
         }
     }
     #endregion
@@ -248,15 +262,18 @@
                 CloseOnEscapeKey = true
             };
 
-   
+
             var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
             var result = await dialog.Result;
 
-            if (result!.Canceled && result.Data is bool sucesso && sucesso)
+            Console.WriteLine(result.Data);
+
+            if (result!.Canceled || result.Data is bool sucesso && !sucesso)
             {
                 Snackbar.Add("É obrigatório informar o pagamento se você editou a NFCe.", Severity.Error);
                 return;
             }
+        
         }
 
         MudDialog.Close(DialogResult.Ok(enNfCeDto));
@@ -265,11 +282,11 @@
     private void Cancel() => MudDialog.Cancel();
 
 
-    private void OnKeyDown(KeyboardEventArgs args)
+    private async void OnKeyDown(KeyboardEventArgs args)
     {
         if (args.Key == "Enter")
         {
-            Submit();
+            await Submit();
         }
         else if (args.Key == "Escape")
         {

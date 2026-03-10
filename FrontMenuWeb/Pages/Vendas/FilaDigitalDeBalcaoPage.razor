@@ -278,7 +278,9 @@
 
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
+        var urlWebSocket = Configuration["Api:UrlWebSoket"];
+
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", urlWebSocket);
         status = "Conectado";
     }
 

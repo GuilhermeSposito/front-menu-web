@@ -36,6 +36,7 @@
 @inject MessageWhatsAppService MessageService
 @inject IntegracoesSophosService IntegracoesSophosService
 
+
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
         <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
@@ -947,7 +948,9 @@
     #region Funções de Impressão e WebSocket
     private async Task Connect()
     {
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
+        var urlWebSocket = Configuration["Api:UrlWebSoket"];
+
+        await JS.InvokeVoidAsync("socketIO.connectSocketIO", urlWebSocket);
         status = "Conectado";
     }
 

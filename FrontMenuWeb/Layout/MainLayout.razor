@@ -200,17 +200,7 @@
     private bool ImpressaoDesabilita = false;
 
     #region Funções de WebSocket
-    private async Task Connect()
-    {
-        //  await JS.InvokeVoidAsync("socketIO.connectSocketIO", "");
-    }
 
-    private async Task OnPedidoRecebido(ClsPedido novoPedido)
-    {
-        await InvokeAsync(StateHasChanged);
-
-        await JS.InvokeVoidAsync("playNotificationSound");
-    }
     #endregion
 
 
@@ -292,21 +282,6 @@
 
 
             await AtualizaStatusDoCaixa();
-
-
-            PedidosService.PedidoRecebido += async pedido =>
-             {
-                 await InvokeAsync(() => OnPedidoRecebido(pedido));
-             };
-
-            try
-            {
-                await Connect();
-            }
-            catch (Exception)
-            {
-                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-            }
         }
         catch (Exception ex)
         {

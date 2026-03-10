@@ -7,6 +7,7 @@
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
+@using System.Text.Json
 @inject PedidosService AliquotaService
 @inject ProdutoService ProdutoService
 @inject GrupoServices GrupoService
@@ -295,7 +296,6 @@
                                         Enviar Itens Para a Mesa (F3)
                                     </MudButton>
                                 </MudPaper>
-
                             }
 
                         </MudStack>
@@ -506,9 +506,11 @@
             Produto = produto,
             Quantidade = QtdAdicionado,
             PrecoUnitario = ValorDoProduto,
-            PrecoTotal = produto.TipoDeVenda != "V" ? ValorDoProduto * QtdAdicionado : ValorDoProduto //Valor do produto cadastrado, caso seja venda por valor
+            PrecoTotal = PrecoTotal
         };
 
+        string jsonPedido = JsonSerializer.Serialize(ItemParaAdicionarNoPedido);
+        Console.WriteLine(jsonPedido);
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
         await Task.Delay(50);
@@ -1273,6 +1275,4 @@
         return InvokeAsync(StateHasChanged);
     }
     #endregion
-
-
 }
