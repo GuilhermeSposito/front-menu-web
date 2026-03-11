@@ -184,7 +184,7 @@
                                                         }
                                                         <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
                                                             <MudStack Spacing="2" Class="w-100">
-                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido,false); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
+                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido, false); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
                                                                 <MudDivider />
                                                                 <MudCollapse Expanded="@pedido.Expandido">
                                                                     <MudStack Class="w-100">
@@ -509,8 +509,10 @@
     private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup, bool Delivery)
     {
         if (!Delivery)
+        {
             sup.Expandido = !sup.Expandido;
-
+            return;
+        }
 
         sup.ExpandidoDeliveryInfos = !sup.ExpandidoDeliveryInfos;
     }
