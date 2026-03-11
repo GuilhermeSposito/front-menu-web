@@ -602,6 +602,7 @@ public class NfService
         var config = new Configuracao
         {
             TipoDFe = tipoDFe,
+            Modelo = ModeloDFe,
             CertificadoDigital = CertificadoSelecionado,
         };
 

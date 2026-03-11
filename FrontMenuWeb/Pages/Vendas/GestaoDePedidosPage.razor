@@ -184,7 +184,7 @@
                                                         }
                                                         <MudStack Style="color:  var(--mud-palette-primary)" AlignItems="AlignItems.Center">
                                                             <MudStack Spacing="2" Class="w-100">
-                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
+                                                                <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido,false); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.Expandido ? "Ver infos de pags" : "Esconder infos de pag")</MudButton>
                                                                 <MudDivider />
                                                                 <MudCollapse Expanded="@pedido.Expandido">
                                                                     <MudStack Class="w-100">
@@ -233,6 +233,51 @@
 
                                                                     </MudStack>
                                                                 </MudCollapse>
+
+                                                                @if (pedido.Pedido.TipoDePedido == "DELIVERY")
+                                                                {
+                                                                    <MudButton OnClick="@(() => { OnExpandCollapseClick(pedido, true); })" StartIcon="@Icons.Material.Filled.ArrowDropDown">@(!@pedido.ExpandidoDeliveryInfos ? "Ver infos de Delivery" : "Esconder infos de Delivery")</MudButton>
+                                                                    <MudDivider />
+                                                                    <MudCollapse Expanded="@pedido.ExpandidoDeliveryInfos">
+                                                                        <MudStack Class="w-100">
+                                                                            @*Informações de Delivery*@
+                                                                            @if (pedido.Pedido.Endereco is not null)
+                                                                            {
+                                                                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                                    <MudText Typo="Typo.subtitle2">Endereco:</MudText>
+                                                                                    <MudText Typo="Typo.subtitle2">@pedido.Pedido.Endereco.Rua, @pedido.Pedido.Endereco.Numero</MudText>
+                                                                                </MudStack>
+                                                                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                                    <MudText Typo="Typo.subtitle2">Bairro:</MudText>
+                                                                                    <MudText Typo="Typo.subtitle2">@pedido.Pedido.Endereco.Bairro</MudText>
+                                                                                </MudStack>
+                                                                                @if (!string.IsNullOrEmpty(pedido.Pedido.Endereco.Referencia))
+                                                                                {
+                                                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                                        <MudText Typo="Typo.subtitle2">Referencia:</MudText>
+                                                                                        <MudText Typo="Typo.subtitle2">@pedido.Pedido.Endereco.Referencia</MudText>
+                                                                                    </MudStack>
+                                                                                }
+                                                                                @if (!string.IsNullOrEmpty(pedido.Pedido.Endereco.Complemento))
+                                                                                {
+                                                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                                        <MudText Typo="Typo.subtitle2">Complemento:</MudText>
+                                                                                        <MudText Typo="Typo.subtitle2">@pedido.Pedido.Endereco.Complemento</MudText>
+                                                                                    </MudStack>
+                                                                                }
+                                                                                @if (!string.IsNullOrEmpty(pedido.Pedido.Endereco.ObsEndereco))
+                                                                                {
+                                                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                                                                        <MudText Typo="Typo.subtitle2">Obs Endereco:</MudText>
+                                                                                        <MudText Typo="Typo.subtitle2">@pedido.Pedido.Endereco.ObsEndereco</MudText>
+                                                                                    </MudStack>
+                                                                                }
+
+                                                                            }
+                                                                        </MudStack>
+                                                                    </MudCollapse>
+                                                                }
+
                                                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                     <MudText Typo="Typo.h6" Style="font-weight: 600">Total:</MudText>
                                                                     <MudText Typo="Typo.h6" Style="font-weight: 600">@pedido.Pedido.ValorTotal.ToString("C")</MudText>
@@ -461,9 +506,13 @@
 
     }
 
-    private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup)
+    private void OnExpandCollapseClick(ClsDeSuporteParaMostrarPedidos sup, bool Delivery)
     {
-        sup.Expandido = !sup.Expandido;
+        if (!Delivery)
+            sup.Expandido = !sup.Expandido;
+
+
+        sup.ExpandidoDeliveryInfos = !sup.ExpandidoDeliveryInfos;
     }
 
     private async Task<IEnumerable<string>> DevolveValorEmListParaMudAutoComplete(string valor, CancellationToken cancellationToken)
