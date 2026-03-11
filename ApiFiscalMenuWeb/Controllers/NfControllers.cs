@@ -96,7 +96,15 @@ public class NfControllers : ControllerBase
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
 
-        var result = await _nfService.InultilizacaoDeNFCe(token, InuDto);
+        ReturnApiRefatored<object>? result = null;
+
+        if (InuDto.TipoNf == 65)
+            result = await _nfService.InultilizacaoDeNFCe(token, InuDto);
+        else if (InuDto.TipoNf == 55)
+            result = await _nfService.InultilizacaoDeNFe(token, InuDto);
+        else
+            return BadRequest(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "TipoNf inválido. Deve ser 55 para NFe ou 65 para NFCe." } });
+
         return Ok(result);
     }
 

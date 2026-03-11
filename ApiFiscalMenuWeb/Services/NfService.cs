@@ -577,7 +577,7 @@ public class NfService
         if (documentoMerchant is null || String.IsNullOrEmpty(documentoMerchant.Cnpj))
             throw new UnauthorizedAccessException("CNPJ informado");
 
-        var TipoHambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
         TipoDFe tipoDFe = InuDTO?.TipoNf == 55 ? TipoDFe.NFe : TipoDFe.NFCe;
         ModeloDFe ModeloDFe = InuDTO?.TipoNf == 55 ? ModeloDFe.NFe : ModeloDFe.NFCe;
 
@@ -594,7 +594,7 @@ public class NfService
                 NNFIni = InuDTO.NumeroInicial,
                 NNFFin = InuDTO.NumeroFinal,
                 Serie = 1,
-                TpAmb = TipoHambiente,
+                TpAmb = Tipoambiente,
                 XJust = "Ocorreu uma falha no sistema que pulou a sequencia de numeracao"
             }
         };
@@ -606,7 +606,100 @@ public class NfService
             CertificadoDigital = CertificadoSelecionado,
         };
 
-        Inutilizacao initInutilizacao = new Inutilizacao(xml, config);
+        Unimake.Business.DFe.Servicos.NFCe.Inutilizacao initInutilizacao = new Unimake.Business.DFe.Servicos.NFCe.Inutilizacao(xml, config);
+        initInutilizacao.Executar();
+
+        bool inseriunaapi = false;
+        switch (initInutilizacao.Result.InfInut.CStat)
+        {
+            case 102: //Inutilização Homologada
+                var ProcNfe = initInutilizacao.ProcInutNFeResult.GerarXML();
+
+                var DataToReturn = new NfeReturnDto
+                {
+                    NFTipo = InuDTO?.TipoNf,
+                    ChaveNf = $"EVENTO DE INUTILIZAÇÃO PARA AS NFCE {InuDTO.NumeroInicial} ATÉ A {InuDTO.NumeroFinal}",
+                    Cstat = initInutilizacao.Result.InfInut.CStat,
+                    Xmotivo = initInutilizacao.Result.InfInut.XMotivo,
+                    NmrProtocolo = initInutilizacao.Result.InfInut.NProt,
+                    NmrDaNf = 0,
+                    XmlStringField = ProcNfe.OuterXml,
+                    ValorTotalDaNf = 0,
+                    ValorTotalDosProdutos = 0,
+                    ValorTotalDosTributos = 0
+                };
+
+                inseriunaapi = await CreateRegistroDaNFInNestApi(token, DataToReturn);
+
+                break;
+            case 563:
+                return new ReturnApiRefatored<object>
+                {
+                    Status = "error",
+                    Messages = new List<string> { $"Rejeição: Já existe pedido de Inutilização com a mesma faixa de inutilização" }
+                };
+            default:
+                return new ReturnApiRefatored<object>
+                {
+                    Status = "error",
+                    Messages = new List<string> { $"Erro na inutilização: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo}" }
+                };
+        }
+
+        return new ReturnApiRefatored<object>
+        {
+            Status = "success",
+            Data = new Data<object>
+            {
+                Messages = new List<string> { $"Inutilização processada: {initInutilizacao.Result.InfInut.CStat} - {initInutilizacao.Result.InfInut.XMotivo} --: Inseriu na api ? {inseriunaapi}" }
+            }
+        };
+
+    }
+
+    public async Task<ReturnApiRefatored<object>> InultilizacaoDeNFe(string token, InultilizacaoNFDto InuDTO)
+    {
+        ClsMerchant? merchant = await GetMerchantFromNestApi(token);
+
+        if (merchant is null || (String.IsNullOrEmpty(merchant.CertificadoBase64) || String.IsNullOrEmpty(merchant.SenhaCertificado)))
+            throw new UnauthorizedAccessException("Certificado ou senha não informados");
+
+        //Função auxiliar para carregar o certificado digital
+        var CertificadoSelecionado = CarregaCertificadoDigitalBySophos(merchant.CertificadoBase64, merchant.SenhaCertificado);
+        var documentoMerchant = merchant.Documentos.FirstOrDefault();
+        if (documentoMerchant is null || String.IsNullOrEmpty(documentoMerchant.Cnpj))
+            throw new UnauthorizedAccessException("CNPJ informado");
+
+        var Tipoambiente = merchant.EmitindoNfeProd ? TipoAmbiente.Producao : TipoAmbiente.Homologacao;
+        TipoDFe tipoDFe = InuDTO?.TipoNf == 55 ? TipoDFe.NFe : TipoDFe.NFCe;
+        ModeloDFe ModeloDFe = InuDTO?.TipoNf == 55 ? ModeloDFe.NFe : ModeloDFe.NFCe;
+
+        var xml = new InutNFe
+        {
+
+            Versao = "4.00",
+            InfInut = new InutNFeInfInut
+            {
+                Ano = "26",
+                CNPJ = LimparCnpj(documentoMerchant.Cnpj),
+                CUF = UFBrasil.SP,
+                Mod = ModeloDFe,
+                NNFIni = InuDTO.NumeroInicial,
+                NNFFin = InuDTO.NumeroFinal,
+                Serie = 1,
+                TpAmb = Tipoambiente,
+                XJust = "Ocorreu uma falha no sistema que pulou a sequencia de numeracao"
+            }
+        };
+
+        var config = new Configuracao
+        {
+            TipoDFe = tipoDFe,
+            Modelo = ModeloDFe,
+            CertificadoDigital = CertificadoSelecionado,
+        };
+
+        Unimake.Business.DFe.Servicos.NFe.Inutilizacao initInutilizacao = new Unimake.Business.DFe.Servicos.NFe.Inutilizacao(xml, config);
         initInutilizacao.Executar();
 
         bool inseriunaapi = false;
