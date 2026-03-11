@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Components\Drawers\" />
+    <Folder Include="wwwroot\merchants\" />
   </ItemGroup>
 
 </Project>

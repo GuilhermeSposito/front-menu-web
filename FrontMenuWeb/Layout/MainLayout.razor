@@ -219,7 +219,7 @@
                 await LocalStorage.SetItemAsync("IntegraIfood", false);
             }
 
-
+           
             if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
             {
                 bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);

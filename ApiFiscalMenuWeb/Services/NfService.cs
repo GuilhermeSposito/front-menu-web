@@ -587,7 +587,6 @@ public class NfService
             Versao = "4.00",
             InfInut = new InutNFeInfInut
             {
-
                 Ano = "26",
                 CNPJ = LimparCnpj(documentoMerchant.Cnpj),
                 CUF = UFBrasil.SP,
@@ -617,7 +616,7 @@ public class NfService
 
                 var DataToReturn = new NfeReturnDto
                 {
-                    NFTipo = 65,
+                    NFTipo = InuDTO?.TipoNf,
                     ChaveNf = $"EVENTO DE INUTILIZAÇÃO PARA AS NFCE {InuDTO.NumeroInicial} ATÉ A {InuDTO.NumeroFinal}",
                     Cstat = initInutilizacao.Result.InfInut.CStat,
                     Xmotivo = initInutilizacao.Result.InfInut.XMotivo,
