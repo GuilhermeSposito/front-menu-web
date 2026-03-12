@@ -97,4 +97,13 @@ public class IntegracoesController : Controller
     }
 
     #endregion
+
+    [HttpPost("enviar-email-teste")]
+    public async Task<ActionResult> EnviarEmailTeste()
+    {
+
+        await emailService.EnviarAsync("guilhermesposito14@gmail.com", "Este é um email de teste enviado pela API do Fiscal Menu.", "Testeeeee");
+        return Ok();
+    }
+
 }

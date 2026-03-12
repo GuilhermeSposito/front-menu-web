@@ -33,15 +33,17 @@ public class NfService
     #region Props
     private readonly IHttpClientFactory _factory;
     private readonly IBPTServices _ibptServices;
+    private readonly EmailService _emailService;
     private ClsMerchant? _merchantAtual { get; set; }
     private string CnpjMerchantAtual { get; set; } = string.Empty;
     private double ValorTotalTribNfAtual = 0;
     private double ValorTrocoNfAtual = 0;
 
-    public NfService(IHttpClientFactory factory, IBPTServices iBPTServices)
+    public NfService(IHttpClientFactory factory, IBPTServices iBPTServices, EmailService emailService)
     {
         _factory = factory;
         _ibptServices = iBPTServices;
+        _emailService = emailService;
     }
     #endregion
 
@@ -326,6 +328,13 @@ public class NfService
                 bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
                 break;
             default:
+                await EnviaEmailDeErro(
+                   MerchantName: merchant.NomeFantasia,
+                   erro: autorizacao.Result.ProtNFe.InfProt.XMotivo,
+                   ValorDosPagamentos: xml.NFe[0].InfNFe[0].Pag.DetPag.Sum(p => p.VPag),
+                   ValorItens: xml.NFe[0].InfNFe[0].Total.ICMSTot.VProd,
+                   Vtotal: xml.NFe[0].InfNFe[0].Total.ICMSTot.VNF
+                   );
                 break;
         }
 
@@ -377,7 +386,7 @@ public class NfService
         if (DocumentoMerchant is null || string.IsNullOrEmpty(DocumentoMerchant.CSC))
             throw new BadHttpRequestException("Documento Incompleto ou faltando para emissão da NFe");
 
- 
+
         ClsPessoas? Destinatario = Pedido.Cliente;
         #endregion
         CnpjMerchantAtual = LimparCnpj(DocumentoMerchant.Cnpj);
@@ -432,6 +441,13 @@ public class NfService
                 bool AtualizacaoResult = await AtualizaMerchantInNestApi(token, merchant);
                 break;
             default:
+                await EnviaEmailDeErro(
+                    MerchantName: merchant.NomeFantasia,
+                    erro: autorizacao.Result.ProtNFe.InfProt.XMotivo,
+                    ValorDosPagamentos: xml.Result.NFe[0].InfNFe[0].Pag.DetPag.Sum(p => p.VPag),
+                    ValorItens: xml.Result.NFe[0].InfNFe[0].Total.ICMSTot.VProd,
+                    Vtotal: xml.Result.NFe[0].InfNFe[0].Total.ICMSTot.VNF
+                    );
                 break;
         }
 
@@ -828,7 +844,7 @@ public class NfService
 
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
+        double ValorNf = detDosProd.Sum(x => (x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete) - enNfCeDto.Pedido.DescontoValor);
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -845,7 +861,7 @@ public class NfService
                 VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
                 VFrete = vFrete,
                 VSeg = 0.00,
-                VDesc = 0.00,
+                VDesc = enNfCeDto.Pedido.DescontoValor,
                 VII = 0.00,
                 VIPI = 0.00,
                 VIPIDevol = 0.00,
@@ -1065,7 +1081,7 @@ public class NfService
 
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = detDosProd.Sum(x => x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete);
+        double ValorNf = detDosProd.Sum(x => (x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete) - Pedido.DescontoValor);
 
         xml.NFe[0].InfNFe[0].Total = new Total
         {
@@ -1081,7 +1097,7 @@ public class NfService
                 VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
                 VFrete = vFrete,
                 VSeg = 0.00,
-                VDesc = 0.00,
+                VDesc = Pedido.DescontoValor,
                 VII = 0.00,
                 VIPI = 0.00,
                 VIPIDevol = 0.00,
@@ -1164,6 +1180,7 @@ public class NfService
 
         double ValorFreteDiluidoPorItem = Pedido.TaxaEntregaValor / ItensDoPedido.Count;
         double ValorOutrosDiluidoPorItem = (Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
+        double ValorDeDescontoDiluidoPorItem = Pedido.DescontoValor / ItensDoPedido.Count;
 
         if (tipoNFE == TipoDFe.NFCe)
         {
@@ -1213,6 +1230,7 @@ public class NfService
                     CEST = LimparNcmECest(item.Produto.CEST),
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
+                    VDesc = ValorDeDescontoDiluidoPorItem,
                     QCom = QuantidadeComercial,
                     VUnCom = ValorUnitarioDaComercializacao,
                     VProd = ValorProduto,
@@ -1376,6 +1394,9 @@ public class NfService
 
     #endregion
 
+    #endregion
+
+    #region Funções auxiliares Calculos/Definições de campos dinâmicos/Envio de email
     private double CalculaValorDoIcmsDoProduto(ItensPedido item, ClsPedido Pedido)
     {
         var BaseDeCalculoDoProduto = CalculaBaseDeCalculoDoProduto(item, Pedido);
@@ -1453,7 +1474,6 @@ public class NfService
     {
         return new string(value.Where(char.IsDigit).ToArray());
     }
-
 
     private EnviNFe CriaXmlDeExemplo() //função temporario para teste
     {
@@ -1672,6 +1692,54 @@ public class NfService
                 }
             }
         };
+    }
+
+    public async Task EnviaEmailDeErro(string MerchantName, string erro, double ValorDosPagamentos, double ValorItens, double Vtotal)
+    {
+        erro += $"\nValor total dos pagamentos: {ValorDosPagamentos}";
+        erro += $"\nValor total dos itens: {ValorItens}";
+        erro += $"\nValor total da NF: {Vtotal}";
+
+        var html = $"""
+                <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
+        
+                    <div style="max-width:800px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            
+                        <div style="background-color:#c62828; color:white; padding:15px;">
+                            <h2 style="margin:0;">🚨 Erro na API De Integrações</h2>
+                        </div>
+
+                        <div style="padding:20px; color:#333;">
+                
+                            <p><strong>Data:</strong> {DateTime.Now.AddHours(-3):dd/MM/yyyy HH:mm:ss}</p>
+                            <p><strong>Servidor:</strong> {Environment.MachineName}</p>
+
+                            <hr style="margin:20px 0;" />
+
+                            <h3 style="color:#c62828;">Detalhes do Erro</h3>
+
+                            <pre style="
+                                background:#1e1e1e;
+                                color:#FFFFFF;
+                                padding:15px;
+                                border-radius:5px;
+                                overflow:auto;
+                                font-size:13px;
+                            ">
+
+                            {erro}
+                            </pre>
+
+                        </div>
+                    </div>
+                </div>
+                """;
+
+        await _emailService.EnviarAsync(
+            "guilhermesposito14@gmail.com",
+            $"Erro Fiscal Da Api de Integração para o estabelecimento:{MerchantName} {DateTime.Now.AddHours(-3):g}",
+            html
+        );
     }
 
     #endregion
