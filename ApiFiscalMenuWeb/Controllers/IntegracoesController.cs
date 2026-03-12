@@ -106,4 +106,12 @@ public class IntegracoesController : Controller
         return Ok();
     }
 
+
+    [HttpPost("teste-webhook-ifood")]
+    public async Task<ActionResult> TestarConexaoPorWebHook([FromBody] PollingIfoodDto PoolingIfood)
+    {
+        Console.WriteLine(PoolingIfood);
+        Console.WriteLine("teste-webshook-chegou");
+        return Ok();
+    }
 }

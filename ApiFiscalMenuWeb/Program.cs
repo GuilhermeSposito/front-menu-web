@@ -39,25 +39,25 @@ builder.Services.AddHttpClient("ApiAutorizada", client =>
 
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {
-    client.BaseAddress = new Uri(UrlIBPT); 
+    client.BaseAddress = new Uri(UrlIBPT);
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.AddHttpClient("ApiIfood", client =>
 {
-    client.BaseAddress = new Uri(UrlApiIfood); 
+    client.BaseAddress = new Uri(UrlApiIfood);
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimake", client =>
 {
-    client.BaseAddress = new Uri("https://unimake.app/umessenger"); 
+    client.BaseAddress = new Uri("https://unimake.app/umessenger");
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddHttpMessageHandler<CustomAuthorizationMessageUnimakeHandler>();
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimakeAuth", client =>
 {
-    client.BaseAddress = new Uri("https://unimake.app/auth"); 
+    client.BaseAddress = new Uri("https://unimake.app/auth");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
@@ -78,14 +78,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsLiberado", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin =>
+            /*.SetIsOriginAllowed(origin =>
             {
                 if (string.IsNullOrEmpty(origin))
                     return false;
 
-                return origin.EndsWith(".sophos-erp.com.br")
-                       || origin == UrlCors || origin == UrlSophos;
-            })
+                return origin.EndsWith(".sophos-erp.com.br") || origin == UrlCors || origin == UrlSophos;
+            })*/
+            .AllowAnyOrigin()
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials();

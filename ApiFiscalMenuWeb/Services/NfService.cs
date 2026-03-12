@@ -771,6 +771,25 @@ public class NfService
 
     private async Task<EnviNFe> CriaXmlDeNFCeSN(ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, EnNfCeDto enNfCeDto, int ProxNumeroNFCe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
+        if (enNfCeDto.Pedido.TipoDePedido == "DELIVERY")
+        {
+            enNfCeDto.Pedido.Itens.Add(new ItensPedido
+            {
+                Descricao = "TAXA DE ENTREGA",
+                Quantidade = 1,
+                PrecoUnitario = enNfCeDto.Pedido.TaxaEntregaValor,
+                PrecoTotal = enNfCeDto.Pedido.TaxaEntregaValor,
+                Produto = new ClsProduto
+                {
+                    Descricao = "TAXA DE ENTREGA",
+                    NCM = "00000000",
+                    csosn = "102"
+                }
+            });
+
+            enNfCeDto.Pedido.TaxaEntregaValor = 0;
+        }
+
         var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente);
 
         var xml = new EnviNFe
@@ -1183,8 +1202,8 @@ public class NfService
 
         if (tipoNFE == TipoDFe.NFCe)
         {
+            ValorOutrosDiluidoPorItem = (Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
             ValorFreteDiluidoPorItem = 0.00; //NFC-e não aceita frete
-            ValorOutrosDiluidoPorItem = (Pedido.TaxaEntregaValor + Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
         }
 
         int ContadorItem = 1;
@@ -1469,8 +1488,13 @@ public class NfService
         return new string(cnpj.Where(char.IsDigit).ToArray());
     }
 
-    public static string LimparNcmECest(string value)
+    public static string LimparNcmECest(string? value)
     {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
         return new string(value.Where(char.IsDigit).ToArray());
     }
 
@@ -1735,7 +1759,7 @@ public class NfService
                 """;
 
         await _emailService.EnviarAsync(
-            "guilherme@sophos-erp.com.br",
+            "guilhermesposito14@gmail.com",
             $"Erro Fiscal Da Api de Integração para o estabelecimento:{MerchantName} {DateTime.Now.AddHours(-3):g}",
             html
         );
