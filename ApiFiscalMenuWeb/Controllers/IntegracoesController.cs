@@ -5,6 +5,7 @@ using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using Unimake.Business.DFe.Xml.CTe;
 
 namespace ApiFiscalMenuWeb.Controllers;
@@ -110,7 +111,9 @@ public class IntegracoesController : Controller
     [HttpPost("teste-webhook-ifood")]
     public async Task<ActionResult> TestarConexaoPorWebHook([FromBody] PollingIfoodDto PoolingIfood)
     {
-        Console.WriteLine(PoolingIfood);
+        var json = JsonSerializer.Serialize(PoolingIfood);
+
+        Console.WriteLine(json);
         Console.WriteLine("teste-webshook-chegou");
         return Ok();
     }
