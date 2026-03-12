@@ -1184,8 +1184,8 @@ public class NfService
 
         if (tipoNFE == TipoDFe.NFCe)
         {
+            ValorOutrosDiluidoPorItem = ((Pedido.TaxaEntregaValor + Pedido.AcrescimoValor + Pedido.ServicoValor) + ValorFreteDiluidoPorItem) / ItensDoPedido.Count;
             ValorFreteDiluidoPorItem = 0.00; //NFC-e não aceita frete
-            ValorOutrosDiluidoPorItem = (Pedido.TaxaEntregaValor + Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
         }
 
         int ContadorItem = 1;

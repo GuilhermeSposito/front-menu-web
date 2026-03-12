@@ -24,8 +24,6 @@ public partial class PaginaInicial : Form
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     public PaginaInicial(ImpressaoService ImpressaoService)
     {
-        AdicionarInicializacao();
-
         _impressaoService = ImpressaoService;
 
         InitializeComponent();
@@ -58,8 +56,6 @@ public partial class PaginaInicial : Form
     {
         base.OnLoad(e);
 
-        AdicionarInicializacao();
-
         using (AppDbContext db = new AppDbContext())
         {
             var infos = db.InfosDeLogin.FirstOrDefault();
@@ -91,7 +87,6 @@ public partial class PaginaInicial : Form
         {
             e.Cancel = true;   // Cancela o fechamento
             this.Hide();       // Apenas esconde o formulário
-            // Não precisa mudar WindowState ou ShowInTaskbar aqui
         }
     }
     private void IniciarMonitoramento()
@@ -402,38 +397,7 @@ public partial class PaginaInicial : Form
             instancia.comboBoxImpressoraDanfe.Items.Add(imp);
         }
     }
-    private void AdicionarInicializacao()
-    {
-        try
-        {
-            string nomeApp = "SophosSync";
-            string caminhoExe = Application.ExecutablePath;
-
-            // Abre a chave de Run com permissão de escrita
-            using (RegistryKey chave = Registry.CurrentUser.OpenSubKey(
-                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true))
-            {
-                if (chave != null)
-                {
-                    // Só cria se não existir
-                    object valorExistente = chave.GetValue(nomeApp);
-                    if (valorExistente == null || valorExistente.ToString() != caminhoExe)
-                    {
-                        chave.SetValue(nomeApp, $"\"{caminhoExe}\"");
-                        Console.WriteLine("Chave de inicialização criada/atualizada.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Chave de inicialização já existe.");
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("Erro ao adicionar à inicialização: " + ex.Message);
-        }
-    }
+  
     private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox1.SelectedItem?.ToString();
