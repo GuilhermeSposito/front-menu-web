@@ -108,9 +108,12 @@ public class IntegracoesController : Controller
     }
 
 
-    [HttpPost("teste-webhook-ifood")]
-    public async Task<ActionResult> TestarConexaoPorWebHook([FromBody] PollingIfoodDto PoolingIfood)
+    [HttpPost("endpoint-webhook-ifood")]
+    public async Task<ActionResult> IfoodConexaoPorWebHook([FromBody] PollingIfoodDto PoolingIfood)
     {
+        var AssinaturaIfood = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
+        Console.WriteLine(AssinaturaIfood);
+
         var json = JsonSerializer.Serialize(PoolingIfood);
 
         Console.WriteLine(json);
