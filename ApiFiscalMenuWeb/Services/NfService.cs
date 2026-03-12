@@ -844,7 +844,7 @@ public class NfService
 
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = detDosProd.Sum(x => ((x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete) + VOutros) - enNfCeDto.Pedido.DescontoValor);
+        double ValorNf = detDosProd.Sum(x => ((x.Prod.VProd) + VOutros) - enNfCeDto.Pedido.DescontoValor);
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -1735,7 +1735,7 @@ public class NfService
                 """;
 
         await _emailService.EnviarAsync(
-            "guilhermesposito14@gmail.com",
+            "guilherme@sophos-erp.com.br",
             $"Erro Fiscal Da Api de Integração para o estabelecimento:{MerchantName} {DateTime.Now.AddHours(-3):g}",
             html
         );
