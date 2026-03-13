@@ -1506,13 +1506,14 @@ public class NfService
         erro += $"\n\nValor total dos pagamentos: {ValorDosPagamentos}";
         erro += $"\nValor total dos itens: {ValorItens}";
         erro += $"\nValor total da NF: {Vtotal}";
+
         erro += $"\n\nMerchant: {MerchantName}";
-        erro += $"\n\nPedido Criado Por: {Pedido.CriadoPor}";
+        erro += $"\nPedido Criado Por: {Pedido.CriadoPor}";
+
         erro += $"\n\nDisplay Id: {Pedido.DisplayId}";
-        erro += $"\n\nId: {Pedido.Id}";
+        erro += $"\nId: {Pedido.Id}";
 
         var PedidoJson = JsonSerializer.Serialize(Pedido, new JsonSerializerOptions { WriteIndented = true });
-        erro += $"\n\n\nPedido JSON: {PedidoJson}";
 
         var html = $"""
                 <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
@@ -1545,6 +1546,18 @@ public class NfService
                             {erro}
                             </pre>
 
+                            <pre style="
+                                background:#1e1e1e;
+                                color:#FFFFFF;
+                                padding:15px;
+                                border-radius:5px;
+                                overflow:auto;
+                                font-size:13px;
+                            ">
+
+                            Pedido Json:{PedidoJson}
+                            </pre>
+
                         </div>
                     </div>
                 </div>
@@ -1552,7 +1565,7 @@ public class NfService
 
         await _emailService.EnviarAsync(
             "guilherme@sophos-erp.com.br",
-            $"Erro Fiscal Da Api de Integração para o estabelecimento:{MerchantName} {DateTime.Now.AddHours(-3):dd/MM/yyyy}",
+            $"Erro Fiscal Da Api para o estabelecimento: {MerchantName} {DateTime.Now.AddHours(-3):dd/MM/yyyy}",
             html
         );
     }
