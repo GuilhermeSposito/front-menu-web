@@ -775,13 +775,14 @@ public class NfService
         {
             enNfCeDto.Pedido.Itens.Add(new ItensPedido
             {
-                Descricao = "TAXA DE ENTREGA",
+                Descricao = "TAXA DE ENTREGA",               
                 Quantidade = 1,
                 PrecoUnitario = enNfCeDto.Pedido.TaxaEntregaValor,
                 PrecoTotal = enNfCeDto.Pedido.TaxaEntregaValor,
                 Produto = new ClsProduto
                 {
                     Descricao = "TAXA DE ENTREGA",
+                    CodigoInterno = "9999",
                     NCM = "00000000",
                     CEST = "",
                     csosn = "102"
