@@ -863,7 +863,7 @@ public class NfService
 
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = detDosProd.Sum(x => ((x.Prod.VProd) + VOutros) - enNfCeDto.Pedido.DescontoValor);
+        double ValorNf = detDosProd.Sum(x => (x.Prod.VProd)) - enNfCeDto.Pedido.DescontoValor;
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -1201,10 +1201,8 @@ public class NfService
         double ValorDeDescontoDiluidoPorItem = Pedido.DescontoValor / ItensDoPedido.Count;
 
         if (tipoNFE == TipoDFe.NFCe)
-        {
-            ValorOutrosDiluidoPorItem = (Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
             ValorFreteDiluidoPorItem = 0.00; //NFC-e não aceita frete
-        }
+
 
         int ContadorItem = 1;
         foreach (var item in ItensDoPedido)

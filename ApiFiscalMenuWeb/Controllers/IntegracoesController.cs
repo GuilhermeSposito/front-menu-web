@@ -5,6 +5,7 @@ using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using System.Text.Json;
 using Unimake.Business.DFe.Xml.CTe;
 
@@ -16,11 +17,13 @@ public class IntegracoesController : Controller
 {
     private readonly IfoodServices _ifoodService;
     private readonly EmailService emailService;
+    private WebhookSignature _webhookSignature;
 
-    public IntegracoesController(IfoodServices ifoodService, EmailService email)
+    public IntegracoesController(IfoodServices ifoodService, EmailService email, WebhookSignature webhookSignature)
     {
         _ifoodService = ifoodService;
         emailService = email;
+        _webhookSignature = webhookSignature;
     }
 
     #region Região de Autenticacao e Autorização
@@ -109,15 +112,24 @@ public class IntegracoesController : Controller
 
 
     [HttpPost("endpoint-webhook-ifood")]
-    public async Task<ActionResult> IfoodConexaoPorWebHook([FromBody] PollingIfoodDto PoolingIfood)
+    public async Task<ActionResult> IfoodConexaoPorWebHook()
     {
-        var AssinaturaIfood = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
-        Console.WriteLine(AssinaturaIfood);
+        var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
-        var json = JsonSerializer.Serialize(PoolingIfood);
+        HttpContext.Request.EnableBuffering();
 
-        Console.WriteLine(json);
-        Console.WriteLine("teste-webshook-chegou");
+        using var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
+        var body = await reader.ReadToEndAsync();
+
+        HttpContext.Request.Body.Position = 0;
+
+        var secret = "uwhuiewhefuiwefhiweuf34r98yr39823y32e89";
+
+        bool valid = _webhookSignature.ValidateSignature(secret, body, signature);
+
+        if (!valid)
+            return Unauthorized("Assinatura inválida");
+
         return Ok();
     }
 }
