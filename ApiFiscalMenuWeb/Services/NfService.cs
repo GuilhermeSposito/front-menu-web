@@ -783,6 +783,7 @@ public class NfService
                 {
                     Descricao = "TAXA DE ENTREGA",
                     NCM = "00000000",
+                    CEST = "",
                     csosn = "102"
                 }
             });
@@ -1491,7 +1492,7 @@ public class NfService
 
     public static string LimparNcmECest(string? value)
     {
-        if (value is null)
+        if (string.IsNullOrEmpty(value))
         {
             return string.Empty;
         }
@@ -1760,7 +1761,7 @@ public class NfService
                 """;
 
         await _emailService.EnviarAsync(
-            "guilhermesposito14@gmail.com",
+            "guilherme@sophos-erp.com.br",
             $"Erro Fiscal Da Api de Integração para o estabelecimento:{MerchantName} {DateTime.Now.AddHours(-3):g}",
             html
         );

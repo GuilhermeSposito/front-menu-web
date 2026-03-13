@@ -40,7 +40,7 @@ public class ApiExceptionFilter : IExceptionFilter
                     """;
 
                 await emailService.EnviarAsync(
-                    "guilhermesposito14@gmail.com", 
+                    "guilherme@sophos-erp.com.br", 
                     $"Log De Erro Na APi {DateTime.Now:g}",
                     logFormatado);
 

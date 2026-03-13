@@ -955,7 +955,7 @@ public class IfoodServices
                 """;
 
         await _emailService.EnviarAsync(
-            "guilhermesposito14@gmail.com",
+            "guilherme@sophos-erp.com.br",
             $"Erro de Exceção na API De Integrações {DateTime.Now:g}",
             html
         );

@@ -15,36 +15,7 @@ public class EmailService
         _configuration = configuration;
     }
 
-    /*public async Task EnviarAsync(string para, string assunto, string corpo)
-    {
-      //  ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
-
-        var host = _configuration["Email:Host"];
-        var port = int.Parse(_configuration["Email:Port"] ?? "587");
-        var user = _configuration["Email:User"];
-        var pass = _configuration["Email:Pass"];
-        var from = _configuration["Email:From"];
-
-        using var smtp = new SmtpClient(host, port)
-        {
-            Credentials = new NetworkCredential(user, pass),
-            EnableSsl = true // porta 587 usa STARTTLS
-        };
-
-
-        using var message = new MailMessage
-        {
-            From = new MailAddress(user, "SOPHOS APLICATIVOS E TECNOLOGIA"),
-            Subject = assunto,
-            Body = corpo,
-            IsBodyHtml = true
-        };
-
-        message.To.Add(para);
-
-        await smtp.SendMailAsync(message);
-    }*/
-
+ 
     public async Task EnviarAsync(string para, string assunto, string corpo)
     {
         var host = _configuration["Email:Host"];

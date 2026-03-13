@@ -106,7 +106,7 @@ public class IntegracoesController : Controller
     public async Task<ActionResult> EnviarEmailTeste()
     {
 
-        await emailService.EnviarAsync("guilhermesposito14@gmail.com", "Este é um email de teste enviado pela API do Fiscal Menu.", "Testeeeee");
+        await emailService.EnviarAsync("guilherme@sophos-erp.com.br", "Este é um email de teste enviado pela API do Fiscal Menu.", "Testeeeee");
         return Ok();
     }
 
@@ -116,8 +116,7 @@ public class IntegracoesController : Controller
     {
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
-       /* HttpContext.Request.EnableBuffering();
-
+        HttpContext.Request.EnableBuffering();
         using var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
 
@@ -125,11 +124,14 @@ public class IntegracoesController : Controller
 
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
-        bool valid = true;//_webhookSignature.ValidateSignature(secret, body, signature);
+        bool valid = _webhookSignature.ValidateSignature(secret, body, signature);
 
         if (!valid)
-            return Unauthorized("Assinatura inválida");*/
+        {
+            Console.WriteLine("IFOOD NÃO AUTORIZADO");
+            return Unauthorized("Assinatura inválida");
+        }
 
-        return Accepted() ;
+        return Accepted();
     }
 }
