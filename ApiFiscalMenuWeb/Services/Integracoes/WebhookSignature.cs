@@ -15,24 +15,24 @@ public class WebhookSignature
         return sb.ToString();
     }
 
-    public bool ValidateSignature(string secret, string body, string signature)
+    public bool ValidateSignature(string secret, byte[] bodyBytes, string signature)
     {
         try
         {
             byte[] keyBytes = Encoding.UTF8.GetBytes(secret);
-            byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
 
-            using (var hmac = new HMACSHA256(keyBytes))
-            {
-                byte[] hash = hmac.ComputeHash(bodyBytes);
-                string expected = BytesToHex(hash);
+            using var hmac = new HMACSHA256(keyBytes);
 
-                return expected.Equals(signature, StringComparison.OrdinalIgnoreCase);
-            }
+            byte[] hash = hmac.ComputeHash(bodyBytes);
+
+            string expected = BytesToHex(hash);
+
+            return expected.Equals(signature, StringComparison.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
             return false;
         }
+       
     }
 }

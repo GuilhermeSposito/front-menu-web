@@ -118,18 +118,17 @@ public class IntegracoesController : Controller
 
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
-        Console.WriteLine(signature);
+        using var ms = new MemoryStream();
+        await HttpContext.Request.Body.CopyToAsync(ms);
 
-        using var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
-        var body = await reader.ReadToEndAsync();
+        var bodyBytes = ms.ToArray();
+        var body = Encoding.UTF8.GetString(bodyBytes);
 
         HttpContext.Request.Body.Position = 0;
 
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
-        Console.WriteLine(body);
-
-        bool valid = _webhookSignature.ValidateSignature(secret, body, signature);
+        var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
 
         if (!valid)
         {
@@ -137,7 +136,7 @@ public class IntegracoesController : Controller
             return Unauthorized();
         }
 
-        var dto = JsonSerializer.Deserialize<PollingIfoodDto>(body);
+        var dto = JsonSerializer.Deserialize<WebHookIfoodDto>(body);
 
         return Accepted();
     }
