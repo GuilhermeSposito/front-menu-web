@@ -123,7 +123,7 @@ public class IntegracoesController : Controller
 
         HttpContext.Request.Body.Position = 0;
 
-        var secret = "uwhuiewhefuiwefhiweuf34r98yr39823y32e89";
+        var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
         bool valid = _webhookSignature.ValidateSignature(secret, body, signature);
 
