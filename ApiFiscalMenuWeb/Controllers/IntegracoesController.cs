@@ -118,11 +118,15 @@ public class IntegracoesController : Controller
 
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
+        Console.WriteLine(signature);
+
         using var ms = new MemoryStream();
         await HttpContext.Request.Body.CopyToAsync(ms);
 
         var bodyBytes = ms.ToArray();
         var body = Encoding.UTF8.GetString(bodyBytes);
+
+        Console.WriteLine("Body:", body);
 
         HttpContext.Request.Body.Position = 0;
 
