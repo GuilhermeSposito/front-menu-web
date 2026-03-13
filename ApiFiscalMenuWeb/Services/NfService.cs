@@ -333,7 +333,8 @@ public class NfService
                    erro: autorizacao.Result.ProtNFe.InfProt.XMotivo,
                    ValorDosPagamentos: xml.NFe[0].InfNFe[0].Pag.DetPag.Sum(p => p.VPag),
                    ValorItens: xml.NFe[0].InfNFe[0].Total.ICMSTot.VProd,
-                   Vtotal: xml.NFe[0].InfNFe[0].Total.ICMSTot.VNF
+                   Vtotal: xml.NFe[0].InfNFe[0].Total.ICMSTot.VNF,
+                   Pedido: Pedido
                    );
                 break;
         }
@@ -446,7 +447,8 @@ public class NfService
                     erro: autorizacao.Result.ProtNFe.InfProt.XMotivo,
                     ValorDosPagamentos: xml.Result.NFe[0].InfNFe[0].Pag.DetPag.Sum(p => p.VPag),
                     ValorItens: xml.Result.NFe[0].InfNFe[0].Total.ICMSTot.VProd,
-                    Vtotal: xml.Result.NFe[0].InfNFe[0].Total.ICMSTot.VNF
+                    Vtotal: xml.Result.NFe[0].InfNFe[0].Total.ICMSTot.VNF,
+                    Pedido: EnvNfceDTO.Pedido
                     );
                 break;
         }
@@ -1498,230 +1500,19 @@ public class NfService
         return new string(value.Where(char.IsDigit).ToArray());
     }
 
-    private EnviNFe CriaXmlDeExemplo() //função temporario para teste
-    {
-        return new EnviNFe
-        {
-            Versao = "4.00",
-            IdLote = "000000000000001",
-            IndSinc = SimNao.Sim,
-            NFe = new List<NFe> //Infos da Nfe
-            {
-                new NFe
-                {
-                    InfNFe =  new List<InfNFe> //Lista de InfNFe --> Porém só tem 1 NFe por vez
-                    {
-                        new InfNFe
-                        {
-                            Versao = "4.00",
-                            Ide = new Ide
-                            {
-                                CUF = UFBrasil.SP,
-                                NatOp = "VENDA",
-                                Mod = ModeloDFe.NFe,
-                                Serie = 1,
-                                NNF = 7,
-                                DhEmi = DateTime.Now,
-                                DhSaiEnt = DateTime.Now,
-                                TpNF = TipoOperacao.Saida,
-                                IdDest = DestinoOperacao.OperacaoInterna,
-                                CMunFG = 3548906,
-                                TpImp = FormatoImpressaoDANFE.NormalRetrato,
-                                TpEmis = TipoEmissao.Normal,
-                                TpAmb = TipoAmbiente.Homologacao,
-                                FinNFe = FinalidadeNFe.Normal,
-                                IndFinal = SimNao.Sim,
-                                IndPres = IndicadorPresenca.OperacaoPresencial,
-                                ProcEmi = ProcessoEmissao.AplicativoContribuinte,
-                                VerProc = "TESTE 1.00"
-                            },
-                            Emit = new Emit //Tag de Emitente
-                            {
-                                CNPJ = "62538536000112",
-                                XNome = "Sophos Aplicativos e Tecnologia LTDA",
-                                XFant = "Sophos Apps",
-                                EnderEmit = new EnderEmit
-                                {
-                                    XLgr = "Rua Miguel Petroni",
-                                    Nro = "2338",
-                                    XBairro = "Bandeirantes",
-                                    CMun = 3548906,
-                                    XMun = "SAO CARLOS",
-                                    UF = UFBrasil.SP,
-                                    CEP = "13563470",
-                                    Fone = "16992366175"
-                                },
-                                IE = "637769679116",
-                                IM = "108158",
-                                CNAE = "6201501",
-                                CRT = CRT.SimplesNacional
-                            },
-                            Dest = new Dest // Tag de Destinatário
-                            {
-                                CPF = "46193939830",
-                                XNome = "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",
-                                EnderDest = new EnderDest
-                                {
-                                    XLgr = "Rua Dr Jonas Novaes",
-                                    Nro = "979",
-                                    XBairro = "Planalto Paraiso",
-                                    CMun = 3548906,
-                                    XMun = "SAO CARLOS",
-                                    UF = UFBrasil.SP,
-                                    CEP = "13562020",
-                                },
-                                IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
-                                Email = "guilhermesposito14@gmail.com"
-                            },
-                            Det = new List<Det>
-                            {
-                                new Det
-                                {
-                                    NItem = 1,
-                                    Prod = new Prod
-                                    {
-                                        CProd = "0001",
-                                        CEAN = "SEM GTIN",
-                                        XProd = "MARMITEX",
-                                        NCM = "21069090",
-                                        CFOP = "5102",
-                                        UCom = "UN",
-                                        QCom = 38.0000M,
-                                        VUnCom = 25.5000M,
-                                        VProd = 969.00,
-                                        CEANTrib = "SEM GTIN",
-                                        UTrib = "UN",
-                                        QTrib = 38.0000M,
-                                        VUnTrib = 25.5000M,
-                                        IndTot = SimNao.Sim,
-                                        NItemPed = "1",
-                                        XPed = "pedido 203",
-                                        VFrete = 7.50
-                                    },
-                                    Imposto = new Imposto
-                                    {
-                                        VTotTrib = 108.53,
-                                        ICMS = new ICMS
-                                        {
-                                            ICMSSN102 = new ICMSSN102
-                                            {
-                                                Orig = OrigemMercadoria.Nacional,
-                                                CSOSN = "102"
-                                            }
-                                        },
-                                        PIS = new PIS
-                                        {
-                                            PISOutr = new PISOutr
-                                            {
-                                                CST = "99",
-                                                VBC = 0.00,
-                                                PPIS = 0.00,
-                                                VPIS = 0.00
-                                            }
-                                        },
-                                        COFINS = new COFINS
-                                        {
-                                            COFINSOutr = new COFINSOutr
-                                            {
-                                                CST = "99",
-                                                VBC = 0.00,
-                                                PCOFINS = 0.00,
-                                                VCOFINS = 0.00
-                                            }
-                                        }
-                                    },
-                                }
-                            }, //Itens do pedido,
-                            Total = new Total
-                            {
-                                ICMSTot = new ICMSTot
-                                {
-                                    VBC = 0.00,
-                                    VICMS = 0.00,
-                                    VICMSDeson = 0.00,
-                                    VFCP = 0.00,
-                                    VFCPST = 0.00,
-                                    VFCPSTRet = 0.00,
-                                    VBCST = 0.00,
-                                    VProd = 969.00,
-                                    VFrete = 7.50,
-                                    VSeg = 0.00,
-                                    VDesc = 0.00,
-                                    VII = 0.00,
-                                    VIPI = 0.00,
-                                    VIPIDevol = 0.00,
-                                    VPIS = 0.00,
-                                    VCOFINS = 0.00,
-                                    VOutro = 0.00,
-                                    VNF = 976.50,
-                                    VTotTrib = 108.53
-                                }
-                            },
-                            Transp = new Transp
-                            {
-                                ModFrete = ModalidadeFrete.ContratacaoFretePorContaRemetente_CIF,
-                                Transporta = new Transporta
-                                {
-                                    CNPJ = "62538536000112",
-                                    XNome = "Sophos Aplicativos e Tecnologia LTDA",
-                                    IE = "637769679116",
-                                    XEnder = "Rua Miguel Petroni, 2338",
-                                    XMun = "SAO CARLOS",
-                                    UF = UFBrasil.SP
-                                },
-                                Vol = new List<Vol>
-                                {
-                                    new Vol
-                                    {
-                                        QVol = 1,
-                                        Esp = "Caixa",
-                                        Marca = "Marca Teste",
-                                        NVol = "0",
-                                    }
-                                }
-                            },
-                            Cobr = new Cobr
-                            {
-                                Fat = new Fat
-                                {
-                                    NFat = "0001",
-                                    VOrig = 976.50,
-                                    VDesc = 0.00,
-                                    VLiq = 976.50
-                                },
-                            },
-                            Pag = new Pag
-                            {
-                                DetPag = new List<DetPag>
-                                {
-                                    new DetPag
-                                    {
-                                        IndPag = IndicadorPagamento.PagamentoVista,
-                                        TPag = MeioPagamento.CartaoCredito,
-                                        VPag = 976.50,
-                                        Card = new Card
-                                        {
-                                            TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado
-                                        }
-                                    }
-                                }
-                            },
-                            InfAdic = new InfAdic
-                            {
-                                InfCpl = "NFE emitida para teste"
-                            }
-                        },
-                    }
-                }
-            }
-        };
-    }
 
-    public async Task EnviaEmailDeErro(string MerchantName, string erro, double ValorDosPagamentos, double ValorItens, double Vtotal)
+    public async Task EnviaEmailDeErro(string MerchantName, string erro, double ValorDosPagamentos, double ValorItens, double Vtotal, ClsPedido Pedido)
     {
         erro += $"\nValor total dos pagamentos: {ValorDosPagamentos}";
         erro += $"\nValor total dos itens: {ValorItens}";
         erro += $"\nValor total da NF: {Vtotal}";
+        erro += $"\nMerchant: {MerchantName}";
+        erro += $"\nPedido Criado Por: {Pedido.CriadoPor}";
+        erro += $"\nDisplay Id: {Pedido.DisplayId}";
+        erro += $"\nId: {Pedido.Id}";
+
+        var PedidoJson = JsonSerializer.Serialize(Pedido, new JsonSerializerOptions { WriteIndented = true });
+            erro += $"\nPedido JSON: {PedidoJson}";
 
         var html = $"""
                 <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
