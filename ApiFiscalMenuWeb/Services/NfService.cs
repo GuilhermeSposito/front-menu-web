@@ -1187,6 +1187,8 @@ public class NfService
                 detPag.Card = new Card
                 {
                     TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado,
+                    CNPJ = "00000000000000",
+                    TBand = BandeiraOperadoraCartao.Outros,
                 };
             }
 
