@@ -790,6 +790,9 @@ public class NfService
             enNfCeDto.Pedido.TaxaEntregaValor = 0;
         }
 
+        var json = JsonSerializer.Serialize(enNfCeDto.Pedido.Itens);
+        Console.WriteLine(json);
+
         var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: enNfCeDto.Pedido.Itens, Pedido: enNfCeDto.Pedido, TipoDFe.NFCe, tipoAmbiente);
 
         var xml = new EnviNFe
