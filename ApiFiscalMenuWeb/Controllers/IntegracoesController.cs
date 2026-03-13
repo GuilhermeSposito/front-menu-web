@@ -116,7 +116,7 @@ public class IntegracoesController : Controller
     {
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
-        HttpContext.Request.EnableBuffering();
+       /* HttpContext.Request.EnableBuffering();
 
         using var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
@@ -128,8 +128,8 @@ public class IntegracoesController : Controller
         bool valid = true;//_webhookSignature.ValidateSignature(secret, body, signature);
 
         if (!valid)
-            return Unauthorized("Assinatura inválida");
+            return Unauthorized("Assinatura inválida");*/
 
-        return Ok();
+        return Accepted() ;
     }
 }
