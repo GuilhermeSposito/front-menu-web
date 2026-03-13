@@ -1555,7 +1555,8 @@ public class NfService
                                 font-size:13px;
                             ">
 
-                            Pedido Json:{PedidoJson}
+                            Pedido Json:
+                            {PedidoJson}
                             </pre>
 
                         </div>

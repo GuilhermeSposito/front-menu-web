@@ -112,11 +112,14 @@ public class IntegracoesController : Controller
 
 
     [HttpPost("endpoint-webhook-ifood")]
-    public async Task<ActionResult> IfoodConexaoPorWebHook()
+    public async Task<IActionResult> IfoodConexaoPorWebHook()
     {
+        HttpContext.Request.EnableBuffering();
+
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
 
-        HttpContext.Request.EnableBuffering();
+        Console.WriteLine(signature);
+
         using var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
 
@@ -124,13 +127,17 @@ public class IntegracoesController : Controller
 
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
+        Console.WriteLine(body);
+
         bool valid = _webhookSignature.ValidateSignature(secret, body, signature);
 
         if (!valid)
         {
             Console.WriteLine("IFOOD NÃO AUTORIZADO");
-            return Unauthorized("Assinatura inválida");
+            return Unauthorized();
         }
+
+        var dto = JsonSerializer.Deserialize<PollingIfoodDto>(body);
 
         return Accepted();
     }
