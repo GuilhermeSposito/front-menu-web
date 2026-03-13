@@ -1137,7 +1137,7 @@ public class NfService
         return xml;
     }
 
-    private MeioPagamento RetornaIndicadorDePagamento(ClsFormaDeRecebimento Forma)
+    private MeioPagamento RetornaIndicadorDePagamento(ClsFormaDeRecebimento? Forma)
     {
         if (Forma is null)
             return MeioPagamento.Dinheiro;
@@ -1186,9 +1186,7 @@ public class NfService
             {
                 detPag.Card = new Card
                 {
-                    TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado,
-                    CNPJ = "00000000000000",
-                    TBand = BandeiraOperadoraCartao.Outros,
+                    TpIntegra = TipoIntegracaoPagamento.PagamentoNaoIntegrado,                 
                 };
             }
 
