@@ -865,9 +865,10 @@ public class NfService
         };
 
 
+        double ValorDescontos = enNfCeDto.Pedido.DescontoValor + enNfCeDto.Pedido.IncentivosExternosValor;
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros) - enNfCeDto.Pedido.DescontoValor;
+        double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros) - (ValorDescontos);
 
         //Somar os totais separados
         xml.NFe[0].InfNFe[0].Total = new Total
@@ -884,7 +885,7 @@ public class NfService
                 VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
                 VFrete = vFrete,
                 VSeg = 0.00,
-                VDesc = enNfCeDto.Pedido.DescontoValor,
+                VDesc = ValorDescontos,
                 VII = 0.00,
                 VIPI = 0.00,
                 VIPIDevol = 0.00,
@@ -905,94 +906,6 @@ public class NfService
 
         return xml;
     }
-
-    private Transp RetornaTransportedaNF(ClsPedido Pedido, ClsMerchant merchant, DocumentosMerchant DocumentoMerchant, EnderecoMerchant enderecoMerchant, TipoDFe? tipoNFE = TipoDFe.NFe)
-    {
-        if (Pedido.TipoDePedido == "DELIVERY" && tipoNFE != TipoDFe.NFCe)
-        {
-            return new Transp
-            {
-                ModFrete = ModalidadeFrete.ContratacaoFretePorContaRemetente_CIF,
-                Transporta = new Transporta
-                {
-                    CNPJ = LimparCnpj(DocumentoMerchant.Cnpj),
-                    XNome = merchant.RazaoSocial,
-                    IE = DocumentoMerchant.IncricaoEstadual,
-                    XEnder = enderecoMerchant.Rua,
-                    XMun = enderecoMerchant.Cidade.Descricao,
-                    UF = UFBrasil.SP
-                },
-                Vol = new List<Vol>
-                {
-                     new Vol
-                     {
-                        QVol = 1,
-                        Esp = "Caixa",
-                        Marca = "Marca Teste",
-                        NVol = "0",
-                     }
-                }
-            };
-        }
-        else
-        {
-            return new Transp
-            {
-                ModFrete = ModalidadeFrete.SemOcorrenciaTransporte
-            };
-        }
-    }
-
-    private Dest? RetornaDestinatarioDeNFCe(EnNfCeDto enNfCeDto, ClsPessoas? Cliente, TipoAmbiente tipoAmbiente, ClsPessoas? Destinatario = null, EnderecoMerchant? enderecoMerchant = null)
-    {
-        if (enNfCeDto.CPF is not null)
-        {
-            return new Dest
-            {
-                CPF = LimparCnpj(enNfCeDto.CPF),
-                XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
-                IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
-            };
-        }
-        else if (Destinatario is not null)
-        {
-            if (!string.IsNullOrEmpty(Destinatario.Cnpj) && !string.IsNullOrEmpty(Destinatario.InscricaoEstadual))
-            {
-                return new Dest
-                {
-                    CNPJ = LimparCnpj(Destinatario.Cnpj!),
-                    XNome = tipoAmbiente == TipoAmbiente.Producao ? Destinatario.Nome : "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",// Destinatario.Nome,
-                    EnderDest = new EnderDest
-                    {
-                        XLgr = Destinatario.Endereco?.Rua,
-                        Nro = Destinatario.Endereco?.Numero,
-                        XBairro = Destinatario.Endereco?.Bairro,
-                        CMun = enderecoMerchant!.Cidade.NumCidade,
-                        XMun = enderecoMerchant.Cidade.Descricao,
-                        UF = UFBrasil.SP,
-                        CEP = LimparCnpj(Destinatario.Endereco?.Cep),
-                    },
-                    IndIEDest = IndicadorIEDestinatario.ContribuinteICMS,
-
-                    IE = Destinatario.InscricaoEstadual,
-                    Email = "guilhermesposito14@gmail.com"
-                };
-            }
-            else if ((Destinatario is not null && !string.IsNullOrEmpty(Destinatario.Cpf)))
-            {
-                return new Dest
-                {
-                    CPF = LimparCnpj(Destinatario.Cpf),
-                    XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
-                    IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
-                };
-            }
-
-        }
-
-        return null;
-    }
-
     private async Task<EnviNFe> CriaXmlDeNfeSN(ClsPedido Pedido, ClsMerchant merchant, EnderecoMerchant enderecoMerchant, DocumentosMerchant DocumentoMerchant, ClsPessoas Destinatario, int ProxNmrNfe, TipoAmbiente tipoAmbiente = TipoAmbiente.Homologacao)
     {
         var detDosProd = await RetornaDetsDosProdutosNoPedido(ItensDoPedido: Pedido.Itens, Pedido: Pedido, TipoDFe.NFe, tipoAmbiente); //Itens do pedido
@@ -1102,9 +1015,10 @@ public class NfService
             }
         };
 
+        double ValorDescontos = Pedido.DescontoValor + Pedido.IncentivosExternosValor;
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = detDosProd.Sum(x => (x.Prod.VProd + x.Prod.VOutro + x.Prod.VFrete) - Pedido.DescontoValor);
+        double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros + vFrete) - ValorDescontos);
 
         xml.NFe[0].InfNFe[0].Total = new Total
         {
@@ -1120,7 +1034,7 @@ public class NfService
                 VProd = detDosProd.Sum(x => (double)x.Prod.VProd),
                 VFrete = vFrete,
                 VSeg = 0.00,
-                VDesc = Pedido.DescontoValor,
+                VDesc = ValorDescontos,
                 VII = 0.00,
                 VIPI = 0.00,
                 VIPIDevol = 0.00,
@@ -1136,6 +1050,94 @@ public class NfService
 
         return xml;
     }
+
+    private Transp RetornaTransportedaNF(ClsPedido Pedido, ClsMerchant merchant, DocumentosMerchant DocumentoMerchant, EnderecoMerchant enderecoMerchant, TipoDFe? tipoNFE = TipoDFe.NFe)
+    {
+        if (Pedido.TipoDePedido == "DELIVERY" && tipoNFE != TipoDFe.NFCe)
+        {
+            return new Transp
+            {
+                ModFrete = ModalidadeFrete.ContratacaoFretePorContaRemetente_CIF,
+                Transporta = new Transporta
+                {
+                    CNPJ = LimparCnpj(DocumentoMerchant.Cnpj),
+                    XNome = merchant.RazaoSocial,
+                    IE = DocumentoMerchant.IncricaoEstadual,
+                    XEnder = enderecoMerchant.Rua,
+                    XMun = enderecoMerchant.Cidade.Descricao,
+                    UF = UFBrasil.SP
+                },
+                Vol = new List<Vol>
+                {
+                     new Vol
+                     {
+                        QVol = 1,
+                        Esp = "Caixa",
+                        Marca = "Marca Teste",
+                        NVol = "0",
+                     }
+                }
+            };
+        }
+        else
+        {
+            return new Transp
+            {
+                ModFrete = ModalidadeFrete.SemOcorrenciaTransporte
+            };
+        }
+    }
+
+    private Dest? RetornaDestinatarioDeNFCe(EnNfCeDto enNfCeDto, ClsPessoas? Cliente, TipoAmbiente tipoAmbiente, ClsPessoas? Destinatario = null, EnderecoMerchant? enderecoMerchant = null)
+    {
+        if (enNfCeDto.CPF is not null)
+        {
+            return new Dest
+            {
+                CPF = LimparCnpj(enNfCeDto.CPF),
+                XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
+                IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
+            };
+        }
+        else if (Destinatario is not null)
+        {
+            if (!string.IsNullOrEmpty(Destinatario.Cnpj) && !string.IsNullOrEmpty(Destinatario.InscricaoEstadual))
+            {
+                return new Dest
+                {
+                    CNPJ = LimparCnpj(Destinatario.Cnpj!),
+                    XNome = tipoAmbiente == TipoAmbiente.Producao ? Destinatario.Nome : "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL",// Destinatario.Nome,
+                    EnderDest = new EnderDest
+                    {
+                        XLgr = Destinatario.Endereco?.Rua,
+                        Nro = Destinatario.Endereco?.Numero,
+                        XBairro = Destinatario.Endereco?.Bairro,
+                        CMun = enderecoMerchant!.Cidade.NumCidade,
+                        XMun = enderecoMerchant.Cidade.Descricao,
+                        UF = UFBrasil.SP,
+                        CEP = LimparCnpj(Destinatario.Endereco?.Cep),
+                    },
+                    IndIEDest = IndicadorIEDestinatario.ContribuinteICMS,
+
+                    IE = Destinatario.InscricaoEstadual,
+                    Email = "guilhermesposito14@gmail.com"
+                };
+            }
+            else if ((Destinatario is not null && !string.IsNullOrEmpty(Destinatario.Cpf)))
+            {
+                return new Dest
+                {
+                    CPF = LimparCnpj(Destinatario.Cpf),
+                    XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
+                    IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
+                };
+            }
+
+        }
+
+        return null;
+    }
+
 
     private MeioPagamento RetornaIndicadorDePagamento(ClsFormaDeRecebimento? Forma)
     {
