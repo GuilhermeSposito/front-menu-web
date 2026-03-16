@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using FrontMenuWeb.Models.Merchant;
+using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Models.Integracoes;
 
@@ -12,6 +13,7 @@ public class ClsEmpresaIfood
     [JsonPropertyName("VenceTokenIfood")] public DateTime VenceTokenIfood { get; set; }
     [JsonPropertyName("online")] public bool Online { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
+    [JsonPropertyName("merchant")] public ClsMerchant? MerchantSophos { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("CodigoDeAutorizacaoDoIfood")] public string? CodigoDeAutorizacaoDoIfood { get; set; }
 
 }

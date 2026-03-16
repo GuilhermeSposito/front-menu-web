@@ -1213,14 +1213,7 @@ public class NfService
         int ContadorItem = 1;
         foreach (var item in ItensDoPedido)
         {
-            if (item.Produto is null)
-                continue;
-
-            if (item.Produto.NCM is null)
-                continue;
-
-            if (item.Produto.CEST is null)
-                continue;
+          
 
             var valorTotalTrib = await _ibptServices.GetIBPTValor
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);

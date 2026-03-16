@@ -91,22 +91,33 @@ public class NestApiServices
         return RetornoDoCreate.Status == "success" ? true : false;
     }
 
-    public async Task<ClsEmpresaIfood?> RetornaEmpresaIfood(string TokenNestApi, int IdEmpresa)
+    public async Task<ClsEmpresaIfood?> RetornaEmpresaIfood(string? TokenNestApi, int IdEmpresa)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestApi);
+
+        if (TokenNestApi is not null)
+            AdicionaTokenNaRequisicao(client, TokenNestApi);
+
         var EmpresaServiceNest = new EmpresaIfoodService(client, _factory);
         var empresa = await EmpresaServiceNest.GetEmpresaIntegradaAsync(IdEmpresa);
         return empresa;
     }
-    public async Task<bool> CriarPedidoSophos(string TokenNestApi, ClsPedido NovoPedido)
+
+    public async Task<ClsEmpresaIfood?> RetornaEmpresaIfoodPeloMerchantId(string IdEmpresa)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+        var EmpresaServiceNest = new EmpresaIfoodService(client, _factory);
+        var empresa = await EmpresaServiceNest.GetEmpresaIntegradaPeloMerchantIdAsync(IdEmpresa);
+        return empresa;
+    }
+
+    public async Task<bool> CriarPedidoSophos(ClsMerchant Merchant, ClsPedido NovoPedido)
     {
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestApi);
         var PedidoServiceNest = new PedidosService(client);
 
-        var RetornoDoCreate = await PedidoServiceNest.CreatePedido(NovoPedido, cts.Token);
+        var RetornoDoCreate = await PedidoServiceNest.CreatePedidoPublicAsync(NovoPedido, Merchant, cts.Token);
         if (RetornoDoCreate.Status == "error")
         {
             Console.WriteLine(string.Join(",", RetornoDoCreate.Messages));
@@ -116,26 +127,25 @@ public class NestApiServices
         return RetornoDoCreate.Status == "success" ? true : false;
     }
 
-    public async Task<ClsProduto?> RetornaProdutoEncontrado(string? CodigoPdv, string TokenNestApi)
+    public async Task<ClsProduto?> RetornaProdutoEncontrado(string? CodigoPdv, string MerchantSophosId)
     {
         if (string.IsNullOrEmpty(CodigoPdv))
             return null;
 
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestApi);
+
         var ProdutoServiceNest = new ProdutoService(client);
-        ClsProduto? prod = await ProdutoServiceNest.GetProdutoPorCodigoInternoAsync(CodigoPdv);
+        ClsProduto? prod = await ProdutoServiceNest.GetProdutoPorCodigoInternoAsync(CodigoPdv, MerchantSophosId);
 
         return prod;
     }
 
-    public async Task<ClsComplemento?> RetornaComplementoEncontrado(string? CodigoPdv, string TokenNestApi)
+    public async Task<ClsComplemento?> RetornaComplementoEncontrado(string? CodigoPdv)
     {
         if (string.IsNullOrEmpty(CodigoPdv))
             return null;
 
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestApi);
         var ProdutoServiceNest = new ComplementosServices(client);
 
         bool CodigoPdvEUmNumeroValido = int.TryParse(CodigoPdv, out int codigoPdvNumerico);
@@ -148,7 +158,7 @@ public class NestApiServices
         return complemento;
     }
 
- 
+
     public async Task<ClsPedido?> GetPedidoPeloIntegracaoIdAsync(string TokenNestAPi, string integracaoId)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
@@ -156,7 +166,7 @@ public class NestApiServices
 
         PedidosService PedidoServiceNest = new PedidosService(client);
         var response = await PedidoServiceNest.GetPedidoByIntegracaoId(integracaoId);
-      
+
         return response;
     }
     public async Task<bool> UpdatePedidoDespachadoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
@@ -166,7 +176,7 @@ public class NestApiServices
 
         PedidosService PedidoServiceNest = new PedidosService(client);
         var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido);
-      
+
         return true;
     }
 
@@ -198,7 +208,7 @@ public class NestApiServices
         AdicionaTokenNaRequisicao(client, TokenNestAPi);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto,Pedido);
+        var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto, Pedido);
 
         return true;
     }

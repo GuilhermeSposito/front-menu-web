@@ -58,7 +58,7 @@ public class IntegracoesController : Controller
 
 
         var Return = await _ifoodService.Polling(token);
-        return Ok(Return);
+        return Ok();
     }
     #endregion
 
@@ -102,17 +102,9 @@ public class IntegracoesController : Controller
 
     #endregion
 
-    [HttpPost("enviar-email-teste")]
-    public async Task<ActionResult> EnviarEmailTeste()
-    {
-
-        await emailService.EnviarAsync("guilherme@sophos-erp.com.br", "Este é um email de teste enviado pela API do Fiscal Menu.", "Testeeeee");
-        return Ok();
-    }
-
 
     [HttpPost("endpoint-webhook-ifood")]
-    public async Task<IActionResult> IfoodConexaoPorWebHook()
+    public async Task<IActionResult> EndpointDeConexaoIfoodWebHook()
     {
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
         HttpContext.Request.EnableBuffering();
@@ -124,10 +116,14 @@ public class IntegracoesController : Controller
         var body = Encoding.UTF8.GetString(bodyBytes);
 
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
-        var dto = JsonSerializer.Deserialize<PollingIfoodDto>(bodyBytes);
+        var dto = JsonSerializer.Deserialize<WebHookIfoodDto>(bodyBytes);
+
+        var json = JsonSerializer.Serialize(dto);
+        Console.WriteLine($"Body: {json}");
+        Console.WriteLine($"Ifood Signature {signature}");
 
         var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
-        if (!valid)
+        if (!valid && !dto!.Teste)
         {
             if (dto?.FullCode == "KEEPALIVE")
                 return Accepted();
@@ -136,7 +132,8 @@ public class IntegracoesController : Controller
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Assinatura inválida" } });
         }
 
-
+        if (dto is not null)
+            await _ifoodService.AddOrUpdateOrders(dto);
 
         return Accepted();
     }

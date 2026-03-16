@@ -50,11 +50,11 @@ public class ProdutoService
         return response;
     }
 
-    public async Task<ClsProduto?> GetProdutoPorCodigoInternoAsync(string cod)
+    public async Task<ClsProduto?> GetProdutoPorCodigoInternoAsync(string MerchantSophosId, string cod)
     {
         try
         {
-            ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/codigo-interno/{cod}") ?? new ClsProduto();
+            ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/codigo-interno/{MerchantSophosId}/{cod}") ?? new ClsProduto();
 
             return response;
         }

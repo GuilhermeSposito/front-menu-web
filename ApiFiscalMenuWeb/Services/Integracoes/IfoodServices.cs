@@ -7,6 +7,7 @@ using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
+using FrontMenuWeb.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Drawing;
@@ -173,42 +174,7 @@ public class IfoodServices
                                 continue;
                         }
 
-                        if (PoolingResponse.IsSuccessStatusCode)
-                        {
-                            //Aqui você pode processar a resposta do pooling, por exemplo, lendo os pedidos e salvando no banco de dados
-                            int statusCode = (int)PoolingResponse.StatusCode;
-                            if (statusCode != 200)
-                                continue;
-
-                            List<PollingIfoodDto> Poolings = JsonSerializer.Deserialize<List<PollingIfoodDto>>(await PoolingResponse.Content.ReadAsStringAsync()) ?? new List<PollingIfoodDto>();
-                            foreach (var P in Poolings)
-                            {
-                                switch (P.Code)
-                                {
-                                    case "PLC": //caso entre aqui é porque é um novo pedido     
-                                        string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(P.OrderId, IfoodClient, TokenNestApi, Merchant, P);
-                                        Messages.Add(MensagemDeTentativaDeAddPedido);
-                                        continue;
-                                    case "CFM":
-                                        //Aqui qunado for aceito o pedido e vier a confimação
-                                        continue;
-                                    case "DSP":
-                                        await MudaStatusPedidoDespachado(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
-                                        continue;
-                                    case "CON":
-                                        await MudaStatusPedidoConcluido(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
-                                        continue;
-                                    case "CAN":
-                                        await MudaStatusPedidoCancelado(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
-                                        continue;
-                                    default:
-                                        await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdateDto: new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, PedidoIdIntegracao = P.OrderId, TokenNestApi = TokenNestApi }, Polling: P);
-                                        break;
-                                }
-                            }
-
-                        }
-                        else
+                        if (!PoolingResponse.IsSuccessStatusCode)
                         {
                             _logger.LogWarning($"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}");
                             return new ReturnApiRefatored<object>
@@ -216,11 +182,9 @@ public class IfoodServices
                                 Status = "error",
                                 Messages = new List<string> { $"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}" }
                             };
+
                         }
                     }
-
-                    if (PollingsToAcknowledge.Count() > 0)
-                        await Acknowledge(IfoodClient, PollingsToAcknowledge);
 
                 }
                 else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
@@ -258,11 +222,68 @@ public class IfoodServices
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
         }
     }
+
+    public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto)
+    {
+        try
+        {
+            List<string> Messages = new List<string>();
+            foreach (var merchantId in dto.MerchantIds)
+            {
+                ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(merchantId);
+                if (Empresa is null || Empresa.MerchantSophos is null)
+                    continue;
+
+                switch (dto.Code)
+                {
+                    case "PLC": //caso entre aqui é porque é um novo pedido     
+                        string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(dto.OrderId, Empresa.MerchantSophos, dto, Empresa);
+                        Messages.Add(MensagemDeTentativaDeAddPedido);
+                        continue;
+                    case "CFM":
+                        //Aqui qunado for aceito o pedido e vier a confimação
+                        continue;
+                    case "DSP":
+                        continue;
+                    case "CON":
+                        continue;
+                    case "CAN":
+                        continue;
+                    default:
+                        break;
+                }
+            }
+
+            return new ReturnApiRefatored<object> { Status = "success", Messages = new List<string> { "Pedido processado com Sucesso!" } };
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Conversão do pedido Ifood não válida. Endpoint: {AddOrUpdateOrder}", "Pooling");
+            await EnviaEmailDeErro(ex.ToString());
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Não Foi possivel ler o pedido do ifood" } };
+        }
+        catch (OperationCanceledException ex)
+        {
+            _logger.LogError(ex, "Pooling do iFood cancelado. Endpoint: {AddOrUpdateOrder}", "Pooling");
+            await EnviaEmailDeErro(ex.ToString());
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "A requisição para leitura de pedidos demorou muito e foi cancelada." } };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Tipo real da exception: {Type}", ex.GetType().FullName);
+            await EnviaEmailDeErro(ex.ToString());
+            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
+        }
+
+    }
     #endregion
 
     #region Funções de Ação dos Pedidos Do Ifood
-    private async Task<PedidoIfoodDto?> GetPedidoIfood(string OrderId, HttpClient IfoodClient)
+    private async Task<PedidoIfoodDto?> GetPedidoIfood(string OrderId, ClsEmpresaIfood MerchantIfood)
     {
+        var IfoodClient = _factory.CreateClient("ApiIfood");
+        AdicionaTokenNaRequisicao(IfoodClient, MerchantIfood.AccessTokenIfood);
+
         var PedidoResponse = await IfoodClient.GetAsync($"order/v1.0/orders/{OrderId}");
         if (PedidoResponse.IsSuccessStatusCode)
         {
@@ -280,8 +301,11 @@ public class IfoodServices
         }
     }
 
-    private async Task<bool> AceitaPedido(string PedidoId, HttpClient IfoodClient)
+    private async Task<bool> AceitaPedido(string PedidoId, ClsEmpresaIfood MerchantIfood)
     {
+        var IfoodClient = _factory.CreateClient("ApiIfood");
+        AdicionaTokenNaRequisicao(IfoodClient, MerchantIfood.AccessTokenIfood);
+
         var ResponseConfirm = await IfoodClient.PostAsync($"order/v1.0/orders/{PedidoId}/confirm", null);
         return ResponseConfirm.IsSuccessStatusCode;
     }
@@ -471,7 +495,7 @@ public class IfoodServices
     #endregion
 
     #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
-    private async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, string TokenNestApi, ClsMerchant MerchantSophos)
+    private async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos)
     {
         ClsPedido PedidoSophos = new ClsPedido
         {
@@ -489,7 +513,7 @@ public class IfoodServices
             ObservacaoDoPedido = PedidoIfood.ExtraInfo
         };
 
-        PedidoSophos.Itens = await RetornaItensSophos(PedidoIfood.Items, TokenNestApi);
+        PedidoSophos.Itens = await RetornaItensSophos(PedidoIfood.Items, MerchantSophos.Id);
 
         //Definir Pagamento
         PedidoSophos.Pagamentos = RetornaPagamentosDoPedido(PedidoIfood, PedidoSophos, MerchantSophos);
@@ -518,7 +542,7 @@ public class IfoodServices
         return PedidoSophos;
     }
 
-    private async Task<List<ItensPedido>> RetornaItensSophos(List<ItemIfoodDto> ItensIfood, string TokenNestApi)
+    private async Task<List<ItensPedido>> RetornaItensSophos(List<ItemIfoodDto> ItensIfood, string MerchantSophosId)
     {
         //Fazer integração depois para buscar o produto no banco de dados do sophos e preencher o Id do produto e o Id do preço, por enquanto vai ser só a descrição mesmo
 
@@ -528,7 +552,7 @@ public class IfoodServices
         {
             var ResultadoConversaoCodPdv = EditaCodigoPdvIfoodParaPadroSophos(item);
 
-            ClsProduto? ProdutoSophos = await _nestApiService.RetornaProdutoEncontrado(ResultadoConversaoCodPdv.Codigo, TokenNestApi);
+            ClsProduto? ProdutoSophos = await _nestApiService.RetornaProdutoEncontrado(ResultadoConversaoCodPdv.Codigo, MerchantSophosId);
             ItensPedido ItemSophos = new ItensPedido
             {
                 Descricao = item.Name,
@@ -549,7 +573,7 @@ public class IfoodServices
 
             foreach (var complemento in item.Options)
             {
-                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode, TokenNestApi);
+                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode);
 
                 ComplementoNoItem ComplementoSophos = new ComplementoNoItem
                 {
@@ -665,51 +689,43 @@ public class IfoodServices
         };
     }
 
-    private async Task<string> AdicionaPedidoAoSophos(string OrderId, HttpClient IfoodClient, string TokenNestApi, ClsMerchant Merchant, PollingIfoodDto P)
+    private async Task<string> AdicionaPedidoAoSophos(string OrderId, ClsMerchant Merchant, WebHookIfoodDto P, ClsEmpresaIfood MerchantIfood)
     {
-        PedidoIfoodDto? PedidoIFood = await GetPedidoIfood(OrderId, IfoodClient);
+        PedidoIfoodDto? PedidoIFood = await GetPedidoIfood(OrderId, MerchantIfood);
         if (PedidoIFood is null)
         {
             return $"Falha ao obter os detalhes do pedido {OrderId} para o merchant {Merchant.NomeFantasia}";
 
         }
 
-        ClsPedido? PedidoSophos = await ConvertePedidoDoIfoodParaPedidoSophos(PedidoIFood, TokenNestApi, Merchant);
+        ClsPedido? PedidoSophos = await ConvertePedidoDoIfoodParaPedidoSophos(PedidoIFood, Merchant);
         if (PedidoSophos is null)
         {
             return $"Falha ao converter o pedido {OrderId} para o formato do Sophos para o merchant {Merchant.NomeFantasia}";
         }
 
-        bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(TokenNestApi, PedidoSophos);
+        bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(Merchant, PedidoSophos);
         if (AdicionouOPedido)
         {
             if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
             {
-                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id, IfoodClient);
+                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id, MerchantIfood);
                 if (AceitouPedido)
-                    PollingsToAcknowledge.Add(P);
-
+                    return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
             }
-            return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
+            return $"Pedido {OrderId}  {Merchant.NomeFantasia}";
         }
         else
         {
             return $"Falha ao adicionar o pedido {P.OrderId} para o merchant {Merchant.NomeFantasia}";
         }
     }
-
-
     #endregion
 
     #region Funções Auxiliares
     private void AdicionaTokenNaRequisicao(HttpClient client, string token)
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
-
-    private async Task Acknowledge(HttpClient IfoodClient, List<PollingIfoodDto> Pollings)
-    {
-        await IfoodClient.PostAsJsonAsync($"order/v1.0/events/acknowledgment", Pollings);
     }
 
     private string RetornaTipoDoPedidoSophos(string tipoIfood)

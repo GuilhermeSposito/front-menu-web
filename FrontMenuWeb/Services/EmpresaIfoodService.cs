@@ -28,6 +28,11 @@ public class EmpresaIfoodService
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>($"empresas-ifood/{idEmpresa}");
         return response?.Data.Objeto ?? new ClsEmpresaIfood();
     }
+    public async Task<ClsEmpresaIfood> GetEmpresaIntegradaPeloMerchantIdAsync(string idEmpresa)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>($"empresas-ifood/{idEmpresa}");
+        return response?.Data.Objeto ?? new ClsEmpresaIfood();
+    }
 
     public async Task<ReturnApiRefatored<ClsEmpresaIfood>> CreateEmpresa(ClsEmpresaIfood empresa)
     {
