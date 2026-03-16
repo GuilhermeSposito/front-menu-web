@@ -5,6 +5,7 @@ using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Text.Json.Serialization;
+using Unimake.Business.DFe.Xml.DARE;
 
 namespace ApiFiscalMenuWeb.Filters;
 
@@ -28,10 +29,11 @@ public class ApiExceptionFilter : IExceptionFilter
         {
             try
             {
+              
                 var ex = context.Exception;
 
                 var logFormatado = $"""
-                    [{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ss.fffZ}] {context.HttpContext.Request.Method} {context.HttpContext.Request.Path}
+                    [{DateTime.Now.AddHours(-3):dd/MM/yyy}] {context.HttpContext.Request.Method} {context.HttpContext.Request.Path}
 
                     Status: 500
                     Mensagem: {ex.Message}
@@ -39,10 +41,46 @@ public class ApiExceptionFilter : IExceptionFilter
                     Stack: {ex.StackTrace}
                     """;
 
+                var html = $"""
+                <div style="font-family: Arial, sans-serif; background-color:#f4f4f4; padding:20px;">
+        
+                    <div style="max-width:800px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            
+                        <div style="background-color:#c62828; color:white; padding:15px;">
+                            <h2 style="margin:0;">🚨 Erro na API De Integrações</h2>
+                        </div>
+
+                        <div style="padding:20px; color:#333;">
+                
+                            <p><strong>Data:</strong> {DateTime.Now:dd/MM/yyyy HH:mm:ss}</p>
+                            <p><strong>Servidor:</strong> {Environment.MachineName}</p>
+
+                            <hr style="margin:20px 0;" />
+
+                            <h3 style="color:#c62828;">Detalhes do Erro</h3>
+
+                            <pre style="
+                                background:#1e1e1e;
+                                color:#FFFFFF;
+                                padding:15px;
+                                border-radius:5px;
+                                overflow:auto;
+                                font-size:13px;
+                            ">
+
+                            {logFormatado}
+                            </pre>
+
+                        </div>
+                    </div>
+                </div>
+                """;
+
+
                 await emailService.EnviarAsync(
                     "guilherme@sophos-erp.com.br", 
                     $"Log De Erro Na APi {DateTime.Now:g}",
-                    logFormatado);
+                    html);
 
 
             }

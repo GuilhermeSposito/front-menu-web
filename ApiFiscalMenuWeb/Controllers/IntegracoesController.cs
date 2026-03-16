@@ -124,10 +124,18 @@ public class IntegracoesController : Controller
         var body = Encoding.UTF8.GetString(bodyBytes);
 
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
+        var dto = JsonSerializer.Deserialize<PollingIfoodDto>(bodyBytes);
 
         var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
-        if(!valid)
-            Console.WriteLine("IFOOD não AUTORIZADO");
+        if (!valid)
+        {
+            if (dto?.FullCode == "KEEPALIVE")
+                return Accepted();
+
+            Console.WriteLine("Assinatura Invalida");
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Assinatura inválida" } });
+        }
+
 
 
         return Accepted();
