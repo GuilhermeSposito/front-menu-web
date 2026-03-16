@@ -22,6 +22,7 @@ public class WebhookSignature
 
             var expected = BytesToHex(hashBytes);
 
+            Console.WriteLine($"Body {body}");
             Console.WriteLine($"Signature: {signature}");
             Console.WriteLine($"Expected: {expected}");
 
