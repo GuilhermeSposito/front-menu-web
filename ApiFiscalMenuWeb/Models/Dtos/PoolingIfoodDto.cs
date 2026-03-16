@@ -33,6 +33,7 @@ public class WebHookIfoodDto
     [JsonPropertyName("fullCode")] public string FullCode { get; set; } = string.Empty;
     [JsonPropertyName("orderId")] public string OrderId { get; set; } = string.Empty;
     [JsonPropertyName("merchantIds")] public List<string> MerchantIds { get; set; } = new();
+    [JsonPropertyName("merchantId")] public string MerchantId { get; set; } = string.Empty;
     [JsonPropertyName("createdAt")] public string CreatedAt { get; set; } = string.Empty;
     [JsonPropertyName("teste")] public bool Teste { get; set; }
 

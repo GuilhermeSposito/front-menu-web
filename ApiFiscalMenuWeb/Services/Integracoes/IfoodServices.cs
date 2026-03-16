@@ -228,31 +228,30 @@ public class IfoodServices
         try
         {
             List<string> Messages = new List<string>();
-            foreach (var merchantId in dto.MerchantIds)
-            {
-                ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(merchantId);
-                if (Empresa is null || Empresa.MerchantSophos is null)
-                    continue;
 
-                switch (dto.Code)
-                {
-                    case "PLC": //caso entre aqui é porque é um novo pedido     
-                        string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(dto.OrderId, Empresa.MerchantSophos, dto, Empresa);
-                        Messages.Add(MensagemDeTentativaDeAddPedido);
-                        continue;
-                    case "CFM":
-                        //Aqui qunado for aceito o pedido e vier a confimação
-                        continue;
-                    case "DSP":
-                        continue;
-                    case "CON":
-                        continue;
-                    case "CAN":
-                        continue;
-                    default:
-                        break;
-                }
+            ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(dto.MerchantId);
+            if (Empresa is null || Empresa.MerchantSophos is null)
+                throw new Exception("Merchant não encontrado na base de dados do sophos");
+
+            switch (dto.Code)
+            {
+                case "PLC": //caso entre aqui é porque é um novo pedido     
+                    string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(dto.OrderId, Empresa.MerchantSophos, dto, Empresa);
+                    Messages.Add(MensagemDeTentativaDeAddPedido);
+                    break;
+                case "CFM":
+                    //Aqui qunado for aceito o pedido e vier a confimação
+                    break;
+                case "DSP":
+                    break;
+                case "CON":
+                    break;
+                case "CAN":
+                    break;
+                default:
+                    break;
             }
+
 
             return new ReturnApiRefatored<object> { Status = "success", Messages = new List<string> { "Pedido processado com Sucesso!" } };
         }
