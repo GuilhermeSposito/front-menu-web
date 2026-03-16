@@ -10,30 +10,21 @@ public class WebhookSignature
         return Convert.ToHexString(bytes).ToLower();
     }
 
-    public bool ValidateSignature(string secret, string body, string signature)
+    public bool ValidateSignature(string secret, byte[] bodyBytes, string signature)
     {
-        try
-        {
-            var keyBytes = Encoding.UTF8.GetBytes(secret);
-            var bodyBytes = Encoding.UTF8.GetBytes(body);
+        var keyBytes = Encoding.UTF8.GetBytes(secret);
 
-            using var hmac = new HMACSHA256(keyBytes);
-            var hashBytes = hmac.ComputeHash(bodyBytes);
+        using var hmac = new HMACSHA256(keyBytes);
+        var hashBytes = hmac.ComputeHash(bodyBytes);
 
-            var expected = BytesToHex(hashBytes);
+        var expected = Convert.ToHexString(hashBytes).ToLower();
 
-            Console.WriteLine($"Body {body}");
-            Console.WriteLine($"Signature: {signature}");
-            Console.WriteLine($"Expected: {expected}");
+        Console.WriteLine($"Signature: {signature}");
+        Console.WriteLine($"Expected: {expected}");
 
-            return CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(expected),
-                Encoding.UTF8.GetBytes(signature)
-            );
-        }
-        catch
-        {
-            return false;
-        }
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.ASCII.GetBytes(expected),
+            Encoding.ASCII.GetBytes(signature)
+        );
     }
 }
