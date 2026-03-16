@@ -1018,7 +1018,7 @@ public class NfService
         double ValorDescontos = Pedido.DescontoValor + Pedido.IncentivosExternosValor;
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
-        double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros + vFrete) - ValorDescontos);
+        double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros + vFrete) - (ValorDescontos);
 
         xml.NFe[0].InfNFe[0].Total = new Total
         {
