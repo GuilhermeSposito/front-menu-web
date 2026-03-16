@@ -227,6 +227,9 @@ public class IfoodServices
     {
         try
         {
+            if(string.IsNullOrEmpty(dto.MerchantId))
+                return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "MerchantId não pode ser nulo ou vazio" } };
+
             List<string> Messages = new List<string>();
 
             ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(dto.MerchantId);
@@ -251,7 +254,6 @@ public class IfoodServices
                 default:
                     break;
             }
-
 
             return new ReturnApiRefatored<object> { Status = "success", Messages = new List<string> { "Pedido processado com Sucesso!" } };
         }
