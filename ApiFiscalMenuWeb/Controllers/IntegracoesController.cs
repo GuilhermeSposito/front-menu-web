@@ -114,20 +114,15 @@ public class IntegracoesController : Controller
     [HttpPost("endpoint-webhook-ifood")]
     public async Task<IActionResult> IfoodConexaoPorWebHook()
     {
-        var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString() ?? "";
+        var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
         string body;
-        using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
+
+        using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8))
         {
             body = await reader.ReadToEndAsync();
-            HttpContext.Request.Body.Position = 0;
         }
-
-
-        Console.WriteLine($"Body: {body}");
-        Console.WriteLine($"Signature Recebida: {signature}");
-
 
         var valid = _webhookSignature.ValidateSignature(secret, body, signature);
 
