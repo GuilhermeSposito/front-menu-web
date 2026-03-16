@@ -135,7 +135,7 @@ public class NestApiServices
         HttpClient client = _factory.CreateClient("ApiAutorizada");
 
         var ProdutoServiceNest = new ProdutoService(client);
-        ClsProduto? prod = await ProdutoServiceNest.GetProdutoPorCodigoInternoAsync(CodigoPdv, MerchantSophosId);
+        ClsProduto? prod = await ProdutoServiceNest.GetProdutoPorCodigoInternoAsync(MerchantSophosId, CodigoPdv);
 
         return prod;
     }
