@@ -22,6 +22,9 @@ public class WebhookSignature
 
             var expected = BytesToHex(hashBytes);
 
+            Console.WriteLine($"Signature: {signature}");
+            Console.WriteLine($"Expected: {expected}");
+
             return CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(expected),
                 Encoding.UTF8.GetBytes(signature)
