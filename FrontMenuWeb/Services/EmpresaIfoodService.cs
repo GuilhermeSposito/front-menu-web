@@ -28,10 +28,19 @@ public class EmpresaIfoodService
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>($"empresas-ifood/{idEmpresa}");
         return response?.Data.Objeto ?? new ClsEmpresaIfood();
     }
-    public async Task<ClsEmpresaIfood> GetEmpresaIntegradaPeloMerchantIdAsync(string idEmpresa)
+
+    public async Task<ClsEmpresaIfood?> GetEmpresaIntegradaPeloMerchantIdAsync(string idEmpresa)
     {
-        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>($"empresas-ifood/{idEmpresa}");
-        return response?.Data.Objeto ?? new ClsEmpresaIfood();
+        var response = await _http.GetAsync($"empresas-ifood/{idEmpresa}");
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>();
+
+        return result?.Data.Objeto;
     }
 
     public async Task<ReturnApiRefatored<ClsEmpresaIfood>> CreateEmpresa(ClsEmpresaIfood empresa)
