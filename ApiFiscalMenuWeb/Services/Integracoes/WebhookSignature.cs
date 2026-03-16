@@ -7,32 +7,29 @@ public class WebhookSignature
 {
     private string BytesToHex(byte[] bytes)
     {
-        StringBuilder sb = new StringBuilder(bytes.Length * 2);
-        foreach (byte b in bytes)
-        {
-            sb.AppendFormat("{0:x2}", b);
-        }
-        return sb.ToString();
+        return Convert.ToHexString(bytes).ToLower();
     }
 
-    public bool ValidateSignature(string secret, byte[] bodyBytes, string signature)
+    public bool ValidateSignature(string secret, string body, string signature)
     {
         try
         {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secret);
+            var keyBytes = Encoding.UTF8.GetBytes(secret);
+            var bodyBytes = Encoding.UTF8.GetBytes(body);
 
             using var hmac = new HMACSHA256(keyBytes);
+            var hashBytes = hmac.ComputeHash(bodyBytes);
 
-            byte[] hash = hmac.ComputeHash(bodyBytes);
+            var expected = BytesToHex(hashBytes);
 
-            string expected = BytesToHex(hash);
-
-            return expected.Equals(signature, StringComparison.OrdinalIgnoreCase);
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(expected),
+                Encoding.UTF8.GetBytes(signature)
+            );
         }
-        catch (Exception ex)
+        catch
         {
             return false;
         }
-       
     }
 }

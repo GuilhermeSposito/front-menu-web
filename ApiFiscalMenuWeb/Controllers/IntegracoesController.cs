@@ -114,25 +114,22 @@ public class IntegracoesController : Controller
     [HttpPost("endpoint-webhook-ifood")]
     public async Task<IActionResult> IfoodConexaoPorWebHook()
     {
-        HttpContext.Request.EnableBuffering();
-
-        var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
-
-        Console.WriteLine(signature);
-
-        using var ms = new MemoryStream();
-        await HttpContext.Request.Body.CopyToAsync(ms);
-
-        var bodyBytes = ms.ToArray();
-        var body = Encoding.UTF8.GetString(bodyBytes);
-
-        Console.WriteLine("Body:", body);
-
-        HttpContext.Request.Body.Position = 0;
-
+        var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString() ?? "";
         var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
 
-        var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
+        string body;
+        using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
+        {
+            body = await reader.ReadToEndAsync();
+            HttpContext.Request.Body.Position = 0;
+        }
+
+
+        Console.WriteLine($"Body: {body}");
+        Console.WriteLine($"Signature Recebida: {signature}");
+
+
+        var valid = _webhookSignature.ValidateSignature(secret, body, signature);
 
         if (!valid)
         {
