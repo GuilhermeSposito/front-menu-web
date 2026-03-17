@@ -67,7 +67,7 @@ public class NestApiServices
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    public async Task<ClsEmpresaIfood?> EditarEAdicionarEmpresaIfood(ClsEmpresaIfood empresa, string? TokenNestApi, bool Editando = false, ClsEmpresaIfood? EmpresaASerEditada = null)
+    public async Task<ClsEmpresaIfood?> EditarEAdicionarEmpresaIfood(ClsEmpresaIfood empresa, string? TokenNestApi, string MerchantSophosId , bool Editando = false, ClsEmpresaIfood? EmpresaASerEditada = null)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
         if (!string.IsNullOrEmpty(TokenNestApi))
@@ -79,7 +79,7 @@ public class NestApiServices
 
         if (!Editando)
         {
-            RetornoDoCreate = await EmpresaServiceNest.CreateEmpresa(empresa);
+            RetornoDoCreate = await EmpresaServiceNest.CreateEmpresaPublic(empresa, MerchantSophosId);
         }
         else
         {

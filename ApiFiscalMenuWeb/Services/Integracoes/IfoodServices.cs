@@ -62,6 +62,8 @@ public class IfoodServices
 
     public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string? TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
     {
+
+
         var HttpIfood = _factory.CreateClient("ApiIfood");
         FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
         {
@@ -90,8 +92,13 @@ public class IfoodServices
         if (result is not null && result.AccessToken is not null && result.RefreshToken is not null)
         {
 
-            if (!Refresh)
+
+            if (!Refresh && TokenNestAPi is not null)
             {
+                var Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestAPi);
+                if(Merchant is null)
+                    throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
+
                 var NovaEmpresa = new ClsEmpresaIfood
                 {
                     NomeEmpresa = Infos.NomeEmpresa,
@@ -102,7 +109,7 @@ public class IfoodServices
                     Ativo = true
                 };
 
-                ClsEmpresaIfood? EmpresaNova = await _nestApiService.EditarEAdicionarEmpresaIfood(NovaEmpresa, TokenNestAPi);
+                ClsEmpresaIfood? EmpresaNova = await _nestApiService.EditarEAdicionarEmpresaIfood(NovaEmpresa, TokenNestAPi, MerchantSophosId: Merchant.Id);
 
                 if (EmpresaNova is not null)
                     return new ReturnApiRefatored<object>
@@ -117,11 +124,12 @@ public class IfoodServices
                 ClsEmpresaIfood? empresa = await _nestApiService.RetornaEmpresaIfood(TokenNestAPi, IdEmpresa);
                 if (empresa is not null)
                 {
+
                     empresa.AccessTokenIfood = result.AccessToken;
                     empresa.RefreshTokenIfood = result.RefreshToken;
                     empresa.VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn);
 
-                    ClsEmpresaIfood? EmpresaEditada = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, true, empresa);
+                    ClsEmpresaIfood? EmpresaEditada = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, empresa.MerchantSophos?.Id, true, empresa);
                     if (EmpresaEditada is not null)
                         return new ReturnApiRefatored<object>
                         {

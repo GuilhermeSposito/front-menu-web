@@ -50,6 +50,13 @@ public class EmpresaIfoodService
 
         return result ?? new ReturnApiRefatored<ClsEmpresaIfood>();
     }
+    public async Task<ReturnApiRefatored<ClsEmpresaIfood>> CreateEmpresaPublic(ClsEmpresaIfood empresa, string MerchantSophosID)
+    {
+        var response = await _http.PostAsJsonAsync<ClsEmpresaIfood>($"empresas-ifood/public/{MerchantSophosID}", empresa);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsEmpresaIfood>>();
+
+        return result ?? new ReturnApiRefatored<ClsEmpresaIfood>();
+    }
 
     public async Task<ReturnApiRefatored<ClsEmpresaIfood>> UpdateEmpresa(ClsEmpresaIfood empresa)
     {
