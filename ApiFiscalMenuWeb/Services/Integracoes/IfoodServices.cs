@@ -144,7 +144,7 @@ public class IfoodServices
         if (Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4)) //Menos 4 porque esta em utc 3 e menos 1 hora pra pegarmos o token 1 hora antes de vencer (6 horas é a validade do token)
         {
             var result = await AutenticarEmpresa(null, null, true, Empresa.RefreshTokenIfood, Empresa.Id);
-            if (result.Status == "success" && result.Data.ObjetoWhenWriting is ClsEmpresaIfood empresaAtualizada)
+            if (result.Status == "success" && result.Data.Objeto is ClsEmpresaIfood empresaAtualizada)
                 Empresa = empresaAtualizada;
             else
                 throw new Exception("Não foi possivel atualizar o token de acesso do ifood para realizar a ação necessária");
@@ -239,7 +239,7 @@ public class IfoodServices
     {
         try
         {
-            if(string.IsNullOrEmpty(dto.MerchantId))
+            if (string.IsNullOrEmpty(dto.MerchantId))
                 return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "MerchantId não pode ser nulo ou vazio" } };
 
             List<string> Messages = new List<string>();
@@ -248,7 +248,7 @@ public class IfoodServices
             if (Empresa is null || Empresa.MerchantSophos is null)
                 throw new Exception("Merchant não encontrado na base de dados do sophos");
 
-           await VerificaTokenVencidoIfood(Empresa);
+            await VerificaTokenVencidoIfood(Empresa);
 
             switch (dto.Code)
             {
@@ -348,7 +348,7 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId ,PedidoSophos);
+                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
 
 
             }
