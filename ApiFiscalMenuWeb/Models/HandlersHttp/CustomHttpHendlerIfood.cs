@@ -22,8 +22,6 @@ public class CustomHttpHendlerIfood : DelegatingHandler
     {
         try
         {
-            Environment.SetEnvironmentVariable("TOKEN_IFOOD_REQS", null, EnvironmentVariableTarget.Process);
-
             string? token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
             if (token is null)
             {

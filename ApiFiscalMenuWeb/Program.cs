@@ -45,6 +45,12 @@ builder.Services.AddHttpClient("ApiIBPT", client =>
     client.Timeout = TimeSpan.FromSeconds(5);
 });
 
+builder.Services.AddHttpClient("ApiIfoodAuth", client =>
+{
+    client.BaseAddress = new Uri(UrlApiIfood);
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 builder.Services.AddHttpClient("ApiIfood", client =>
 {
     client.BaseAddress = new Uri(UrlApiIfood);

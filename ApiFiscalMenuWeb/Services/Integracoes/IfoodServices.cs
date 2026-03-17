@@ -43,7 +43,7 @@ public class IfoodServices
     {
         try
         {
-            var HttpIfood = _factory.CreateClient("ApiIfood");
+            var HttpIfood = _factory.CreateClient("ApiIfoodAuth");
             FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
             {
               new KeyValuePair<string, string>("grantType", "client_credentials"),
@@ -52,18 +52,6 @@ public class IfoodServices
             });
 
             var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var raw = await response.Content.ReadAsStringAsync();
-
-                Console.WriteLine($"STATUS: {response.StatusCode}");
-                Console.WriteLine($"BODY: {raw}");
-
-                Console.WriteLine("Erro ao autenticar no iFood");
-                return false;
-            }
-
             var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
 
             if (result is not null)
