@@ -29,20 +29,23 @@ public class IfoodServices
     private readonly ILogger<IfoodServices> _logger;
     private readonly EmailService _emailService;
     private List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
+    private readonly IConfiguration _configuration;
 
-    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger, EmailService emailService)
+    public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger, EmailService emailService, IConfiguration configuration)
     {
         _factory = factory;
         _nestApiService = nestApiService;
         _logger = logger;
         _emailService = emailService;
+        _configuration = configuration;
     }
     #endregion
 
     public async Task<bool> AutenticarEmpresa()
     {
-        string? ClientIdIfood = Environment.GetEnvironmentVariable("CLIENT_ID_IFOOD");
-        string? ClientSercretIfood = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+        string? ClientIdIfood = _configuration["Ifood:CLIENT_ID_IFOOD"];
+        string? ClientSercretIfood = _configuration["Ifood:CLIENT_SECRET"];
+
         if (string.IsNullOrEmpty(ClientIdIfood) || string.IsNullOrEmpty(ClientSercretIfood))
             throw new Exception("ClientId ou ClientSecret do ifood não encontrado nas variáveis de ambiente");
 

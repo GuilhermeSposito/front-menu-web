@@ -25,8 +25,6 @@ builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
-DotNetEnv.Env.Load();
-builder.Configuration.AddEnvironmentVariables();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
