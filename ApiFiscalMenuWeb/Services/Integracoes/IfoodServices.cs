@@ -50,6 +50,8 @@ public class IfoodServices
         var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);
         var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfoodDto>();
 
+        Console.WriteLine(await response.Content.ReadAsStringAsync();
+
         return new ReturnApiRefatored<object>
         {
             Status = response.IsSuccessStatusCode ? "success" : "error",
