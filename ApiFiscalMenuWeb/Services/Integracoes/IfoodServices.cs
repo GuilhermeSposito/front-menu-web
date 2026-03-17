@@ -43,8 +43,8 @@ public class IfoodServices
 
     public async Task<bool> AutenticarEmpresa()
     {
-        string? ClientIdIfood = _configuration["Ifood:CLIENT_ID_IFOOD"];
-        string? ClientSercretIfood = _configuration["Ifood:CLIENT_SECRET"];
+        string? ClientIdIfood = _configuration["Ifood:ClientId"];
+        string? ClientSercretIfood = _configuration["Ifood:ClientSecret"];
 
         if (string.IsNullOrEmpty(ClientIdIfood) || string.IsNullOrEmpty(ClientSercretIfood))
             throw new Exception("ClientId ou ClientSecret do ifood não encontrado nas variáveis de ambiente");
