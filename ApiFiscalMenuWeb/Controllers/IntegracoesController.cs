@@ -126,7 +126,7 @@ public class IntegracoesController : Controller
         if (!valid && !dto!.Teste)
         {
             if (dto?.FullCode == "KEEPALIVE")
-                return Accepted(dto.MerchantIds);
+                return Accepted(new { dto?.MerchantIds });
 
             Console.WriteLine("Assinatura Invalida");
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Assinatura inválida" } });
@@ -135,6 +135,6 @@ public class IntegracoesController : Controller
         if (dto is not null)
             await _ifoodService.AddOrUpdateOrders(dto);
 
-        return Accepted(dto?.MerchantIds);
+        return Accepted(new { dto?.MerchantIds });
     }
 }
