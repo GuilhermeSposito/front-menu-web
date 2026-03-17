@@ -88,7 +88,7 @@ public class CustomHttpHendlerIfood : DelegatingHandler
               new KeyValuePair<string, string>("grantType", "client_credentials"),
               new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
               new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
-        });
+            });
 
             var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
 

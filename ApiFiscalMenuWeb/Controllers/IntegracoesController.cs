@@ -122,4 +122,12 @@ public class IntegracoesController : Controller
 
         return Accepted(new { dto?.MerchantIds });
     }
+
+    [HttpPost("autenticar_ifood_teste")]
+    public async Task<ActionResult> AutenticarEmpresa()
+    {
+        await _ifoodService.AutenticarEmpresa();
+
+        return Ok();
+    }
 }
