@@ -354,6 +354,7 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
+                Console.WriteLine(UpdateDto.MerchantId);
                 var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
 
             }
@@ -383,8 +384,6 @@ public class IfoodServices
             }
 
         }
-
-
 
         return true;
     }
