@@ -57,7 +57,7 @@ public class IntegracoesController : Controller
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
 
-       // var Return = await _ifoodService.Polling(token);
+        // var Return = await _ifoodService.Polling(token);
         return Ok();
     }
     #endregion
@@ -118,9 +118,6 @@ public class IntegracoesController : Controller
         var signature = HttpContext.Request.Headers["X-IFood-Signature"].ToString();
         var dto = JsonSerializer.Deserialize<WebHookIfoodDto>(bodyBytes);
 
-        var json = JsonSerializer.Serialize(dto);
-        Console.WriteLine($"Body: {json}");
-        Console.WriteLine($"Ifood Signature {signature}");
 
         var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
         if (!valid && !dto!.Teste)
@@ -131,6 +128,9 @@ public class IntegracoesController : Controller
             Console.WriteLine("Assinatura Invalida");
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Assinatura inválida" } });
         }
+        var json = JsonSerializer.Serialize(dto);
+        Console.WriteLine($"Body: {json}");
+        Console.WriteLine($"Ifood Signature {signature}");
 
         if (dto is not null)
             await _ifoodService.AddOrUpdateOrders(dto);
