@@ -96,7 +96,7 @@ public class IfoodServices
                     MerchantIdIfood = Infos.MerchantIdIfood,
                     AccessTokenIfood = result.AccessToken,
                     RefreshTokenIfood = result.RefreshToken,
-                    VenceTokenIfood = DateTime.Now.AddSeconds(result.ExpiresIn - 3600),
+                    VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn),
                     Ativo = true
                 };
 
@@ -117,7 +117,7 @@ public class IfoodServices
                 {
                     empresa.AccessTokenIfood = result.AccessToken;
                     empresa.RefreshTokenIfood = result.RefreshToken;
-                    empresa.VenceTokenIfood = DateTime.Now.AddSeconds(result.ExpiresIn);
+                    empresa.VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn);
 
                     bool EditouEmpresa = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, true, empresa);
                     if (EditouEmpresa)
@@ -137,6 +137,18 @@ public class IfoodServices
             Status = "error",
             Messages = new List<string> { "Erro Ao obter Resposta do Ifood" }
         };
+    }
+
+    public async Task VerificaTokenVencidoIfood(ClsEmpresaIfood Empresa)
+    {
+        if (Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4)) //Menos 4 porque esta em utc 3 e menos 1 hora pra pegarmos o token 1 hora antes de vencer (6 horas é a validade do token)
+        {
+            var result = await AutenticarEmpresa(null, null, true, Empresa.RefreshTokenIfood, Empresa.Id);
+            if (result.Status == "success" && result.Data.ObjetoWhenWriting is ClsEmpresaIfood empresaAtualizada)
+                Empresa = empresaAtualizada;
+            else
+                throw new Exception("Não foi possivel atualizar o token de acesso do ifood para realizar a ação necessária");
+        }
     }
     #endregion
 
@@ -235,6 +247,8 @@ public class IfoodServices
             ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(dto.MerchantId);
             if (Empresa is null || Empresa.MerchantSophos is null)
                 throw new Exception("Merchant não encontrado na base de dados do sophos");
+
+           await VerificaTokenVencidoIfood(Empresa);
 
             switch (dto.Code)
             {
@@ -354,7 +368,6 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                Console.WriteLine(UpdateDto.MerchantId);
                 var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
 
             }
