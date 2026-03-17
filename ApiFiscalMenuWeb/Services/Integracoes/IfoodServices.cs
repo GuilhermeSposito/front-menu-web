@@ -349,7 +349,7 @@ public class IfoodServices
     {
         HttpClient? HttpIntegracaoCliente = null;
 
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && (UpdateDto.TokenNestApi is not null || UpdateDto.MerchantId is not null))
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
@@ -373,7 +373,7 @@ public class IfoodServices
 
         }
 
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && (UpdateDto.TokenNestApi is not null || UpdateDto.MerchantId is not null))
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
