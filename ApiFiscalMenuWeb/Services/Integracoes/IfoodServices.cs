@@ -45,7 +45,7 @@ public class IfoodServices
         var HttpIfood = _factory.CreateClient("ApiIfood");
         FormUrlEncodedContent formData = new FormUrlEncodedContent(new[]
         {
-              new KeyValuePair<string, string>("clientId", "7e476dce-79fa-4a7e-a605-aa2a1a40b803")
+              new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8")
         });
         var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);
         var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfoodDto>();
@@ -64,8 +64,8 @@ public class IfoodServices
         FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
         {
               new KeyValuePair<string, string>("grantType", "authorization_code"),
-              new KeyValuePair<string, string>("clientId", "7e476dce-79fa-4a7e-a605-aa2a1a40b803"),
-              new KeyValuePair<string, string>("clientSecret", "z5086yxoeeblv5go12ag9ynk2i8oan36l0gca8y9vs0h66yrorjh2nccdmxpbxk955lb0j6wc7vdpb2i3416aqs8ja4xjhbw3u0"),
+              new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
+              new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
               new KeyValuePair<string, string>("authorizationCode", Infos?.CodigoDeAutorizacaoEnviadoPeloIfood ?? ""),
               new KeyValuePair<string, string>("authorizationCodeVerifier", Infos?.VerificadorDoCodigo ?? "")
         });
@@ -75,8 +75,8 @@ public class IfoodServices
             formDataToGetTheToken = new FormUrlEncodedContent(new[]
              {
                         new KeyValuePair<string, string>("grantType", "refresh_token"),
-                        new KeyValuePair<string, string>("clientId", "7e476dce-79fa-4a7e-a605-aa2a1a40b803"),
-                        new KeyValuePair<string, string>("clientSecret", "z5086yxoeeblv5go12ag9ynk2i8oan36l0gca8y9vs0h66yrorjh2nccdmxpbxk955lb0j6wc7vdpb2i3416aqs8ja4xjhbw3u0"),
+                        new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
+                        new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
                         new KeyValuePair<string, string>("refreshToken", RefreshToken),
              }
            );
@@ -141,10 +141,6 @@ public class IfoodServices
 
     public async Task VerificaTokenVencidoIfood(ClsEmpresaIfood Empresa)
     {
-        Console.WriteLine(Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4));
-        Console.WriteLine(Empresa.VenceTokenIfood);
-        Console.WriteLine(DateTime.Now.AddHours(-4));
-
         if (Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4)) //Menos 4 porque esta em utc 3 e menos 1 hora pra pegarmos o token 1 hora antes de vencer (6 horas é a validade do token)
         {
             var result = await AutenticarEmpresa(null, null, true, Empresa.RefreshTokenIfood, Empresa.Id);
