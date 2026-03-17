@@ -19,12 +19,12 @@ public class CustomHttpHendlerIfood : DelegatingHandler
         try
         {
             string? token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
-            if (token is null)
+           /* if (token is null)
             {
                 bool Autenticou = await AutenticarEmpresa();
                 if (Autenticou)
                     token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
-            }
+            }*/
 
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
@@ -35,7 +35,7 @@ public class CustomHttpHendlerIfood : DelegatingHandler
 
 
             var refreshClient = _factory.CreateClient("ApiIfood");
-            await AutenticarEmpresa();
+           // await AutenticarEmpresa();
             token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
 
 
