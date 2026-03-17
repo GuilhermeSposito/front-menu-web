@@ -25,6 +25,8 @@ builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
+DotNetEnv.Env.Load();
+builder.Configuration.AddEnvironmentVariables();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
@@ -32,6 +34,7 @@ string UrlIBPT = builder.Configuration.GetValue<string>("UrlApiIbpt") ?? "";
 string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>("UrlApiMessageBroker") ?? "";
 string UrlMessageBrokerWhatsAppUnimakeAuth = builder.Configuration.GetValue<string>("UrlApiMessageBrokerAuth") ?? "";
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
+
 
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
