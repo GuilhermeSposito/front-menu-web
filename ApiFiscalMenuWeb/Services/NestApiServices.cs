@@ -174,7 +174,7 @@ public class NestApiServices
             AdicionaTokenNaRequisicao(client, TokenNest);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido, MerchantId);
+        var response = await PedidoServiceNest.UpdatePedidoDespachadoEProntoPublic(Pedido, MerchantId);
 
         return true;
     }
@@ -186,7 +186,7 @@ public class NestApiServices
             AdicionaTokenNaRequisicao(client, TokenNest);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoFinalizadoo(Pedido, MerchantSophosId: MerchantId);
+        var response = await PedidoServiceNest.UpdatePedidoFinalizadoPublic(Pedido, MerchantSophosId: MerchantId);
 
         return true;
     }
