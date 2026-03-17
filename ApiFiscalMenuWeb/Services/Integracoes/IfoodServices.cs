@@ -41,33 +41,30 @@ public class IfoodServices
 
     public async Task<bool> AutenticarEmpresa()
     {
-        try
+        string? ClientIdIfood = Environment.GetEnvironmentVariable("CLIENT_ID_IFOOD");
+        string? ClientSercretIfood = Environment.GetEnvironmentVariable("CLIENT_SECRET");
+        if (string.IsNullOrEmpty(ClientIdIfood) || string.IsNullOrEmpty(ClientSercretIfood))
+            throw new Exception("ClientId ou ClientSecret do ifood não encontrado nas variáveis de ambiente");
+
+
+        var HttpIfood = _factory.CreateClient("ApiIfoodAuth");
+        FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
         {
-            var HttpIfood = _factory.CreateClient("ApiIfoodAuth");
-            FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
-            {
               new KeyValuePair<string, string>("grantType", "client_credentials"),
-              new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
-              new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
+              new KeyValuePair<string, string>("clientId", ClientIdIfood),
+              new KeyValuePair<string, string>("clientSecret", ClientSercretIfood),
             });
 
-            var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
-            var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
+        var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
+        var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
 
-            if (result is not null)
-            {
-                Environment.SetEnvironmentVariable("TOKEN_IFOOD_REQS", result.AccessToken, EnvironmentVariableTarget.Process);
-                return true;
-            }
-
-            return false;
-        }
-        catch (Exception ex)
+        if (result is not null)
         {
-            Console.WriteLine("Erro ao pegar token ifood");
-            return false;
+            Environment.SetEnvironmentVariable("TOKEN_IFOOD_REQS", result.AccessToken, EnvironmentVariableTarget.Process);
+            return true;
         }
 
+        return false;
     }
 
     #region Pooling Region

@@ -37,12 +37,8 @@ public class CustomHttpHendlerIfood : DelegatingHandler
             if (response.StatusCode != HttpStatusCode.Unauthorized)
                 return response;
 
-
-            var refreshClient = _factory.CreateClient("ApiIfood");
             await _ifoodService.AutenticarEmpresa();
             token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
-
-
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             var newRequest = await CloneHttpRequestMessage(request);
