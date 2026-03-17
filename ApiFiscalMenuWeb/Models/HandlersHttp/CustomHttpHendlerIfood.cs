@@ -16,32 +16,41 @@ public class CustomHttpHendlerIfood : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        string? token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
-        if (token is null)
+        try
         {
-            bool Autenticou = await AutenticarEmpresa();
-            if(Autenticou)
-                token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
+            string? token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
+            if (token is null)
+            {
+                bool Autenticou = await AutenticarEmpresa();
+                if (Autenticou)
+                    token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
+            }
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await base.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode != HttpStatusCode.Unauthorized)
+                return response;
+
+
+            var refreshClient = _factory.CreateClient("ApiIfood");
+            await AutenticarEmpresa();
+            token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
+
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var newRequest = await CloneHttpRequestMessage(request);
+
+            return await base.SendAsync(newRequest, cancellationToken);
         }
-
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var response = await base.SendAsync(request, cancellationToken);
-
-        if (response.StatusCode != HttpStatusCode.Unauthorized)
-            return response;
-
-
-        var refreshClient = _factory.CreateClient("ApiIfood");
-        await AutenticarEmpresa();
-        token = Environment.GetEnvironmentVariable("TOKEN_IFOOD_REQS");
-
-
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-
-        var newRequest = await CloneHttpRequestMessage(request);
-
-        return await base.SendAsync(newRequest, cancellationToken);
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new HttpResponseMessage(HttpStatusCode.InternalServerError) { Content = new StringContent("Erro ao autenticar com o iFood") };
+        }
+   
     }
 
     private static async Task<HttpRequestMessage> CloneHttpRequestMessage(HttpRequestMessage request)
