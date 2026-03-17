@@ -10,6 +10,7 @@ public class UpdatePedidosDto
     [JsonPropertyName("EmpresaIfood")] public ClsEmpresaIfood MerchantIfood { get; set; } = new();
     [JsonPropertyName("PedidoIdIntegracao")] public string PedidoIdIntegracao { get; set; } = string.Empty;
     [JsonPropertyName("DestinoPedido")] public DestinoPedido DestinoPedido { get; set; }
+    [JsonPropertyName("MerchantId")] public string? MerchantId { get; set; }
     [JsonIgnore] public string? TokenNestApi { get; set; }
 }
 

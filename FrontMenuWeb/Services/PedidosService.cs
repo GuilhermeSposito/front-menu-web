@@ -202,33 +202,41 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido, string? MerchantSophosId = null)
     {
-        var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}", Pedido);
+        var QueryStringMerchantSophosId = !string.IsNullOrEmpty(MerchantSophosId) ? $"?merchant={MerchantSophosId}" : string.Empty;
+
+        var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}{QueryStringMerchantSophosId}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoDespachadoEPronto(ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoDespachadoEPronto(ClsPedido Pedido, string? MerchantSophosId = null)
     {
-        var response = await _http.PutAsJsonAsync($"pedidos/despachado/{Pedido.Id}", Pedido);
+        var QueryStringMerchantSophosId = !string.IsNullOrEmpty(MerchantSophosId) ? $"?merchant={MerchantSophosId}" : string.Empty;
+
+        var response = await _http.PutAsJsonAsync($"pedidos/despachado/{Pedido.Id}{QueryStringMerchantSophosId}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoFinalizadoo(ClsPedido Pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoFinalizadoo(ClsPedido Pedido, string? MerchantSophosId = null)
     {
-        var response = await _http.PutAsJsonAsync($"pedidos/finalizado/{Pedido.Id}", Pedido);
+        var QueryStringMerchantSophosId = !string.IsNullOrEmpty(MerchantSophosId) ? $"?merchant={MerchantSophosId}" : string.Empty;
+
+        var response = await _http.PutAsJsonAsync($"pedidos/finalizado/{Pedido.Id}{QueryStringMerchantSophosId}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoInfosAdicionaisOuStatus(UpdatePedidoInfosAdicionaisDto updatDto, ClsPedido pedido)
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoInfosAdicionaisOuStatus(UpdatePedidoInfosAdicionaisDto updatDto, ClsPedido pedido, string? MerchantSophosId = null)
     {
-        var response = await _http.PutAsJsonAsync($"pedidos/info-adicional/{pedido.Id}", updatDto);
+        var QueryStringMerchantSophosId = !string.IsNullOrEmpty(MerchantSophosId) ? $"?merchant={MerchantSophosId}" : string.Empty;
+
+        var response = await _http.PutAsJsonAsync($"pedidos/info-adicional/{pedido.Id}{QueryStringMerchantSophosId}", updatDto);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;

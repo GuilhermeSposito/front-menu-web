@@ -246,8 +246,10 @@ public class IfoodServices
                     //Aqui qunado for aceito o pedido e vier a confimação
                     break;
                 case "DSP":
+                    await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
                 case "CON":
+                    await MudaStatusPedidoConcluido(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
                 case "CAN":
                     break;
@@ -329,17 +331,12 @@ public class IfoodServices
 
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
         {
-            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId ,PedidoSophos);
 
 
-            }
-
-            if (Polling is not null)
-            {
-                PollingsToAcknowledge.Add(Polling);
             }
         }
 
@@ -354,19 +351,12 @@ public class IfoodServices
 
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
         {
-            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
+                var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
 
             }
-
-            if (Polling is not null)
-            {
-
-                PollingsToAcknowledge.Add(Polling);
-            }
-
         }
 
         return true;
@@ -385,16 +375,11 @@ public class IfoodServices
 
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
         {
-            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
                 var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
 
-            }
-
-            if (Polling is not null)
-            {
-                PollingsToAcknowledge.Add(Polling);
             }
 
         }
@@ -408,7 +393,7 @@ public class IfoodServices
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
         {
-            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.TokenNestApi, UpdateDto.PedidoIdIntegracao);
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
                 string infoAdicional = RetornaStatusCompletoAtualizado(Polling.Code);
@@ -895,7 +880,7 @@ public class IfoodServices
             {
                 try
                 {
-                    PedidoReferente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(TokenNestApi, IdPedidoIfood);
+                    PedidoReferente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(IdPedidoIfood);
                     if (PedidoReferente is null)
                         throw new Exception("Não Foi possivel ler os dados do pedido referente para obter o motivo de cancelamento");
 

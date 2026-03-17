@@ -159,34 +159,34 @@ public class NestApiServices
     }
 
 
-    public async Task<ClsPedido?> GetPedidoPeloIntegracaoIdAsync(string TokenNestAPi, string integracaoId)
+    public async Task<ClsPedido?> GetPedidoPeloIntegracaoIdAsync(string integracaoId)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestAPi);
-
         PedidosService PedidoServiceNest = new PedidosService(client);
         var response = await PedidoServiceNest.GetPedidoByIntegracaoId(integracaoId);
 
         return response;
     }
-    public async Task<bool> UpdatePedidoDespachadoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
+    public async Task<bool> UpdatePedidoDespachadoNaAPiPrincipalAsync(string? TokenNest, string? MerchantId, ClsPedido Pedido)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+        if (!string.IsNullOrEmpty(TokenNest))
+            AdicionaTokenNaRequisicao(client, TokenNest);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido);
+        var response = await PedidoServiceNest.UpdatePedidoDespachadoEPronto(Pedido, MerchantId);
 
         return true;
     }
 
-    public async Task<bool> UpdatePedidoConcluidodoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido)
+    public async Task<bool> UpdatePedidoConcluidodoNaAPiPrincipalAsync(string? TokenNest, string? MerchantId, ClsPedido Pedido)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestAPi);
+        if(!string.IsNullOrEmpty(TokenNest))
+            AdicionaTokenNaRequisicao(client, TokenNest);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoFinalizadoo(Pedido);
+        var response = await PedidoServiceNest.UpdatePedidoFinalizadoo(Pedido, MerchantSophosId: MerchantId);
 
         return true;
     }

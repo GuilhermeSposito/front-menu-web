@@ -128,11 +128,12 @@ public class IntegracoesController : Controller
             Console.WriteLine("Assinatura Invalida");
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Assinatura inválida" } });
         }
+
         var json = JsonSerializer.Serialize(dto);
         Console.WriteLine($"Body: {json}");
         Console.WriteLine($"Ifood Signature {signature}");
 
-        if (dto is not null)
+        if (dto is not null && dto.FullCode != "KEEPALIVE")
             await _ifoodService.AddOrUpdateOrders(dto);
 
         return Accepted(new { dto?.MerchantIds });
