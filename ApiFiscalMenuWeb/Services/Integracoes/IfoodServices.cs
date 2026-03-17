@@ -58,7 +58,7 @@ public class IfoodServices
         };
     }
 
-    public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
+    public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string? TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
     {
         var HttpIfood = _factory.CreateClient("ApiIfood");
         FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
@@ -100,9 +100,9 @@ public class IfoodServices
                     Ativo = true
                 };
 
-                bool AdicionouEmpresa = await _nestApiService.EditarEAdicionarEmpresaIfood(NovaEmpresa, TokenNestAPi);
+                ClsEmpresaIfood? EmpresaNova = await _nestApiService.EditarEAdicionarEmpresaIfood(NovaEmpresa, TokenNestAPi);
 
-                if (AdicionouEmpresa)
+                if (EmpresaNova is not null)
                     return new ReturnApiRefatored<object>
                     {
                         Status = response.IsSuccessStatusCode ? "success" : "error",
@@ -119,8 +119,8 @@ public class IfoodServices
                     empresa.RefreshTokenIfood = result.RefreshToken;
                     empresa.VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn);
 
-                    bool EditouEmpresa = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, true, empresa);
-                    if (EditouEmpresa)
+                    ClsEmpresaIfood? EmpresaEditada = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, true, empresa);
+                    if (EmpresaEditada is not null)
                         return new ReturnApiRefatored<object>
                         {
                             Status = response.IsSuccessStatusCode ? "success" : "error",

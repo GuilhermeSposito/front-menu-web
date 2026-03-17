@@ -67,10 +67,12 @@ public class NestApiServices
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    public async Task<bool> EditarEAdicionarEmpresaIfood(ClsEmpresaIfood empresa, string TokenNestApi, bool Editando = false, ClsEmpresaIfood? EmpresaASerEditada = null)
+    public async Task<ClsEmpresaIfood?> EditarEAdicionarEmpresaIfood(ClsEmpresaIfood empresa, string? TokenNestApi, bool Editando = false, ClsEmpresaIfood? EmpresaASerEditada = null)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestApi);
+        if (!string.IsNullOrEmpty(TokenNestApi))
+            AdicionaTokenNaRequisicao(client, TokenNestApi);
+
         var EmpresaServiceNest = new EmpresaIfoodService(client, _factory);
 
         ReturnApiRefatored<ClsEmpresaIfood>? RetornoDoCreate = null;
@@ -86,9 +88,9 @@ public class NestApiServices
         }
 
         if (RetornoDoCreate is null)
-            return false;
+            return null;
 
-        return RetornoDoCreate.Status == "success" ? true : false;
+        return RetornoDoCreate.Data.Objeto;
     }
 
     public async Task<ClsEmpresaIfood?> RetornaEmpresaIfood(string? TokenNestApi, int IdEmpresa)
@@ -182,7 +184,7 @@ public class NestApiServices
     public async Task<bool> UpdatePedidoConcluidodoNaAPiPrincipalAsync(string? TokenNest, string? MerchantId, ClsPedido Pedido)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        if(!string.IsNullOrEmpty(TokenNest))
+        if (!string.IsNullOrEmpty(TokenNest))
             AdicionaTokenNaRequisicao(client, TokenNest);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
