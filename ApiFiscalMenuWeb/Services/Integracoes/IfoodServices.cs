@@ -50,7 +50,7 @@ public class IfoodServices
         var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);
         var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfoodDto>();
 
-        Console.WriteLine(await response.Content.ReadAsStringAsync();
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
 
         return new ReturnApiRefatored<object>
         {
@@ -62,8 +62,6 @@ public class IfoodServices
 
     public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string? TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
     {
-
-
         var HttpIfood = _factory.CreateClient("ApiIfood");
         FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
         {
@@ -89,10 +87,10 @@ public class IfoodServices
         var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
         var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
 
+        Console.WriteLine($"Body da response: {await response.Content.ReadAsStringAsync()}");
+
         if (result is not null && result.AccessToken is not null && result.RefreshToken is not null)
         {
-
-
             if (!Refresh && TokenNestAPi is not null)
             {
                 var Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestAPi);
