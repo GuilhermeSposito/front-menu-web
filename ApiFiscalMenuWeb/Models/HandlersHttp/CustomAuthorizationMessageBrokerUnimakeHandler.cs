@@ -6,11 +6,11 @@ using System.Text.Json.Serialization;
 
 namespace ApiFiscalMenuWeb.Models.HandlersHttp;
 
-public class CustomAuthorizationMessageUnimakeHandler : DelegatingHandler
+public class CustomAuthorizationMessageBrokerUnimakeHandler : DelegatingHandler
 {
     private readonly IHttpClientFactory _factory;
 
-    public CustomAuthorizationMessageUnimakeHandler(IHttpClientFactory factory)
+    public CustomAuthorizationMessageBrokerUnimakeHandler(IHttpClientFactory factory)
     {
         _factory = factory;
     }

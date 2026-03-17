@@ -27,12 +27,6 @@ public class IntegracoesController : Controller
     }
 
     #region Região de Autenticacao e Autorização
-    [HttpGet("ifood/authorization-code")]
-    public async Task<ActionResult<ReturnApiRefatored<object>>> GetAuthorization()
-    {
-        return await _ifoodService.GetAutorizationCode();
-    }
-
     [HttpPost("ifood/autenticar")]
     public async Task<ActionResult<ReturnApiRefatored<object>>> Autenticar([FromBody] InformacoesParaAutenticarEmpresaIfoodDto infos)
     {

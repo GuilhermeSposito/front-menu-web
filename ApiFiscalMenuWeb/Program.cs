@@ -16,7 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<CustomAuthorizationMessageUnimakeHandler>();
+builder.Services.AddScoped<CustomAuthorizationMessageBrokerUnimakeHandler>();
+builder.Services.AddScoped<CustomHttpHendlerIfood>();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<MessageService>();
@@ -48,13 +49,13 @@ builder.Services.AddHttpClient("ApiIfood", client =>
 {
     client.BaseAddress = new Uri(UrlApiIfood);
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+}).AddHttpMessageHandler<CustomHttpHendlerIfood>();
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimake", client =>
 {
     client.BaseAddress = new Uri("https://unimake.app/umessenger");
     client.Timeout = TimeSpan.FromSeconds(30);
-}).AddHttpMessageHandler<CustomAuthorizationMessageUnimakeHandler>();
+}).AddHttpMessageHandler<CustomAuthorizationMessageBrokerUnimakeHandler>();
 
 builder.Services.AddHttpClient("ApiMessageBrokerUnimakeAuth", client =>
 {

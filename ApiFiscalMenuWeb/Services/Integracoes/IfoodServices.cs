@@ -40,105 +40,28 @@ public class IfoodServices
     #endregion
 
     #region Autorização e Autenticacao Region
-    public async Task<ReturnApiRefatored<object>> GetAutorizationCode()
-    {
-        var HttpIfood = _factory.CreateClient("ApiIfood");
-        FormUrlEncodedContent formData = new FormUrlEncodedContent(new[]
-        {
-              new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8")
-        });
-        var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/userCode", formData);
-        var result = await response.Content.ReadFromJsonAsync<UserCodeReturnFromAPIIfoodDto>();
-
-        Console.WriteLine(await response.Content.ReadAsStringAsync());
-
-        return new ReturnApiRefatored<object>
-        {
-            Status = response.IsSuccessStatusCode ? "success" : "error",
-            Messages = new List<string> { result.VerificationUrlComplete ?? "" },
-            Data = new Data<object> { ObjetoWhenWriting = result }
-        };
-    }
-
     public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string? TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
     {
         var HttpIfood = _factory.CreateClient("ApiIfood");
         FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
         {
-              new KeyValuePair<string, string>("grantType", "authorization_code"),
+              new KeyValuePair<string, string>("grantType", "client_credentials"),
               new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
               new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
-              new KeyValuePair<string, string>("authorizationCode", Infos?.CodigoDeAutorizacaoEnviadoPeloIfood ?? ""),
-              new KeyValuePair<string, string>("authorizationCodeVerifier", Infos?.VerificadorDoCodigo ?? "")
         });
-
-        if (Refresh && !string.IsNullOrEmpty(RefreshToken))
-        {
-            formDataToGetTheToken = new FormUrlEncodedContent(new[]
-             {
-                        new KeyValuePair<string, string>("grantType", "refresh_token"),
-                        new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
-                        new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
-                        new KeyValuePair<string, string>("refreshToken", RefreshToken),
-             }
-           );
-        }
 
         var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
         var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
 
-        Console.WriteLine($"Body da response: {await response.Content.ReadAsStringAsync()}");
-
-        if (result is not null && result.AccessToken is not null && result.RefreshToken is not null)
+        if (result is not null)
         {
-            if (!Refresh && TokenNestAPi is not null)
+            Environment.SetEnvironmentVariable("TOKEN_IFOOD_REQS", result.AccessToken, EnvironmentVariableTarget.Process);
+            return new ReturnApiRefatored<object>
             {
-                var Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestAPi);
-                if(Merchant is null)
-                    throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
-
-                var NovaEmpresa = new ClsEmpresaIfood
-                {
-                    NomeEmpresa = Infos.NomeEmpresa,
-                    MerchantIdIfood = Infos.MerchantIdIfood,
-                    AccessTokenIfood = result.AccessToken,
-                    RefreshTokenIfood = result.RefreshToken,
-                    VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn),
-                    Ativo = true
-                };
-
-                ClsEmpresaIfood? EmpresaNova = await _nestApiService.EditarEAdicionarEmpresaIfood(NovaEmpresa, TokenNestAPi, MerchantSophosId: Merchant.Id);
-
-                if (EmpresaNova is not null)
-                    return new ReturnApiRefatored<object>
-                    {
-                        Status = response.IsSuccessStatusCode ? "success" : "error",
-                        Messages = new List<string> { "Empresa Autenticada com Sucesso!" },
-                        Data = new Data<object> { ObjetoWhenWriting = result, Messages = new List<string> { "Empresa Autenticada com sucesso!" } }
-                    };
-            }
-            else
-            {
-                ClsEmpresaIfood? empresa = await _nestApiService.RetornaEmpresaIfood(TokenNestAPi, IdEmpresa);
-                if (empresa is not null)
-                {
-
-                    empresa.AccessTokenIfood = result.AccessToken;
-                    empresa.RefreshTokenIfood = result.RefreshToken;
-                    empresa.VenceTokenIfood = DateTime.Now.AddHours(-3).AddSeconds(result.ExpiresIn);
-
-                    ClsEmpresaIfood? EmpresaEditada = await _nestApiService.EditarEAdicionarEmpresaIfood(empresa, TokenNestAPi, empresa.MerchantSophos?.Id, true, empresa);
-                    if (EmpresaEditada is not null)
-                        return new ReturnApiRefatored<object>
-                        {
-                            Status = response.IsSuccessStatusCode ? "success" : "error",
-                            Messages = new List<string> { "Token Atualizado com Sucesso!" },
-                            Data = new Data<object> { ObjetoWhenWriting = empresa, Messages = new List<string> { "Token Atualizado com Sucesso!" } }
-                        };
-                }
-            }
+                Status = "success",
+                Messages = new List<string> { "Sucesso Ao Adicionar Token do Ifood" }
+            };
         }
-
 
         return new ReturnApiRefatored<object>
         {
@@ -146,103 +69,9 @@ public class IfoodServices
             Messages = new List<string> { "Erro Ao obter Resposta do Ifood" }
         };
     }
-
-    public async Task VerificaTokenVencidoIfood(ClsEmpresaIfood Empresa)
-    {
-        if (Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4)) //Menos 4 porque esta em utc 3 e menos 1 hora pra pegarmos o token 1 hora antes de vencer (6 horas é a validade do token)
-        {
-            var result = await AutenticarEmpresa(null, null, true, Empresa.RefreshTokenIfood, Empresa.Id);
-            if (result.Status == "success" && result.Data.Objeto is ClsEmpresaIfood empresaAtualizada)
-                Empresa = empresaAtualizada;
-            else
-                throw new Exception("Não foi possivel atualizar o token de acesso do ifood para realizar a ação necessária");
-        }
-    }
     #endregion
 
     #region Pooling Region
-    public async Task<ReturnApiRefatored<object>> Polling(string TokenNestApi)
-    {
-        try
-        {
-            ClsMerchant? Merchant = await _nestApiService.GetMerchantFromNestApi(TokenNestApi);
-            if (Merchant is null)
-                throw new Exception("Não Foi possivel obter acesso as informações do estabelecimento!");
-
-            List<string> Messages = new List<string>();
-            if (Merchant.IntegraIfood)
-                if (Merchant.EmpresasIfood.Count() > 0)
-                {
-                    var IfoodClient = _factory.CreateClient("ApiIfood");
-                    foreach (var merchantsIfood in Merchant.EmpresasIfood)
-                    {
-                        if (!merchantsIfood.Ativo)
-                            continue;
-
-                        string AccessToken = merchantsIfood.AccessTokenIfood;
-                        AdicionaTokenNaRequisicao(IfoodClient, AccessToken);
-
-                        var PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
-                        if (PoolingResponse.StatusCode == HttpStatusCode.Unauthorized)
-                        {
-                            var result = await AutenticarEmpresa(null, TokenNestApi, true, merchantsIfood.RefreshTokenIfood, merchantsIfood.Id);
-                            if (result.Status == "success" && result.Data.ObjetoWhenWriting is ClsEmpresaIfood empresaAtualizada)
-                                AdicionaTokenNaRequisicao(IfoodClient, empresaAtualizada.AccessTokenIfood);
-
-                            PoolingResponse = await IfoodClient.GetAsync("/events/v1.0/events:polling");
-                            if (PoolingResponse.StatusCode == HttpStatusCode.Unauthorized)
-                                continue;
-                        }
-
-                        if (!PoolingResponse.IsSuccessStatusCode)
-                        {
-                            _logger.LogWarning($"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}");
-                            return new ReturnApiRefatored<object>
-                            {
-                                Status = "error",
-                                Messages = new List<string> { $"Falha ao realizar pooling para o merchant {Merchant.NomeFantasia} erro: {PoolingResponse.StatusCode}" }
-                            };
-
-                        }
-                    }
-
-                }
-                else // CASO NÃO EXISTA NENHUMA EMPRESA IFOOD VINCULADA AO ESTABELECIMENTO
-                {
-                    return new ReturnApiRefatored<object>
-                    {
-                        Status = "error",
-                        Messages = new List<string> { "Nenhuma Empresa Ifood Encontrada para esse Estabelecimento!" }
-                    };
-
-                }
-
-            return new ReturnApiRefatored<object>
-            {
-                Status = "success",
-                Messages = Messages
-            };
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogError(ex, "Conversão do pedido Ifood não válida. Endpoint: {Pooling}", "Pooling");
-            await EnviaEmailDeErro(ex.ToString());
-            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Não Foi possivel ler o pedido do ifood" } };
-        }
-        catch (OperationCanceledException ex)
-        {
-            _logger.LogError(ex, "Pooling do iFood cancelado. Endpoint: {Pooling}", "Pooling");
-            await EnviaEmailDeErro(ex.ToString());
-            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "A requisição para leitura de pedidos demorou muito e foi cancelada." } };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Tipo real da exception: {Type}", ex.GetType().FullName);
-            await EnviaEmailDeErro(ex.ToString());
-            return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
-        }
-    }
-
     public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto)
     {
         try
@@ -256,7 +85,6 @@ public class IfoodServices
             if (Empresa is null || Empresa.MerchantSophos is null)
                 throw new Exception("Merchant não encontrado na base de dados do sophos");
 
-            await VerificaTokenVencidoIfood(Empresa);
 
             switch (dto.Code)
             {
@@ -307,7 +135,6 @@ public class IfoodServices
     private async Task<PedidoIfoodDto?> GetPedidoIfood(string OrderId, ClsEmpresaIfood MerchantIfood)
     {
         var IfoodClient = _factory.CreateClient("ApiIfood");
-        AdicionaTokenNaRequisicao(IfoodClient, MerchantIfood.AccessTokenIfood);
 
         var PedidoResponse = await IfoodClient.GetAsync($"order/v1.0/orders/{OrderId}");
         if (PedidoResponse.IsSuccessStatusCode)
@@ -329,7 +156,6 @@ public class IfoodServices
     private async Task<bool> AceitaPedido(string PedidoId, ClsEmpresaIfood MerchantIfood)
     {
         var IfoodClient = _factory.CreateClient("ApiIfood");
-        AdicionaTokenNaRequisicao(IfoodClient, MerchantIfood.AccessTokenIfood);
 
         var ResponseConfirm = await IfoodClient.PostAsync($"order/v1.0/orders/{PedidoId}/confirm", null);
         return ResponseConfirm.IsSuccessStatusCode;
@@ -341,7 +167,6 @@ public class IfoodServices
         if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
         {
             HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
-            AdicionaTokenNaRequisicao(HttpIntegracaoCliente, UpdateDto.MerchantIfood.AccessTokenIfood);
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
             var response = await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/dispatch", null);
             if (Polling is not null)
@@ -390,7 +215,6 @@ public class IfoodServices
         if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
         {
             HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
-            AdicionaTokenNaRequisicao(HttpIntegracaoCliente, UpdateDto.MerchantIfood.AccessTokenIfood);
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
 
         }
@@ -468,7 +292,6 @@ public class IfoodServices
                 }
             }
             var IfoodClient = _factory.CreateClient("ApiIfood");
-            AdicionaTokenNaRequisicao(IfoodClient, EmpresaIfood.AccessTokenIfood);
 
             var json = JsonSerializer.Serialize(CancelationDto.CancalationComfirmation);
 
@@ -729,11 +552,6 @@ public class IfoodServices
     #endregion
 
     #region Funções Auxiliares
-    private void AdicionaTokenNaRequisicao(HttpClient client, string token)
-    {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
-
     private string RetornaTipoDoPedidoSophos(string tipoIfood)
     {
         switch (tipoIfood)
@@ -920,7 +738,6 @@ public class IfoodServices
             }
 
             var IfoodClient = _factory.CreateClient("ApiIfood");
-            AdicionaTokenNaRequisicao(IfoodClient, EmpresaIfood.AccessTokenIfood);
 
             var Response = await IfoodClient.GetAsync($"order/v1.0/orders/{PedidoReferente?.IfoodID ?? IdPedidoIfood}/cancellationReasons");
             List<ClsCancelationReasons>? CancelationReasons = await Response.Content.ReadFromJsonAsync<List<ClsCancelationReasons>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
