@@ -39,38 +39,6 @@ public class IfoodServices
     }
     #endregion
 
-    #region Autorização e Autenticacao Region
-    public async Task<ReturnApiRefatored<object>> AutenticarEmpresa(InformacoesParaAutenticarEmpresaIfoodDto? Infos, string? TokenNestAPi, bool Refresh, string? RefreshToken, int IdEmpresa)
-    {
-        var HttpIfood = _factory.CreateClient("ApiIfood");
-        FormUrlEncodedContent formDataToGetTheToken = new FormUrlEncodedContent(new[]
-        {
-              new KeyValuePair<string, string>("grantType", "client_credentials"),
-              new KeyValuePair<string, string>("clientId", "20bd3527-0599-4762-a773-b167dad2a9c8"),
-              new KeyValuePair<string, string>("clientSecret", "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry"),
-        });
-
-        var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
-        var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
-
-        if (result is not null)
-        {
-            Environment.SetEnvironmentVariable("TOKEN_IFOOD_REQS", result.AccessToken, EnvironmentVariableTarget.Process);
-            return new ReturnApiRefatored<object>
-            {
-                Status = "success",
-                Messages = new List<string> { "Sucesso Ao Adicionar Token do Ifood" }
-            };
-        }
-
-        return new ReturnApiRefatored<object>
-        {
-            Status = "error",
-            Messages = new List<string> { "Erro Ao obter Resposta do Ifood" }
-        };
-    }
-    #endregion
-
     #region Pooling Region
     public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto)
     {

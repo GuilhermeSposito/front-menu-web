@@ -26,20 +26,6 @@ public class IntegracoesController : Controller
         _webhookSignature = webhookSignature;
     }
 
-    #region Região de Autenticacao e Autorização
-    [HttpPost("ifood/autenticar")]
-    public async Task<ActionResult<ReturnApiRefatored<object>>> Autenticar([FromBody] InformacoesParaAutenticarEmpresaIfoodDto infos)
-    {
-        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
-        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
-        if (string.IsNullOrEmpty(token))
-            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
-
-
-        var Return = await _ifoodService.AutenticarEmpresa(infos, token, false, null, 0);
-        return Ok(Return);
-    }
-    #endregion
 
     #region Região de Polling
     [HttpGet("polling")]
