@@ -89,7 +89,16 @@ public class CustomHttpHendlerIfood : DelegatingHandler
 
             var response = await HttpIfood.PostAsync("/authentication/v1.0/oauth/token", formDataToGetTheToken);
 
-            Console.WriteLine($"Response Body: {await response.Content.ReadAsStringAsync()}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var raw = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"STATUS: {response.StatusCode}");
+                Console.WriteLine($"BODY: {raw}");
+
+                Console.WriteLine("Erro ao autenticar no iFood");
+                return false;
+            }
 
             var result = await response.Content.ReadFromJsonAsync<InformacoesDoTokenRetornadaPeloIfoodDto>();
 
