@@ -141,6 +141,10 @@ public class IfoodServices
 
     public async Task VerificaTokenVencidoIfood(ClsEmpresaIfood Empresa)
     {
+        Console.WriteLine(Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4));
+        Console.WriteLine(Empresa.VenceTokenIfood);
+        Console.WriteLine(DateTime.Now.AddHours(-4));
+
         if (Empresa.VenceTokenIfood <= DateTime.Now.AddHours(-4)) //Menos 4 porque esta em utc 3 e menos 1 hora pra pegarmos o token 1 hora antes de vencer (6 horas é a validade do token)
         {
             var result = await AutenticarEmpresa(null, null, true, Empresa.RefreshTokenIfood, Empresa.Id);
