@@ -913,6 +913,30 @@
         await BuscarPedidos();
     }
 
+    private async void VerificaSeTemPedidosAbertos()
+    {
+        PaginatedResponse<ClsPedido> retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Status = StatusPedidos.ABERTO });
+        if (retornoPedidosAbertos.Total > 0)
+        {
+            bool TemPedidoAbertoIntegracao = false;
+            foreach (var pedido in retornoPedidosAbertos.Data)
+            {
+                if (pedido.CriadoPor != "SOPHOS")
+                {
+                    TemPedidoAbertoIntegracao = true;
+                    break;
+                }        
+            }
+
+            if(TemPedidoAbertoIntegracao)
+            {
+                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                return;
+            }
+
+        }
+    }
 
     private async Task BuscarPedidos()
     {
@@ -1076,6 +1100,7 @@
 
         while (await _timer.WaitForNextTickAsync(_cts.Token))
         {
+            VerificaSeTemPedidosAbertos();
             await VerificaPedidosNaoImpressos();
         }
     }
