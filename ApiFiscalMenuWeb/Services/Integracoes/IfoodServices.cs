@@ -595,7 +595,7 @@ public class IfoodServices
 
     private string RetornaStatusCompletoAtualizado(string legendaTamnho)
     {
-        switch (legendaTamnho)
+        switch (legendaTamnho) //Atualiza status enviados pelo ifood
         {
             case "CAR":
                 return "Solicitação de cancelamento feita pelo Merchant (loja) ou pelo iFood de maneira automática (pedidos não confirmados dentro do prazo) ou de maneira manual através do nosso time de atendimento";
