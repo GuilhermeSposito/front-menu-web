@@ -383,6 +383,7 @@
 @code {
     #region Propriedades
     public bool Carregando { get; set; } = true;
+    public bool ProcessandoNovoPedido { get; set; } = false;
     public bool CarregandoParteFiscal { get; set; } = false;
     public string LabelDeCarregamento { get; set; } = "Emitindo NFC-e..";
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
@@ -756,7 +757,7 @@
                 if (item.Selector == "NOVO")
                 {
                     if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
-                        await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);   
+                        await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
 
                     item.Selector = "PREPARANDO";
                     var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
@@ -1083,6 +1084,9 @@
     {
         try
         {
+            if (ProcessandoNovoPedido) //condicional para não duplicar a impressão
+                return;
+
             bool IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood") ?? false;
             if (!IntegraIfood)
             {
@@ -1136,31 +1140,49 @@
     }
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
-        bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
-
-        if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor != "SOPHOS")
+        ProcessandoNovoPedido = true;
+        try
         {
-            if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
+            bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
+
+            if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor != "SOPHOS")
             {
+                if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
+                {
+                    await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                    Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                    return;
+                }
+
                 await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
+                await VizualizaSeNaoExistePedidoNaTela(novoPedido);
+
+                if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes)
+                    await ImprimirPedido(novoPedido, false);
+
+                if (AppState.MerchantLogado is null) //Mesmo se o merchant for nulo vai imprimir
+                    await ImprimirPedido(novoPedido, false);
+
+                await PedidosService.UpdatePedidoImpresso(novoPedido);
+
+                await InvokeAsync(StateHasChanged);
                 return;
             }
 
-            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-            Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
+            await JS.InvokeVoidAsync("playNotificationSound");
             await VizualizaSeNaoExistePedidoNaTela(novoPedido);
-            await ImprimirPedido(novoPedido, false);
-
-            await PedidosService.UpdatePedidoImpresso(novoPedido);
-
-            await InvokeAsync(StateHasChanged);
-            return;
+            Snackbar.Add("Novo pedido recebido!", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao Obter pedido automaticamente, por favor atualize a página", Severity.Error);
+        }
+        finally
+        {
+            ProcessandoNovoPedido = false;
         }
 
-        await JS.InvokeVoidAsync("playNotificationSound");
-        await VizualizaSeNaoExistePedidoNaTela(novoPedido);
-        Snackbar.Add("Novo pedido recebido!", Severity.Info);
     }
 
     private async Task VizualizaSeNaoExistePedidoNaTela(ClsPedido pedido)
