@@ -87,17 +87,25 @@ builder.Services.AddCors(options =>
     options.AddPolicy("CorsLiberado", policy =>
     {
         policy
-            /*.SetIsOriginAllowed(origin =>
+            .SetIsOriginAllowed(origin =>
             {
                 if (string.IsNullOrEmpty(origin))
                     return false;
 
-                return origin.EndsWith(".sophos-erp.com.br") || origin == UrlCors || origin == UrlSophos;
-            })*/
+                return origin
+                .EndsWith(".sophos-erp.com.br") ||
+                origin == UrlCors ||
+                origin == UrlSophos ||
+                origin == "34.202.11.230" ||
+                origin == "334.228.183.194" ||
+                origin == "44.207.41.97" ||
+                origin == "44.208.105.236" ||
+                origin == "54.85.55.192";
+            })
             .AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowAnyHeader();
-            //.AllowCredentials();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
