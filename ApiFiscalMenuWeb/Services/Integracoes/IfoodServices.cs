@@ -79,7 +79,7 @@ public class IfoodServices
             Console.WriteLine("Fez polling");
 
             var ifoodClient = _factory.CreateClient("ApiIfood");
-            var ResponsePolling = await ifoodClient.PostAsync("/events/v1.0/events:polling", null);
+            var ResponsePolling = await ifoodClient.GetAsync("/events/v1.0/events:polling");
 
             if (ResponsePolling.IsSuccessStatusCode)
             {
