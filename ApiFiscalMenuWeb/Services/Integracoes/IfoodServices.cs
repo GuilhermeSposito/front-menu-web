@@ -232,7 +232,7 @@ public class IfoodServices
 
         return true;
     }
-    public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, PollingIfoodDto Polling)
+    public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, WebHookIfoodDto Polling)
     {
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
