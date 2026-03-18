@@ -97,13 +97,13 @@ public class IfoodServices
                         Polling = Polling
                     };
 
-                    await AddOrUpdateOrders(WebHookDto);
+                    await AddOrUpdateOrders(WebHookDto, PollingResult);
 
-                    if(PollingsToAcknowledge.Count > 0)
+                    if (PollingsToAcknowledge.Count > 0)
                         await EnviaAcknowledgmentPolling(PollingsToAcknowledge);
                 }
             }
-        
+
         }
         catch (Exception ex)
         {
@@ -113,7 +113,7 @@ public class IfoodServices
         }
     }
 
-    public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto)
+    public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto, List<PollingIfoodDto>? Poolings = null)
     {
         try
         {
@@ -134,6 +134,22 @@ public class IfoodServices
                     break;
                 case "CFM":
                     //Aqui qunado for aceito o pedido e vier a confimação
+                    if (Poolings is not null) //Aqui limpa os CFM e os PLC do polling pq ja foi confirmado o pedido
+                    {
+                        PollingIfoodDto? ExistePlc = Poolings.FirstOrDefault(p => p.Code == "PLC" && p.OrderId == dto.OrderId);
+                        if (ExistePlc is not null)
+                            PollingsToAcknowledge.Add(ExistePlc);
+
+                        PollingsToAcknowledge.Add(new PollingIfoodDto
+                        {
+                            Code = dto.Code,
+                            CreatedAt = dto.CreatedAt,
+                            FullCode = dto.FullCode,
+                            Id = dto.Id,
+                            MerchantId = dto.MerchantId,
+                            OrderId = dto.OrderId,
+                        });
+                    }
                     break;
                 case "DSP":
                     await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
