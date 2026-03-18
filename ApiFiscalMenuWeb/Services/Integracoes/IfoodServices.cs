@@ -103,6 +103,7 @@ public class IfoodServices
                 case "CAN":
                     break;
                 default:
+                    await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto);
                     break;
             }
 
@@ -241,16 +242,9 @@ public class IfoodServices
             {
                 string infoAdicional = RetornaStatusCompletoAtualizado(Polling.Code);
 
-                if (!string.IsNullOrEmpty(infoAdicional))
-                    await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
-
-                if (Polling is not null)
-                {
-                    PollingsToAcknowledge.Add(Polling);
-                }
+                if (!string.IsNullOrEmpty(infoAdicional) && !string.IsNullOrEmpty(UpdateDto.MerchantId))
+                    await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.MerchantId, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
             }
-
-
         }
 
         return true;
@@ -633,6 +627,8 @@ public class IfoodServices
                 return "O código de confirmação de entrega foi validado com sucesso";
             case "DPCS":
                 return "O código de confirmação de coleta foi validado com sucesso";
+            case "DPCR":
+                return "Informe o codigo de coleta na entrega do pedido!";
             default:
                 return string.Empty;
         }

@@ -204,13 +204,12 @@ public class NestApiServices
         return true;
     }
 
-    public async Task<bool> UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(string TokenNestAPi, ClsPedido Pedido, UpdatePedidoInfosAdicionaisDto UpdateDto)
+    public async Task<bool> UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(string MerchantSophosId ,ClsPedido Pedido, UpdatePedidoInfosAdicionaisDto UpdateDto)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
-        AdicionaTokenNaRequisicao(client, TokenNestAPi);
 
         PedidosService PedidoServiceNest = new PedidosService(client);
-        var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto, Pedido);
+        var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto, Pedido, MerchantSophosId);
 
         return true;
     }
