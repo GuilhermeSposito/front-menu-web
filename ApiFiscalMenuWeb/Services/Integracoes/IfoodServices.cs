@@ -76,8 +76,6 @@ public class IfoodServices
     {
         try
         {
-            Console.WriteLine("Fez polling");
-
             var ifoodClient = _factory.CreateClient("ApiIfood");
             var ResponsePolling = await ifoodClient.GetAsync("/events/v1.0/events:polling");
 
@@ -195,7 +193,7 @@ public class IfoodServices
         }
     }
 
-    private async Task<bool> AceitaPedido(string PedidoId, ClsEmpresaIfood MerchantIfood)
+    public async Task<bool> AceitaPedido(string PedidoId)
     {
         var IfoodClient = _factory.CreateClient("ApiIfood");
 
@@ -374,6 +372,12 @@ public class IfoodServices
             TaxaEntregaValor = (float)PedidoIfood.Total.DeliveryFee,
             ObservacaoDoPedido = PedidoIfood.ExtraInfo
         };
+
+        if (!MerchantSophos.AceitaPedidoAutDeIntegracoes)
+        {
+            PedidoSophos.EtapaPedido = "NOVO";
+            PedidoSophos.StatusPedido = "ABERTO";
+        }
 
         PedidoSophos.Itens = await RetornaItensSophos(PedidoIfood.Items, MerchantSophos.Id);
 
@@ -571,7 +575,7 @@ public class IfoodServices
         {
             if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
             {
-                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id, MerchantIfood);
+                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id);
                 if (AceitouPedido)
                     return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
             }

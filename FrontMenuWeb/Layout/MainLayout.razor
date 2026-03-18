@@ -199,13 +199,6 @@
 
     private bool ImpressaoDesabilita = false;
 
-    #region Funções de WebSocket
-
-    #endregion
-
-
-
-
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _cts;
     protected override async Task OnInitializedAsync()
@@ -219,7 +212,7 @@
                 await LocalStorage.SetItemAsync("IntegraIfood", false);
             }
 
-           
+
             if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
             {
                 bool isDarkMode = await LocalStorage.GetItemAsync<bool>(ThemePreferenceKey);
@@ -270,16 +263,9 @@
 
             if (IntegraIfood is not null && IntegraIfood == true)
             {
-
-
-                _cts = new CancellationTokenSource();
-                _timer = new PeriodicTimer(TimeSpan.FromSeconds(25));
-
                 await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
-                _ = StartPollingAsync(_cts.Token);
                 IntegraIfoodSettingsLocalStoragePreference = true;
             }
-
 
             await AtualizaStatusDoCaixa();
         }
@@ -307,42 +293,20 @@
         await LocalStorage.SetItemAsync("IntegraIfood", value);
 
         if (value)
-        {
-
-            _cts = new CancellationTokenSource();
-            _timer = new PeriodicTimer(TimeSpan.FromSeconds(25));
-
             await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
-            _ = StartPollingAsync(_cts.Token);
-        }
         else
-        {
             Dispose();
-        }
+
         IntegraIfoodSettingsLocalStoragePreference = value;
 
         StateHasChanged();
 
     }
 
-    private async Task StartPollingAsync(CancellationToken token)
+    public void Dispose()
     {
-        try
-        {
-
-            while (await _timer!.WaitForNextTickAsync(token))
-            {
-                await InvokeAsync(async () =>
-                {
-                    await IntegracoesSophos.PollingParaVisualizacaoDeNovosPedidos();
-                });
-
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            Snackbar.Add("Visualização de Novos Pedidos Ifood Pausada.", Severity.Info);
-        }
+        _cts?.Cancel();
+        _timer?.Dispose();
     }
 
     private async Task AlteraImpressaoDesabilita()
@@ -368,12 +332,6 @@
     {
         await LocalStorage.SetItemAsync(ThemePreferenceKey, isDarkMode);
 
-    }
-
-    public void Dispose()
-    {
-        _cts?.Cancel();
-        _timer?.Dispose();
     }
 
 
@@ -529,7 +487,6 @@
 
     }
 
-
     public async Task IniciarWidget(List<ClsEmpresaIfood> Empresas)
     {
         List<string> MerchantsId = Empresas
@@ -547,6 +504,7 @@
             }
         }
     }
+
     public class WidgetResult
     {
         public bool Success { get; set; }

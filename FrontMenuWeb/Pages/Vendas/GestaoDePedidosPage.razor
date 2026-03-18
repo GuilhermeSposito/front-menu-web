@@ -427,7 +427,7 @@
             await CarregaEmpresasMachine();
             await CarregarPedidos();
 
-
+            await VerificaSeColocaEtapaNovoNaTela();
         }
         catch (Exception ex)
         {
@@ -451,9 +451,22 @@
             }
 
             _ = IniciarTimer();
+            await VerificaSeColocaEtapaNovoNaTela();
+
         }
     }
 
+    private async Task VerificaSeColocaEtapaNovoNaTela()
+    {
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.IntegraIfood && !AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes)
+        {
+            if (!ListaDeEtapasDosPedidos.Any(x => x.NomeDaEtapa == "NOVO"))
+            {
+                ListaDeEtapasDosPedidos.Insert(0, new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "NOVO", Selector = "NOVO" });
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
 
     private async Task HandleKeyDownGestaoPedidos(KeyboardEventArgs e)
     {
@@ -741,6 +754,9 @@
 
                 if (item.Selector == "NOVO")
                 {
+                    if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
+                        await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);   
+
                     item.Selector = "PREPARANDO";
                     var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
                     MostraMensagemDeUpdateDoPedido(Response);

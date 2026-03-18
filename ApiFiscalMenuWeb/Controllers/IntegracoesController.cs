@@ -18,12 +18,14 @@ public class IntegracoesController : Controller
     private readonly IfoodServices _ifoodService;
     private readonly EmailService emailService;
     private WebhookSignature _webhookSignature;
+    private readonly IConfiguration _configuration;
 
-    public IntegracoesController(IfoodServices ifoodService, EmailService email, WebhookSignature webhookSignature)
+    public IntegracoesController(IfoodServices ifoodService, EmailService email, WebhookSignature webhookSignature, IConfiguration configuration)
     {
         _ifoodService = ifoodService;
         emailService = email;
         _webhookSignature = webhookSignature;
+        _configuration = configuration;
     }
 
 
@@ -80,13 +82,24 @@ public class IntegracoesController : Controller
         return Ok(Return);
     }
 
+    [HttpPost("ifood/accepted/{id:string}")]
+    public async Task<ActionResult> AceitaPedido([FromRoute] string id)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        var Return = await _ifoodService.AceitaPedido(id);
+        return Ok(Return);
+    }
     #endregion
 
 
     [HttpPost("endpoint-webhook-ifood")]
     public async Task<IActionResult> EndpointDeConexaoIfoodWebHook()
     {
-        var secret = "4kyv4yt3b2cczztrdfihr8pihblgptoa9a5pw9ldmeq7tidz90nauhp2009opffjoh33ay1uy60unq3gw1vm8u72dm91ols7fry";
+        var secret = _configuration["Ifood:ClientSecret"];
         HttpContext.Request.EnableBuffering();
 
         using var ms = new MemoryStream();
@@ -110,15 +123,8 @@ public class IntegracoesController : Controller
         }
 
 
-
         if (dto is not null && dto.FullCode != "KEEPALIVE")
-        {
-            var json = JsonSerializer.Serialize(dto);
-            Console.WriteLine($"Body: {json}");
-            Console.WriteLine($"Ifood Signature {signature}");
-
             await _ifoodService.AddOrUpdateOrders(dto);
-        }
 
         return Accepted(new { dto?.MerchantIds });
     }
