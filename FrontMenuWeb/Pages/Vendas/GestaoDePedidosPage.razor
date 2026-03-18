@@ -388,7 +388,6 @@
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
     public List<ClsDeSuporteParaVizualicacaoDePedidos> ListaDeEtapasDosPedidos = new List<ClsDeSuporteParaVizualicacaoDePedidos>
     {
-
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "PREPARANDO", Selector = "PREPARANDO" },
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "DESPACHADOS / PRONTOS", Selector = "DESPACHADO" },
         new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "FINALIZADOS", Selector = "FINALIZADO" },
@@ -428,6 +427,8 @@
             await CarregarPedidos();
 
             await VerificaSeColocaEtapaNovoNaTela();
+
+            await VerificaPedidosNaoImpressos();
         }
         catch (Exception ex)
         {
