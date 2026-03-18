@@ -82,7 +82,7 @@ public class IntegracoesController : Controller
         return Ok(Return);
     }
 
-    [HttpPost("ifood/accepted/{id:string}")]
+    [HttpPost("ifood/accepted/{id}")]
     public async Task<ActionResult> AceitaPedido([FromRoute] string id)
     {
         var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
