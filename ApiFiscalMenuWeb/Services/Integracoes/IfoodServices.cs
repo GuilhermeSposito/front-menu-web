@@ -81,6 +81,8 @@ public class IfoodServices
 
             if (ResponsePolling.IsSuccessStatusCode)
             {
+                Console.WriteLine("Pooling lançado");
+
                 var PollingResult = await ResponsePolling.Content.ReadFromJsonAsync<List<PollingIfoodDto>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (PollingResult is null || PollingResult.Count() == 0)
                     return;
@@ -98,8 +100,10 @@ public class IfoodServices
 
                     await AddOrUpdateOrders(WebHookDto);
                 }
-
-
+            }
+            else
+            {
+                Console.WriteLine($"Erro ao lançar polling de fallback {await ResponsePolling.Content.ReadAsStringAsync()}");
             }
         }
         catch (Exception ex)
@@ -122,7 +126,6 @@ public class IfoodServices
             ClsEmpresaIfood? Empresa = await _nestApiService.RetornaEmpresaIfoodPeloMerchantId(dto.MerchantId);
             if (Empresa is null || Empresa.MerchantSophos is null)
                 throw new Exception("Merchant não encontrado na base de dados do sophos");
-
 
             switch (dto.Code)
             {

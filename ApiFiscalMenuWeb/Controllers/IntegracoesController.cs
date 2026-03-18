@@ -136,4 +136,11 @@ public class IntegracoesController : Controller
 
         return Ok();
     }
+
+    [HttpGet("teste-polling")]
+    public async Task<ActionResult> TestePolling()
+    {
+        await _ifoodService.PollingIfood();
+        return Ok();
+    }
 }
