@@ -81,8 +81,6 @@ public class IfoodServices
 
             if (ResponsePolling.IsSuccessStatusCode)
             {
-                Console.WriteLine("Pooling lançado");
-
                 var PollingResult = await ResponsePolling.Content.ReadFromJsonAsync<List<PollingIfoodDto>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 if (PollingResult is null || PollingResult.Count() == 0)
                     return;
@@ -95,16 +93,17 @@ public class IfoodServices
                         CreatedAt = Polling.CreatedAt,
                         Code = Polling.Code,
                         MerchantId = Polling.MerchantId,
-                        OrderId = Polling.OrderId
+                        OrderId = Polling.OrderId,
+                        Polling = Polling
                     };
 
                     await AddOrUpdateOrders(WebHookDto);
+
+                    if(PollingsToAcknowledge.Count > 0)
+                        await EnviaAcknowledgmentPolling(PollingsToAcknowledge);
                 }
             }
-            else
-            {
-                Console.WriteLine($"Erro ao lançar polling de fallback {await ResponsePolling.Content.ReadAsStringAsync()}");
-            }
+        
         }
         catch (Exception ex)
         {
@@ -137,16 +136,16 @@ public class IfoodServices
                     //Aqui qunado for aceito o pedido e vier a confimação
                     break;
                 case "DSP":
-                    await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
+                    await MudaStatusPedidoDespachado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     break;
                 case "CON":
-                    await MudaStatusPedidoConcluido(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
+                    await MudaStatusPedidoConcluido(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     break;
                 case "CAN":
-                    await MudaStatusPedidoCancelado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
+                    await MudaStatusPedidoCancelado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     break;
                 default:
-                    await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto);
+                    await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto, dto.Polling);
                     break;
             }
 
@@ -171,6 +170,13 @@ public class IfoodServices
             return new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Erro ao ler pedidos ifood" } };
         }
 
+    }
+
+    public async Task EnviaAcknowledgmentPolling(List<PollingIfoodDto> Pollings)
+    {
+        var ifoodClient = _factory.CreateClient("ApiIfood");
+        await ifoodClient.PostAsJsonAsync($"/events/v1.0/events/acknowledgment", Pollings);
+        Pollings.Clear();
     }
     #endregion
 
@@ -224,9 +230,9 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
-
-
+                var atualizou = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
+                if (atualizou && Polling is not null)
+                    PollingsToAcknowledge.Add(Polling);
             }
         }
 
@@ -244,15 +250,16 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
-
+                bool atualizou = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
+                if (atualizou && Polling is not null)
+                    PollingsToAcknowledge.Add(Polling);
             }
         }
 
         return true;
     }
 
-    public async Task<bool> MudaStatusPedidoCancelado(UpdatePedidosDto UpdateDto)
+    public async Task<bool> MudaStatusPedidoCancelado(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
     {
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
@@ -266,14 +273,16 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(PedidoSophos);
+                bool atualzou = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(PedidoSophos);
+                if (atualzou && Polling is not null)
+                    PollingsToAcknowledge.Add(Polling);
             }
 
         }
 
         return true;
     }
-    public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, WebHookIfoodDto Polling)
+    public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, WebHookIfoodDto WebHookDto, PollingIfoodDto? Polling = null)
     {
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos)
@@ -281,10 +290,16 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                string infoAdicional = RetornaStatusCompletoAtualizado(Polling.Code);
+                string infoAdicional = RetornaStatusCompletoAtualizado(WebHookDto.Code);
 
                 if (!string.IsNullOrEmpty(infoAdicional) && !string.IsNullOrEmpty(UpdateDto.MerchantId))
-                    await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.MerchantId, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
+                {
+                    bool atualizou = await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.MerchantId, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
+                    if (atualizou && Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+
+
             }
         }
 

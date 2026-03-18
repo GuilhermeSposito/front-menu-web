@@ -113,7 +113,7 @@ public class IntegracoesController : Controller
 
 
         var valid = _webhookSignature.ValidateSignature(secret, bodyBytes, signature);
-        if (!valid && !dto!.Teste)
+        if (!valid)
         {
             if (dto?.FullCode == "KEEPALIVE")
                 return Accepted(new { dto?.MerchantIds });
