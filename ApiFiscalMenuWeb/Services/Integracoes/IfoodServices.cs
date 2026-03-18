@@ -100,7 +100,8 @@ public class IfoodServices
                 case "CON":
                     await MudaStatusPedidoConcluido(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
-                case "CAN":
+                case "CAN": 
+                    await MudaStatusPedidoCancelado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
                 default:
                     await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto);
@@ -209,23 +210,21 @@ public class IfoodServices
         return true;
     }
 
-    public async Task<bool> MudaStatusPedidoCancelado(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
+    public async Task<bool> MudaStatusPedidoCancelado(UpdatePedidosDto UpdateDto)
     {
         HttpClient? HttpIntegracaoCliente = null;
         if (UpdateDto.DestinoPedido == DestinoPedido.Ifood)
         {
             HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
-
         }
 
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && (UpdateDto.TokenNestApi is not null || UpdateDto.MerchantId is not null))
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos &&  UpdateDto.MerchantId is not null)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, PedidoSophos);
-
+                var response = await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(PedidoSophos);
             }
 
         }

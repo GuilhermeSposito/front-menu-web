@@ -16,10 +16,12 @@ namespace FrontMenuWeb.Services;
 public class PedidosService
 {
     private HttpClient _http;
+    private readonly IConfiguration _configuration;
 
-    public PedidosService(HttpClient http)
+    public PedidosService(HttpClient http, IConfiguration configuration)
     {
         _http = http;
+        _configuration = configuration;
     }
 
     public static Action<ClsPedido>? PedidoRecebido;
@@ -289,8 +291,12 @@ public class PedidosService
     public async Task<ReturnApiRefatored<ClsPedido>> CancelarPedido(ClsPedido Pedido, bool ePedidoDeCaixaFechado = false)
     {
         var url = ePedidoDeCaixaFechado ? $"pedidos/cancelar/fechado/{Pedido.Id}" : $"pedidos/cancelar/{Pedido.Id}";
+        string ApiKey = _configuration["ApiKeyNest"] ?? string.Empty;
 
-        var response = await _http.DeleteAsync(url);
+        var request = new HttpRequestMessage(HttpMethod.Delete, url);
+        request.Headers.Add("x-api-key", ApiKey);
+
+        var response = await _http.SendAsync(request);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
         return retorno!;
     }
