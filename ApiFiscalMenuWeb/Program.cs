@@ -1,5 +1,6 @@
 using ApiFiscalMenuWeb.Controllers;
 using ApiFiscalMenuWeb.Filters;
+using ApiFiscalMenuWeb.Models.BackGroundWorkers;
 using ApiFiscalMenuWeb.Models.Dtos;
 using ApiFiscalMenuWeb.Models.HandlersHttp;
 using ApiFiscalMenuWeb.Services;
@@ -25,6 +26,7 @@ builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
+builder.Services.AddHostedService<IfoodPollingWorker>();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";

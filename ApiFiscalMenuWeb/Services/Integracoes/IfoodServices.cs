@@ -14,6 +14,7 @@ using System.Drawing;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
 using Unimake.Business.DFe.Servicos;
@@ -70,7 +71,47 @@ public class IfoodServices
         return false;
     }
 
-    #region Pooling Region
+    #region Pooling E Add Pedido Region
+    public async Task PollingIfood()
+    {
+        try
+        {
+            Console.WriteLine("Fez polling");
+
+            var ifoodClient = _factory.CreateClient("ApiIfood");
+            var ResponsePolling = await ifoodClient.PostAsync("/events/v1.0/events:polling", null);
+
+            if (ResponsePolling.IsSuccessStatusCode)
+            {
+                var PollingResult = await ResponsePolling.Content.ReadFromJsonAsync<List<PollingIfoodDto>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (PollingResult is null || PollingResult.Count() == 0)
+                    return;
+
+                foreach (var Polling in PollingResult)
+                {
+                    var WebHookDto = new WebHookIfoodDto
+                    {
+                        FullCode = Polling.FullCode,
+                        CreatedAt = Polling.CreatedAt,
+                        Code = Polling.Code,
+                        MerchantId = Polling.MerchantId,
+                        OrderId = Polling.OrderId
+                    };
+
+                    await AddOrUpdateOrders(WebHookDto);
+                }
+
+
+            }
+        }
+        catch (Exception ex)
+        {
+            await EnviaEmailDeErro(ex.ToString());
+            _logger.LogError(ex, "Erro no pooling do iFood. Endpoint: {PollingIfood}", "Pooling");
+            return;
+        }
+    }
+
     public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto)
     {
         try
@@ -100,7 +141,7 @@ public class IfoodServices
                 case "CON":
                     await MudaStatusPedidoConcluido(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
-                case "CAN": 
+                case "CAN":
                     await MudaStatusPedidoCancelado(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId });
                     break;
                 default:
@@ -219,7 +260,7 @@ public class IfoodServices
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
         }
 
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos &&  UpdateDto.MerchantId is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.MerchantId is not null)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
