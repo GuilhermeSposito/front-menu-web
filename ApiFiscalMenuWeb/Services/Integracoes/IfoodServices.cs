@@ -235,7 +235,7 @@ public class IfoodServices
     public async Task<bool> MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(UpdatePedidosDto UpdateDto, WebHookIfoodDto Polling)
     {
         HttpClient? HttpIntegracaoCliente = null;
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
