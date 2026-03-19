@@ -275,7 +275,7 @@ public class IfoodServices
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
-            if (PedidoSophos is not null)
+          //  if (PedidoSophos is not null)
             {
                 var atualizou = await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
                 if (atualizou && Polling is not null)
