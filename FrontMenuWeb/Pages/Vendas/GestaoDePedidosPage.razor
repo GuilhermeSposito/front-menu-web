@@ -438,6 +438,7 @@
             await VerificaSeColocaEtapaNovoNaTela();
 
             await VerificaPedidosNaoImpressos();
+            VerificaSeTemPedidosAbertos();
         }
         catch (Exception ex)
         {
@@ -958,9 +959,10 @@
                 if (Pedido.PedidoAgendado && Pedido.HorarioDataAgendamento is not null)
                     if (Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual)
                     {
+                        Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
+                        await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
                         await ImprimirPedido(Pedido, false);
                         await PedidosService.UpdatePedidoImpresso(Pedido);
-                        Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
                     }
             }
         }
