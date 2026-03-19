@@ -158,7 +158,6 @@ public class IfoodServices
                     }
                     else
                     {
-                        Console.WriteLine("ENTROU PRA MMUDAR O PEDIDO PRA CONFIRMADO");
                         await MudaStatusPedidoPreparando(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     }
                     break;
@@ -255,7 +254,7 @@ public class IfoodServices
 
         }
 
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
@@ -273,7 +272,7 @@ public class IfoodServices
 
     public async Task<bool> MudaStatusPedidoPreparando(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
     {
-        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
           //  if (PedidoSophos is not null)
@@ -286,7 +285,6 @@ public class IfoodServices
 
         return true;
     }
-
 
     public async Task<bool> MudaStatusPedidoConcluido(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
     {
