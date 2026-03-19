@@ -140,7 +140,16 @@ public class IfoodServices
 
             switch (dto.Code)
             {
-                case "PLC": //caso entre aqui é porque é um novo pedido     
+                case "PLC": //caso entre aqui é porque é um novo pedido
+                    if (Poolings is not null)//aqui apaga quando ele volta no polling depois de confirmado o pedido, pq o ifood manda um PLC quando o pedido é feito e depois quando é confirmado ele manda outro PLC, então aqui ele apaga os dois PLC do polling para não dar erro de pedido já existe quando for confirmado o pedido
+                    {
+                        ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(dto.OrderId);
+                        if (PedidoSophos is not null)
+                        {
+                            PollingsToAcknowledge.Add(dto.Polling);
+                            break;
+                        }
+                    }
                     string MensagemDeTentativaDeAddPedido = await AdicionaPedidoAoSophos(dto.OrderId, Empresa.MerchantSophos, dto, Empresa);
                     Messages.Add(MensagemDeTentativaDeAddPedido);
                     break;
