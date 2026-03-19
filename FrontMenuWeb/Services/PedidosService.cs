@@ -364,6 +364,7 @@ public class QuerysDePedidos
 
     public string CriadoPor = string.Empty;
     public bool? Imprimiu = null;
+    public bool? Agendado = null;
 
     [JsonPropertyName("pesquisa")] public string Pesquisa { get; set; } = string.Empty;
 }

@@ -948,6 +948,20 @@
             }
 
         }
+
+        PaginatedResponse<ClsPedido> RetornoPedidosAgendados = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Agendado = true });
+        if (RetornoPedidosAgendados.Data.Count() > 0)
+        {
+            DateTime HorarioAtual = DateTime.Now.AddHours(-3); //Pra ser o utc igual o nosso
+            foreach (var Pedido in RetornoPedidosAgendados.Data)
+            {
+                if (Pedido.PedidoAgendado && Pedido.HorarioDataAgendamento is not null)
+                    if (!Pedido.Imprimiu && Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual){
+                        await ImprimirPedido(Pedido, false);
+                        await PedidosService.UpdatePedidoImpresso(Pedido);
+                    }
+            }
+        }
     }
 
     private async Task BuscarPedidos()
