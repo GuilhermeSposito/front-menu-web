@@ -949,16 +949,18 @@
 
         }
 
-        PaginatedResponse<ClsPedido> RetornoPedidosAgendados = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Agendado = true });
+        PaginatedResponse<ClsPedido> RetornoPedidosAgendados = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Agendado = true, Imprimiu = false });
         if (RetornoPedidosAgendados.Data.Count() > 0)
         {
             DateTime HorarioAtual = DateTime.Now.AddHours(-3); //Pra ser o utc igual o nosso
             foreach (var Pedido in RetornoPedidosAgendados.Data)
             {
                 if (Pedido.PedidoAgendado && Pedido.HorarioDataAgendamento is not null)
-                    if (!Pedido.Imprimiu && Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual){
+                    if (Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual)
+                    {
                         await ImprimirPedido(Pedido, false);
                         await PedidosService.UpdatePedidoImpresso(Pedido);
+                        Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
                     }
             }
         }
@@ -1212,7 +1214,8 @@
                 if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
                     await ImprimirPedido(novoPedido, false);
 
-                await PedidosService.UpdatePedidoImpresso(novoPedido);
+                if (!novoPedido.PedidoAgendado)
+                    await PedidosService.UpdatePedidoImpresso(novoPedido);
 
                 await InvokeAsync(StateHasChanged);
                 return;
