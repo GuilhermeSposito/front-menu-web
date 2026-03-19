@@ -79,9 +79,9 @@ public class IfoodServices
             var ifoodClient = _factory.CreateClient("ApiIfood");
             var ResponsePolling = await ifoodClient.GetAsync("/events/v1.0/events:polling");
 
-            if (ResponsePolling.IsSuccessStatusCode)
+            if ((int)ResponsePolling.StatusCode == 200)
             {
-                var PollingResult = await ResponsePolling.Content.ReadFromJsonAsync<List<PollingIfoodDto>>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var PollingResult = await ResponsePolling.Content.ReadFromJsonAsync<List<PollingIfoodDto>>();
                 if (PollingResult is null || PollingResult.Count() == 0)
                     return;
 
@@ -611,7 +611,10 @@ public class IfoodServices
             {
                 bool AceitouPedido = await AceitaPedido(PedidoIFood.Id);
                 if (AceitouPedido)
+                {
+                    await EnviaAcknowledgmentPolling(new List<PollingIfoodDto> { new PollingIfoodDto { Id = P.Id, Code = P.Code, FullCode = P.FullCode, MerchantId = P.MerchantId, CreatedAt = P.CreatedAt } });
                     return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
+                }
             }
             return $"Pedido {OrderId}  {Merchant.NomeFantasia}";
         }

@@ -35,6 +35,6 @@ public class WebHookIfoodDto
     [JsonPropertyName("merchantIds")] public List<string> MerchantIds { get; set; } = new();
     [JsonPropertyName("merchantId")] public string MerchantId { get; set; } = string.Empty;
     [JsonPropertyName("createdAt")] public string CreatedAt { get; set; } = string.Empty;
-    [JsonPropertyName("Polling")] public PollingIfoodDto? Polling { get; set; }
+    [JsonIgnore] public PollingIfoodDto? Polling { get; set; }
 
 }
