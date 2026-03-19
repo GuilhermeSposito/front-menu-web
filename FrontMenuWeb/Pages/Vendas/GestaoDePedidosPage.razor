@@ -142,7 +142,15 @@
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
                                                             }
-                                                            <MudText>@pedido.Pedido.CriadoEm</MudText>
+                                                            @if (pedido.Pedido.PedidoAgendado)
+                                                            {
+                                                                <MudText Color="Color.Error" Typo="Typo.h6">***PEDIDO AGENDADO***</MudText>
+                                                                <MudText>  Agendado Para: @pedido.Pedido.HorarioDataAgendamento</MudText>
+                                                            }
+                                                            else
+                                                            {
+                                                                <MudText>@pedido.Pedido.CriadoEm</MudText>
+                                                            }
                                                             @if (!string.IsNullOrEmpty(pedido.Pedido.InfosPedidoIntegradoStatusAdicionais))
                                                             {
                                                                 <MudText>@pedido.Pedido.InfosPedidoIntegradoStatusAdicionais</MudText>
@@ -925,10 +933,10 @@
                 {
                     TemPedidoAbertoIntegracao = true;
                     break;
-                }        
+                }
             }
 
-            if(TemPedidoAbertoIntegracao)
+            if (TemPedidoAbertoIntegracao)
             {
                 await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
                 Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
