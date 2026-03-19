@@ -259,9 +259,17 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                var atualizou = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
-                if (atualizou && Polling is not null)
-                    PollingsToAcknowledge.Add(Polling);
+                if (PedidoSophos.EtapaPedido == "PREPARANDO")
+                {
+                    var atualizou = await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
+                    if (atualizou && Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+                else
+                {
+                    if (Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+                }
             }
         }
 
@@ -275,8 +283,16 @@ public class IfoodServices
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos)
         {
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
-          //  if (PedidoSophos is not null)
+            if (PedidoSophos is not null)
             {
+                if (PedidoSophos.EtapaPedido != "NOVO")
+                {
+                    if (Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+
+                    return true;
+                }
+
                 var atualizou = await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
                 if (atualizou && Polling is not null)
                     PollingsToAcknowledge.Add(Polling);
@@ -295,9 +311,17 @@ public class IfoodServices
             ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
             if (PedidoSophos is not null)
             {
-                bool atualizou = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
-                if (atualizou && Polling is not null)
-                    PollingsToAcknowledge.Add(Polling);
+                if (PedidoSophos.EtapaPedido == "DESPACHADO" || PedidoSophos.EtapaPedido == "PRONTO")
+                {
+                    bool atualizou = await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
+                    if (atualizou && Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+                }
+                else
+                {
+                    if (Polling is not null)
+                        PollingsToAcknowledge.Add(Polling);
+                }
             }
         }
 
@@ -337,17 +361,22 @@ public class IfoodServices
             {
                 string infoAdicional = RetornaStatusCompletoAtualizado(WebHookDto.Code);
 
-                if (!string.IsNullOrEmpty(infoAdicional) && !string.IsNullOrEmpty(UpdateDto.MerchantId))
+                if (PedidoSophos.InfosPedidoIntegradoStatusAdicionais != infoAdicional)
                 {
-                    bool atualizou = await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.MerchantId, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
-                    if (atualizou && Polling is not null)
+                    if (!string.IsNullOrEmpty(infoAdicional) && !string.IsNullOrEmpty(UpdateDto.MerchantId))
+                    {
+                        bool atualizou = await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(UpdateDto.MerchantId, PedidoSophos, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = infoAdicional });
+                        if (atualizou && Polling is not null)
+                            PollingsToAcknowledge.Add(Polling);
+                    }
+                }
+                else
+                {
+                    if (Polling is not null)
                         PollingsToAcknowledge.Add(Polling);
                 }
-
-
             }
         }
-
         return true;
     }
 
@@ -626,35 +655,27 @@ public class IfoodServices
     {
         PedidoIfoodDto? PedidoIFood = await GetPedidoIfood(OrderId, MerchantIfood);
         if (PedidoIFood is null)
-        {
             return $"Falha ao obter os detalhes do pedido {OrderId} para o merchant {Merchant.NomeFantasia}";
-
-        }
 
         ClsPedido? PedidoSophos = await ConvertePedidoDoIfoodParaPedidoSophos(PedidoIFood, Merchant);
         if (PedidoSophos is null)
-        {
             return $"Falha ao converter o pedido {OrderId} para o formato do Sophos para o merchant {Merchant.NomeFantasia}";
-        }
 
         bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(Merchant, PedidoSophos);
-        if (AdicionouOPedido)
-        {
-            if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
-            {
-                bool AceitouPedido = await AceitaPedido(PedidoIFood.Id);
-                if (AceitouPedido)
-                {
-                    await EnviaAcknowledgmentPolling(new List<PollingIfoodDto> { new PollingIfoodDto { Id = P.Id, Code = P.Code, FullCode = P.FullCode, MerchantId = P.MerchantId, CreatedAt = P.CreatedAt } });
-                    return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
-                }
-            }
-            return $"Pedido {OrderId}  {Merchant.NomeFantasia}";
-        }
-        else
-        {
+        if (!AdicionouOPedido)
             return $"Falha ao adicionar o pedido {P.OrderId} para o merchant {Merchant.NomeFantasia}";
+
+        if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
+        {
+            bool AceitouPedido = await AceitaPedido(PedidoIFood.Id);
+            if (AceitouPedido)
+            {
+                await EnviaAcknowledgmentPolling(new List<PollingIfoodDto> { new PollingIfoodDto { Id = P.Id, Code = P.Code, FullCode = P.FullCode, MerchantId = P.MerchantId, CreatedAt = P.CreatedAt } });
+                return $"Pedido {OrderId} processado e adicionado com sucesso para o merchant {Merchant.NomeFantasia}";
+            }
         }
+        return $"Pedido {OrderId} {Merchant.NomeFantasia}";
+
     }
     #endregion
 
