@@ -570,9 +570,10 @@ public class IfoodServices
                 Pagamento.FormaDePagamento = RetornaTipoDePagamentoQueBataComCodeDoCardapioIntegrado(MerchantSophos.FormasDeRecebimento, Metodo.Method) ?? MerchantSophos.FormasDeRecebimento.FirstOrDefault();
             }
 
-            if (Metodo.Type == "CASH")
+            if (Metodo.Method == "CASH")
             {
-                Pagamento.ValorTotal = (float)Metodo.Cash.ChangeFor;
+               if(Metodo.Cash.ChangeFor > 0)
+                    Pagamento.ValorTotal = (float)Metodo.Cash.ChangeFor;
 
                 var Troco = Metodo.Cash.ChangeFor - Metodo.Value;
                 Pagamento.Troco = (float)Troco;
