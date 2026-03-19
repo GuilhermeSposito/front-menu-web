@@ -765,7 +765,11 @@
                 if (item.Selector == "NOVO")
                 {
                     if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
-                        await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
+                    {
+                        var response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
+                        if (response.Status == "success")
+                            ImprimirPedido(item.Pedido, false);
+                    }
 
                     item.Selector = "PREPARANDO";
                     var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido, AppState.MerchantLogado.Id);
@@ -1191,10 +1195,7 @@
                 Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
                 await VizualizaSeNaoExistePedidoNaTela(novoPedido);
 
-                if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes)
-                    await ImprimirPedido(novoPedido, false);
-
-                if (AppState.MerchantLogado is null) //Mesmo se o merchant for nulo vai imprimir
+                if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
                     await ImprimirPedido(novoPedido, false);
 
                 await PedidosService.UpdatePedidoImpresso(novoPedido);
