@@ -42,6 +42,7 @@ public class IfoodServices
     }
     #endregion
 
+    #region função de autenticação
     public async Task<bool> AutenticarEmpresa()
     {
         string? ClientIdIfood = _configuration["Ifood:ClientId"];
@@ -70,6 +71,7 @@ public class IfoodServices
 
         return false;
     }
+    #endregion
 
     #region Pooling E Add Pedido Region
     public async Task PollingIfood()
@@ -126,6 +128,16 @@ public class IfoodServices
             if (Empresa is null || Empresa.MerchantSophos is null)
                 throw new Exception("Merchant não encontrado na base de dados do sophos");
 
+            dto.Polling = new PollingIfoodDto
+            {
+                Code = dto.Code,
+                CreatedAt = dto.CreatedAt,
+                FullCode = dto.FullCode,
+                Id = dto.Id,
+                MerchantId = dto.MerchantId,
+                OrderId = dto.OrderId,
+            };
+
             switch (dto.Code)
             {
                 case "PLC": //caso entre aqui é porque é um novo pedido     
@@ -136,19 +148,15 @@ public class IfoodServices
                     //Aqui qunado for aceito o pedido e vier a confimação
                     if (Poolings is not null) //Aqui limpa os CFM e os PLC do polling pq ja foi confirmado o pedido
                     {
-                        PollingIfoodDto? ExistePlc = Poolings.FirstOrDefault(p => p.Code == "PLC" && p.OrderId == dto.OrderId);
+                        var ExistePlc = Poolings.Where(p => p.Code == "PLC" && p.OrderId == dto.OrderId).ToList();
                         if (ExistePlc is not null)
-                            PollingsToAcknowledge.Add(ExistePlc);
+                            PollingsToAcknowledge.AddRange(ExistePlc);
 
-                        PollingsToAcknowledge.Add(new PollingIfoodDto
-                        {
-                            Code = dto.Code,
-                            CreatedAt = dto.CreatedAt,
-                            FullCode = dto.FullCode,
-                            Id = dto.Id,
-                            MerchantId = dto.MerchantId,
-                            OrderId = dto.OrderId,
-                        });
+                        PollingsToAcknowledge.Add(dto.Polling);
+                    }
+                    else
+                    {
+                        await MudaStatusPedidoPreparando(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     }
                     break;
                 case "DSP":
@@ -164,6 +172,9 @@ public class IfoodServices
                     await MudaStatusComoINfosAdicionaisPedidoNaAPiPrincipal(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto, dto.Polling);
                     break;
             }
+
+            if (PollingsToAcknowledge.Count > 0)
+                await EnviaAcknowledgmentPolling(PollingsToAcknowledge);
 
             return new ReturnApiRefatored<object> { Status = "success", Messages = new List<string> { "Pedido processado com Sucesso!" } };
         }
@@ -256,6 +267,23 @@ public class IfoodServices
 
         return true;
     }
+
+    public async Task<bool> MudaStatusPedidoPreparando(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
+    {
+        if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
+        {
+            ClsPedido? PedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(UpdateDto.PedidoIdIntegracao);
+            if (PedidoSophos is not null)
+            {
+                var atualizou = await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(UpdateDto.TokenNestApi, UpdateDto.MerchantId, PedidoSophos);
+                if (atualizou && Polling is not null)
+                    PollingsToAcknowledge.Add(Polling);
+            }
+        }
+
+        return true;
+    }
+
 
     public async Task<bool> MudaStatusPedidoConcluido(UpdatePedidosDto UpdateDto, PollingIfoodDto? Polling = null)
     {

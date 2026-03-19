@@ -115,7 +115,7 @@
         {
             case "NOVO":
                 EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
-                return await PedidosService.UpdatePedidoPreparando(pedido);
+                return await PedidosService.UpdatePedidoPreparando(pedido, AppState.MerchantLogado.Id);
 
 
             case "PREPARANDO":

@@ -760,7 +760,7 @@
                         await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
 
                     item.Selector = "PREPARANDO";
-                    var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido);
+                    var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido, AppState.MerchantLogado.Id);
                     MostraMensagemDeUpdateDoPedido(Response);
 
                     EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.PREPARANDO);

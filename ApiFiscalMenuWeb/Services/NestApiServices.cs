@@ -195,6 +195,16 @@ public class NestApiServices
         return true;
     }
 
+    public async Task<bool> UpdatePedidoPreparandoNaAPiPrincipalAsync(string? TokenNest, string MerchantId, ClsPedido Pedido)
+    {
+        HttpClient client = _factory.CreateClient("ApiAutorizada");
+
+        PedidosService PedidoServiceNest = new PedidosService(client, _configuration);
+        var response = await PedidoServiceNest.UpdatePedidoPreparando(Pedido, MerchantId);
+
+        return true;
+    }
+
     public async Task<bool> UpdatePedidoCanceladodoNaAPiPrincipalAsync(ClsPedido Pedido)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
