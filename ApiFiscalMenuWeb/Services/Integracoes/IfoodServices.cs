@@ -158,6 +158,7 @@ public class IfoodServices
                     }
                     else
                     {
+                        Console.WriteLine("ENTROU PRA MMUDAR O PEDIDO PRA CONFIRMADO");
                         await MudaStatusPedidoPreparando(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
                     }
                     break;
