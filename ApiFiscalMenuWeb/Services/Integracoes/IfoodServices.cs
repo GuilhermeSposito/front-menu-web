@@ -148,6 +148,8 @@ public class IfoodServices
                     //Aqui qunado for aceito o pedido e vier a confimação
                     if (Poolings is not null) //Aqui limpa os CFM e os PLC do polling pq ja foi confirmado o pedido
                     {
+                        await MudaStatusPedidoPreparando(new UpdatePedidosDto { DestinoPedido = DestinoPedido.Sophos, MerchantId = Empresa.MerchantSophos.Id, PedidoIdIntegracao = dto.OrderId }, dto.Polling);
+
                         var ExistePlc = Poolings.Where(p => p.Code == "PLC" && p.OrderId == dto.OrderId).ToList();
                         if (ExistePlc is not null)
                             PollingsToAcknowledge.AddRange(ExistePlc);
@@ -572,7 +574,7 @@ public class IfoodServices
 
             if (Metodo.Method == "CASH")
             {
-               if(Metodo.Cash.ChangeFor > 0)
+                if (Metodo.Cash.ChangeFor > 0)
                     Pagamento.ValorTotal = (float)Metodo.Cash.ChangeFor;
 
                 var Troco = Metodo.Cash.ChangeFor - Metodo.Value;
