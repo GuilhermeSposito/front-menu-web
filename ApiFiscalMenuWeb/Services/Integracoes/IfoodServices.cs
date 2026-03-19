@@ -244,12 +244,12 @@ public class IfoodServices
         {
             HttpIntegracaoCliente = _factory.CreateClient("ApiIfood");
             string PedidoIdIfood = UpdateDto.Pedido?.IfoodID ?? UpdateDto.PedidoIdIntegracao;
-            var response = await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/dispatch", null);
-            if (Polling is not null)
-            {
-                if (response.IsSuccessStatusCode)
-                    PollingsToAcknowledge.Add(Polling);
-            }
+
+            if (UpdateDto.Pedido?.TipoDePedido == "BALCÃO")
+                await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/readyToPickup", null);
+            else
+                await HttpIntegracaoCliente.PostAsync($"order/v1.0/orders/{PedidoIdIfood}/dispatch", null);
+
         }
 
         if (UpdateDto.DestinoPedido == DestinoPedido.Sophos && UpdateDto.TokenNestApi is not null)
