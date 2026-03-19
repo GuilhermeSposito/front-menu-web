@@ -583,10 +583,6 @@ public class IfoodServices
             PagamentosDoPedido.Add(Pagamento);
         }
 
-        var json = JsonSerializer.Serialize(PagamentosDoPedido);
-        Console.WriteLine($"Json Pagamento: {json}");
-
-
         return PagamentosDoPedido;
 
     }

@@ -414,7 +414,7 @@ public class ImpressaoService
     #region Definição do pedido para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDePedidoParaImpressao(ClsPedido pedido, string AppQueEnviou)
     {
-        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>(); //Teste kk 
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
         if (pedido.CriadoPor != "SOPHOS")
         {
@@ -427,7 +427,7 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================
-        
+
         if (pedido.TipoDePedido != "DELIVERY" && AppState.MerchantLogado is not null && AppState.MerchantLogado.ImprimeSenhaBalcao)
         {
             int seed = pedido.Id;
@@ -462,9 +462,18 @@ public class ImpressaoService
             }
         }
 
+        bool PedidoAgendado = pedido.PedidoAgendado;
+        if (PedidoAgendado)
+        {
+            AdicionaConteudo(Conteudo, $"***PEDIDO  AGENDADO***", FonteContaEntregaEConta, Alinhamentos.Centro, eObs: true);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        }
 
         if (AppState.MerchantLogado is null || AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
         {
+            if(PedidoAgendado)
+                EntregarAté = pedido.HorarioDataAgendamento ?? EntregarAté;
+
             AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         }
