@@ -572,6 +572,8 @@ public class IfoodServices
 
             if (Metodo.Type == "CASH")
             {
+                Pagamento.ValorTotal = (float)Metodo.Cash.ChangeFor;
+
                 var Troco = Metodo.Cash.ChangeFor - Metodo.Value;
                 Pagamento.Troco = (float)Troco;
             }
@@ -580,7 +582,12 @@ public class IfoodServices
             PagamentosDoPedido.Add(Pagamento);
         }
 
+        var json = JsonSerializer.Serialize(PagamentosDoPedido);
+        Console.WriteLine($"Json Pagamento: {json}");
+
+
         return PagamentosDoPedido;
+
     }
 
     public ClsPessoas? RetornaClienteSophos(CustomerIfoodDto? ClienteIfood)
