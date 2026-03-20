@@ -1176,7 +1176,6 @@ public class NfService
                 IndPag = IndicadorPagamento.PagamentoVista,
                 TPag = tipoPag,
                 VPag = pag.ValorTotal,
-
             };
 
             if (pag.Troco > 0)

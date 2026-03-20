@@ -181,7 +181,7 @@
                             <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(async () => { await RemovePagamentoDoPedido(pagamentoRealizado); })>
                                 <ChildContent>
                                     <MudStack Row=true Spacing="-1">
-                                        <MudText>@pagamentoRealizado.FormaDePagamento.Descricao -> @pagamentoRealizado.ValorTotal.ToString("C")</MudText>
+                                        <MudText>@pagamentoRealizado.FormaDePagamento?.Descricao -> @pagamentoRealizado.ValorTotal.ToString("C")</MudText>
                                     </MudStack>
                                 </ChildContent>
                             </MudChip>
@@ -415,7 +415,7 @@
 
     private async void AdicionaFormaAoPagamento(ClsFormaDeRecebimento clsFormaDeRecebimento)
     {
-        var ValorAtual = ValorTotal - Pedido.Pagamentos.Sum(x => x.ValorTotal);
+        var ValorAtual = (float)Math.Round(ValorTotal - Pedido.Pagamentos.Sum(x => x.ValorTotal), 2);
         float valorRestante = ValorAtual;
 
         var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Declarar Valor", new DialogParameters { { "ValorAtual", ValorAtual }, { "ValorTotalDoPedido", ValorTotal } });

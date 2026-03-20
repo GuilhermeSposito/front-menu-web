@@ -478,7 +478,7 @@
                     QtdAdicionado = (float)Math.Round(Valor / ValorDoProduto, 3);
                 }
 
-                ValorDoProduto = Valor;
+                ValorDoProduto = (float)Math.Round(Valor, 2);
             }
         }
 
@@ -508,9 +508,6 @@
             PrecoUnitario = ValorDoProduto,
             PrecoTotal = PrecoTotal
         };
-
-        string jsonPedido = JsonSerializer.Serialize(ItemParaAdicionarNoPedido);
-        Console.WriteLine(jsonPedido);
 
         NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
         await Task.Delay(50);
