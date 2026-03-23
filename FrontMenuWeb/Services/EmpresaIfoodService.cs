@@ -75,22 +75,6 @@ public class EmpresaIfoodService
     }
 
 
-    //Funções de Integrações com Api Ifood
-    public async Task<ReturnApiRefatored<UserCodeReturnFromAPIIfoodDto>> GerarAutorizacao()
-    {
-        var HttpIntegracoes = _factory.CreateClient("ApiIntegracoes");
-        var response = await HttpIntegracoes.GetAsync("integracoes/ifood/authorization-code");
-        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<UserCodeReturnFromAPIIfoodDto>>();
-        return result ?? new ReturnApiRefatored<UserCodeReturnFromAPIIfoodDto>() { Status = "error", Messages = new List<string> { "Erro ao obter código de Autorização do Ifood!" } };
-    }
-
-    public async Task<ReturnApiRefatored<object>> AutenticarEmpresaIfood(InformacoesParaAutenticarEmpresaIfoodDto infoAuth)
-    {
-        var HttpIntegracoes = _factory.CreateClient("ApiIntegracoes");
-        var response = await HttpIntegracoes.PostAsJsonAsync("integracoes/ifood/autenticar", infoAuth);
-        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<object>>();
-        return result ?? new ReturnApiRefatored<object>() { Status = "error", Messages = new List<string> { "Erro ao autorizar empresa com Ifood!" } };
-    }
 
 }
 

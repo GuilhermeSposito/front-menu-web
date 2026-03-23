@@ -21,26 +21,14 @@
                 <MudTextField @bind-Value=Empresa.MerchantIdIfood Label="ID Empresa Ifood" Variant="Variant.Outlined" />
             </MudItem>
 
-            @if (!GerouCodigoDeAtivacao)
-            {
-                <MudItem xs="12" sm="12" md="12" lg="12">
-                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
-                        <MudButton Color="Color.Primary" OnClick=GerarCodigoDeAutorizacao Variant="Variant.Filled">Gerar Código de Autorização</MudButton>
-                    </MudStack>
-                </MudItem>
-            }
 
-            @if (GerouCodigoDeAtivacao)
-            {
-                <MudItem xs="12" sm="12" md="12" lg="12">
-                    <MudTextField Mask="CodigoIfoodMask" T="string" @bind-Value=Empresa.CodigoDeAutorizacaoDoIfood Label="Codigo De Autorização (Cole Aqui!)" Variant="Variant.Outlined" Placeholder="Cole o código de autorização gerado pelo ifood aqui!" />
-                </MudItem>
-                <MudItem xs="12" sm="12" md="12" lg="12">
-                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
-                        <MudButton Color="Color.Error" OnClick=AutorizarEmpresa Variant="Variant.Filled">Autorizar</MudButton>
-                    </MudStack>
-                </MudItem>
-            }
+            <MudItem xs="12" sm="12" md="12" lg="12">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudButton Color="Color.Primary" OnClick=AdicionarEmpresa Variant="Variant.Filled">Adicionar Empresa</MudButton>
+                </MudStack>
+            </MudItem>
+
+
 
 
         </MudGrid>
@@ -55,74 +43,32 @@
     private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter] public ClsEmpresaIfood Empresa { get; set; } = new ClsEmpresaIfood();
-
-    private bool GerouCodigoDeAtivacao { get; set; } = false;
-    private PatternMask CodigoIfoodMask = new PatternMask("****-****") { MaskChars = new[] { new MaskChar('*', @"[A-Za-z0-9]") } };
-
     private UserCodeReturnFromAPIIfoodDto? ObjetoRetornadoDaAutorizacaoDoIfood { get; set; } = null;
     #endregion
 
-
     #region Funções de Ações
-    private async Task GerarCodigoDeAutorizacao()
+    public async Task AdicionarEmpresa()
     {
-        if (string.IsNullOrEmpty(Empresa.MerchantIdIfood))
+        if (!string.IsNullOrEmpty(Empresa.MerchantIdIfood))
         {
-            Snackbar.Add("O campo 'ID Empresa Ifood' é obrigatório para gerar o código de autorização.", Severity.Error);
-            return;
+            var response = await EmpresasIfoodServices.CreateEmpresa(Empresa);
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Empresa Ifood adicionada com sucesso", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(",", response.Messages), Severity.Error);
+                return;
+            }
         }
-        else if (string.IsNullOrEmpty(Empresa.NomeEmpresa))
+        else
         {
-            Snackbar.Add("O campo 'Nome Identificador' é obrigatório para gerar o código de autorização.", Severity.Error);
-            return;
+            Snackbar.Add("Preencha o campo Merchant ID Ifood", Severity.Error);
         }
-
-        var ObjetoDeAutorizacaoDoIfood = await EmpresasIfoodServices.GerarAutorizacao();
-
-        if (ObjetoDeAutorizacaoDoIfood.Status == "error")
-        {
-            Snackbar.Add("Ocorreu um erro ao gerar o código de autorização. Por favor, tente novamente.", Severity.Error);
-            return;
-        }
-
-        var UrldeAutorizacao = ObjetoDeAutorizacaoDoIfood.Data.ObjetoWhenWriting?.VerificationUrlComplete;
-        if (string.IsNullOrEmpty(UrldeAutorizacao))
-        {
-            Snackbar.Add("Ocorreu um erro ao gerar o código de autorização. Por favor, tente novamente.", Severity.Error);
-            return;
-        }
-
-        ObjetoRetornadoDaAutorizacaoDoIfood = ObjetoDeAutorizacaoDoIfood.Data.ObjetoWhenWriting;
-
-        await JS.InvokeVoidAsync("open", UrldeAutorizacao, "_blank");
-        GerouCodigoDeAtivacao = true;
-        StateHasChanged();
     }
 
-    private async Task AutorizarEmpresa()
-    {
-        if (string.IsNullOrEmpty(Empresa.CodigoDeAutorizacaoDoIfood) || ObjetoRetornadoDaAutorizacaoDoIfood is null || ObjetoRetornadoDaAutorizacaoDoIfood.AuthorizationCodeVerifier is null)
-        {
-            Snackbar.Add("O campo 'Codigo De Autorização' é obrigatório para autorizar a empresa.", Severity.Error);
-            return;
-        }      
-
-        InformacoesParaAutenticarEmpresaIfoodDto Infos = new InformacoesParaAutenticarEmpresaIfoodDto
-        {
-            CodigoDeAutorizacaoEnviadoPeloIfood = Empresa.CodigoDeAutorizacaoDoIfood,
-            VerificadorDoCodigo = ObjetoRetornadoDaAutorizacaoDoIfood.AuthorizationCodeVerifier,
-            NomeEmpresa = Empresa.NomeEmpresa,
-            MerchantIdIfood = Empresa.MerchantIdIfood
-        };
-
-        var ResultadoDaAutorizacao = await EmpresasIfoodServices.AutenticarEmpresaIfood(Infos);
-      
-        Snackbar.Add(string.Join(",", ResultadoDaAutorizacao.Messages), ResultadoDaAutorizacao.Status == "success" ? Severity.Success : Severity.Error);
-        MudDialog.Close(DialogResult.Ok(true));
-    }
     #endregion
 
-    #region Funções da página
-
-    #endregion
 }

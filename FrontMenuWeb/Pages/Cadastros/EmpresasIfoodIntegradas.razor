@@ -57,8 +57,6 @@
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Sortable="false" Property="x => x.NomeEmpresa" Title="Nome"></PropertyColumn>
-                <PropertyColumn Sortable="false" Property="x => x.MerchantIdIfood" Title="Id Ifood"></PropertyColumn>
-                <PropertyColumn Sortable="false" Property="x => x.VenceTokenIfood" Title="Data Vencimento" Format="dd/MM/yyyy HH:mm"></PropertyColumn>
                 <TemplateColumn T="ClsEmpresaIfood" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar a integração com a empresa" Color="Color.Primary">
@@ -70,7 +68,6 @@
                 <TemplateColumn T="ClsEmpresaIfood" Title="Ações">
                     <CellTemplate Context="context">
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                            <MudMenuItem OnClick=@(async () => { await CopiarToken(context.Item.AccessTokenIfood); }) Icon="@Icons.Material.Filled.CopyAll" Label="Copiar Token" />
                             <MudMenuItem OnClick=@(async () => { await DeletarEmpresa(context.Item); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Deletar" />
                         </MudMenu>
                     </CellTemplate>
