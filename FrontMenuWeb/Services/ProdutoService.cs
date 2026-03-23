@@ -1,11 +1,13 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Fiscal;
+using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http;
 using MudBlazor.Extensions.Components.ObjectEdit;
 using Nextended.Core.Extensions;
+using SocketIOClient.Transport.Http;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -128,6 +130,25 @@ public class ProdutoService
         return response;
     }
 
+
+    public async Task<ReturnApiRefatored<ClsProduto>> AdicionarFotoAoProduto(MemoryStream ms,string filename, string IdProduto)
+    {
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new ByteArrayContent(ms.ToArray()); 
+        fileContent.Headers.ContentType =new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(fileContent, "foto", filename);
+        var response = await _http.PatchAsync($"produtos/update/imagem/{IdProduto}", content );
+
+        var resultado = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsProduto>>();
+
+        return resultado ??
+            new ReturnApiRefatored<ClsProduto>
+            {
+                Status = "error",
+                Messages = new List<string> { "Erro desconhecido" }
+            };
+    }
 
 }
 

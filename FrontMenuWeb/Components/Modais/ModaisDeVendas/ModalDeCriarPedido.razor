@@ -98,11 +98,19 @@
                                                         <MudGrid Class="h-100">
                                                             <!-- Avatar -->
                                                             <MudItem xs="3" Class="d-flex justify-center align-center">
+
                                                                 <MudAvatar Size="Size.Large"
                                                                            Color="Color.Primary"
                                                                            Square="true"
                                                                            Class="fw-bold text-white">
-                                                                    @item.produto.Descricao.Substring(0, 1)
+                                                                    @if (string.IsNullOrEmpty(item.produto.ImgProduto))
+                                                                    {
+                                                                        @item.produto.Descricao.Substring(0, 1)
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <MudImage Src="@item.produto.ImgProduto" Alt="IMG" />
+                                                                    }
                                                                 </MudAvatar>
                                                             </MudItem>
 
@@ -473,7 +481,7 @@
             if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
             {
                 //Faz Soma do Peso Dependendo do Valor do produto cadastrado
-                if(ValorDoProduto > 0)
+                if (ValorDoProduto > 0)
                 {
                     QtdAdicionado = (float)Math.Round(Valor / ValorDoProduto, 3);
                 }

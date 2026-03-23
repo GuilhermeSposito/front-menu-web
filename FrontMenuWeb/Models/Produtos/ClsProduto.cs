@@ -4,11 +4,13 @@ namespace FrontMenuWeb.Models.Produtos;
 
 public class ClsProduto
 {
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("id")] public string? Id { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("codigo_interno")] public string? CodigoInterno { get; set; }
     [JsonPropertyName("categoria")] public Categoria? Categoria { get; set; }
     [JsonPropertyName("categoria_id")] public int? CategoriaId { get; set; }
     [JsonPropertyName("grupo_id")] public int GrupoId { get; set; }
+    [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
+    [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
     [JsonPropertyName("ncm")] public string? NCM { get; set; }
     [JsonPropertyName("cest")] public string? CEST { get; set; }

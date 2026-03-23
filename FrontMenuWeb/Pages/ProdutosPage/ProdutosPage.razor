@@ -860,44 +860,46 @@
         try
         {
             carregandoProdutoParaEdicao = true;
-
             OpenDrawer(Anchor.End);
-
-            ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(produto.Id ?? "");
-
-            // Verifica se o produto selecionado para edição não é nulo e atribui os valores das listas de seleção
-            if (ProdutoSelecionadoParaEdicao is not null)
-            {
-                ProdutoSelecionadoParaEdicao.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.csosn);
-                ProdutoSelecionadoParaEdicao.CSTSelected = ListaDeCSTS.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.CST);
-                ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
-                ProdutoSelecionadoParaEdicao.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.TribPisCofins);
-                ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
-
-                if (!string.IsNullOrEmpty(ProdutoSelecionadoParaEdicao.NCM))
-                {
-                    var resposta = await ProdutoService.GetCestsAsync(ProdutoSelecionadoParaEdicao.NCM);
-                    MostraMensagem(resposta);
-
-                    if (resposta.Status != "error")
-                        ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
-
-                    if (ProdutoSelecionadoParaEdicao.CEST is not null)
-                    {
-                        CestSelecionado = ListaDeCests.FirstOrDefault(c => c.CestReferente == ProdutoSelecionadoParaEdicao.CEST);
-                    }
-                }
-            }
-
-
+            await CarregaProdutoParaEdicao(produto.Id);
             carregandoProdutoParaEdicao = false;
-
-
         }
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
+    }
+
+    private async Task CarregaProdutoParaEdicao(string IdProduto)
+    {
+        ProdutoSelecionadoParaEdicao = await ProdutoService.GetProdutoAsync(IdProduto);
+
+        // Verifica se o produto selecionado para edição não é nulo e atribui os valores das listas de seleção
+        if (ProdutoSelecionadoParaEdicao is not null)
+        {
+            ProdutoSelecionadoParaEdicao.CSOSNSelected = ListaDeCSOSN.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.csosn);
+            ProdutoSelecionadoParaEdicao.CSTSelected = ListaDeCSTS.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.CST);
+            ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
+            ProdutoSelecionadoParaEdicao.TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.TribPisCofins);
+            ProdutoSelecionadoParaEdicao.OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(c => c.Id.ToString() == ProdutoSelecionadoParaEdicao.OrigemProduto);
+
+            if (!string.IsNullOrEmpty(ProdutoSelecionadoParaEdicao.NCM))
+            {
+                var resposta = await ProdutoService.GetCestsAsync(ProdutoSelecionadoParaEdicao.NCM);
+                MostraMensagem(resposta);
+
+                if (resposta.Status != "error")
+                    ListaDeCests = resposta.Data.Lista ?? new List<Cest>();
+
+                if (ProdutoSelecionadoParaEdicao.CEST is not null)
+                {
+                    CestSelecionado = ListaDeCests.FirstOrDefault(c => c.CestReferente == ProdutoSelecionadoParaEdicao.CEST);
+                }
+            }
+        }
+
+
+        carregandoProdutoParaEdicao = false;
     }
 
     private void OpenDrawer(Anchor anchor)
@@ -1131,7 +1133,7 @@
         if (ProdutoSelecionadoParaEdicao is not null)
         {
             ProdutoSelecionadoParaEdicao.NCM = novoValor;
-            if(novoValor.Length == 0)
+            if (novoValor.Length == 0)
             {
                 return;
             }
@@ -1162,6 +1164,37 @@
             }
         }
     }
+
+    private async Task UploadImagemDoProduto(IBrowserFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            if (ProdutoSelecionadoParaEdicao is not null)
+            {
+                var response = await ProdutoService.AdicionarFotoAoProduto(ms, file.Name, ProdutoSelecionadoParaEdicao.Id);
+
+                MostraMensagem(response);
+                if(response.Status == "success")
+                {
+                    carregandoProdutoParaEdicao = true;
+                    await CarregaProdutoParaEdicao(ProdutoSelecionadoParaEdicao.Id);
+                    carregandoProdutoParaEdicao = false;
+                }
+                return;
+            }
+
+            Snackbar.Add("Não foi possivel carregar imagem!", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar imagem: {ex.Message}", Severity.Error);
+        }
+    }
+
 
 }
 
@@ -1199,15 +1232,40 @@
                     }
                     else
                     {
-                        <MudAvatar Size="Size.Large">
-                            @(ProdutoSelecionadoParaEdicao!.Descricao!.Length > 1 ? ProdutoSelecionadoParaEdicao.Descricao.Substring(0, 1) : "")
+                        <MudAvatar Style="width:120px; height:120px;">
+                            @if (string.IsNullOrEmpty(ProdutoSelecionadoParaEdicao?.ImgProduto))
+                            {
+                                @(ProdutoSelecionadoParaEdicao!.Descricao!.Length > 1 ? ProdutoSelecionadoParaEdicao.Descricao.Substring(0, 1) : "")
+                            }
+                            else
+                            {
+                                <MudImage Src="@ProdutoSelecionadoParaEdicao.ImgProduto" Alt="IMG" />
+                            }
                         </MudAvatar>
                         <MudText Color="Color.Primary">
                             @ProdutoSelecionadoParaEdicao!.Descricao
                         </MudText>
-                        <MudText style="font-weight:30; font-size: 10px">
-                            Produto Adicionado em 17/01/2000 15:30
-                        </MudText>
+                        <MudStack Class="mt-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadImagemDoProduto">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Alterar Imagem do Produto
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                        </MudStack>
+                        @if(ProdutoSelecionadoParaEdicao is not null)
+                        {
+                            <MudText style="font-weight:30; font-size: 10px; margin-top: 15px">
+                                Produto Adicionado em @ProdutoSelecionadoParaEdicao.CriadoEm.ToString("dd/MM/yyyy")
+                            </MudText>
+                            <MudText style="font-weight:30; font-size: 10px">
+                                Ultima Modificação/Venda em @ProdutoSelecionadoParaEdicao.ModificadoEm.ToString("dd/MM/yyyy")
+                            </MudText>
+                        }
+                       
                     }
                 </MudPaper>
                 @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
@@ -1732,7 +1790,7 @@
                                     <MudItem xs="12">
                                         <MudPaper Class="d-flex align-center justify-center w-100 py-8">
                                             <MudStack Row=true Justify=Justify.FlexStart AlignItems=AlignItems.Start Class="w-100">
-                                                <MudTextField @onfocusout=@(async (prop) => {await OnSaveChanges(ProdutoSelecionadoParaEdicao);}) T="string" Value=ProdutoSelecionadoParaEdicao.NCM DebounceInterval="100" ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense" />
+                                                <MudTextField @onfocusout=@(async (prop) => { await OnSaveChanges(ProdutoSelecionadoParaEdicao); }) T="string" Value=ProdutoSelecionadoParaEdicao.NCM DebounceInterval="100" ValueChanged="MudouValorNcm" Disabled="false" MaxLength="8" Class="w-25 m-2" Label="NCM" Variant="Variant.Filled" Margin="Margin.Dense" />
 
                                                 <MudStack Class="w-75" AlignItems="AlignItems.Stretch" Justify="Justify.FlexEnd">
                                                     <MudSelect T="Cest" Class="w-100" Label="CEST" Variant=Variant.Filled Value="CestSelecionado" Clearable=true ValueChanged="OnCestChanged">
