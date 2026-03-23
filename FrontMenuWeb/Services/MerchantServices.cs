@@ -104,5 +104,24 @@ public class MerchantServices
                 Messages = new List<string> { "Erro desconhecido" }
             };
     }
+
+    public async Task<ReturnApiRefatored<ClsProduto>> AdicionarFoto(MemoryStream ms, string filename, string IdMerchant)
+    {
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new ByteArrayContent(ms.ToArray());
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        content.Add(fileContent, "foto", filename);
+        var response = await _HttpClient.PatchAsync($"merchants/update/imagem/{IdMerchant}", content);
+
+        var resultado = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsProduto>>();
+
+        return resultado ??
+            new ReturnApiRefatored<ClsProduto>
+            {
+                Status = "error",
+                Messages = new List<string> { "Erro desconhecido" }
+            };
+    }
 }
 

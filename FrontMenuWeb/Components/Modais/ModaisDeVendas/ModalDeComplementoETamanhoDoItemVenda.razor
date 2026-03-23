@@ -12,7 +12,7 @@
                             <MudImage Src="@Produto.ImgProduto" Alt="@Produto.Descricao" Width="60" Height="60" />
                             <MudText Typo="Typo.h6">@Produto.Descricao</MudText>
                         </MudStack>
-
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"   Color="Color.Secondary" OnClick="Cancel" Style="position: absolute; top: 15px; right: 10px;" />
                     </MudStack>
                 </MudItem>
 
@@ -131,36 +131,47 @@
                   Style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1300; background-color: var(--mud-palette-surface); box-shadow: 0 -2px 5px rgba(0,0,0,0.1);">
 
             <MudStack Class="w-100" Row=true>
-                <MudStack Class="w-25" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Spacing="1">
+                <MudGrid Class="w-100">
+                    <MudItem xs="12" md="12" lg="4" xxl="4">
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Spacing="1">
 
-                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
-                                   OnClick="@(() => DiminuiQuantidadeDoProduto())" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                           OnClick="@(() => DiminuiQuantidadeDoProduto())" />
 
-                    <MudNumericField Immediate="false"
-                                     Variant="Variant.Outlined"
-                                     Format="N3"
-                                     Culture="_pt"
-                                     T="float"
-                                     HideSpinButtons="true"
-                                     @bind-Value="@Item.Quantidade"
-                                     @onfocusout="@(() => AtualizarPrecoTotal())" />
-
-
-                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
-                                   OnClick="@(() => AumentaQuantidadeDoProduto())" />
-                </MudStack>
+                            <MudNumericField Immediate="false"
+                                             Variant="Variant.Outlined"
+                                             Format="N3"
+                                             Culture="_pt"
+                                             T="float"
+                                             HideSpinButtons="true"
+                                             @bind-Value="@Item.Quantidade"
+                                             @onfocusout="@(() => AtualizarPrecoTotal())" />
 
 
-                <MudButton Class="w-75" OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary">
-                    @if (!AtualizandoItem)
-                    {
-                        <MudText>Adicionar - @Item.PrecoTotal.ToString("F2")</MudText>
-                    }
-                    else
-                    {
-                        <MudText>Atualizar - @Item.PrecoTotal.ToString("F2")</MudText>
-                    }
-                </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                                           OnClick="@(() => AumentaQuantidadeDoProduto())" />
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" md="12" lg="8" xxl="8">
+                        <MudStack Class="w-100 h-100">
+                            <MudButton Class="w-100 h-100" OnClick="Submit" Variant="Variant.Filled" Color="Color.Primary">
+                                @if (!AtualizandoItem)
+                                {
+                                    <MudText>Adicionar - @Item.PrecoTotal.ToString("F2")</MudText>
+                                }
+                                else
+                                {
+                                    <MudText>Atualizar - @Item.PrecoTotal.ToString("F2")</MudText>
+                                }
+                            </MudButton>
+                        </MudStack>
+
+                    </MudItem>
+                </MudGrid>
+
+
+
+
 
             </MudStack>
 

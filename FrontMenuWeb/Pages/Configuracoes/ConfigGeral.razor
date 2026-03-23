@@ -23,8 +23,6 @@
             @*Informações da loja*@
             <MudPaper Class="rounded-5 p-2" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
                 <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
-
-                    <MudAvatar Size=Size.Large Color="Color.Primary">S</MudAvatar>
                     <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background);" Elevation="2">
                         <MudText Align="Align.Center" Typo="Typo.h4">Informações da Empresa</MudText>
                     </MudPaper>
@@ -32,6 +30,25 @@
                 </MudStack>
 
                 <MudGrid Class="mt-2 p-2 mb-1">
+                    <MudItem xs="12" md="12" lg="12">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudAvatar Style="width:120px; height:120px;">
+                                @if (!string.IsNullOrEmpty(AppState.MerchantLogado?.ImagemLogo))
+                                {
+                                    <MudImage Src="@AppState.MerchantLogado?.ImagemLogo" Alt="IMG" />
+                                }
+                            </MudAvatar>
+                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadImagem">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Alterar Imagem
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                        </MudStack>
+                    </MudItem>
                     <MudItem xs="12" md="4" lg="4">
                         <MudTextField @onfocusout=SalvarInfosLojaAsync Disabled=EditandoInfosLojaBloq @bind-Value=@Merchant.NomeFantasia Immediate=true Label="Nome da Loja" AdornmentColor=Color.Primary Variant="Variant.Outlined" FullWidth="true" />
                     </MudItem>
@@ -797,6 +814,36 @@
         }
     }
 
+
+    private async Task UploadImagem(IBrowserFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            if (AppState.MerchantLogado is not null)
+            {     
+                var response = await MerchantServices.AdicionarFoto(ms, file.Name, AppState.MerchantLogado.Id);
+                if (response.Status == "success")
+                {
+                    ClsMerchant merchant = await MerchantServices.GetMerchantAsync();
+                    if (merchant is not null)
+                        AppState.MerchantLogado = merchant;
+
+                    StateHasChanged();
+                }
+                return;
+            }
+
+            Snackbar.Add("Não foi possivel carregar imagem!", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar imagem: {ex.Message}", Severity.Error);
+        }
+    }
 
     #endregion
 }
