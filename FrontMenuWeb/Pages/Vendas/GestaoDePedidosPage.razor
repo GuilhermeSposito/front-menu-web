@@ -1224,6 +1224,10 @@
                 return;
             }
 
+            if (novoPedido.EtapaPedido == "PREPARANDO")
+                EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
+
+
             await JS.InvokeVoidAsync("playNotificationSound");
             await VizualizaSeNaoExistePedidoNaTela(novoPedido);
             Snackbar.Add("Novo pedido recebido!", Severity.Info);
@@ -1329,7 +1333,6 @@
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
             await CarregarPedidos();
-            await InvokeAsync(StateHasChanged);
         }
 
     }
@@ -1342,9 +1345,9 @@
         {
             var parameters = new DialogParameters<ModalDeExcluir>
             {
-            { x => x.ContentText, $"Atenção: Ao confirmar você estara enviando o pedido para o mapa da {EmpresaEnviada.Nome}. Deseja continuar?" },
-            { x => x.ButtonText, "Sim" },
-            { x => x.Color, Color.Error}
+                { x => x.ContentText, $"Atenção: Ao confirmar você estara enviando o pedido para o mapa da {EmpresaEnviada.Nome}. Deseja continuar?" },
+                { x => x.ButtonText, "Sim" },
+                { x => x.Color, Color.Error}
             };
             var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
             var dialog = await DialogService.ShowAsync<ModalDeExcluir>
@@ -1387,6 +1390,7 @@
 
                 if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
                     await MessageService.EnviarMensagem(Pedido, etapa);
+
             }
         }
     }

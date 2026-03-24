@@ -19,6 +19,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<CustomAuthorizationMessageBrokerUnimakeHandler>();
 builder.Services.AddScoped<CustomHttpHendlerIfood>();
+builder.Services.AddScoped<CustomSophosHttpHendler>();
 builder.Services.AddScoped<IBPTServices>();
 builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<MessageService>();
@@ -35,12 +36,11 @@ string UrlMessageBrokerWhatsAppUnimake = builder.Configuration.GetValue<string>(
 string UrlMessageBrokerWhatsAppUnimakeAuth = builder.Configuration.GetValue<string>("UrlApiMessageBrokerAuth") ?? "";
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
 
-
 builder.Services.AddHttpClient("ApiAutorizada", client =>
 {
     client.BaseAddress = new Uri(UrlSophos);
-    client.Timeout = TimeSpan.FromSeconds(5);
-});
+    client.Timeout = TimeSpan.FromSeconds(15);
+}).AddHttpMessageHandler<CustomSophosHttpHendler>();
 
 builder.Services.AddHttpClient("ApiIBPT", client =>
 {

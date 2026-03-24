@@ -72,7 +72,14 @@ public class MessageService
         ClsMerchant Merchant = await GetMerchantFromNestApi(TokenDaApiNest) ?? throw new Exception("Não foi possível obter os detalhes do comerciante.");
 
         string Mensagem = string.Empty;
-        if (enviaMsgDto.EtapaDoPedido == EtapasPedido.DESPACHADO)
+        if(enviaMsgDto.EtapaDoPedido == EtapasPedido.PREPARANDO)
+        {
+            var HttpSophosClient = _factory.CreateClient("ApiAutorizada");
+            var GetMensagem = await HttpSophosClient.PostAsJsonAsync($"gemini/preparando?nomeestabelecimento={Merchant.NomeFantasia}", enviaMsgDto.Pedido, CancellationToken.None);
+
+            Mensagem = await GetMensagem.Content.ReadAsStringAsync() ?? throw new Exception("Não foi possível obter a mensagem para a etapa PREPARANDO");
+        }
+        else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.DESPACHADO)
         {
             if (enviaMsgDto.Pedido.TipoDePedido == "DELIVERY")
             {
@@ -96,7 +103,7 @@ public class MessageService
         }
         else
         {
-            throw new Exception("Etapa do pedido não suportada para envio de mensagem.");
+            return;
         }
 
         string NomeDoCliente = enviaMsgDto.Pedido.Cliente?.Nome ?? throw new Exception("Nome do cliente não encontrado");
