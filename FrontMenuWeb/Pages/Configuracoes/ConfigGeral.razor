@@ -15,6 +15,7 @@
 @using MudBlazor.Extensions.Services
 @using System.Text.Json
 @inject MerchantServices MerchantServices
+@inject IJSRuntime JS
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -24,7 +25,12 @@
             <MudPaper Class="rounded-5 p-2" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
                 <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
                     <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background);" Elevation="2">
-                        <MudText Align="Align.Center" Typo="Typo.h4">Informações da Empresa</MudText>
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row=true>
+                            <MudText Align="Align.Center" Typo="Typo.h4">Informações da Empresa</MudText>
+                            <MudTooltip Text="Copiar ID" Color="Color.Primary">
+                                <MudIconButton Icon="@Icons.Material.Filled.CopyAll" OnClick="CopiaMerchantId" />
+                            </MudTooltip>
+                        </MudStack>
                     </MudPaper>
                     <MudButton OnClick=@(() => { EditandoInfosLojaBloq = !EditandoInfosLojaBloq; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
                 </MudStack>
@@ -824,7 +830,7 @@
             await stream.CopyToAsync(ms);
 
             if (AppState.MerchantLogado is not null)
-            {     
+            {
                 var response = await MerchantServices.AdicionarFoto(ms, file.Name, AppState.MerchantLogado.Id);
                 if (response.Status == "success")
                 {
@@ -843,6 +849,11 @@
         {
             Snackbar.Add($"Erro ao carregar imagem: {ex.Message}", Severity.Error);
         }
+    }
+
+    private async Task CopiaMerchantId()
+    {
+        await JS.InvokeVoidAsync("copyToClipboard", Merchant?.Id.ToString() ?? string.Empty);
     }
 
     #endregion
