@@ -148,6 +148,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> EditaPedido(ClsPedido Pedido, CancellationToken cancellationToken = default)
+    {
+        var response = await _http.PatchAsJsonAsync($"pedidos/editar/{Pedido.Id}", Pedido, cancellationToken);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> CreatePedidoPublicAsync(ClsPedido Pedido,ClsMerchant Merchant,CancellationToken cancellationToken = default)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/public/{Merchant.Id}", Pedido, cancellationToken);

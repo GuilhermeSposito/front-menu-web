@@ -357,6 +357,7 @@
 
     //Lógica do pedido
     [Parameter] public ClsPedido NovoPedido { get; set; } = new();
+    [Parameter] public bool Editando { get; set; } = false;
 
     //Lógica do AutoComplete de Pessoas
     private List<ClsPessoas> PessoasParaSelecionar { get; set; } = new List<ClsPessoas>();
@@ -869,7 +870,15 @@
             StateHasChanged();
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            ReturnApiRefatored<ClsPedido> ResponseAPi = await PedidosService.CreatePedido(NovoPedido, cts.Token);
+            ReturnApiRefatored<ClsPedido> ResponseAPi;
+            if (Editando)
+            {
+                ResponseAPi = await PedidosService.EditaPedido(NovoPedido, cts.Token);
+            }
+            else
+            {
+                ResponseAPi = await PedidosService.CreatePedido(NovoPedido, cts.Token);
+            }
 
             string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
             Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);

@@ -316,7 +316,8 @@
                                                                     }
                                                                     @if (pedido.Pedido.StatusPedido != "CANCELADO")
                                                                     {
-                                                                        <MudMenuItem OnClick="@(async () => { await EditarPedido(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pagamento" />
+                                                                        <MudMenuItem OnClick="@(async () => { await EditarPedido(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pedido" />
+                                                                        <MudMenuItem OnClick="@(async () => { await EditarPedidoPagamento(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pagamento" />
                                                                         <MudMenuItem OnClick=@(async () => { await CancelarPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                                                     }
                                                                 </MudMenu>
@@ -1254,21 +1255,21 @@
     #endregion
 
     #region Funções de edicao do pedido
-    private async Task EditarPedido(ClsPedido pedido)
+    private async Task EditarPedidoPagamento(ClsPedido pedido)
     {
         //Primeiro fazer a requisição para ver se existe pagamentos para ser editado
         ReturnApiRefatored<PagamentoDoPedido>
-    ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
+         ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
         MostraMensagemDeUpdateDoPedido(ReturnFromApi);
         if (ReturnFromApi.Status == "eror")
             return;
 
         pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
         var parameters = new DialogParameters
-    {
-    { "Pedido", pedido },
-    {"Editando", true}
-    };
+        {
+        { "Pedido", pedido },
+        {"Editando", true}
+        };
 
         var options = new DialogOptions
         {
@@ -1287,6 +1288,48 @@
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
 
+        }
+
+    }
+
+    private async Task EditarPedido(ClsPedido pedido)
+    {
+        ClsPedido? Pedido = await PedidosService.GetPedidoById(pedido.Id);
+        if (Pedido is null)
+        {
+            Snackbar.Add("Erro ao obter detalhes do pedido, por favor tente novamente.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+           { "NovoPedido", Pedido},
+           { "Editando", true}
+        };
+
+
+        if (Pedido.TipoDePedido == "DELIVERY")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.DELIVERY;
+        }
+        else if (Pedido.TipoDePedido == "BALCÂO")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.BALCÃO;
+        }
+        else if (Pedido.TipoDePedido == "MESA")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.MESA;
+        }
+
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
+
+        var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Editar Pedido", parameters, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await CarregarPedidos();
+            await InvokeAsync(StateHasChanged);
         }
 
     }

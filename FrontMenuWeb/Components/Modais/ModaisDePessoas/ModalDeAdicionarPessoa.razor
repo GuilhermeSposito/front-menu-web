@@ -47,7 +47,7 @@
                                     <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
                                                   Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
                                                   Variant="@Variant.Filled" Clearable
-                                                  RequiredError="O Telefone é obrigatório" Immediate=true />
+                                                  RequiredError="O Telefone é obrigatório" Immediate=false />
                                 </MudItem>
                             </MudGrid>
                             @if (!CadastroRapido)
