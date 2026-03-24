@@ -1214,6 +1214,9 @@
                 Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
                 await VizualizaSeNaoExistePedidoNaTela(novoPedido);
 
+                if (novoPedido.CriadoPor == "SOPHOS CARDAPIO")
+                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
+
                 if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
                     await ImprimirPedido(novoPedido, false);
 
