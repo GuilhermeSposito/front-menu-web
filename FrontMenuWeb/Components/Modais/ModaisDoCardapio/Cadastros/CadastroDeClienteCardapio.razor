@@ -38,7 +38,7 @@
                                 <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
                                               Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
                                               Variant="@Variant.Filled" Clearable
-                                              RequiredError="O Telefone é obrigatório" Immediate=true />
+                                              RequiredError="O Telefone é obrigatório" Immediate=false />
                             </MudItem>
                         </MudGrid>
                         <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable Immediate=true />
@@ -198,8 +198,12 @@
     private async Task OnPhoneChanged(string value) //remove a mascara e deixa só os números
     {
         maskedPhone = value;
-        NovaPessoa.Telefone = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
         await Task.CompletedTask; // para manter a assinatura async
+    }
+
+    private async Task AdicionaTelefoneProCliente()
+    {
+        NovaPessoa.Telefone = new string(maskedPhone?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
     }
 
     private async Task OnCnpjChange(string value) //remove a mascara do cnpj
@@ -250,7 +254,7 @@
         NovaPessoa.Nome = input.ToUpper();
 
         /*if (string.IsNullOrWhiteSpace(input))
-            NovaPessoa.Nome = string.Empty;
+        NovaPessoa.Nome = string.Empty;
 
         var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         for (int i = 0; i < words.Length; i++)
@@ -260,7 +264,7 @@
                 words[i] = char.ToUpper(w[0]).ToString();
             else
                 words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
-        }
+            }
         NovaPessoa.Nome = string.Join(' ', words);*/
     }
 
@@ -428,6 +432,8 @@
     {
         try
         {
+            await AdicionaTelefoneProCliente();
+
             Pedido.Cliente = NovaPessoa;
             if (Pedido.TipoDePedido == "DELIVERY")
             {
