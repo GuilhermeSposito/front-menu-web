@@ -29,7 +29,7 @@ public class EmailService
             user));
 
         message.To.Add(MailboxAddress.Parse(para));
-        message.Subject = assunto;
+        message.Subject = assunto; //ss
 
         message.Body = new TextPart("html")
         {

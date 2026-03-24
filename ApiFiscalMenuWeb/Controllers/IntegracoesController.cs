@@ -143,4 +143,5 @@ public class IntegracoesController : Controller
         await _ifoodService.PollingIfood();
         return Ok();
     }
+
 }
