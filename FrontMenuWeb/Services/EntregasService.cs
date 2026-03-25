@@ -25,6 +25,12 @@ public class EntregasService
         return response?.Data.Lista ?? new List<RaioDeEntrega>();
     }
 
+    public async Task<List<AutoCompleteDeEndereco>> GetAutoCompleteDeEnderecos(string endereco)
+    {
+        var response = await _http.GetFromJsonAsync<ReturnApiRefatored<AutoCompleteDeEndereco>>($"api-entregas/autocomplete?endereco={endereco}");
+        return response?.Data.Lista ?? new List<AutoCompleteDeEndereco>();
+    }
+
     public async Task<ReturnApiRefatored<RaioDeEntrega>> CreateRaio(RaioDeEntrega raio)
     {
         var response = await _http.PostAsJsonAsync($"api-entregas/raio", raio);

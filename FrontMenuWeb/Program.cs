@@ -47,7 +47,6 @@ builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("Api"));
 
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
-string UrlApiGoogle = builder.Configuration.GetValue<string>("UrlApiGoogleMaps") ?? "";
 
 //Injeções para integrações 
 builder.Services.AddScoped<MessageWhatsAppService>();
@@ -69,11 +68,6 @@ builder.Services.AddHttpClient("ApiRefresh", (sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
-
-builder.Services.AddHttpClient("ApiGoogleMaps", (sp, client) =>
-{
-    client.BaseAddress = new Uri(UrlApiGoogle);
 });
 
 builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>

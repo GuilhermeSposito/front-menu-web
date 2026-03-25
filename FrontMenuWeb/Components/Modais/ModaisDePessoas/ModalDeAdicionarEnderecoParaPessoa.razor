@@ -1,11 +1,13 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject CEPService CEPService
 @inject PessoasService PessoasService
+@inject EntregasService EntregasService
 
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
@@ -31,7 +33,19 @@
                         </MudText>
                         <MudGrid>
                             <MudItem xs="12" sm="8">
-                                <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Outlined" />
+                                <MudAutocomplete T="AutoCompleteDeEndereco"
+                                                 Label="Rua"
+                                                 HelperText="Procure por Cliente (número | nome)"
+                                                 SearchFunc="BuscarEndereco"
+                                                 ToStringFunc="@(p => { if (p == null) return string.Empty; return $"{p.Descricao}"; })"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Dense="true"
+                                                 Variant="Variant.Outlined"
+                                                 ShowProgressIndicator="true"
+                                                 ValueChanged="SelecionarEndereco"
+                                                 @onfocusout=ProcuraCepPorRua>
+                                </MudAutocomplete>
                             </MudItem>
 
                             <MudItem xs="12" sm="4">
@@ -101,11 +115,14 @@
 
 
 @code {
+    #region props
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     public bool CarregandoRespostaDaApiDeCep { get; set; } = false;
     public bool ErroAoAdicionarEndereco { get; set; } = false;
     private MudTextField<string> TextFieldDeNumeroDoCliente = new MudTextField<string>();
+    private string PesquisaEndereco { get; set; } = string.Empty;
+    private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
 
     [Parameter]
     public ClsPessoas Pessoa { get; set; } = new ClsPessoas();//pessoa que vai ser enviada para adicionar o endereço nela
@@ -117,9 +134,10 @@
     {
         TipoEndereco = "Casa"
     };
-    //teste
+    #endregion
 
-    protected override async Task OnInitializedAsync()
+    #region função de inicialização
+    protected override void OnInitialized()
     {
         if (EnderecoParaEditar is not null)
         {
@@ -127,8 +145,9 @@
             Editando = true;
         }
     }
+    #endregion
 
-
+    #region de pesquisa
     private async Task ProcuraCep()
     {
         try
@@ -190,10 +209,15 @@
                     }
 
                     NovoEndereco.Cep = endereco.Cep!;
-                    NovoEndereco.Rua = endereco.Logradouro!;
-                    NovoEndereco.Bairro = endereco.Bairro!;
-                    NovoEndereco.Cidade = endereco.Cidade!;
-                    NovoEndereco.Estado = endereco.Uf!;
+ 
+                    if (string.IsNullOrEmpty(NovoEndereco.Bairro))
+                        NovoEndereco.Bairro = endereco.Bairro!;
+
+                    if (string.IsNullOrEmpty(NovoEndereco.Cidade))
+                        NovoEndereco.Cidade = endereco.Cidade!;
+
+                    if (string.IsNullOrEmpty(NovoEndereco.Estado))
+                        NovoEndereco.Estado = endereco.Uf!;
 
                     if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
                         await TextFieldDeNumeroDoCliente.FocusAsync();
@@ -245,6 +269,44 @@
         }
     }
 
+    private bool _semResultados;
+    private async Task<IEnumerable<AutoCompleteDeEndereco>> BuscarEndereco(string valor, CancellationToken cancellationToken)
+    {
+        PesquisaEndereco = valor;
+        NovoEndereco.Rua = valor;
+
+        var ResponseAPi = await EntregasService.GetAutoCompleteDeEnderecos(valor);
+        EnderecosParaSelecionar = ResponseAPi;
+
+        _semResultados = !EnderecosParaSelecionar.Any();
+
+        return EnderecosParaSelecionar;
+    }
+
+    private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
+    {
+        if (end is null)
+        {
+            PesquisaEndereco = string.Empty;
+
+            NovoEndereco.Rua = string.Empty;
+            NovoEndereco.Bairro = string.Empty;
+            NovoEndereco.Cidade = string.Empty;
+            NovoEndereco.Estado = string.Empty;
+            return;
+        }
+
+        PesquisaEndereco = end.Descricao;
+
+        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? "";
+        NovoEndereco.Bairro = end.Termos?.ElementAtOrDefault(1) ?? "";
+        NovoEndereco.Cidade = end.Termos?.ElementAtOrDefault(2) ?? "";
+        NovoEndereco.Estado = end.Termos?.ElementAtOrDefault(3) ?? "";
+
+        await TextFieldDeNumeroDoCliente.FocusAsync();
+
+    }
+    #endregion
     private async Task Submit()
     {
         try

@@ -13,16 +13,24 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
 {
     private readonly ILocalStorageService _localStorage;
     private readonly IHttpClientFactory _factory;
+    private readonly IConfiguration _configuration;
 
 
-    public CustomAuthorizationMessageHandler(ILocalStorageService localStorage, IHttpClientFactory factory)
+    public CustomAuthorizationMessageHandler(ILocalStorageService localStorage, IHttpClientFactory factory, IConfiguration configuration)
     {
         _localStorage = localStorage;
         _factory = factory;
+        _configuration = configuration;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        if (!request.Headers.Contains("x-api-key"))
+        {
+            var apiKey = _configuration["ApiKeyNest"];
+            request.Headers.Add("x-api-key", apiKey);
+        }
+
         request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
         var response = await base.SendAsync(request, cancellationToken);
