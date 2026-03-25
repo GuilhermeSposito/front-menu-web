@@ -2,6 +2,7 @@
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
@@ -9,6 +10,7 @@
 @inject CEPService CEPService
 @inject PessoasService PessoasService
 @inject CnpjPesquisaService CnpjPesquisaService
+@inject EntregasService EntregasService
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
 
@@ -23,7 +25,7 @@
 
             <MudForm @onkeydown="HandleKeyDown" class="" Spacing="5">
                 <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                    <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
+                    <MudStack Class="pa-4" Spacing=3 style="background-color: var(--mud-palette-background); border-radius:8px">
                         <MudTextField Label="Nome Completo"
                                       Value="NovaPessoa.Nome"
                                       ValueChanged="EventCallback.Factory.Create<string>(this, ArrumaNomePrimeiraLetraMAiuscula)"
@@ -33,11 +35,17 @@
                                       RequiredError="O Nome é obrigatório"
                                       Immediate=true />
 
-                        <MudGrid Class="justify-space-between" Style="max-width: 400px;">
+                        <MudGrid Class="w-100">
                             <MudItem xs="12" sm="12">
-                                <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
-                                              @bind-Value="@maskedPhone" Variant="@Variant.Filled" Clearable
-                                              RequiredError="O Telefone é obrigatório" Immediate=false />
+                                <MudTextField T="string"
+                                              Mask="phoneMask"
+                                              Label="Telefone (Brasil)"
+                                              HelperText="Celular"
+                                              Value="@maskedPhone"
+                                              ValueChanged="OnPhoneChanged"
+                                              Variant="Variant.Filled"
+                                              Clearable="true"
+                                              Immediate="true" />
                             </MudItem>
                         </MudGrid>
                         <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable Immediate=true />
@@ -70,7 +78,7 @@
                                           Variant="Variant.Filled"
                                           Clearable />
                         }
-                    </MudPaper>
+                    </MudStack>
 
                     @if (Pedido.TipoDePedido == "DELIVERY")
                     {
@@ -81,7 +89,18 @@
                             </MudText>
                             <MudGrid>
                                 <MudItem xs="12" sm="8">
-                                    <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Filled" />
+                                    <MudAutocomplete T="AutoCompleteDeEndereco"
+                                                     Label="@LabelDePesquisaDeEndereco"
+                                                     @ref="_autoCompleteRua"
+                                                     MinCharacters="1"
+                                                     Clearable="true"
+                                                     Dense="true"
+                                                     Variant="Variant.Outlined"
+                                                     SearchFunc="BuscarEndereco"
+                                                     ValueChanged="SelecionarEndereco"
+                                                     ShowProgressIndicator="true"
+                                                     ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
+                                                     TextChanged="OnTextoEnderecoChanged" />
                                 </MudItem>
 
                                 <MudItem xs="12" sm="4">
@@ -160,6 +179,11 @@
     private bool ErroAoModificarPessoa = false;
     private string MensagemErro = string.Empty;
     private bool CarregandoRespostaDaApi = false;
+    private string? PesquisaEndereco { get; set; } = string.Empty;
+    private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
+    private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
+    private bool _focoInicialAplicado;
+    private string LabelDePesquisaDeEndereco = "RUA";
 
     [Parameter] public string? TelefoneEnviado { get; set; } = null;
     [Parameter] public bool CadastroRapido { get; set; } = false;
@@ -168,7 +192,7 @@
     [Parameter] public ClsPessoas? Pessoa { get; set; }
     [Parameter] public EnderecoPessoa? Endereco { get; set; }
 
-    public PatternMask phoneMask = new PatternMask("(##) #####-####")
+    public PatternMask? phoneMask = new PatternMask("(##) #####-####")
     {
         MaskChars = new[] { new MaskChar('#', @"[0-9]") }
     };
@@ -206,18 +230,18 @@
             NovaPessoa.Nome = NomeEnviado;
         }
 
-        if(Pessoa is not null)
+        if (Pessoa is not null)
         {
             NovaPessoa = Pessoa;
         }
-        if(Endereco is not null)
+        if (Endereco is not null)
         {
             NovoEndereco = Endereco;
         }
 
     }
     #endregion
-    
+
     #region funções de manipulação de dados e eventos
     private void OnPhoneChanged(string value) //remove a mascara e deixa só os números
     {
@@ -388,6 +412,52 @@
             await Submit();
         }
     }
+
+    private bool _semResultados;
+    private async Task<IEnumerable<AutoCompleteDeEndereco>> BuscarEndereco(string valor, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return Enumerable.Empty<AutoCompleteDeEndereco>();
+
+        var responseApi = await EntregasService.GetAutoCompleteDeEnderecos(valor);
+        EnderecosParaSelecionar = responseApi ?? new List<AutoCompleteDeEndereco>();
+
+        return EnderecosParaSelecionar;
+    }
+
+    private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
+    {
+        if (end is null)
+        {
+            PesquisaEndereco = string.Empty;
+
+            NovoEndereco.Rua = string.Empty;
+            NovoEndereco.Bairro = string.Empty;
+            NovoEndereco.Cidade = string.Empty;
+            NovoEndereco.Estado = string.Empty;
+            return;
+        }
+
+        PesquisaEndereco = end.Descricao;
+
+        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? "";
+        NovoEndereco.Bairro = end.Termos?.ElementAtOrDefault(1) ?? "";
+        NovoEndereco.Cidade = end.Termos?.ElementAtOrDefault(2) ?? "";
+        NovoEndereco.Estado = end.Termos?.ElementAtOrDefault(3) ?? "";
+
+        await TextFieldDeNumeroDoCliente.FocusAsync();
+    }
+
+    private Task OnTextoEnderecoChanged(string texto)
+    {
+        PesquisaEndereco = texto;
+
+        if (texto is null)
+            PesquisaEndereco = string.Empty;
+
+
+        return Task.CompletedTask;
+    }
     #endregion
 
     #region funções de dialog
@@ -427,16 +497,13 @@
         try
         {
             await AdicionaTelefoneProCliente();
-
             Pedido.Cliente = NovaPessoa;
+
             if (Pedido.TipoDePedido == "DELIVERY")
-            {
                 Pedido.Endereco = NovoEndereco;
-            }
+
 
             MudDialog.Close(DialogResult.Ok(true));
-
-
         }
         catch (Exception ex)
         {
