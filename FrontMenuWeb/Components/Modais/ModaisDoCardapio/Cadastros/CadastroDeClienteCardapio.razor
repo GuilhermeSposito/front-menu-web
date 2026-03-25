@@ -224,7 +224,7 @@
         maskedPhone = value;
     }
 
-    private void AdicionaTelefoneProCliente()
+    private async Task AdicionaTelefoneProCliente()
     {
         NovaPessoa.Telefone = new string(maskedPhone?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
     }
