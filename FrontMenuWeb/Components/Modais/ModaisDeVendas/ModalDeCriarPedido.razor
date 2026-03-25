@@ -784,7 +784,8 @@
         var parameters = new DialogParameters
         {
             { "Pessoa", pessoaSelecionadaParaEdicao },
-            { "EnderecoParaEditar", endereco }
+            { "NovoEndereco", endereco },
+            { "Editando", true }
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
