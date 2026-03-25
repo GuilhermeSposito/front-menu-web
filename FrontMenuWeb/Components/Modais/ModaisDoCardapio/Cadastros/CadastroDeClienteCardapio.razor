@@ -36,8 +36,7 @@
                         <MudGrid Class="justify-space-between" Style="max-width: 400px;">
                             <MudItem xs="12" sm="12">
                                 <MudTextField Mask="@phoneMask" Label="Telefone (Brasil)" HelperText="Celular"
-                                              Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
-                                              Variant="@Variant.Filled" Clearable
+                                              @bind-Value="@maskedPhone" Variant="@Variant.Filled" Clearable
                                               RequiredError="O Telefone é obrigatório" Immediate=false />
                             </MudItem>
                         </MudGrid>
@@ -118,11 +117,9 @@
                                     <MudTextField Immediate=true Label="Observações" @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Filled" />
                                 </MudItem>
 
-
                                 <MudItem xs="12">
                                     <MudTextField Immediate=true Label="Tipo Do Endereço" @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Filled" />
                                 </MudItem>
-
 
                             </MudGrid>
                         </MudPaper>
@@ -152,6 +149,7 @@
 
 @code {
 
+    #region Parameters
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     private MudTextField<string> _descricaoRef;
@@ -180,7 +178,6 @@
         MaskChars = new[] { new MaskChar('#', @"[0-9]") }
     };
 
-
     [Parameter]
     public IEnumerable<ClsPessoas> Pessoas { get; set; }
 
@@ -194,36 +191,10 @@
         TipoEndereco = "Casa"
     };
 
+    #endregion
 
-    private async Task OnPhoneChanged(string value) //remove a mascara e deixa só os números
-    {
-        maskedPhone = value;
-        await Task.CompletedTask; // para manter a assinatura async
-    }
-
-    private async Task AdicionaTelefoneProCliente()
-    {
-        NovaPessoa.Telefone = new string(maskedPhone?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
-    }
-
-    private async Task OnCnpjChange(string value) //remove a mascara do cnpj
-    {
-        //NovaPessoa.Cnpj
-        NovaPessoa.Cnpj = value;
-
-        CnpjSemMascara = value;
-        CnpjSemMascara = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
-        await Task.CompletedTask; // para manter a assinatura async
-    }
-
-    private async Task OnPhoneChanged2(string value)
-    {
-        maskedPhone2 = value;
-        NovaPessoa.Telefone1 = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
-        await Task.CompletedTask; // para manter a assinatura async
-    }
-
-    protected override async Task OnInitializedAsync()
+    #region Funções de inicialização
+    protected override void OnInitialized()
     {
         if (!string.IsNullOrEmpty(TelefoneEnviado))
         {
@@ -245,30 +216,42 @@
         }
 
     }
+    #endregion
+    
+    #region funções de manipulação de dados e eventos
+    private void OnPhoneChanged(string value) //remove a mascara e deixa só os números
+    {
+        maskedPhone = value;
+    }
 
-    private async Task ArrumaNomePrimeiraLetraMAiuscula(string input)
+    private void AdicionaTelefoneProCliente()
+    {
+        NovaPessoa.Telefone = new string(maskedPhone?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+    }
+
+    private void OnCnpjChange(string value) //remove a mascara do cnpj
+    {
+        NovaPessoa.Cnpj = value;
+
+        CnpjSemMascara = value;
+        CnpjSemMascara = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+    }
+
+    private void OnPhoneChanged2(string value)
+    {
+        maskedPhone2 = value;
+        NovaPessoa.Telefone1 = new string(value?.Where(char.IsDigit).ToArray() ?? Array.Empty<char>());
+    }
+
+    private void ArrumaNomePrimeiraLetraMAiuscula(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.Nome = string.Empty;
 
         NovaPessoa.Nome = input.ToUpper();
-
-        /*if (string.IsNullOrWhiteSpace(input))
-        NovaPessoa.Nome = string.Empty;
-
-        var words = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < words.Length; i++)
-        {
-            var w = words[i];
-            if (w.Length == 1)
-                words[i] = char.ToUpper(w[0]).ToString();
-            else
-                words[i] = char.ToUpper(w[0]) + w.Substring(1).ToLower();
-            }
-        NovaPessoa.Nome = string.Join(' ', words);*/
     }
 
-    private async Task ArrumaNomePrimeiraLetraMAiusculaRazaoSocial(string input)
+    private void ArrumaNomePrimeiraLetraMAiusculaRazaoSocial(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
             NovaPessoa.RazaoSocial = string.Empty;
@@ -398,7 +381,16 @@
         }
     }
 
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Submit();
+        }
+    }
+    #endregion
 
+    #region funções de dialog
     private EnderecoViaCep? _enderecoSelecionado;
     private async Task OpenDialogAsync(List<EnderecoViaCep> enderecos)
     {
@@ -427,7 +419,9 @@
             StateHasChanged();
         }
     }
+    #endregion
 
+    #region funções de submit e cancel
     private async Task Submit()
     {
         try
@@ -451,13 +445,6 @@
         }
     }
 
-    private async Task HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await Submit();
-        }
-    }
-
     private void Cancelar() => MudDialog.Cancel();
+    #endregion
 }
