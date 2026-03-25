@@ -38,7 +38,7 @@
                         <MudGrid Class="w-100">
                             <MudItem xs="12" sm="12">
                                 <MudTextField T="string"
-                                              Mask="phoneMask"
+                                          
                                               Label="Telefone (Brasil)"
                                               HelperText="Celular"
                                               Value="@maskedPhone"
@@ -243,9 +243,34 @@
     #endregion
 
     #region funções de manipulação de dados e eventos
-    private void OnPhoneChanged(string value) //remove a mascara e deixa só os números
+    private Task OnPhoneChanged(string? value)
     {
-        maskedPhone = value;
+        var numeros = new string((value ?? string.Empty).Where(char.IsDigit).ToArray());
+
+        if (numeros.Length > 11)
+            numeros = numeros[..11];
+
+        NovaPessoa.Telefone = numeros;
+        maskedPhone = FormatarTelefone(numeros);
+
+        return Task.CompletedTask;
+    }
+
+    private static string FormatarTelefone(string telefone)
+    {
+        if (string.IsNullOrEmpty(telefone))
+            return string.Empty;
+
+        if (telefone.Length <= 2)
+            return $"({telefone}";
+
+        if (telefone.Length <= 6)
+            return $"({telefone[..2]}) {telefone[2..]}";
+
+        if (telefone.Length <= 10)
+            return $"({telefone[..2]}) {telefone[2..6]}-{telefone[6..]}";
+
+        return $"({telefone[..2]}) {telefone[2..7]}-{telefone[7..]}";
     }
 
     private async Task AdicionaTelefoneProCliente()
