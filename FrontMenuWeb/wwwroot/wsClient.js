@@ -7,15 +7,11 @@ window.socketIO = {
             window.socketIO.socket.off();
             window.socketIO.socket.disconnect();
             window.socketIO.socket = null;
-            console.log("Socket desconectado.");
         }
     },
 
     connectSocketIO: async (url) => {
         try {
-            const rawToken = localStorage.getItem("authToken");
-            const token = rawToken ? rawToken.replaceAll('"', '') : null;
-
             if (window.socketIO.socket) {
                 return;
             }
@@ -39,6 +35,7 @@ window.socketIO = {
             socket.on("registrado", (msg) => {
             });
 
+            socket.off("pedido-recebido");
             socket.on("pedido-recebido", (msg) => {
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
@@ -47,41 +44,38 @@ window.socketIO = {
             });
 
 
-            // Quando o servidor envia algo para o cliente
+            socket.off("pedido-recebido-mesa");
             socket.on("pedido-recebido-mesa", (msg) => {
                 // Avisando o Blazor
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesa", JSON.stringify(msg))
-                        .then(() => console.log(""))
                         .catch(err => console.error("Erro ao notificar Blazor:", err));
                 }
             });
 
+            socket.off("mesa-fechada");
             socket.on("mesa-fechada", (msg) => {
                 // Avisando o Blazor
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoMesaFechada", JSON.stringify(msg))
-                        .then(() => { })
                         .catch(err => console.error("Erro ao notificar Blazor:", err));
                 }
             });
 
-            //Quando Atualiza a etapa de um pedido
+            socket.off("pedido-mudou-etapa")
             socket.on("pedido-mudou-etapa", (msg) => {
                 // Avisando o Blazor
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveEtapaDoPedido", JSON.stringify(msg))
-                        .then(() => { })
                         .catch(err => console.error("Erro ao notificar Blazor:", err));
                 }
             });
 
-            //Quando Atualiza a info adicional de um pedido
+            socket.off("pedido-mudou-info")
             socket.on("pedido-mudou-info", (msg) => {
                 // Avisando o Blazor
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveInfoAdicionalDoPedido", JSON.stringify(msg))
-                        .then(() => { })
                         .catch(err => console.error("Erro ao notificar Blazor:", err));
                 }
             });
@@ -90,45 +84,9 @@ window.socketIO = {
         } catch (e) {
             console.error("Erro ao conectar Socket.IO:", e);
         }
-
-       
-       
     },
 
-    /* connectSocketIOMesa: async (url) => {
-         const rawToken = localStorage.getItem("authToken");
-         const token = rawToken ? rawToken.replaceAll('"', '') : null;
- 
-         if (!window.socketIO.socket) {
-             await window.socketIO.connectSocketIO();
-         }
- 
- 
-         const socket = io("https://sophos-erp.com.br", {
-             path: "/socket.io/",
-             transports: ["websocket"],
-             withCredentials: true
-         });
- 
-         socket.on("connect", () => {
- 
-         });
- 
-         socket.emit("registrar-merchant");
- 
-         // Quando o servidor envia algo para o cliente
-         socket.on("registrado", (msg) => {
-         });
- 
-       
- 
-         socket.on("disconnect", () => {
- 
-         });
- 
-     },*/
-
-
+  
 
 };
 
