@@ -95,18 +95,18 @@ public class ImpressaoService
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
-                                         .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
-                                          {
-                                                new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
-                                                new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
-                                          })
-                                         .GroupBy(x => x.Impressora)
-                                         .Select(grupo => new ItensPorImpressoraDto
-                                         {
-                                             Impressora = grupo.Key,
-                                             Itens = grupo.Select(x => x.Item).ToList()
-                                         })
-                                         .ToList();
+                               .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
+                                {
+                                                            new { Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                                            new { Impressora = i.Produto.ImpressoraComanda2, Item = i }
+                                })
+                               .GroupBy(x => x.Impressora)
+                               .Select(grupo => new ItensPorImpressoraDto
+                               {
+                                   Impressora = grupo.Key,
+                                   Itens = grupo.Select(x => x.Item).ToList()
+                               })
+                               .ToList();
 
                     foreach (var Prods in produtosAgrupados)
                     {
@@ -147,6 +147,8 @@ public class ImpressaoService
                             }
 
                         }
+
+
                     }
 
                 }
@@ -471,7 +473,7 @@ public class ImpressaoService
 
         if (AppState.MerchantLogado is null || AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
         {
-            if(PedidoAgendado)
+            if (PedidoAgendado)
                 EntregarAté = pedido.HorarioDataAgendamento ?? EntregarAté;
 
             AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);

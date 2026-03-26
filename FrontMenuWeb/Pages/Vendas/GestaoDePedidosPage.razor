@@ -429,10 +429,6 @@
 
             Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
 
-            PedidosService.PedidoRecebido = PedidoRecebidoHandler;
-            PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
-            PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
-
             await CarregaEmpresasMachine();
             await CarregarPedidos();
 
@@ -451,7 +447,11 @@
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
+            await JS.InvokeVoidAsync("interceptFunctionKeys", this);
+
+            PedidosService.PedidoRecebido = PedidoRecebidoHandler;
+            PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
+            PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
 
             try
             {
@@ -1215,7 +1215,7 @@
                 await VizualizaSeNaoExistePedidoNaTela(novoPedido);
 
                 if (novoPedido.CriadoPor == "SOPHOS CARDAPIO")
-                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
+                   await EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
 
                 if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
                     await ImprimirPedido(novoPedido, false);
@@ -1228,7 +1228,7 @@
             }
 
             if (novoPedido.EtapaPedido == "PREPARANDO")
-                EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
+                await EnviaMensagemNoWhatsAppDeUpdateDoPedido(novoPedido, EtapasPedido.PREPARANDO);
 
 
             await JS.InvokeVoidAsync("playNotificationSound");
@@ -1237,7 +1237,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Erro ao Obter pedido automaticamente, por favor atualize a página", Severity.Error);
+            Snackbar.Add($"Erro ao Obter pedido automaticamente, por favor atualize a página {ex.Message}", Severity.Error);
         }
         finally
         {
@@ -1382,7 +1382,7 @@
     #endregion
 
     #region Funções de Integrações
-    private async void EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
+    private async Task EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
     {
         if ((Pedido.CriadoPor == "SOPHOS") || (AppState.MerchantLogado.EnviaMsgWhatsIntegracao && Pedido.CriadoPor != "IFOOD")) //Envia para a integração menos ifood
         {

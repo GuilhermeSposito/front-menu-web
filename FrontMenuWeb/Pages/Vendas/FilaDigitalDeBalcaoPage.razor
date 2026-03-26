@@ -150,14 +150,16 @@
     #endregion
 
     #region Funções de Enventos de Página
-    protected override async Task OnInitializedAsync()
+   
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        try
+        if (firstRender)
         {
             PedidosService.PedidoRecebido += async pedido =>
-            {
-                await InvokeAsync(() => OnPedidoRecebido(pedido));
-            };
+          {
+              await InvokeAsync(() => OnPedidoRecebido(pedido));
+          };
 
             PedidosService.PedidoMudouEtapa += async pedido =>
             {
@@ -174,17 +176,7 @@
             {
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
             }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add("Erro ao carregar pedidos: " + ex.Message, Severity.Error);
-        }
-    }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
             await JS.InvokeVoidAsync("interceptFunctionKeys", DotNetObjectReference.Create(this));
         }
     }

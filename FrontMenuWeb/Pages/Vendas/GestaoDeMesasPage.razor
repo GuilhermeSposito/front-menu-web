@@ -117,12 +117,29 @@
     {
         try
         {
-            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomStart;   
+            await CarregarMesasEComandas();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar a página: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoPagina = false;
+            StateHasChanged();
+        }
 
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
             PedidosService.PedidoMesaRecebido = async pedido =>
-            {
-                await InvokeAsync(() => OnPedidoRecebido(pedido));
-            };
+             {
+                 await InvokeAsync(() => OnPedidoRecebido(pedido));
+             };
 
             PedidosService.PedidoMesaFechada = async pedido =>
             {
@@ -138,18 +155,7 @@
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
             }
 
-            await CarregarMesasEComandas();
         }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao carregar a página: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            CarregandoPagina = false;
-            StateHasChanged();
-        }
-
     }
 
     private async Task CarregarMesasEComandas()

@@ -2,21 +2,27 @@
 window.socketIO = {
     socket: null,
 
+    disconnectSocketIO: () => {
+        if (window.socketIO.socket) {
+            window.socketIO.socket.off();
+            window.socketIO.socket.disconnect();
+            window.socketIO.socket = null;
+            console.log("Socket desconectado.");
+        }
+    },
+
     connectSocketIO: async (url) => {
         try {
             const rawToken = localStorage.getItem("authToken");
             const token = rawToken ? rawToken.replaceAll('"', '') : null;
 
-            if (window.socketIO.socket && window.socketIO.socket.connected) {
-                console.log("Socket já conectado.");
+            if (window.socketIO.socket) {
                 return;
             }
 
             if (url == "" || url == null || !url)
                 url = "https://sophos-erp.com.br";
 
-            //http://localhost:3030
-            //https://sophos-erp.com.br
             const socket = io(url, {
                 path: "/socket.io/",
                 transports: ["websocket"],
@@ -25,22 +31,20 @@ window.socketIO = {
 
             window.socketIO.socket = socket;
 
-            socket.on("connect", () => { });
+            socket.on("connect", () => {
+                socket.emit("registrar-merchant");
+            });
 
-            socket.emit("registrar-merchant");
 
             socket.on("registrado", (msg) => {
             });
 
             socket.on("pedido-recebido", (msg) => {
-                // Avisando o Blazor
                 if (window.DotNet) {
                     DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedido", JSON.stringify(msg))
-                        .then(() => console.log(""))
                         .catch(err => console.error("Erro ao notificar Blazor:", err));
                 }
             });
-
 
 
             // Quando o servidor envia algo para o cliente
@@ -82,14 +86,13 @@ window.socketIO = {
                 }
             });
 
-            socket.on("disconnect", () => {
-
-            });
+           
         } catch (e) {
             console.error("Erro ao conectar Socket.IO:", e);
         }
-      
 
+       
+       
     },
 
     /* connectSocketIOMesa: async (url) => {

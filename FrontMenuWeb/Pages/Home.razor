@@ -336,12 +336,6 @@
     {
         try
         {
-
-            PedidosService.PedidoRecebido += async pedido =>
-              {
-                  await InvokeAsync(() => OnPedidoRecebido(pedido));
-              };
-
             pedidosFiltrados = new List<ClsPedido>(pedidos);
 
             await AtualizaInfosDosPedidos();
@@ -468,12 +462,6 @@
         Carregando = false;
     }
 
-    private async Task OnPedidoRecebido(ClsPedido novoPedido)
-    {
-        await InvokeAsync(StateHasChanged);
-        await AtualizaInfosDosPedidos();
-        Snackbar.Add("Novo pedido recebido!", Severity.Info);
-    }
 
     private void ClickCardPedidos()
     {
