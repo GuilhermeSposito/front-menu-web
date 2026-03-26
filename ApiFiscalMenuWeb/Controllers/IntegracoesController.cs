@@ -95,7 +95,7 @@ public class IntegracoesController : Controller
     }
     #endregion
 
-
+    #region Região de Webhooks (Pontos de extremidade)
     [HttpPost("endpoint-webhook-ifood")]
     public async Task<IActionResult> EndpointDeConexaoIfoodWebHook()
     {
@@ -129,13 +129,12 @@ public class IntegracoesController : Controller
         return Accepted(new { dto?.MerchantIds });
     }
 
-    [HttpPost("autenticar_ifood_teste")]
-    public async Task<ActionResult> AutenticarEmpresa()
+    [HttpPost("endpoint-webhook-b1-delivery")]
+    public async Task<IActionResult> EndpointDeConexaoB1Delivery()
     {
-        await _ifoodService.AutenticarEmpresa();
-
-        return Ok();
+        return Accepted();
     }
+    #endregion
 
     [HttpGet("teste-polling")]
     public async Task<ActionResult> TestePolling()
