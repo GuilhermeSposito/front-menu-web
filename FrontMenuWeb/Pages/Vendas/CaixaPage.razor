@@ -331,7 +331,7 @@
 
             if (ResponseAPi.Status == "success")
             {
-                await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-WEB-FECHA.json");
+                await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-FECHA.json");
                 AppState.CaixaAberto = false;
 
                 dataGridRef?.ReloadServerData();

@@ -245,10 +245,9 @@ public partial class PaginaInicial : Form
     }
     private async void OnWatcherRenamedLeituraDeFechamentoDeCaixa(object sender, RenamedEventArgs e)
     {
-        if (e.Name.Contains("SOPHOS-WEB-FECHA", StringComparison.OrdinalIgnoreCase) &&
-                    Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        if (e.Name.Contains("SOPHOS-FECHA", StringComparison.OrdinalIgnoreCase) && Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
         {
-            await Task.Delay(500); // espera terminar o download
+            await Task.Delay(500);
             try
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);

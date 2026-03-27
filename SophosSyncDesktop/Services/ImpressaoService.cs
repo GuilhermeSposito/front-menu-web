@@ -114,8 +114,8 @@ public class ImpressaoService
                             continue;
 
                         PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
+                        PedidoMesaDto PedidoAtualizadoComItensAgrupadosAuxiliar = Pedido;
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
-
 
                         string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
                         if (Impressora == "Sem Impressora" || Impressora == "Não Imprime")
@@ -126,16 +126,45 @@ public class ImpressaoService
                         if (AppState.MerchantLogado is not null)
                             QtdDeLoops = AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos ? Prods.Itens.Count() : 1;
 
+                        var IndiceDoItemAtual = 1;
                         for (var i = 0; i < QtdDeLoops; i++)
                         {
-                            if (QtdDeLoops > 1)//se for maior que 1 é porque é separado por item
+                            if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)//se for maior que 1 é porque é separado por item
                             {
                                 var ItemAtual = Prods.Itens[i];
                                 PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido> { ItemAtual };
-                            }
-                            List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupados, AppQueEnviou);
 
-                            if (AppState.MerchantLogado is not null)
+                                if (ItemAtual.Quantidade > 1)
+                                {
+                                    PedidoAtualizadoComItensAgrupados.Itens = new List<ItensPedido>();
+                                    var QtdOriginalDoProduto = ItemAtual.Quantidade;
+                                    for (var x = 0; x < QtdOriginalDoProduto; x++)
+                                    {
+                                        ItemAtual.Quantidade = 1;
+                                        PedidoAtualizadoComItensAgrupados.Itens.Add(ItemAtual);
+                                    }
+                                }
+                            }
+
+                            var SeparaPorItem = 1f;
+                            if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)
+                                SeparaPorItem = PedidoAtualizadoComItensAgrupados.Itens.Count;
+
+                            for (var y = 0; y < SeparaPorItem; y++)
+                            {
+                                if (QtdDeLoops > 1 || AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos)
+                                    PedidoAtualizadoComItensAgrupadosAuxiliar.Itens = new List<ItensPedido> { PedidoAtualizadoComItensAgrupados.Itens[y] };
+
+                                List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupadosAuxiliar, AppQueEnviou);
+
+                                    for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
+                                        await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
+
+                                IndiceDoItemAtual++;
+                            }
+
+
+                            /*if (AppState.MerchantLogado is not null)
                             {
                                 for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
                                     await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
@@ -144,7 +173,7 @@ public class ImpressaoService
                             else
                             {
                                 await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
-                            }
+                            }*/
 
                         }
 
@@ -309,7 +338,6 @@ public class ImpressaoService
             //------------------------------------------------------------------------------------------
         }
 
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
@@ -606,7 +634,8 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
-        AdicionaConteudo(Conteudo, "Sophos Testes", FonteDetalhesDoPedido, Alinhamentos.Centro);
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================        
         AdicionaConteudo(Conteudo, $"FECHAMENTO DO CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
