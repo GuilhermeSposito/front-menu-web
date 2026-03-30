@@ -394,6 +394,7 @@
     #region Propriedades
     public bool Carregando { get; set; } = true;
     public bool ProcessandoNovoPedido { get; set; } = false;
+    private HashSet<int> _pedidosJaProcessados = new();
     public bool CarregandoParteFiscal { get; set; } = false;
     public string LabelDeCarregamento { get; set; } = "Emitindo NFC-e..";
     private List<ClsDeSuporteParaMostrarPedidos> _items = new List<ClsDeSuporteParaMostrarPedidos>();
@@ -1165,15 +1166,9 @@
 
                             await VizualizaSeNaoExistePedidoNaTela(pedido);
 
-                            if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.EtapaPedido == "PREPARANDO")
-                                await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
-
                         } //Só os integrações
                         else
                         {
-                            if (pedido.EtapaPedido == "PREPARANDO")
-                                await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
-
                             await PedidosService.UpdatePedidoImpresso(pedido);
                         }
                     }
@@ -1201,6 +1196,9 @@
     }
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
+        if (!_pedidosJaProcessados.Add(novoPedido.Id) || ProcessandoNovoPedido)
+            return;
+
         ProcessandoNovoPedido = true;
         try
         {
@@ -1219,8 +1217,8 @@
                 Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
                 await VizualizaSeNaoExistePedidoNaTela(novoPedido);
 
-                if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
-                    await VerificaPedidosNaoImpressos();
+                //if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
+                    //await VerificaPedidosNaoImpressos();
 
                 if (!novoPedido.PedidoAgendado)
                     await PedidosService.UpdatePedidoImpresso(novoPedido);
@@ -1257,6 +1255,18 @@
             });
 
             await InvokeAsync(StateHasChanged);
+        }
+
+        if (pedido.EtapaPedido == "PREPARANDO")
+            await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
+
+        if (pedido.CriadoPor != "SOPHOS")
+        {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!pedido.PedidoAgendado && !(pedido.StatusPedido == "ABERTO")))
+            {
+                await ImprimirPedido(pedido, false);
+                await PedidosService.UpdatePedidoImpresso(pedido);
+            }
         }
     }
     #endregion
