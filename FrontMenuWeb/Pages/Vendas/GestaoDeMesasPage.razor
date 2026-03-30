@@ -136,15 +136,8 @@
     {
         if (firstRender)
         {
-            PedidosService.PedidoMesaRecebido = async pedido =>
-             {
-                 await InvokeAsync(() => OnPedidoRecebido(pedido));
-             };
-
-            PedidosService.PedidoMesaFechada = async pedido =>
-            {
-                await InvokeAsync(() => PedidoMesaFechada(pedido));
-            };
+            PedidosService.PedidoMesaRecebido = pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
+            PedidosService.PedidoMesaFechada = pedido => InvokeAsync(() => PedidoMesaFechada(pedido));
 
             try
             {

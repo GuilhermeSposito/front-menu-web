@@ -24,19 +24,18 @@ public class PedidosService
         _configuration = configuration;
     }
 
-    public static Action<ClsPedido>? PedidoRecebido;
-    public static Action<PedidoMesaDto>? PedidoMesaRecebido;
-    public static Action<ClsMesasEComandas>? PedidoMesaFechada;
-    public static Action<ClsPedido>? PedidoMudouEtapa;
-    public static Action<ClsPedido>? PedidoMudouInfoAdicional;
+    public static Func<ClsPedido, Task>? PedidoRecebido;
+    public static Func<PedidoMesaDto, Task>? PedidoMesaRecebido;
+    public static Func<ClsMesasEComandas, Task>? PedidoMesaFechada;
+    public static Func<ClsPedido, Task>? PedidoMudouEtapa;
+    public static Func<ClsPedido, Task>? PedidoMudouInfoAdicional;
 
     [JSInvokable]
     public static Task ReceivePedido(string msg)
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
-        PedidoRecebido?.Invoke(pedido);
-        return Task.CompletedTask;
+        return PedidoRecebido?.Invoke(pedido) ?? Task.CompletedTask;
     }
 
     [JSInvokable]
@@ -44,8 +43,7 @@ public class PedidosService
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
-        PedidoMudouEtapa?.Invoke(pedido);
-        return Task.CompletedTask;
+        return PedidoMudouEtapa?.Invoke(pedido) ?? Task.CompletedTask;
     }
 
     [JSInvokable]
@@ -53,8 +51,7 @@ public class PedidosService
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
 
-        PedidoMudouInfoAdicional?.Invoke(pedido);
-        return Task.CompletedTask;
+        return PedidoMudouInfoAdicional?.Invoke(pedido) ?? Task.CompletedTask;
     }
 
     [JSInvokable]
@@ -62,8 +59,7 @@ public class PedidosService
     {
         PedidoMesaDto pedido = System.Text.Json.JsonSerializer.Deserialize<PedidoMesaDto>(msg)!;
 
-        PedidoMesaRecebido?.Invoke(pedido);
-        return Task.CompletedTask;
+        return PedidoMesaRecebido?.Invoke(pedido) ?? Task.CompletedTask;
     }
 
     [JSInvokable]
@@ -71,8 +67,7 @@ public class PedidosService
     {
         ClsMesasEComandas mesa = System.Text.Json.JsonSerializer.Deserialize<ClsMesasEComandas>(msg)!;
 
-        PedidoMesaFechada?.Invoke(mesa);
-        return Task.CompletedTask;
+        return PedidoMesaFechada?.Invoke(mesa) ?? Task.CompletedTask;
     }
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)

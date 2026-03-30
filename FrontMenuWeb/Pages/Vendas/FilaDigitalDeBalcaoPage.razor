@@ -128,6 +128,8 @@
     </MudLayout>
 </MudPaper>
 
+@implements IDisposable
+
 @code {
     #region Propriedades
     public bool Carregando { get; set; } = true;
@@ -147,6 +149,9 @@
     private MudTextField<string> pesquisaField;
     private string pesquisaTexto = string.Empty;
     private TiposDePedido FiltroPorTipoDePedido = TiposDePedido.BALCÃO;
+
+    private Func<ClsPedido, Task>? _pedidoRecebidoHandler;
+    private Func<ClsPedido, Task>? _pedidoMudouEtapaHandler;
     #endregion
 
     #region Funções de Enventos de Página
@@ -156,15 +161,11 @@
     {
         if (firstRender)
         {
-            PedidosService.PedidoRecebido += async pedido =>
-          {
-              await InvokeAsync(() => OnPedidoRecebido(pedido));
-          };
+            _pedidoRecebidoHandler = pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
+            _pedidoMudouEtapaHandler = pedido => InvokeAsync(() => OnEtapaPedidoMudou(pedido));
 
-            PedidosService.PedidoMudouEtapa += async pedido =>
-            {
-                await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
-            };
+            PedidosService.PedidoRecebido += _pedidoRecebidoHandler;
+            PedidosService.PedidoMudouEtapa += _pedidoMudouEtapaHandler;
 
             await CarregarPedidos();
 
@@ -299,6 +300,13 @@
 
     #endregion
 
+    public void Dispose()
+    {
+        if (_pedidoRecebidoHandler is not null)
+            PedidosService.PedidoRecebido -= _pedidoRecebidoHandler;
 
+        if (_pedidoMudouEtapaHandler is not null)
+            PedidosService.PedidoMudouEtapa -= _pedidoMudouEtapaHandler;
+    }
 
 }

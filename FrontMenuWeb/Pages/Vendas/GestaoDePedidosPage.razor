@@ -1,6 +1,7 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/gestao-de-pedidos"
+@implements IDisposable
 @inject IJSRuntime JS
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
@@ -1112,17 +1113,17 @@
 
     }
 
-    private async void PedidoRecebidoHandler(ClsPedido pedido)
+    private Task PedidoRecebidoHandler(ClsPedido pedido)
     {
-        await InvokeAsync(() => OnPedidoRecebido(pedido));
+        return InvokeAsync(() => OnPedidoRecebido(pedido));
     }
-    private async void PedidoMudouDeEtapaHandler(ClsPedido pedido)
+    private Task PedidoMudouDeEtapaHandler(ClsPedido pedido)
     {
-        await InvokeAsync(() => OnEtapaPedidoMudou(pedido));
+        return InvokeAsync(() => OnEtapaPedidoMudou(pedido));
     }
-    private async void PedidoMudouInfoAdicionalHandler(ClsPedido pedido)
+    private Task PedidoMudouInfoAdicionalHandler(ClsPedido pedido)
     {
-        await InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
+        return InvokeAsync(() => OnInfoAdicionalPedidoMudou(pedido));
     }
 
     private async Task IniciarTimer()
@@ -1140,13 +1141,9 @@
     {
         try
         {
-
             bool IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood") ?? false;
             if (!IntegraIfood)
-            {
-                _cts.Cancel();
                 return;
-            }
 
             var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = 10, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido, Imprimiu = false });
 
@@ -1401,4 +1398,19 @@
         }
     }
     #endregion
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _timer?.Dispose();
+
+        if (PedidosService.PedidoRecebido == PedidoRecebidoHandler)
+            PedidosService.PedidoRecebido = null;
+
+        if (PedidosService.PedidoMudouEtapa == PedidoMudouDeEtapaHandler)
+            PedidosService.PedidoMudouEtapa = null;
+
+        if (PedidosService.PedidoMudouInfoAdicional == PedidoMudouInfoAdicionalHandler)
+            PedidosService.PedidoMudouInfoAdicional = null;
+    }
 }
