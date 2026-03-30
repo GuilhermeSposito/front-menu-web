@@ -26,6 +26,8 @@
 @inject PedidosService PedidosService
 @inject NfService NFService
 @inject MesasServices MesasServices
+@implements IDisposable
+@using FrontMenuWeb.Dtos
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidosMesa Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -103,11 +105,11 @@
     private bool CarregandoPagina { get; set; } = true;
     private string pesquisaTexto { get; set; } = string.Empty;
 
+    private Func<PedidoMesaDto, Task>? _pedidoMesaRecebidoHandler;
+    private Func<ClsMesasEComandas, Task>? _pedidoMesaFechadaHandler;
+
     //props de mesas
     private List<ClsMesasEComandas> MesasOuComandaList { get; set; } = new();
-
-    //prop de status do websocket
-    private string status = "Desconectado";
 
     private int TotalDeMesasCarregando = 12;
     #endregion
@@ -132,22 +134,15 @@
 
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            PedidosService.PedidoMesaRecebido += pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
-            PedidosService.PedidoMesaFechada += pedido => InvokeAsync(() => PedidoMesaFechada(pedido));
+            _pedidoMesaRecebidoHandler = pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
+            _pedidoMesaFechadaHandler = pedido => InvokeAsync(() => OnPedidoMesaFechada(pedido));
 
-            try
-            {
-                await Connect();
-            }
-            catch (Exception)
-            {
-                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-            }
-
+            PedidosService.PedidoMesaRecebido += _pedidoMesaRecebidoHandler;
+            PedidosService.PedidoMesaFechada += _pedidoMesaFechadaHandler;
         }
     }
 
@@ -278,30 +273,19 @@
     }
     #endregion
 
-    #region Funções de Impressão e WebSocket
-    private async Task Connect()
-    {
-        var urlWebSocket = Configuration["Api:UrlWebSoket"];
-
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", urlWebSocket);
-        status = "Conectado";
-    }
-
+    #region Funções de WebSocket (UI only - impressão é global no MainLayout)
     private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
         await CarregarMesasEComandas();
-        await ImprimirPedido(novoPedido); // por enquanto todos
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
-        await JS.InvokeVoidAsync("playNotificationSound");
     }
 
-    private async Task PedidoMesaFechada(ClsMesasEComandas mesa)
+    private async Task OnPedidoMesaFechada(ClsMesasEComandas mesa)
     {
         await CarregarMesasEComandas();
         await InvokeAsync(StateHasChanged);
         Snackbar.Add($"Mesa/Comanda {mesa.CodigoExterno} Fechada!", Severity.Info);
-
     }
 
     private async Task ChamaImpressaoDeItensDaMesa(ClsMesasEComandas mesaEnviada)
@@ -315,7 +299,11 @@
                 var pedido = mesa.Data.Objeto;
                 if (pedido is not null)
                 {
-                    await ImprimirPedido(pedido);
+                    bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+                    if (!impressaoDesabilita)
+                        await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
+                    else
+                        Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
                 }
                 else
                 {
@@ -333,15 +321,6 @@
         }
     }
 
-    private async Task ImprimirPedido(PedidoMesaDto pedido)
-    {
-        bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
-
-        if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
-        else
-            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
-    }
     #endregion
 
     #region Função de Fechar Conta
@@ -413,5 +392,16 @@
         return null!;
     }
 
+    #endregion
+
+    #region Dispose
+    public void Dispose()
+    {
+        if (_pedidoMesaRecebidoHandler is not null)
+            PedidosService.PedidoMesaRecebido -= _pedidoMesaRecebidoHandler;
+
+        if (_pedidoMesaFechadaHandler is not null)
+            PedidosService.PedidoMesaFechada -= _pedidoMesaFechadaHandler;
+    }
     #endregion
 }

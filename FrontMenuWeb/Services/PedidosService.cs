@@ -30,44 +30,49 @@ public class PedidosService
     public static Func<ClsPedido, Task>? PedidoMudouEtapa;
     public static Func<ClsPedido, Task>? PedidoMudouInfoAdicional;
 
-    [JSInvokable]
-    public static Task ReceivePedido(string msg)
+    private static async Task InvokeAllAsync<T>(Func<T, Task>? handler, T arg)
     {
-        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
-
-        return PedidoRecebido?.Invoke(pedido) ?? Task.CompletedTask;
+        if (handler is null) return;
+        foreach (var d in handler.GetInvocationList().Cast<Func<T, Task>>())
+        {
+            try { await d(arg); }
+            catch (Exception ex) { Console.WriteLine($"Handler error: {ex.Message}"); }
+        }
     }
 
     [JSInvokable]
-    public static Task ReceiveEtapaDoPedido(string msg)
+    public static async Task ReceivePedido(string msg)
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
-
-        return PedidoMudouEtapa?.Invoke(pedido) ?? Task.CompletedTask;
+        await InvokeAllAsync(PedidoRecebido, pedido);
     }
 
     [JSInvokable]
-    public static Task ReceiveInfoAdicionalDoPedido(string msg)
+    public static async Task ReceiveEtapaDoPedido(string msg)
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
-
-        return PedidoMudouInfoAdicional?.Invoke(pedido) ?? Task.CompletedTask;
+        await InvokeAllAsync(PedidoMudouEtapa, pedido);
     }
 
     [JSInvokable]
-    public static Task ReceivePedidoMesa(string msg)
+    public static async Task ReceiveInfoAdicionalDoPedido(string msg)
+    {
+        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
+        await InvokeAllAsync(PedidoMudouInfoAdicional, pedido);
+    }
+
+    [JSInvokable]
+    public static async Task ReceivePedidoMesa(string msg)
     {
         PedidoMesaDto pedido = System.Text.Json.JsonSerializer.Deserialize<PedidoMesaDto>(msg)!;
-
-        return PedidoMesaRecebido?.Invoke(pedido) ?? Task.CompletedTask;
+        await InvokeAllAsync(PedidoMesaRecebido, pedido);
     }
 
     [JSInvokable]
-    public static Task ReceivePedidoMesaFechada(string msg)
+    public static async Task ReceivePedidoMesaFechada(string msg)
     {
         ClsMesasEComandas mesa = System.Text.Json.JsonSerializer.Deserialize<ClsMesasEComandas>(msg)!;
-
-        return PedidoMesaFechada?.Invoke(mesa) ?? Task.CompletedTask;
+        await InvokeAllAsync(PedidoMesaFechada, mesa);
     }
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)

@@ -1011,9 +1011,6 @@
             return;
         }
 
-        if (ResponseAPi.Data.Objeto is not null && !UsandoMobile)
-            await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"pedido{ResponseAPi.Data.Objeto}-MESA-SOPHOS-WEB.json");
-
         MudDialog.Close(DialogResult.Ok(true));
     }
     #endregion

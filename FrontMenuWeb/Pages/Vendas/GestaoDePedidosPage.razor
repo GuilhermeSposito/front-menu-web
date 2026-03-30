@@ -406,7 +406,6 @@
     };
     public List<ClsDeSuporteParaMostrarPedidos> ItensSelecionadosPArAProximaEtapa = new List<ClsDeSuporteParaMostrarPedidos>();
 
-    private string status = "Desconectado";
     private List<EmpresaMachine>? EmpresasMachine = null;
 
     private MudTextField<string> pesquisaField;
@@ -451,18 +450,9 @@
         {
             await JS.InvokeVoidAsync("interceptFunctionKeys", this);
 
-            PedidosService.PedidoRecebido = PedidoRecebidoHandler;
-            PedidosService.PedidoMudouEtapa = PedidoMudouDeEtapaHandler;
-            PedidosService.PedidoMudouInfoAdicional = PedidoMudouInfoAdicionalHandler;
-
-            try
-            {
-                await Connect();
-            }
-            catch (Exception)
-            {
-                Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", Severity.Error);
-            }
+            PedidosService.PedidoRecebido += PedidoRecebidoHandler;
+            PedidosService.PedidoMudouEtapa += PedidoMudouDeEtapaHandler;
+            PedidosService.PedidoMudouInfoAdicional += PedidoMudouInfoAdicionalHandler;
 
             _ = IniciarTimer();
             await VerificaSeColocaEtapaNovoNaTela();
@@ -1074,14 +1064,6 @@
     #endregion
 
     #region Funções de Impressão e WebSocket
-    private async Task Connect()
-    {
-        var urlWebSocket = Configuration["Api:UrlWebSoket"];
-
-        await JS.InvokeVoidAsync("socketIO.connectSocketIO", urlWebSocket);
-        status = "Conectado";
-    }
-
     private async Task ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true)
     {
         bool confirmaImpressao = true;
@@ -1159,10 +1141,8 @@
                         {
                             if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!pedido.PedidoAgendado && !(pedido.StatusPedido == "ABERTO")))
                             {
-                                await ImprimirPedido(pedido, false);
                                 await PedidosService.UpdatePedidoImpresso(pedido);
                             }
-
 
                             await VizualizaSeNaoExistePedidoNaTela(pedido);
 
@@ -1177,6 +1157,7 @@
         }
         catch (Exception ex)
         {
+            Snackbar.Add(ex.Message);
             Snackbar.Add($"Erro ao verificar pedidos não impressos: {ex.Message}", Severity.Error);
         }
     }
@@ -1228,10 +1209,8 @@
             }
 
 
-            await JS.InvokeVoidAsync("playNotificationSound");
             await VizualizaSeNaoExistePedidoNaTela(novoPedido);
             Snackbar.Add("Novo pedido recebido!", Severity.Info);
-            await VerificaPedidosNaoImpressos();
         }
         catch (Exception ex)
         {
@@ -1264,7 +1243,6 @@
         {
             if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!pedido.PedidoAgendado && !(pedido.StatusPedido == "ABERTO")))
             {
-                await ImprimirPedido(pedido, false);
                 await PedidosService.UpdatePedidoImpresso(pedido);
             }
         }
@@ -1278,7 +1256,7 @@
         ReturnApiRefatored<PagamentoDoPedido>
          ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
         MostraMensagemDeUpdateDoPedido(ReturnFromApi);
-        if (ReturnFromApi.Status == "eror")
+        if (ReturnFromApi.Status == "error")
             return;
 
         pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
@@ -1414,13 +1392,8 @@
         _cts.Cancel();
         _timer?.Dispose();
 
-        if (PedidosService.PedidoRecebido == PedidoRecebidoHandler)
-            PedidosService.PedidoRecebido = null;
-
-        if (PedidosService.PedidoMudouEtapa == PedidoMudouDeEtapaHandler)
-            PedidosService.PedidoMudouEtapa = null;
-
-        if (PedidosService.PedidoMudouInfoAdicional == PedidoMudouInfoAdicionalHandler)
-            PedidosService.PedidoMudouInfoAdicional = null;
+        PedidosService.PedidoRecebido -= PedidoRecebidoHandler;
+        PedidosService.PedidoMudouEtapa -= PedidoMudouDeEtapaHandler;
+        PedidosService.PedidoMudouInfoAdicional -= PedidoMudouInfoAdicionalHandler;
     }
 }
