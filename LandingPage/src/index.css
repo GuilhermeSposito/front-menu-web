@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sophos-primary: #F88113;
+  --color-sophos-bg: #192436;
+  --color-sophos-card: #0f172A;
+}

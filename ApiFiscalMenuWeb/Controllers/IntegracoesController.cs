@@ -132,6 +132,8 @@ public class IntegracoesController : Controller
     [HttpPost("endpoint-webhook-b1-delivery")]
     public async Task<IActionResult> EndpointDeConexaoB1Delivery()
     {
+        var body = HttpContext.Request.Body;
+        Console.WriteLine("Conexão delmatch: \n \n"  + body + "\n\n");
         return Accepted();
     }
     #endregion

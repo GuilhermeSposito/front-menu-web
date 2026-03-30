@@ -1183,7 +1183,7 @@ public class NfService
                 ValorTrocoNfAtual += pag.Troco;
             }
 
-            if (tipoPag == MeioPagamento.CartaoCredito || tipoPag == MeioPagamento.CartaoDebito)
+            if (tipoPag == MeioPagamento.CartaoCredito || tipoPag == MeioPagamento.CartaoDebito || tipoPag == MeioPagamento.PagamentoInstantaneo)
             {
                 detPag.Card = new Card
                 {
