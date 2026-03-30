@@ -136,8 +136,8 @@
     {
         if (firstRender)
         {
-            PedidosService.PedidoMesaRecebido = pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
-            PedidosService.PedidoMesaFechada = pedido => InvokeAsync(() => PedidoMesaFechada(pedido));
+            PedidosService.PedidoMesaRecebido += pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
+            PedidosService.PedidoMesaFechada += pedido => InvokeAsync(() => PedidoMesaFechada(pedido));
 
             try
             {
@@ -290,7 +290,7 @@
     private async Task OnPedidoRecebido(PedidoMesaDto novoPedido)
     {
         await CarregarMesasEComandas();
-        // await ImprimirPedido(novoPedido); // por enquanto todos
+        await ImprimirPedido(novoPedido); // por enquanto todos
         await InvokeAsync(StateHasChanged);
         Snackbar.Add("Novo pedido mesa, recebido!", Severity.Info);
         await JS.InvokeVoidAsync("playNotificationSound");

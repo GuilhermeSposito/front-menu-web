@@ -53,10 +53,6 @@
                 {
                     <MudButton Class="m-3" OnClick=DeletarMesaOuComanda Variant="Variant.Filled" Color="Color.Error">Excluir Selecionados</MudButton>
                     <MudButton Class="m-3" OnClick=GerarQr Variant="Variant.Filled" Color="Color.Primary">Criar QrCode</MudButton>
-
-
-
-
                 }
 
             </ToolBarContent>
@@ -222,7 +218,7 @@
         foreach (var mesa in MesasSelecionadas)
         {
             using var generator = new QRCodeGenerator();
-            using QRCodeData qrCodeData = generator.CreateQrCode($"https://sophos-erp.com.br/qrmesa?MerchantId={AppState.MerchantLogado.Id}&MesaId={mesa.Id}", QRCodeGenerator.ECCLevel.Q);
+            using QRCodeData qrCodeData = generator.CreateQrCode($"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado.Id}/{mesa.Id}", QRCodeGenerator.ECCLevel.Q);
             SvgQRCode qrCode = new SvgQRCode(qrCodeData);
             string svgText = qrCode.GetGraphic(5);
             qrCodeMarkup = new MarkupString(svgText);
