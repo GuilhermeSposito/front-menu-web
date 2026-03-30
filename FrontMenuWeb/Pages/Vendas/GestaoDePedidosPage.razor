@@ -1139,14 +1139,9 @@
                     {
                         if (pedido.CriadoPor != "SOPHOS")
                         {
-                            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!pedido.PedidoAgendado && !(pedido.StatusPedido == "ABERTO")))
-                            {
-                                await PedidosService.UpdatePedidoImpresso(pedido);
-                            }
-
                             await VizualizaSeNaoExistePedidoNaTela(pedido);
 
-                        } //Só os integrações
+                        }
                         else
                         {
                             await PedidosService.UpdatePedidoImpresso(pedido);
@@ -1236,8 +1231,8 @@
             await InvokeAsync(StateHasChanged);
         }
 
-        if (pedido.EtapaPedido == "PREPARANDO")
-            await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);
+        /**if (pedido.EtapaPedido == "PREPARANDO")
+            await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);*/
 
         if (pedido.CriadoPor != "SOPHOS")
         {

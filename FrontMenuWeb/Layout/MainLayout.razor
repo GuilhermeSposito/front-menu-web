@@ -309,7 +309,10 @@
         bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
         if (!impressaoDesabilita)
             if (pedido.CriadoPor != "SOPHOS")
+            {
                 await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+                await PedidoService.UpdatePedidoImpresso(pedido);
+            }
 
         await JS.InvokeVoidAsync("playNotificationSound");
     }
