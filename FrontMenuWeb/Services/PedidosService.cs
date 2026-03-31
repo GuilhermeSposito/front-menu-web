@@ -212,6 +212,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparandoProtected(ClsPedido Pedido)
+    {  
+        var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}", Pedido);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido, string MechantSophosId)
     {  
         var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}/{MechantSophosId}", Pedido);

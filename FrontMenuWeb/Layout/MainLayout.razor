@@ -354,7 +354,15 @@
                 {
                     await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
                     await PedidoService.UpdatePedidoImpresso(pedido);
+                    if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.StatusPedido != "ABERTO")
+                        await PedidoService.UpdatePedidoPreparandoProtected(pedido);
                 }
+            }
+            else
+            {
+                if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+                    await PedidoService.UpdatePedidoPreparandoProtected(pedido);
+
             }
 
         await JS.InvokeVoidAsync("playNotificationSound");

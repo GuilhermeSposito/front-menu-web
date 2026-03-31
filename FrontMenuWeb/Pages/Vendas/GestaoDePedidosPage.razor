@@ -778,22 +778,21 @@
                     if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
                     {
                         var response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
-                        if (response.Status == "success")
-                            ImprimirPedido(item.Pedido, false);
+                        if (response.Status == "success"){
+                            await ImprimirPedido(item.Pedido, false);
+                            await PedidosService.UpdatePedidoImpresso(item.Pedido);
+                        }
                     }
 
                     item.Selector = "PREPARANDO";
                     var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido, AppState.MerchantLogado.Id);
                     MostraMensagemDeUpdateDoPedido(Response);
-
-                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.PREPARANDO);
                 }
                 else if (item.Selector == "PREPARANDO")
                 {
                     item.Selector = "DESPACHADO";
                     var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
                     MostraMensagemDeUpdateDoPedido(Response);
-                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.DESPACHADO);
                 }
                 else if (item.Selector == "DESPACHADO")
                 {
@@ -801,7 +800,6 @@
                     item.UltimaEtapa = true;
                     var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
                     MostraMensagemDeUpdateDoPedido(Response);
-                    EnviaMensagemNoWhatsAppDeUpdateDoPedido(item.Pedido, EtapasPedido.FINALIZADO);
                 }
 
                 // Atualiza progresso baseado em quantos já foram processados
@@ -1378,24 +1376,6 @@
     private async Task CarregaEmpresasMachine()
     {
         EmpresasMachine = await EmpresasMachineService.GetEmpresasIntegradas();
-    }
-    #endregion
-
-    #region Funções de Integrações
-    private async Task EnviaMensagemNoWhatsAppDeUpdateDoPedido(ClsPedido Pedido, EtapasPedido etapa)
-    {
-        if ((Pedido.CriadoPor == "SOPHOS") || (AppState.MerchantLogado.EnviaMsgWhatsIntegracao && Pedido.CriadoPor != "IFOOD")) //Envia para a integração menos ifood
-        {
-            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
-            {
-                if (Pedido.Cliente is null || string.IsNullOrEmpty(Pedido.Cliente.Telefone))
-                    return;
-
-                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado.EnviaMsgWhatsDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado.EnviaMsgWhatsBalcao))
-                    await MessageService.EnviarMensagem(Pedido, etapa);
-
-            }
-        }
     }
     #endregion
 
