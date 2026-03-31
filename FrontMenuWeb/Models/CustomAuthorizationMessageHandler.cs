@@ -5,6 +5,8 @@ using SocketIOClient.Transport.Http;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,6 +32,14 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
             var apiKey = _configuration["ApiKeyNest"];
             request.Headers.Add("x-api-key", apiKey);
         }
+
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        var key = Encoding.UTF8.GetBytes(_configuration["HMAC_SECRET"]!);
+        var message = Encoding.UTF8.GetBytes(timestamp);
+        using var hmac = new HMACSHA256(key);
+        var hash = Convert.ToHexString(hmac.ComputeHash(message)).ToLower();
+        request.Headers.Add("x-timestamp", timestamp);
+        request.Headers.Add("x-hash", hash);
 
         request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
