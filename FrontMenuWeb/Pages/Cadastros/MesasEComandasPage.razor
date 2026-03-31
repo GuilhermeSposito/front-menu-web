@@ -250,7 +250,7 @@
     <div class="d-flex flex-column align-items-center justify-content-center">
         @foreach (var qr in SuporteDeImpressaoDeQrCodes)
         {
-            <div id="qrcode" class="w-100 d-flex flex-column align-items-center justify-content-center" style="width:400px;height:400px;">
+            <div id="qrcode" class="w-100 d-flex flex-column align-items-center justify-content-center" style="width:600px;height:600px;">
                 @qr.QrCodeSvg
                 <div style="text-align:center; margin-top:10px;">
                     <strong>@(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced): @qr.CodigoExternoMesa</strong>

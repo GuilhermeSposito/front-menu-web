@@ -136,7 +136,6 @@
                 <MudNavMenu>
                     <MudDivider Class="my-2" />
                     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
-
                     @if (AppState.MerchantLogado is not null)
                     {
                         <MudNavLink Icon="@Icons.Material.Filled.ListAlt" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/gestao-de-pedidos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Gestão De Pedidos</MudNavLink>
