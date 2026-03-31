@@ -24,8 +24,8 @@
     <MudLayout>
         <MudStack Row=true class="d-flex align-items-center justify-content-between">
             <MudStack>
-                <MudText Typo="Typo.h4">Mesas / Comandas</MudText>
-                <MudText Class="mb-3" Typo="Typo.body1">Lista de mesas / comandas</MudText>
+                <MudText Typo="Typo.h4">@(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced)s </MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de @(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced)s</MudText>
             </MudStack>
             <MudStack class="d-flex">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="CarregandoMesas" OnClick="@(async () => { await AbreEdicaoOuCriacaoDeMesaOuComanda(true); })">Novo Cadastro</MudButton>
@@ -253,7 +253,7 @@
             <div id="qrcode" class="w-100 d-flex flex-column align-items-center justify-content-center" style="width:400px;height:400px;">
                 @qr.QrCodeSvg
                 <div style="text-align:center; margin-top:10px;">
-                    <strong>Mesa: @qr.CodigoExternoMesa</strong>
+                    <strong>@(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced): @qr.CodigoExternoMesa</strong>
                 </div>
             </div>
         }
