@@ -357,15 +357,19 @@
                     if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.StatusPedido != "ABERTO")
                         await PedidoService.UpdatePedidoPreparandoProtected(pedido);
                 }
-            }
-            else
-            {
-                if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
-                    await PedidoService.UpdatePedidoPreparandoProtected(pedido);
 
+                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
             }
 
-        await JS.InvokeVoidAsync("playNotificationSound");
+
+        if (pedido.CriadoPor == "SOPHOS")
+        {
+            if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+                await PedidoService.UpdatePedidoPreparandoProtected(pedido);
+
+            await JS.InvokeVoidAsync("playNotificationSound");
+        }
+
     }
 
     private async Task ImprimirPedidoMesaGlobal(PedidoMesaDto pedido)
