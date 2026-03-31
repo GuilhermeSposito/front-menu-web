@@ -23,6 +23,7 @@
 @using System.Globalization;
 @using MudBlazor.Extensions
 @using MudBlazor.Extensions.Components
+@using System.Text.Json
 @inject GrupoServices GrupoService
 @inject CaixaEPagamentosService CaixasService
 @inject ISnackbar Snackbar
@@ -36,6 +37,7 @@
 @inject EntregasMachineService EmpresasMachineService
 @inject MessageWhatsAppService MessageService
 @inject IntegracoesSophosService IntegracoesSophosService
+@inject BalancaService BalancaService
 
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
@@ -70,7 +72,14 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.ReceiptLong" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDeCodigoDeBarrasParaProximaEtapa(); })"></MudIconButton>
                             </MudTooltip>
                         }
+                        @if (AppState.MerchantLogado.UltilizaBalanca)
+                        {
+                            <MudTooltip Text="Reconectar Balanca" Color="Color.Primary">
+                                <MudIconButton Icon="@Icons.Material.Filled.MonitorWeight" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await ForcaNovaConexao(); })"></MudIconButton>
+                            </MudTooltip>
+                        }
                     </MudStack>
+
                 </MudStack>
             </MudStack>
             @if (PedidosEmAberto.Any())
@@ -448,6 +457,9 @@
     {
         if (firstRender)
         {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                await BalancaService.ConectarAsync();
+
             await JS.InvokeVoidAsync("interceptFunctionKeys", this);
 
             PedidosService.PedidoRecebido += PedidoRecebidoHandler;
@@ -458,6 +470,11 @@
             await VerificaSeColocaEtapaNovoNaTela();
 
         }
+    }
+
+    private async Task ForcaNovaConexao()
+    {
+        await BalancaService.ConectarAsync(forcarConexao: true);
     }
 
     private async Task VerificaSeColocaEtapaNovoNaTela()
@@ -1194,7 +1211,7 @@
                 await VizualizaSeNaoExistePedidoNaTela(novoPedido);
 
                 //if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
-                    //await VerificaPedidosNaoImpressos();
+                //await VerificaPedidosNaoImpressos();
 
                 if (!novoPedido.PedidoAgendado)
                     await PedidosService.UpdatePedidoImpresso(novoPedido);

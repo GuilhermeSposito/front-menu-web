@@ -17,6 +17,7 @@
 @inject PedidosService PedidosService
 @inject IJSRuntime JS
 @inject MesasServices MesaService
+@inject BalancaService BalancaService
 
 <MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background); overflow:hidden">
     <TitleContent>
@@ -234,7 +235,7 @@
                                 @if (TiposDePedido == TiposDePedido.MESA)
                                 {
                                     <MudStack>
-                                        <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa T="int" Label="Número da Mesa" Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
+                                        <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa @onfocus=@(async ()=> {await TextFieldDeNumeroDeMesa.SelectAsync();}) T="int" Label=@($"Número da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}") Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
                                     </MudStack>
                                 }
 
@@ -257,7 +258,7 @@
                                                             @if (produtoNoPedido.Produto is not null && produtoNoPedido.Produto.UltilizaProdutoNaBalanca)
                                                             {
                                                                 <MudTooltip Text="Balança" Color="Color.Primary">
-                                                                    <MudIconButton OnClick=@(async () => { await AbreModalParaEditarItemCompleto(produtoNoPedido); }) Icon="@Icons.Material.Filled.MonitorWeight" Color="Color.Primary" />
+                                                                    <MudIconButton OnClick=@(async () => { await AbreModalParaEditarPrecoDeBalanca(produtoNoPedido); }) Icon="@Icons.Material.Filled.MonitorWeight" Color="Color.Primary" />
                                                                 </MudTooltip>
                                                             }
                                                             <MudTooltip Text="Editar" Color="Color.Primary">
@@ -404,6 +405,33 @@
         }
     }
 
+    public async Task AbreModalParaEditarPrecoDeBalanca(ItensPedido itemAdicionadoAoCarrinho)
+    {
+        var peso = new BalancaLeitura { Sucesso = false, Peso = 0 };
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+            peso = await BalancaService.LerPesoAsync();
+
+        float QtdAdicionado = 1f;
+        if (!peso.Sucesso || peso.Peso == 0)
+        {
+            var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+            var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
+            var resultInput = await dialogInput.Result;
+
+            if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+            {
+                QtdAdicionado = ValorQtd;
+            }
+        }
+        else
+        {
+            QtdAdicionado = (float)peso.Peso;
+        }
+
+        itemAdicionadoAoCarrinho.Quantidade = QtdAdicionado;
+        itemAdicionadoAoCarrinho.PrecoTotal = itemAdicionadoAoCarrinho.PrecoUnitario * itemAdicionadoAoCarrinho.Quantidade;
+    }
+
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
 
@@ -456,13 +484,24 @@
         float QtdAdicionado = 1f;
         if (produto.UltilizaProdutoNaBalanca)
         {
-            var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
-            var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
-            var resultInput = await dialogInput.Result;
+            var peso = new BalancaLeitura { Sucesso = false, Peso = 0 };
+            if(AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                peso = await BalancaService.LerPesoAsync();
 
-            if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+            if (!peso.Sucesso || peso.Peso == 0)
             {
-                QtdAdicionado = ValorQtd;
+                var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+                var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
+                var resultInput = await dialogInput.Result;
+
+                if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+                {
+                    QtdAdicionado = ValorQtd;
+                }
+            }
+            else
+            {
+                QtdAdicionado = (float)peso.Peso;
             }
         }
 

@@ -44,7 +44,8 @@
                                     <MudImage Src="@AppState.MerchantLogado?.ImagemLogo" Alt="IMG" />
                                 }
                             </MudAvatar>
-                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadImagem"> @*Teste*@
+                            <MudFileUpload T="IBrowserFile" FilesChanged="UploadImagem">
+                                @*Teste*@
                                 <ActivatorContent>
                                     <MudButton Variant="Variant.Filled"
                                                Color="Color.Primary"
@@ -90,7 +91,7 @@
                 <MudStack Class="m-5">
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
                     <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <MudText Typo="Typo.h5">Impressões / Fechamento</MudText>
+                        <MudText Typo="Typo.h5">Impressões / Fechamento / Ultilizarios</MudText>
                         <MudLink Href="https://syslogica.com.br/SophosSync/setup.exe">Clique aqui para baixar o modulo de impressão</MudLink>
                     </MudStack>
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
@@ -153,6 +154,17 @@
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.ImprimeSenhaBalcao ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeSenhaBalcao = x)) T=bool Color="Color.Primary">Imprime Senha No Balcão</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.UltilizaBalanca ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaBalanca = x)) T=bool Color="Color.Primary">Ultiliza Balança</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">                        
+                                    <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
+                                               Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
+                                               T="string">
+                                        <MudSelectItem Value=@("Mesa")>Mesa</MudSelectItem>
+                                        <MudSelectItem Value=@("Comanda")>Comanda</MudSelectItem>
+                                    </MudSelect>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudNumericField Variant="Variant.Outlined" Label="Nmr de Vias da Comanda" @bind-Value=@Merchant.QtdViasDaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />

@@ -89,7 +89,8 @@ public class ClsMerchant
     [JsonPropertyName("MenssagemDeDeliveryDespachado")] public string? MenssagemDeDeliveryDespachado { get; set; }
     [JsonPropertyName("MenssagemDeBalcaoFinalizado")] public string? MenssagemDeBalcaoFinalizado { get; set; }
     [JsonPropertyName("MenssagemDeDeliveryFinalizado")] public string? MenssagemDeDeliveryFinalizado { get; set; }
-    [JsonPropertyName("LegendaNomeUltilizadoParaPlaced")] public string LegendaNomeUltilizadoParaPlaced { get; set; } = "Mesa";
+    [JsonPropertyName("LegendaNomeUltilizadoParaPlaced")] public string LegendaNomeUltilizadoParaPlaced { get; set; } = "";
+    [JsonPropertyName("UltilizaBalanca")] public bool UltilizaBalanca { get; set; } = true;
 }
 
 

@@ -48,7 +48,7 @@ builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("Api"))
 
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
 
-//Injeções para integrações 
+//Injeï¿½ï¿½es para integraï¿½ï¿½es 
 builder.Services.AddScoped<MessageWhatsAppService>();
 
 builder.Services.AddScoped(sp =>
@@ -140,6 +140,7 @@ ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<IntegracoesSophosS
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 
+builder.Services.AddScoped<BalancaService>();
 builder.Services.AddScoped<IErrorBoundaryLogger, GlobalErrorHandler>();
 
 var culture = new CultureInfo("pt-BR");
