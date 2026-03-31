@@ -89,6 +89,24 @@
                     </MudMenuItem>
 
 
+                    <!-- Sophos Cardápio -->
+                    <MudMenuItem>
+                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
+                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudAvatar Color="Color.Secondary">
+                                        <MudImage Src="@AppState.GetIconeDoApp("SOPHOS")"></MudImage>
+                                    </MudAvatar>
+                                    <MudText Typo="Typo.h6">Impressão Sophos Cardápio</MudText>
+                                </MudStack>
+                                <MudSwitch T="bool" @bind-Value=ImpressaoSophosCardapioLocalStoragePreference @onclick="OnSophosCardapioChanged" UncheckedColor="Color.Error" Color="Color.Success" />
+                            </MudStack>
+                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
+                                @(ImpressaoSophosCardapioLocalStoragePreference ? "Sua impressão do Sophos Cardápio está ativa" : "Sua impressão do Sophos Cardápio está desativada.")
+                            </MudText>
+                        </MudPaper>
+                    </MudMenuItem>
+
                     <!-- Entregas -->
                     @if (AppState.MerchantLogado is not null && AppState.MerchantLogado.EnviaPedidoAutTaxyMachine)
                     {
@@ -199,6 +217,7 @@
     private string ProgramName = "Sophos";
     private const string ThemePreferenceKey = "themePreference"; // chave no localStorage
     private bool IntegraIfoodSettingsLocalStoragePreference = false;
+    private bool ImpressaoSophosCardapioLocalStoragePreference = false;
 
     private string MensagemDeCaixa = "Carregando status do caixa...";
     private Color ColorStatusCaixa = Color.Error;
@@ -220,6 +239,22 @@
             {
                 IntegraIfoodSettingsLocalStoragePreference = false;
                 await LocalStorage.SetItemAsync("IntegraIfood", false);
+            }
+            else
+            {
+                IntegraIfoodSettingsLocalStoragePreference = IntegraIfood.Value;
+            }
+
+            bool? impressaoSophosCardapio = await LocalStorage.GetItemAsync<bool?>("ImpressaoSophosCardapio");
+            if (impressaoSophosCardapio is null)
+            {
+                bool defaultValue = IntegraIfood ?? false;
+                ImpressaoSophosCardapioLocalStoragePreference = defaultValue;
+                await LocalStorage.SetItemAsync("ImpressaoSophosCardapio", defaultValue);
+            }
+            else
+            {
+                ImpressaoSophosCardapioLocalStoragePreference = impressaoSophosCardapio.Value;
             }
 
 
@@ -315,8 +350,11 @@
         if (!impressaoDesabilita)
             if (pedido.CriadoPor != "SOPHOS")
             {
-                await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
-                await PedidoService.UpdatePedidoImpresso(pedido);
+                if ((pedido.CriadoPor == "IFOOD" && IntegraIfoodSettingsLocalStoragePreference) || (pedido.CriadoPor == "SOPHOS CARDAPIO" && ImpressaoSophosCardapioLocalStoragePreference))
+                {
+                    await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+                    await PedidoService.UpdatePedidoImpresso(pedido);
+                }
             }
 
         await JS.InvokeVoidAsync("playNotificationSound");
@@ -355,6 +393,14 @@
 
         StateHasChanged();
 
+    }
+
+    private async Task OnSophosCardapioChanged()
+    {
+        bool value = !ImpressaoSophosCardapioLocalStoragePreference;
+        await LocalStorage.SetItemAsync("ImpressaoSophosCardapio", value);
+        ImpressaoSophosCardapioLocalStoragePreference = value;
+        StateHasChanged();
     }
 
     public void Dispose()
