@@ -95,12 +95,11 @@
                                                     <MudPaper @onclick="async () => await AdicionarProdutoNoPedido(item.produto)"
                                                               Elevation="6"
                                                               Class=@($"d-flex align-center pa-2 transition-all product-card {(item.index == ProdutoSelecionadoIndex ? "produto-selecionado" : "")}")
-                                                              Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:100px; max-height:100px; border-radius:12px;">
-                                                        <MudGrid Class="h-100">
+                                                              Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:80px; border-radius:12px; overflow:hidden;">
+                                                        <MudGrid Class="h-100" Style="flex-wrap:nowrap;">
                                                             <!-- Avatar -->
-                                                            <MudItem xs="3" Class="d-flex justify-center align-center">
-
-                                                                <MudAvatar Size="Size.Large"
+                                                            <MudItem xs="3" Class="d-flex justify-center align-center" Style="flex-shrink:0;">
+                                                                <MudAvatar Size="Size.Medium"
                                                                            Color="Color.Primary"
                                                                            Square="true"
                                                                            Class="fw-bold text-white">
@@ -116,11 +115,11 @@
                                                             </MudItem>
 
                                                             <!-- Informações -->
-                                                            <MudItem xs="9" Class="d-flex flex-column justify-center">
-                                                                <MudText Typo="Typo.subtitle1" Class="fw-semibold">
+                                                            <MudItem xs="9" Class="d-flex flex-column justify-center" Style="min-width:0; overflow:hidden;">
+                                                                <MudText Typo="Typo.body2" Class="fw-semibold" Style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                                                                     @item.produto.CodigoInterno - @item.produto.Descricao
                                                                 </MudText>
-                                                                <MudText Style="opacity: 0.7;" Typo="Typo.body2">
+                                                                <MudText Style="opacity: 0.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" Typo="Typo.caption">
                                                                     @($"A Partir de: {item.produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
                                                                 </MudText>
                                                             </MudItem>
@@ -302,7 +301,7 @@
                                 <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
                                           Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
                                     <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
-                                        Enviar Itens Para a Mesa (F3)
+                                        Enviar Itens Para a @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced (F3)
                                     </MudButton>
                                 </MudPaper>
                             }

@@ -1,12 +1,14 @@
 ﻿@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject CEPService CEPService
 @inject PessoasService PessoasService
 @inject CnpjPesquisaService CnpjPesquisaService
+@inject EntregasService EntregasService
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
 
@@ -178,6 +180,21 @@
                         </MudText>
                         <MudGrid>
                             <MudItem xs="12" sm="8">
+                                <MudAutocomplete T="AutoCompleteDeEndereco"
+                                                 Label="@LabelDePesquisaDeEndereco"
+                                                 @ref="_autoCompleteRua"
+                                                 MinCharacters="1"
+                                                 Clearable="true"
+                                                 Dense="true"
+                                                 Variant="Variant.Outlined"
+                                                 SearchFunc="BuscarEndereco"
+                                                 ValueChanged="SelecionarEndereco"
+                                                 ShowProgressIndicator="true"
+                                                 ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
+                                                 TextChanged="OnTextoEnderecoChanged" />
+
+                            </MudItem>
+                            <MudItem xs="12" sm="8">
                                 <MudTextField Required Immediate=true RequiredError="A Rua é obrigatório" Label="Rua" @onfocusout=ProcuraCepPorRua @bind-Value="NovoEndereco.Rua" Variant="Variant.Filled" />
                             </MudItem>
 
@@ -259,9 +276,15 @@
     private string MensagemErro = string.Empty;
     private bool CarregandoRespostaDaApi = false;
 
+    private string? PesquisaEndereco { get; set; } = string.Empty;
     [Parameter] public string? TelefoneEnviado { get; set; } = null;
     [Parameter] public bool CadastroRapido { get; set; } = false;
     [Parameter] public string? NomeEnviado { get; set; } = null;
+
+    //Logica Auto Complete 
+    private string LabelDePesquisaDeEndereco = "RUA";
+    private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
+    private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
     {
@@ -568,6 +591,52 @@
         {
             await Submit();
         }
+    }
+
+    private bool _semResultados;
+    private async Task<IEnumerable<AutoCompleteDeEndereco>> BuscarEndereco(string valor, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return Enumerable.Empty<AutoCompleteDeEndereco>();
+
+        var responseApi = await EntregasService.GetAutoCompleteDeEnderecos(valor, AppState.MerchantLogado.Id);
+        EnderecosParaSelecionar = responseApi ?? new List<AutoCompleteDeEndereco>();
+
+        return EnderecosParaSelecionar;
+    }
+
+    private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
+    {
+        if (end is null)
+        {
+            PesquisaEndereco = string.Empty;
+
+            NovoEndereco.Rua = string.Empty;
+            NovoEndereco.Bairro = string.Empty;
+            NovoEndereco.Cidade = string.Empty;
+            NovoEndereco.Estado = string.Empty;
+            return;
+        }
+
+        PesquisaEndereco = end.Descricao;
+
+        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? "";
+        NovoEndereco.Bairro = end.Termos?.ElementAtOrDefault(1) ?? "";
+        NovoEndereco.Cidade = end.Termos?.ElementAtOrDefault(2) ?? "";
+        NovoEndereco.Estado = end.Termos?.ElementAtOrDefault(3) ?? "";
+
+        await TextFieldDeNumeroDoCliente.FocusAsync();
+    }
+
+    private Task OnTextoEnderecoChanged(string texto)
+    {
+        PesquisaEndereco = texto;
+
+        if (texto is null)
+            PesquisaEndereco = string.Empty;
+
+
+        return Task.CompletedTask;
     }
 
     private void Cancelar() => MudDialog.Cancel();

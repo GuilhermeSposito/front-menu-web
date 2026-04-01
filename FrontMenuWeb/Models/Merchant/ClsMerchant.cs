@@ -91,6 +91,9 @@ public class ClsMerchant
     [JsonPropertyName("MenssagemDeDeliveryFinalizado")] public string? MenssagemDeDeliveryFinalizado { get; set; }
     [JsonPropertyName("LegendaNomeUltilizadoParaPlaced")] public string LegendaNomeUltilizadoParaPlaced { get; set; } = "";
     [JsonPropertyName("UltilizaBalanca")] public bool UltilizaBalanca { get; set; } = true;
+    [JsonPropertyName("Latitude")] public double? Latitude { get; set; }
+    [JsonPropertyName("Longitude")] public double? Longitude { get; set; }
+    [JsonPropertyName("SeparaCaixaPorUsuario")] public bool SeparaCaixaPorUsuario { get; set; }
 }
 
 

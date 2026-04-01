@@ -158,6 +158,9 @@
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.UltilizaBalanca ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaBalanca = x)) T=bool Color="Color.Primary">Ultiliza Balança</MudCheckBox>
                             </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.SeparaCaixaPorUsuario ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.SeparaCaixaPorUsuario = x)) T=bool Color="Color.Primary">Separa Caixa Por Usuário</MudCheckBox>
+                            </MudItem>
                             <MudItem xs="12" sm="6" md="3">                        
                                     <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
                                                Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
@@ -330,6 +333,12 @@
                         </MudItem>
                         <MudItem xs="12" md="12" lg="12">
                             <MudExTextField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.TokenApiEntrega @onfocusout=SalvarInfosLojaAsync T="string" Immediate=true Label="Token Para Entregas Automaticas" Variant="Variant.Outlined" FullWidth="true" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                        </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.Latitude @onfocusout=SalvarInfosLojaAsync T="double?" Immediate=true Label="Latitude" Variant="Variant.Outlined" FullWidth="true" AdornmentIcon="@Icons.Material.Filled.LocationOn" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
+                        </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudNumericField Disabled=EditandoInfosEntregaBloq @bind-Value=Merchant.Longitude @onfocusout=SalvarInfosLojaAsync T="double?" Immediate=true Label="Longitude" Variant="Variant.Outlined" FullWidth="true" AdornmentIcon="@Icons.Material.Filled.LocationOn" Adornment="Adornment.Start" AdornmentColor=Color.Primary />
                         </MudItem>
                         <MudItem xs="12" md="12" lg="12">
                             <MudCheckBox ValueChanged="@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.EnviaPedidoAutTaxyMachine = x))" Value=Merchant.EnviaPedidoAutTaxyMachine Disabled=EditandoInfosEntregaBloq T=bool Color="Color.Primary">Envia Pedido Automatico</MudCheckBox>

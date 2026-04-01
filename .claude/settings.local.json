@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -r \"ReceivePedido\\\\|ReceivePedidoMesa\\\\|ReceiveEtapaDoPedido\" /c/Prog/projeto_menu_web/front-menu-web/FrontMenuWeb/FrontMenuWeb --include=*.cs --include=*.razor)",
       "Bash(xargs grep:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(ls:*)"
     ]
   }
 }

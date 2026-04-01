@@ -444,7 +444,7 @@
         if (string.IsNullOrWhiteSpace(valor))
             return Enumerable.Empty<AutoCompleteDeEndereco>();
 
-        var responseApi = await EntregasService.GetAutoCompleteDeEnderecos(valor);
+        var responseApi = await EntregasService.GetAutoCompleteDeEnderecos(valor, AppState.MerchantLogado.Id);
         EnderecosParaSelecionar = responseApi ?? new List<AutoCompleteDeEndereco>();
 
         return EnderecosParaSelecionar;
