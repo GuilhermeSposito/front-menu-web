@@ -1,4 +1,5 @@
 ﻿using FrontMenuWeb.Models.Financeiro;
+using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using System.ComponentModel;
@@ -168,6 +169,8 @@ public class ItensPedido
     [JsonPropertyName("PrecoId")] public string? PrecoId { get; set; }
     [JsonPropertyName("Observacoes")] public string? Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
+    [JsonPropertyName("Funcionario")] public ClsFuncionario? Funcionario { get; set; }
+
 }
 
 public class ComplementoNoItem : IEquatable<ComplementoNoItem>

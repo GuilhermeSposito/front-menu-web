@@ -17,7 +17,7 @@
 <MudDialog tabindex="0" OnKeyDown="HandleKeyDownDialog" TitleClass="p-0" ContentClass="p-0" Class="novo-pedido-dialog mud-width-full mud-height-full p-0" Style="background-color: var(--mud-palette-background);">
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
-            <MudText Class="ms-3" Typo="Typo.h6">Itens da Mesa @MesaOuComanda.CodigoExterno</MudText>
+            <MudText Class="ms-3" Typo="Typo.h6">Itens da @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced @MesaOuComanda.CodigoExterno</MudText>
             <MudStack Row="true" Spacing="2">
                 <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Secondary" OnClick="Cancelar" />
             </MudStack>
@@ -56,6 +56,11 @@
                 <PropertyColumn Property="x => x.Quantidade" Title="Quantidade do Item"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
+                <TemplateColumn Title="Funcionario">
+                    <CellTemplate>
+                        @(context.Item.Funcionario?.Nome ?? "Admin")
+                    </CellTemplate>
+                </TemplateColumn>
             </Columns>
         </MudDataGrid>
 
