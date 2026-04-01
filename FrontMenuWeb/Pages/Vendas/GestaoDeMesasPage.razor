@@ -37,7 +37,7 @@
         </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-100" Row=true>
-                <MudTextField DebounceInterval="500" Value="pesquisaTexto" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por nome de cliente ou número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="FiltrarMesas" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
             </MudStack>
             <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -109,6 +109,7 @@
     private Func<ClsMesasEComandas, Task>? _pedidoMesaFechadaHandler;
 
     //props de mesas
+    private List<ClsMesasEComandas> _todasMesas { get; set; } = new();
     private List<ClsMesasEComandas> MesasOuComandaList { get; set; } = new();
 
     private int TotalDeMesasCarregando = 12;
@@ -155,13 +156,34 @@
     {
         var response = await MesasServices.GetMesaPorPaginaAsync(1, 1000);
         if (response.Data is not null)
-        {         
-            MesasOuComandaList = AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced != "Comanda" ? response.Data : response.Data.Where(x => x.Ocupada).ToList();
+        {
+            _todasMesas = AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced != "Comanda" ? response.Data : response.Data.Where(x => x.Ocupada).ToList();
+            FiltrarMesas(pesquisaTexto);
         }
         else
         {
             Snackbar.Add("Erro ao carregar mesas/comandas.", Severity.Error);
         }
+    }
+    #endregion
+
+    #region Funções de Pesquisa
+    private void FiltrarMesas(string texto)
+    {
+        pesquisaTexto = texto;
+
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            MesasOuComandaList = _todasMesas.ToList();
+        }
+        else
+        {
+            MesasOuComandaList = _todasMesas
+                .Where(m => m.CodigoExterno.ToString().Contains(texto.Trim()))
+                .ToList();
+        }
+
+        StateHasChanged();
     }
     #endregion
 
