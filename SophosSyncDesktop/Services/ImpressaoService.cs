@@ -157,7 +157,7 @@ public class ImpressaoService
 
                                 List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupadosAuxiliar, AppQueEnviou);
 
-                                    for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
+                                    for (var interador = 0; interador < AppState.MerchantLogado?.QtdViasDaComanda; interador++)
                                         await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
 
                                 IndiceDoItemAtual++;
@@ -309,7 +309,7 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
-        AdicionaConteudo(Conteudo, $"MESA: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);

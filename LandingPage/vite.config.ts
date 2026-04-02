@@ -10,6 +10,7 @@ export default defineConfig(({mode}) => {
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
+    base: '/apresentacao/',
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -17,9 +18,6 @@ export default defineConfig(({mode}) => {
     },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
-      proxy: {
-        '/api': 'http://localhost:3001',
-      },
     },
   };
 });

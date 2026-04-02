@@ -237,8 +237,8 @@
                                                 <MudText Class="d-flex align-items-center justify-content-center"> Item Vende Pela Internet ? </MudText>
                                             </MudPaper>
                                             <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
-                                                           Value="false"
-                                                           ValueChanged="@(valor => { })">
+                                                           Value="Produto.UltilizaProdutoOnline"
+                                                           ValueChanged="@(valor => { Produto.UltilizaProdutoOnline = valor; })">
                                                 <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
                                                 <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
                                             </MudRadioGroup>

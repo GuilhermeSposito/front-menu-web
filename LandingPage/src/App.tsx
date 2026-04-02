@@ -18,11 +18,30 @@ import {
   CheckCircle2,
   ArrowRight,
   Menu,
-  X
+  X,
+  MapPin,
+  Users,
+  Globe,
+  Handshake
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
+
+async function gerarHashHmac(secret: string, timestamp: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(timestamp));
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -37,24 +56,39 @@ export default function App() {
     setFormStatus('loading');
     setFormMessage('');
 
-    try {
-      const res = await fetch('/api/orcamento', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ empresa, email, whatsapp }),
-      });
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const apiKey = import.meta.env.VITE_API_KEY;
+    const hmacSecret = import.meta.env.VITE_HMAC_SECRET;
 
-      const data = await res.json();
+    const timestamp = String(Date.now());
+    const hash = await gerarHashHmac(hmacSecret, timestamp);
+
+    try {
+      const res = await fetch(`${apiUrl}/envios-email/comercial`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'x-timestamp': timestamp,
+          'x-hash': hash,
+        },
+        body: JSON.stringify({
+          EmailCliente: email,
+          NomeCliente: empresa,
+          Assunto: `Solicitação de contato - ${empresa}`,
+          Conteudo: `Empresa: ${empresa}\nWhatsApp: ${whatsapp}`,
+        }),
+      });
 
       if (res.ok) {
         setFormStatus('success');
-        setFormMessage(data.message || 'Solicitação enviada com sucesso!');
+        setFormMessage('Solicitação enviada com sucesso!');
         setEmpresa('');
         setEmail('');
         setWhatsapp('');
       } else {
         setFormStatus('error');
-        setFormMessage(data.error || 'Erro ao enviar. Tente novamente.');
+        setFormMessage('Erro ao enviar. Tente novamente.');
       }
     } catch {
       setFormStatus('error');
@@ -78,30 +112,11 @@ export default function App() {
   ];
 
   const clientes = [
-    {
-      nome: "Restaurante Piassa",
-      segmento: "Restaurante",
-      // Substitua pelo caminho da foto real: ex: "images/clientes/piassa.jpg"
-      foto: null,
-      iniciais: "RP",
-      cor: "#F88113",
-    },
-    {
-      nome: "Pastel da Li",
-      segmento: "Lanchonete",
-      // Substitua pelo caminho da foto real: ex: "images/clientes/pastel-da-li.jpg"
-      foto: null,
-      iniciais: "PL",
-      cor: "#0ea5e9",
-    },
-    {
-      nome: "Burgues on the Table",
-      segmento: "Hamburgueria",
-      // Substitua pelo caminho da foto real: ex: "images/clientes/burgues.jpg"
-      foto: null,
-      iniciais: "BT",
-      cor: "#22c55e",
-    },
+    { nome: "Restaurante Piassa", segmento: "Restaurante", foto: "images/empresas-nossaas/piassa.jpeg" },
+    { nome: "Macarrão Piassa", segmento: "Restaurante", foto: "images/empresas-nossaas/macarraopiassa.jpeg" },
+    { nome: "Pastel da Li", segmento: "Lanchonete", foto: "images/empresas-nossaas/PastelDaLi.png" },
+    { nome: "Burgues on the Table", segmento: "Hamburgueria", foto: "images/empresas-nossaas/burguers-on-the-table.png" },
+    { nome: "Pão com Gergelim", segmento: "Lanchonete", foto: "images/empresas-nossaas/pao-com-gergelim.jpg" },
   ];
 
   // Adicione mais imagens em images/ e inclua aqui para expandir o carrossel
@@ -132,6 +147,32 @@ export default function App() {
         setActiveDashboard((prev) => (prev + 1) % dashboardSlides.length);
       }, 4000);
     }
+  }
+
+  const cardapioSlides = [
+    { src: "images/DemostracaoCardapioDigitalSophos/1.jpeg" },
+    { src: "images/DemostracaoCardapioDigitalSophos/2.jpeg" },
+    { src: "images/DemostracaoCardapioDigitalSophos/3.jpeg" },
+  ];
+
+  const [activeCardapio, setActiveCardapio] = useState(0);
+  const cardapioIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    cardapioIntervalRef.current = setInterval(() => {
+      setActiveCardapio((prev) => (prev + 1) % cardapioSlides.length);
+    }, 3500);
+    return () => {
+      if (cardapioIntervalRef.current) clearInterval(cardapioIntervalRef.current);
+    };
+  }, [cardapioSlides.length]);
+
+  function goToCardapioSlide(idx: number) {
+    setActiveCardapio(idx);
+    if (cardapioIntervalRef.current) clearInterval(cardapioIntervalRef.current);
+    cardapioIntervalRef.current = setInterval(() => {
+      setActiveCardapio((prev) => (prev + 1) % cardapioSlides.length);
+    }, 3500);
   }
 
   const [activeCliente, setActiveCliente] = useState(0);
@@ -169,6 +210,8 @@ export default function App() {
             <div className="hidden md:flex items-center gap-8">
               <a href="#recursos" className="text-slate-300 hover:text-sophos-primary transition-colors font-medium">Recursos</a>
               <a href="#segmentos" className="text-slate-300 hover:text-sophos-primary transition-colors font-medium">Segmentos</a>
+              <a href="#cardapio-digital" className="text-slate-300 hover:text-sophos-primary transition-colors font-medium">Cardápio Digital</a>
+              <a href="#integracoes" className="text-slate-300 hover:text-sophos-primary transition-colors font-medium">Integrações</a>
               <a href="#sobre" className="text-slate-300 hover:text-sophos-primary transition-colors font-medium">Sobre</a>
               <button onClick={() => window.open("https://wa.me/5516992366175", "_blank")} className="bg-sophos-primary text-white px-6 py-2.5 rounded-full font-semibold hover:opacity-90 transition-all shadow-lg shadow-sophos-primary/20">
                 Falar com Consultor
@@ -196,6 +239,8 @@ export default function App() {
           >
             <a href="#recursos" onClick={() => setIsMenuOpen(false)} className="text-slate-300 font-medium">Recursos</a>
             <a href="#segmentos" onClick={() => setIsMenuOpen(false)} className="text-slate-300 font-medium">Segmentos</a>
+            <a href="#cardapio-digital" onClick={() => setIsMenuOpen(false)} className="text-slate-300 font-medium">Cardápio Digital</a>
+            <a href="#integracoes" onClick={() => setIsMenuOpen(false)} className="text-slate-300 font-medium">Integrações</a>
             <a href="#sobre" onClick={() => setIsMenuOpen(false)} className="text-slate-300 font-medium">Sobre</a>
             <button onClick={() => window.open("https://wa.me/5516992366175", "_blank")} className="bg-sophos-primary text-white px-6 py-3 rounded-xl font-semibold">Falar com Consultor</button>
             <a href="https://sophos-erp.com.br/login" target="_blank" rel="noopener noreferrer" className="text-center bg-sophos-card text-sophos-primary border border-slate-700 px-6 py-3 rounded-xl font-semibold">Entrar</a>
@@ -211,32 +256,61 @@ export default function App() {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}>
-            <span className="inline-block py-1 px-3 rounded-full bg-sophos-primary/20 text-sophos-primary text-sm font-bold mb-6 tracking-wider uppercase text-center">
-              Sistema ERP para Restaurantes, Bares, Mercados e Conveniências
+            <span className="inline-block py-1 px-3 rounded-full bg-sophos-primary/20 text-sophos-primary text-sm font-bold mb-6 tracking-wider uppercase">
+              ERP · CRM · Cardápio Digital · PDV · Consultoria de TI
             </span>
-            <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-8">
-              Esta Cansado de sistemas <span className="text-sophos-primary">grandes</span> que não te dão suporte e atenção ?
+            <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] mb-6">
+              Tudo que sua empresa precisa em <span className="text-sophos-primary">um único sistema</span> —
             </h1>
-            <p className="text-xl text-slate-400 mb-10 leading-relaxed max-w-lg">
-              O Sophos ERP é a sua solução completa para gestão de restaurantes, bares, mercados e conveniências.
-              Com Atendimento Personalizado, Suporte 24/7 e Implantação Rápida, estamos prontos para transformar a gestão do seu negócio.
-              <span className="text-sophos-primary"> Aqui você é unico para nós !</span>
+            <p className="text-lg text-slate-400 mb-8 leading-relaxed max-w-xl">
+              O Sophos vai muito além de um ERP. Entregamos <span className="text-white font-semibold">CRM, mensagens automáticas de status de pedido, cardápio digital para Delivery, Balcão, Mesas e QR Code, PDV para mercados</span>, <span className="text-white font-semibold">controle financeiro completo</span> com fluxo de caixa, contas a pagar e receber, e <span className="text-white font-semibold">gestão de estoque inteligente</span> com alertas de reposição. Cada operador trabalha com seu <span className="text-white font-semibold">caixa individual</span>, garantindo fechamentos precisos e rastreabilidade total por usuário — e ainda cuidamos da sua infraestrutura: impressoras, redes, dispositivos locais e toda a <span className="text-sophos-primary font-semibold">consultoria de TI</span> que sua operação exige.
             </p>
+
+            {/* Feature pills */}
+            <div className="flex flex-wrap gap-2 mb-10">
+              {[
+                'ERP Completo',
+                'CRM',
+                'Controle Financeiro',
+                'Gestão de Estoque',
+                'Caixa por Usuário',
+                'Delivery',
+                'Balcão',
+                'Mesas & QR Code',
+                'PDV Mercado',
+                'Mensagem Automática de Status',
+                'Impressoras & Dispositivos',
+                'Consultoria de TI',
+              ].map((item) => (
+                <span key={item} className="px-3 py-1 rounded-full bg-sophos-card border border-slate-700 text-slate-300 text-xs font-medium">
+                  {item}
+                </span>
+              ))}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4">
               <button onClick={() => window.open("https://wa.me/5516992366175", "_blank")} className="bg-sophos-primary text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-sophos-primary/20 group">
-                Solicitar Demonstração
+                Solicitar Demonstração Gratuita
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
 
-            <div className="mt-12 flex items-center gap-6 text-slate-500">
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-slate-500">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500 w-5 h-5" />
-                <span className="text-sm font-medium">Suporte 24/7</span>
+                <CheckCircle2 className="text-green-500 w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">Suporte Presencial</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="text-green-500 w-5 h-5" />
+                <CheckCircle2 className="text-green-500 w-5 h-5 shrink-0" />
                 <span className="text-sm font-medium">Implantação Rápida</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="text-green-500 w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">Sem contrato de fidelidade</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="text-green-500 w-5 h-5 shrink-0" />
+                <span className="text-sm font-medium">Aqui você é único para nós</span>
               </div>
             </div>
           </motion.div>
@@ -329,25 +403,18 @@ export default function App() {
             <h2 className="text-2xl lg:text-3xl font-bold text-white">Negócios que confiam em nós</h2>
           </div>
 
-          {/* Desktop: todos visíveis lado a lado */}
-          <div className="hidden md:flex justify-center gap-12">
+          {/* Desktop */}
+          <div className="hidden md:flex justify-center flex-wrap gap-8">
             {clientes.map((cliente, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="flex flex-col items-center gap-4"
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                className="flex flex-col items-center gap-3"
               >
-                <div
-                  className="w-28 h-28 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shadow-lg border-4 border-sophos-card overflow-hidden"
-                  style={{ background: cliente.foto ? 'transparent' : cliente.cor }}
-                >
-                  {cliente.foto ? (
-                    <img src={cliente.foto} alt={cliente.nome} className="w-full h-full object-cover" />
-                  ) : (
-                    cliente.iniciais
-                  )}
+                <div className="w-28 h-28 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-lg bg-sophos-card">
+                  <img src={cliente.foto} alt={cliente.nome} className="w-full h-full object-cover" />
                 </div>
                 <div className="text-center">
                   <p className="text-white font-bold text-sm">{cliente.nome}</p>
@@ -355,6 +422,22 @@ export default function App() {
                 </div>
               </motion.div>
             ))}
+
+            {/* E muito mais */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: clientes.length * 0.1 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="w-28 h-28 rounded-2xl border-2 border-dashed border-sophos-primary/50 bg-sophos-primary/10 flex items-center justify-center shadow-lg">
+                <span className="text-sophos-primary font-extrabold text-3xl">+</span>
+              </div>
+              <div className="text-center">
+                <p className="text-sophos-primary font-bold text-sm">E muito mais</p>
+                <p className="text-slate-500 text-xs">Novos clientes todo mês</p>
+              </div>
+            </motion.div>
           </div>
 
           {/* Mobile: carrossel */}
@@ -366,15 +449,8 @@ export default function App() {
               transition={{ duration: 0.4 }}
               className="flex flex-col items-center gap-4"
             >
-              <div
-                className="w-32 h-32 rounded-full flex items-center justify-center text-3xl font-extrabold text-white shadow-xl border-4 border-sophos-card overflow-hidden"
-                style={{ background: clientes[activeCliente].foto ? 'transparent' : clientes[activeCliente].cor }}
-              >
-                {clientes[activeCliente].foto ? (
-                  <img src={clientes[activeCliente].foto!} alt={clientes[activeCliente].nome} className="w-full h-full object-cover" />
-                ) : (
-                  clientes[activeCliente].iniciais
-                )}
+              <div className="w-36 h-36 rounded-2xl overflow-hidden border-2 border-slate-700 shadow-xl bg-sophos-card">
+                <img src={clientes[activeCliente].foto} alt={clientes[activeCliente].nome} className="w-full h-full object-cover" />
               </div>
               <div className="text-center">
                 <p className="text-white font-bold">{clientes[activeCliente].nome}</p>
@@ -382,7 +458,6 @@ export default function App() {
               </div>
             </motion.div>
 
-            {/* Dots */}
             <div className="flex gap-2">
               {clientes.map((_, idx) => (
                 <button
@@ -394,11 +469,12 @@ export default function App() {
                       setActiveCliente((prev) => (prev + 1) % clientes.length);
                     }, 3500);
                   }}
-                  className={`w-2 h-2 rounded-full transition-all ${idx === activeCliente ? 'bg-sophos-primary w-5' : 'bg-slate-600'
-                    }`}
+                  className={`h-1.5 rounded-full transition-all ${idx === activeCliente ? 'bg-sophos-primary w-5' : 'bg-slate-600 w-1.5'}`}
                 />
               ))}
             </div>
+
+            <p className="text-sophos-primary font-bold text-sm">+ E muito mais</p>
           </div>
         </div>
       </section>
@@ -467,6 +543,273 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Integrations Section */}
+      <section id="integracoes" className="py-24 bg-sophos-bg">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <span className="inline-block py-1 px-3 rounded-full bg-sophos-primary/20 text-sophos-primary text-xs font-bold mb-4 tracking-wider uppercase">
+              Ecossistema conectado
+            </span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Integrado com as ferramentas que você já usa</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">Conectamos o Sophos ERP com os principais aplicativos do mercado para que você não precise mudar nada na sua operação.</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* WhatsApp */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#25D366]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/whatsapp.jpg" alt="WhatsApp" className="w-14 h-14 rounded-2xl object-cover" />
+              <span className="text-white font-semibold text-sm text-center">WhatsApp</span>
+            </motion.div>
+            {/* iFood */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#EA1D2C]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/ifoodImagem.png" alt="iFood" className="w-14 h-14 rounded-2xl object-cover" />
+              <span className="text-white font-semibold text-sm text-center">iFood</span>
+            </motion.div>
+            {/* 1 Delivery */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#F88113]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/1DELIVERY.png" alt="1 Delivery" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">1 Delivery</span>
+            </motion.div>
+            {/* Anota Aí */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#1E88E5]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/ANOTAAI.png" alt="Anota Aí" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">Anota Aí</span>
+            </motion.div>
+            {/* Cardápio Web */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#7C3AED]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/cardapio_web_logo.jpg" alt="Cardápio Web" className="w-14 h-14 rounded-2xl object-cover" />
+              <span className="text-white font-semibold text-sm text-center">Cardápio Web</span>
+            </motion.div>
+            {/* On Pedido */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#C0392B]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/LogoOnPedido.png" alt="On Pedido" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">On Pedido</span>
+            </motion.div>
+            {/* AiqFome */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#8B2FC9]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/aiqfome_logo.jpg" alt="AiqFome" className="w-14 h-14 rounded-2xl object-cover" />
+              <span className="text-white font-semibold text-sm text-center">AiqFome</span>
+            </motion.div>
+            {/* Juma */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#F5A623]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/jumalogo.png" alt="Juma Entregas" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">Juma Entregas</span>
+            </motion.div>
+            {/* Del Match */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-slate-500/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/delmatchlogo.png" alt="Del Match" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">Del Match</span>
+            </motion.div>
+            {/* Otto */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-[#E74C3C]/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/ottologo.png" alt="Otto" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">Otto</span>
+            </motion.div>
+            {/* Ápice Entregas */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-slate-800 bg-sophos-card hover:border-sophos-primary/50 transition-all cursor-default">
+              <img src="images/empresas_integradas/LOGOAPICE.png" alt="Ápice Entregas" className="w-14 h-14 rounded-2xl object-contain" />
+              <span className="text-white font-semibold text-sm text-center">Ápice Entregas</span>
+            </motion.div>
+            {/* Cardápio Digital Próprio */}
+            <motion.div whileHover={{ y: -6, scale: 1.03 }} className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-sophos-primary/40 bg-sophos-primary/10 hover:border-sophos-primary transition-all cursor-default">
+              <div className="w-14 h-14 rounded-2xl bg-sophos-primary flex items-center justify-center">
+                <img src="images/CEREBRO-VETOR.svg" alt="Cardápio Digital Sophos" className="w-9 h-9" />
+              </div>
+              <span className="text-sophos-primary font-bold text-sm text-center">Cardápio Digital Próprio</span>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Cardápio Digital Próprio */}
+      <section id="cardapio-digital" className="py-24 bg-sophos-card overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+
+            {/* Carrossel */}
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex justify-center"
+            >
+              {/* Phone mockup */}
+              <div className="relative w-[280px] sm:w-[300px]">
+                {/* Frame */}
+                <div className="relative bg-slate-900 rounded-[3rem] border-[6px] border-slate-700 shadow-2xl overflow-hidden" style={{ boxShadow: '0 0 0 2px #0f172a, 0 30px 80px rgba(0,0,0,0.6)' }}>
+                  {/* Notch */}
+                  <div className="flex justify-center pt-3 pb-1 bg-slate-900">
+                    <div className="w-20 h-5 bg-slate-800 rounded-full" />
+                  </div>
+                  {/* Screen */}
+                  <div className="relative overflow-hidden bg-black" style={{ height: '560px' }}>
+                    {cardapioSlides.map((slide, idx) => (
+                      <motion.img
+                        key={idx}
+                        src={slide.src}
+                        alt={`Cardápio Digital Sophos - tela ${idx + 1}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: idx === activeCardapio ? 1 : 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="absolute inset-0 w-full h-full object-cover object-top"
+                      />
+                    ))}
+                  </div>
+                  {/* Home bar */}
+                  <div className="flex justify-center py-3 bg-slate-900">
+                    <div className="w-24 h-1 bg-slate-600 rounded-full" />
+                  </div>
+                </div>
+                {/* Side buttons */}
+                <div className="absolute -right-[8px] top-24 w-[5px] h-12 bg-slate-700 rounded-r-lg" />
+                <div className="absolute -left-[8px] top-20 w-[5px] h-8 bg-slate-700 rounded-l-lg" />
+                <div className="absolute -left-[8px] top-32 w-[5px] h-8 bg-slate-700 rounded-l-lg" />
+                {/* Dots */}
+                <div className="flex justify-center gap-2 mt-6">
+                  {cardapioSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => goToCardapioSlide(idx)}
+                      className={`h-1.5 rounded-full transition-all ${idx === activeCardapio ? 'bg-sophos-primary w-5' : 'bg-slate-600 w-1.5'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Texto */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-8"
+            >
+              <div>
+                <span className="inline-block py-1 px-3 rounded-full bg-sophos-primary/20 text-sophos-primary text-xs font-bold mb-4 tracking-wider uppercase">
+                  Solução própria Sophos
+                </span>
+                <h2 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
+                  Cardápio Digital <span className="text-sophos-primary">completo</span> e integrado ao seu ERP
+                </h2>
+                <p className="text-slate-400 text-lg leading-relaxed">
+                  Sem mensalidade extra, sem app de terceiros. O cardápio digital do Sophos já vem integrado ao seu sistema, com pedidos chegando direto na cozinha.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-sophos-bg border border-slate-800">
+                  <div className="p-2.5 rounded-xl bg-sophos-primary/20 text-sophos-primary shrink-0">
+                    <ShoppingBag className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold mb-1">Venda no Balcão</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">Cliente escolhe pelo cardápio digital diretamente no balcão, agilizando o atendimento e reduzindo erros de pedido.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-sophos-bg border border-slate-800">
+                  <div className="p-2.5 rounded-xl bg-sophos-primary/20 text-sophos-primary shrink-0">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold mb-1">Delivery Online</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">Receba pedidos delivery direto no seu sistema, sem depender de plataformas externas ou pagar comissões abusivas.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-sophos-bg border border-slate-800">
+                  <div className="p-2.5 rounded-xl bg-sophos-primary/20 text-sophos-primary shrink-0">
+                    <ChefHat className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-bold mb-1">QR Code por Mesa</h4>
+                    <p className="text-slate-400 text-sm leading-relaxed">O cliente escaneia o QR code da mesa, faz o pedido pelo celular e ele cai automaticamente na comanda e na cozinha.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Localização & Suporte Presencial */}
+      <section className="py-24 bg-sophos-bg relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-sophos-primary/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-sophos-primary/5 rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="text-center mb-16">
+            <span className="inline-block py-1 px-3 rounded-full bg-sophos-primary/20 text-sophos-primary text-xs font-bold mb-4 tracking-wider uppercase">
+              Onde estamos
+            </span>
+            <h2 className="text-3xl lg:text-5xl font-bold text-white mb-4">
+              Atendemos você de <span className="text-sophos-primary">perto</span>
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              Sediados em <strong className="text-white">São Carlos — SP</strong>, cobrimos toda a região e atendemos empresas em todo o Brasil.
+            </p>
+          </div>
+
+          {/* Destaque suporte presencial */}
+          <div className="bg-sophos-primary rounded-3xl p-10 lg:p-14 mb-12 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-40 -mt-40 blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full -ml-32 -mb-32 blur-2xl" />
+            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
+              <div className="flex-shrink-0 w-24 h-24 bg-white/20 rounded-3xl flex items-center justify-center shadow-xl">
+                <Handshake className="w-14 h-14 text-white" />
+              </div>
+              <div className="text-center lg:text-left">
+                <p className="text-white/70 font-bold uppercase tracking-widest text-sm mb-2">O que nos diferencia</p>
+                <h3 className="text-3xl lg:text-4xl font-extrabold text-white mb-3">
+                  Suporte 100% Presencial
+                </h3>
+                <p className="text-white/80 text-lg leading-relaxed max-w-2xl">
+                  Quando você precisa, um especialista Sophos vai até a sua empresa. Sem chamados sem resposta, sem atendimento robô — <strong className="text-white">gente de verdade resolvendo o seu problema na hora.</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Cards de cobertura */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <motion.div
+              whileHover={{ y: -6 }}
+              className="bg-sophos-card border border-slate-800 hover:border-sophos-primary/40 rounded-2xl p-8 flex flex-col items-center text-center gap-4 transition-all"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-sophos-primary/20 flex items-center justify-center text-sophos-primary">
+                <MapPin className="w-7 h-7" />
+              </div>
+              <h4 className="text-white font-bold text-xl">São Carlos — SP</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Nossa sede. Implantação, treinamento e suporte presencial para clientes da cidade e arredores.</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -6 }}
+              className="bg-sophos-card border border-slate-800 hover:border-sophos-primary/40 rounded-2xl p-8 flex flex-col items-center text-center gap-4 transition-all"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-sophos-primary/20 flex items-center justify-center text-sophos-primary">
+                <Users className="w-7 h-7" />
+              </div>
+              <h4 className="text-white font-bold text-xl">Região de São Carlos</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Araraquara, Ribeirão Preto, Campinas, Piracicaba e toda a região central paulista com atendimento presencial.</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ y: -6 }}
+              className="bg-sophos-card border border-slate-800 hover:border-sophos-primary/40 rounded-2xl p-8 flex flex-col items-center text-center gap-4 transition-all"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-sophos-primary/20 flex items-center justify-center text-sophos-primary">
+                <Globe className="w-7 h-7" />
+              </div>
+              <h4 className="text-white font-bold text-xl">Todo o Brasil</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Atendemos empresas em qualquer estado com suporte remoto ágil e visitas presenciais mediante agendamento.</p>
+            </motion.div>
           </div>
         </div>
       </section>

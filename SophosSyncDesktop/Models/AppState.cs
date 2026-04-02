@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -13,8 +14,21 @@ namespace SophosSyncDesktop.Models;
 
 public static class AppState
 {
+    private const string HMAC_SECRET = "MySecretKeyForHMAC";
+
     public static ClsMerchant? MerchantLogado { get; set; }
     public static string? Token { get; set; }
+
+    private static void AddHmacHeaders(HttpClient client)
+    {
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        var key = Encoding.UTF8.GetBytes(HMAC_SECRET);
+        var message = Encoding.UTF8.GetBytes(timestamp);
+        using var hmac = new HMACSHA256(key);
+        var hash = Convert.ToHexString(hmac.ComputeHash(message)).ToLower();
+        client.DefaultRequestHeaders.Add("x-timestamp", timestamp);
+        client.DefaultRequestHeaders.Add("x-hash", hash);
+    }
 
     public static async Task<ClsMerchant?> GetMerchantAsync()
     {
@@ -24,6 +38,7 @@ public static class AppState
                 HttpClient client = new HttpClient();
                 client.DefaultRequestHeaders.Authorization =
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AppState.Token);
+                AddHmacHeaders(client);
 
                 var response = await client.GetAsync("https://sophos-erp.com.br/api/v1/merchants/details");
 
@@ -65,6 +80,7 @@ public static class AppState
         try
         {
             HttpClient client = new HttpClient();
+            AddHmacHeaders(client);
             LoginModel loginModel = new LoginModel
             {
                 Email = email,

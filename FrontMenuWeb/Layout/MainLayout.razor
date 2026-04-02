@@ -11,6 +11,7 @@
 @inject IntegracoesSophosService IntegracoesSophos
 
 @inherits LayoutComponentBase
+@implements IDisposable
 
 @inject CaixaEPagamentosService CaixaService
 
@@ -351,19 +352,33 @@
             {
                 if ((pedido.CriadoPor == "IFOOD" && IntegraIfoodSettingsLocalStoragePreference) || (pedido.CriadoPor == "SOPHOS CARDAPIO" && ImpressaoSophosCardapioLocalStoragePreference))
                 {
-                    await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
-                    await PedidoService.UpdatePedidoImpresso(pedido);
-                    if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.StatusPedido != "ABERTO")
-                        await PedidoService.UpdatePedidoPreparandoProtected(pedido);
+                    var pedidoParaImpressao = await PedidoService.GetPedidoById(pedido.Id);
+                    if (pedidoParaImpressao is not null && !pedidoParaImpressao.Imprimiu)
+                    {
+                        if (pedido.StatusPedido != "ABERTO")
+                        {
+                            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+                            await PedidoService.UpdatePedidoImpresso(pedido);
+                            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+
+
+                            if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.StatusPedido != "ABERTO")
+                                await PedidoService.UpdatePedidoPreparandoProtected(pedido);
+                        }
+                        else
+                        {
+                            Snackbar.Add("Você tem pedido em aberto esperando ser aceito !", severity: Severity.Warning);
+                            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                        }
+                    }
                 }
 
-                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
             }
 
 
         if (pedido.CriadoPor == "SOPHOS")
         {
-            if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp)
+            if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp && ImpressaoSophosCardapioLocalStoragePreference)
                 await PedidoService.UpdatePedidoPreparandoProtected(pedido);
 
             await JS.InvokeVoidAsync("playNotificationSound");
@@ -397,8 +412,7 @@
 
         if (value)
             await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
-        else
-            Dispose();
+
 
         IntegraIfoodSettingsLocalStoragePreference = value;
 
