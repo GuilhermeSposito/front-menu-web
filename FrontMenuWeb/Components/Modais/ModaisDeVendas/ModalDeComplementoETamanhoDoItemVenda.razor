@@ -1,5 +1,6 @@
 ﻿@using FrontMenuWeb.Models.Pedidos
 @using System.Globalization
+@using System.Text.Json
 @inject IJSRuntime JS
 
 <MudDialog TitleClass="p-0" ContentClass="p-0" tabindex="0" @onkeydown=OnKeyDown DefaultFocus="DefaultFocus.FirstChild">
@@ -55,7 +56,7 @@
                                                 var totalAtivos = relacao.Grupo.Complementos.Count(c => c.Complemento.Ativo);
                                             }
 
-                                          
+
                                             <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="px-1">
                                                 <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
                                                     @if (relacao.QtdMin == 0)
@@ -266,6 +267,11 @@
     private void DefinirFiltroPorGrupo(int grupoId, string valor) =>
         _filtroPorGrupo[grupoId] = valor ?? string.Empty;
 
+    //Logica para criação de produtos fracionados
+    private Dictionary<string, float> _precosPorProdutoFracionado = new();
+    private int QtdDeSaboresFracionadosSelecionados = 0;
+    private List<ClsProduto> ProdutosFracionadosSelecionados = new List<ClsProduto>();
+
     protected override void OnInitialized()
     {
         Produto.GruposDeComplementosDoProduto = Produto.GruposDeComplementosDoProduto?.OrderBy(g => g.Id).ToList();
@@ -287,6 +293,15 @@
             Item.PrecoUnitario = Item.Preco.Valor;
             AtualizarPrecoTotal();
         }
+
+        if (Produto.Fracionado)
+        {
+            ProdutosFracionadosSelecionados.Add(Produto);
+
+            if (Produto.TamanhoUnico) //Se for tamanho unico ja entra aqui com o preco definido, se tiver mais de um preco, o preco só é definido quando escolher o sabor fracionado
+                OnPrecoChanged(Produto.Precos.MinBy(b => b.Valor) ?? new Preco() { Valor = 0f, DescricaoDoTamanho = "Único" });
+        }
+
 
 
         AtualizarPrecoTotal();
@@ -313,9 +328,33 @@
 
     private void SelecionarComplementoRadio(ClsGruposDeComplementosDoProduto relacao, int complementoId)
     {
+        var complemento = relacao.Grupo.Complementos.FirstOrDefault(c => c.Complemento.Id == complementoId)?.Complemento;
+        if (complemento is not null && Produto.Fracionado && complemento.EProduto && complemento.Produto is not null && complemento.Produto.Fracionado)
+        {
+            if (_precosPorProdutoFracionado.Count == 0)
+            {
+                Snackbar.Add("Selecione o preço do produto antes de adicionar sabores fracionados.", Severity.Warning);
+                return;
+            }
+
+            var anteriormenteSelecionado = Complementos.FirstOrDefault(c => c.RelacaoGrupoComlpemento.Grupo.Id == relacao.Grupo.Id);
+            if (anteriormenteSelecionado?.Complemento?.EProduto == true && anteriormenteSelecionado.Complemento.Produto is not null)
+            {
+                ProdutosFracionadosSelecionados.RemoveAll(x => x.Id == anteriormenteSelecionado.Complemento.Produto.Id);
+            }
+
+            ProdutosFracionadosSelecionados.Add(complemento.Produto);
+            QtdDeSaboresFracionadosSelecionados = ProdutosFracionadosSelecionados.Count;
+            RecalculaNomeDeProdutoFaracionado();
+
+            AtualizaPrecoTotalParaItemFracionado(complemento.Produto.Id, complemento.Valor);
+            StateHasChanged();
+
+            complemento.Valor = 0f;
+        }
+
         Complementos.RemoveAll(c => c.RelacaoGrupoComlpemento.Grupo.Id == relacao.Grupo.Id);
 
-        var complemento = relacao.Grupo.Complementos.FirstOrDefault(c => c.Complemento.Id == complementoId)?.Complemento;
         if (complemento is not null)
         {
             Complementos.Add(new ComplementoNoItem
@@ -331,7 +370,9 @@
             ProximaAba();
         }
 
-        AtualizarPrecoTotal();
+        if (!(complemento is not null && Produto.Fracionado && complemento.EProduto && complemento.Produto is not null && complemento.Produto.Fracionado))
+            AtualizarPrecoTotal();
+
         StateHasChanged();
     }
 
@@ -345,6 +386,29 @@
             Snackbar.Add($"Você atingiu o limite máximo de {relacaoGrupoComlpemento.QtdMax} complementos para o grupo {relacaoGrupoComlpemento.Grupo.Descricao}.", Severity.Warning);
             return;
         }
+
+        if (Produto.Fracionado && complemento.EProduto && complemento.Produto is not null && complemento.Produto.Fracionado)
+        {
+            if (ProdutosFracionadosSelecionados.Count >= AppState.MerchantLogado.QtdsItemFracionado)
+            {
+                Snackbar.Add("Você atingiu o limite de sabores disponiveis na montagem do item.", Severity.Warning);
+                return;
+            }
+            else if (_precosPorProdutoFracionado.Count == 0)
+            {
+                Snackbar.Add("Selecione o preço do produto antes de adicionar sabores fracionados.", Severity.Warning);
+                return;
+            }
+
+
+            ProdutosFracionadosSelecionados.Add(complemento.Produto);
+            QtdDeSaboresFracionadosSelecionados = ProdutosFracionadosSelecionados.Count;
+            RecalculaNomeDeProdutoFaracionado();
+
+            AtualizaPrecoTotalParaItemFracionado(complemento.Produto.Id, complemento.Valor);
+            StateHasChanged();
+        }
+
 
         bool existeComplemento = Complementos.Any(c => c.Id == complemento.Id);
         if (existeComplemento)
@@ -381,9 +445,11 @@
             ProximaAba();
         }
 
-        AtualizarPrecoTotal();
-        StateHasChanged();
+        if (!(Produto.Fracionado && complemento.EProduto && complemento.Produto is not null && complemento.Produto.Fracionado))
+            AtualizarPrecoTotal();
 
+
+        StateHasChanged();
     }
 
     private void ValorDeQtdMudou(decimal novaQuantidade)
@@ -394,28 +460,148 @@
         AtualizarPrecoTotal();
     }
 
+    private void RecalculaNomeDeProdutoFaracionado()
+    {
+        Item.Descricao = "";
+        int QtdAtualDeSaboresFracionadosSelecionados = ProdutosFracionadosSelecionados.Count;
+        foreach (var produto in ProdutosFracionadosSelecionados)
+            Item.Descricao += $"{(ProdutosFracionadosSelecionados.IndexOf(produto) == 0 ? "" : " & ")}{1}/{QtdAtualDeSaboresFracionadosSelecionados} {produto.Descricao}";
+    }
+
     private void OnPrecoChanged(Preco novoPreco)
     {
         Produto.PrecoSelecionado = novoPreco;
         Item.PrecoUnitario = novoPreco?.Valor ?? 0;
         Item.PrecoId = novoPreco?.Id ?? "";
 
+        if (Produto.Fracionado)
+        {
+            _precosPorProdutoFracionado[Produto.Id] = Item.PrecoUnitario;
+            int indexPreco = Produto.Precos.FindIndex(p => p.Id == novoPreco?.Id);
+            List<ClsGruposDeComplementosDoProduto>? GrupoComComplementosFracionadosDentroDoGruposDeComlemento = Produto.GruposDeComplementosDoProduto?.Where(x => x.Grupo.Descricao.StartsWith("Sabor ")).ToList();
+            foreach (var grupo in GrupoComComplementosFracionadosDentroDoGruposDeComlemento ?? new List<ClsGruposDeComplementosDoProduto>())
+            {
+                foreach (var comp in grupo.Grupo.Complementos)
+                {
+                    if (comp.Complemento.Produto is not null)
+                    {
+                        var precos = comp.Complemento.Produto.Precos;
+                        if (precos is not null && precos.Count > 0)
+                        {
+                            Preco precoEscolhido = precos.FirstOrDefault(p => p.DescricaoDoTamanho == novoPreco?.DescricaoDoTamanho)
+                                ?? precos.MinBy(p => Math.Abs(p.Valor - (novoPreco?.Valor ?? 0)))
+                                ?? precos[0];
+
+                            comp.Complemento.Valor = precoEscolhido.Valor;
+
+                            if (_precosPorProdutoFracionado.ContainsKey(comp.Complemento.Produto.Id))
+                                _precosPorProdutoFracionado[comp.Complemento.Produto.Id] = precoEscolhido.Valor;
+                        }
+                    }
+                }
+            }
+        }
+
 
         AtualizarPrecoTotal();
 
         Snackbar.Add($"Tamanho selecionado: {novoPreco?.DescricaoDoTamanho}, Preço: R$ {novoPreco?.Valor.ToString("F2")}", Severity.Info);
 
+        ProximaAba();
         StateHasChanged();
+    }
+
+    private void AtualizaPrecoTotalParaItemFracionado(string produtoId, float valor)
+    {
+        _precosPorProdutoFracionado[produtoId] = valor;
+        AtualizarPrecoTotal(); // delega pro método unificado                                                                                                                                                                                                                    }
     }
 
     private void AtualizarPrecoTotal()
     {
-        Item.PrecoTotal = (Item.PrecoUnitario + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade)) * Item.Quantidade;
+        if (Produto.Fracionado && _precosPorProdutoFracionado.Count > 0)
+        {
+            int qtd = ProdutosFracionadosSelecionados.Count;
+            if (qtd == 0) return;
 
+            float precoBase;
+
+            if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.MAIOR)
+            {
+                precoBase = _precosPorProdutoFracionado.Values.Max();
+            }
+            else if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.METADE)
+            {
+                precoBase = _precosPorProdutoFracionado.Values.Sum(v => v / qtd);
+            }
+            else if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.MEDIA)
+            {
+                precoBase = _precosPorProdutoFracionado.Values.Average();
+            }
+            else return;
+
+            float totalComplementosNormais = Complementos
+                .Where(c => !(c.Complemento?.EProduto == true && c.Complemento?.Produto?.Fracionado == true))
+                .Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade);
+
+            Item.PrecoTotal = (precoBase + totalComplementosNormais) * Item.Quantidade;
+        }
+        else
+        {
+            Item.PrecoTotal = (Item.PrecoUnitario + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade)) * Item.Quantidade;
+        }
     }
+
+    /* private void AtualizaPrecoTotalParaItemFracionado(string produtoId, float valor)
+     {
+         _precosPorProdutoFracionado[produtoId] = valor;
+
+         // Soma só os complementos que NÃO são produtos fracionados (ex: bordas, extras)
+         float totalComplementos = Complementos
+             .Where(c => !(c.Complemento?.EProduto == true && c.Complemento?.Produto?.Fracionado == true))
+             .Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade);
+
+         float precoBase;
+
+         if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.MAIOR)
+         {
+             precoBase = _precosPorProdutoFracionado.Values.Max();
+         }
+         else if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.METADE)
+         {
+             int qtd = ProdutosFracionadosSelecionados.Count;
+             if (qtd == 0) return;
+
+             precoBase = _precosPorProdutoFracionado.Values.Sum(v => v / qtd);
+         }
+         else if (AppState.MerchantLogado.TipoDeCobrancaItemFracionado == Models.Merchant.CobrancaItemFracionado.MEDIA)
+         {
+             precoBase = _precosPorProdutoFracionado.Values.Average();
+         }
+         else return;
+
+         Item.PrecoTotal = (precoBase + totalComplementos) * Item.Quantidade;
+     }
+
+     private void AtualizarPrecoTotal()
+     {
+         Item.PrecoTotal = (Item.PrecoUnitario + Complementos.Sum(c => (c.Complemento?.Valor ?? 0) * c.Quantidade)) * Item.Quantidade;
+     }*/
 
     private void RemoverComplemento(ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento, ClsComplemento complemento)
     {
+        if (Produto.Fracionado)
+        {
+            float ValorDoComplementoNegativo = complemento.Valor * -1;
+            if (complemento.Produto is not null)
+            {
+                ProdutosFracionadosSelecionados.RemoveAll(p => p.Id == complemento.Produto.Id);
+                RecalculaNomeDeProdutoFaracionado();
+
+                AtualizaPrecoTotalParaItemFracionado(complemento.Produto.Id, ValorDoComplementoNegativo);
+            }
+        }
+
         var existente = Complementos.FirstOrDefault(c => c.Id == complemento.Id);
 
         if (existente is not null)

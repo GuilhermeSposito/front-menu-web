@@ -234,7 +234,7 @@
                                 @if (TiposDePedido == TiposDePedido.MESA)
                                 {
                                     <MudStack>
-                                        <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa @onfocus=@(async ()=> {await TextFieldDeNumeroDeMesa.SelectAsync();}) T="int" Label=@($"Número da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}") Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
+                                        <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa @onfocus=@(async () => { await TextFieldDeNumeroDeMesa.SelectAsync(); }) T="int" Label=@($"Número da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}") Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
                                     </MudStack>
                                 }
 
@@ -378,6 +378,9 @@
 
     //auto complete
     private string LabelDeCliente = "Cliente";
+
+    //Criação de Pizza(Item Fracionado)
+    private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado ?? 2;
     #endregion
 
     #region Funções Auxiliares
@@ -433,133 +436,194 @@
 
     public async Task AdicionarProdutoNoPedido(ClsProduto produto, bool AtualizandoItem = false)
     {
-
-        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) || (!produto.TamanhoUnico && produto.Precos.Count > 0))
+        if (produto.Fracionado)
         {
-            var parameters = new DialogParameters
+            List<ClsProduto> ProdutosFracionados = await ProdutoService.GetProdutosFracionadosAsync();
+            ProdutosFracionados = ProdutosFracionados.Where(p => p.Id != produto.Id).ToList(); //Remove o produto principal da lista de complementos para não aparecer como opção de sabor
+            produto.GruposDeComplementosDoProduto?.RemoveAll(g => g.Grupo.Descricao.StartsWith("Sabor "));
+
+            //Adiciona os grupos de complemento para os sabores, dependendo da quantidade de sabores aceitos
+            //Decrementa 1 do QtdDeSaboresAceitos pq ele ja selecionou um sabor na tela inicial
+            for (var i = (QtdDeSaboresAceitos - 1); i >= 1; i--)
             {
-               { "AtualizandoItem",AtualizandoItem},
-               { "Produto", produto}
-            };
-
-            var options = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
-
-            //var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
-            var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
-            var result = await dialog.Result;
-
-            if (!result!.Canceled && result.Data is ItensPedido itemPedido)
-            {
-
-                //Verifica se já existe o produto no pedido
-                var itemExistente = NovoPedido.Itens.FirstOrDefault(x =>
-                      x.Produto?.Id == produto.Id &&
-                      x.PrecoId == itemPedido.PrecoId &&
-                      x.Observacoes == itemPedido.Observacoes &&
-                      x.Complementos.SequenceEqual(itemPedido.Complementos.OrderBy(c => c.Id))
-                  );
-
-                if (itemExistente != null)
+                var NovoGrupoDeComplemento = new ClsGruposDeComplementosDoProduto
                 {
-                    itemExistente.Quantidade += itemPedido.Quantidade;
-                    itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
-                    StateHasChanged();
-                    return;
-                }
+                    QtdMin = 0, //Quantidade 0 porque ele já selecinou um
+                    QtdMax = 1,
+                    Grupo = new ClsGrupoDeComplemento
+                    {
+                        Id = i,
+                        Descricao = $"Sabor {i + 1}", //e incrementa 1 aqui pra começar do sabor 2, porque o sabor 1 é o produto principal que ele já selecionou
+                        Ativo = true,
+                        Complementos = ProdutosFracionados.Select((p, Index) => new ClsComplementoDoGrupo
+                        {
+                            Complemento = new ClsComplemento
+                            {
+                                Id = Index,
+                                Descricao = p.Descricao,
+                                ProdutoId = p.Id,
+                                Produto = p,
+                                EProduto = true
+                            }
+                        }).ToList()
+                    }
+                };
 
-                NovoPedido.Itens.Add(itemPedido);
+
+                produto.GruposDeComplementosDoProduto?.Insert(0, NovoGrupoDeComplemento);
+            }
+
+
+            var parametersProdutoFracionado = new DialogParameters { { "AtualizandoItem", AtualizandoItem }, { "Produto", produto } };
+            var optionsProdutoFracionado = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+            var dialogProdutoFracionado = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parametersProdutoFracionado, optionsProdutoFracionado);
+            var resultProdutoFracionado = await dialogProdutoFracionado.Result;
+
+            if (!resultProdutoFracionado!.Canceled && resultProdutoFracionado.Data is ItensPedido itemPedidoProdutoFracionado)
+            {
+                itemPedidoProdutoFracionado.Complementos.RemoveAll(c => c.Complemento?.EProduto == true && c.Complemento?.Produto?.Fracionado == true);
+
+                NovoPedido.Itens.Add(itemPedidoProdutoFracionado);
                 await TextFieldProd.FocusAsync();
                 return;
             }
             else
             {
-                Snackbar.Add("Produtos com informações obrigatórias não informadas", Severity.Error);
+                Snackbar.Add("Produto com informações obrigatórias não informadas", Severity.Error);
                 return;
             }
 
         }
-
-        //Aqui chama o modal Caso o produto seja cadastrado pra venda por peso
-        float QtdAdicionado = 1f;
-        if (produto.UltilizaProdutoNaBalanca)
+        else
         {
-            var peso = new BalancaLeitura { Sucesso = false, Peso = 0 };
-            if(AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
-                peso = await BalancaService.LerPesoAsync();
 
-            if (!peso.Sucesso || peso.Peso == 0)
+            if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) || (!produto.TamanhoUnico && produto.Precos.Count > 0))
             {
-                var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
-                var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
-                var resultInput = await dialogInput.Result;
-
-                if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+                var parameters = new DialogParameters
                 {
-                    QtdAdicionado = ValorQtd;
+                   { "AtualizandoItem",AtualizandoItem},
+                   { "Produto", produto}
+                };
+
+                var options = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+
+                //var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
+                var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
+                var result = await dialog.Result;
+
+                if (!result!.Canceled && result.Data is ItensPedido itemPedido)
+                {
+
+                    //Verifica se já existe o produto no pedido
+                    var itemExistente = NovoPedido.Itens.FirstOrDefault(x =>
+                          x.Produto?.Id == produto.Id &&
+                          x.PrecoId == itemPedido.PrecoId &&
+                          x.Observacoes == itemPedido.Observacoes &&
+                          x.Complementos.SequenceEqual(itemPedido.Complementos.OrderBy(c => c.Id))
+                      );
+
+                    if (itemExistente != null)
+                    {
+                        itemExistente.Quantidade += itemPedido.Quantidade;
+                        itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+                        StateHasChanged();
+                        return;
+                    }
+
+                    NovoPedido.Itens.Add(itemPedido);
+                    await TextFieldProd.FocusAsync();
+                    return;
+                }
+                else
+                {
+                    Snackbar.Add("Produtos com informações obrigatórias não informadas", Severity.Error);
+                    return;
+                }
+
+            }
+
+            //Aqui chama o modal Caso o produto seja cadastrado pra venda por peso
+            float QtdAdicionado = 1f;
+            if (produto.UltilizaProdutoNaBalanca)
+            {
+                var peso = new BalancaLeitura { Sucesso = false, Peso = 0 };
+                if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                    peso = await BalancaService.LerPesoAsync();
+
+                if (!peso.Sucesso || peso.Peso == 0)
+                {
+                    var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+                    var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
+                    var resultInput = await dialogInput.Result;
+
+                    if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+                    {
+                        QtdAdicionado = ValorQtd;
+                    }
+                }
+                else
+                {
+                    QtdAdicionado = (float)peso.Peso;
                 }
             }
-            else
-            {
-                QtdAdicionado = (float)peso.Peso;
-            }
-        }
 
-        //Aqui chama o modal Caso o produto seja cadastrado pra venda por valor
-        float ValorDoProduto = produto.Precos.Min(p => p.Valor);
-        if (produto.TipoDeVenda == "V")
-        {
-            var parameters = new DialogParameters
+            //Aqui chama o modal Caso o produto seja cadastrado pra venda por valor
+            float ValorDoProduto = produto.Precos.Min(p => p.Valor);
+            if (produto.TipoDeVenda == "V")
+            {
+                var parameters = new DialogParameters
             {
                { "Valor",ValorDoProduto}
             };
 
-            var optionsDoInputValor = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
-            var dialogInputValor = await DialogService.ShowAsync<InputFloatN3>("Valor do Item", parameters, optionsDoInputValor);
-            var resultInputValor = await dialogInputValor.Result;
+                var optionsDoInputValor = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+                var dialogInputValor = await DialogService.ShowAsync<InputFloatN3>("Valor do Item", parameters, optionsDoInputValor);
+                var resultInputValor = await dialogInputValor.Result;
 
-            if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
-            {
-                //Faz Soma do Peso Dependendo do Valor do produto cadastrado
-                if (ValorDoProduto > 0)
+                if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
                 {
-                    QtdAdicionado = (float)Math.Round(Valor / ValorDoProduto, 3);
+                    //Faz Soma do Peso Dependendo do Valor do produto cadastrado
+                    if (ValorDoProduto > 0)
+                    {
+                        QtdAdicionado = (float)Math.Round(Valor / ValorDoProduto, 3);
+                    }
+
+                    ValorDoProduto = (float)Math.Round(Valor, 2);
                 }
-
-                ValorDoProduto = (float)Math.Round(Valor, 2);
             }
-        }
 
-        //Verifica se já existe o produto no pedido
-        if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V"))
-        {
-            var itemExistente = NovoPedido.Itens.Where(p => string.IsNullOrEmpty(p.Observacoes)).FirstOrDefault(x => x.Produto == produto);
-
-            if (itemExistente is not null)
+            //Verifica se já existe o produto no pedido
+            if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V"))
             {
-                itemExistente.Quantidade += QtdAdicionado;
-                itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+                var itemExistente = NovoPedido.Itens.Where(p => string.IsNullOrEmpty(p.Observacoes)).FirstOrDefault(x => x.Produto == produto);
 
-                await TextFieldProd.FocusAsync();
-                StateHasChanged();
-                return;
+                if (itemExistente is not null)
+                {
+                    itemExistente.Quantidade += QtdAdicionado;
+                    itemExistente.PrecoTotal = itemExistente.PrecoUnitario * itemExistente.Quantidade;
+
+                    await TextFieldProd.FocusAsync();
+                    StateHasChanged();
+                    return;
+                }
             }
+
+            float PrecoTotal = produto.TipoDeVenda != "V" ? ValorDoProduto * QtdAdicionado : ValorDoProduto;
+
+            ItensPedido ItemParaAdicionarNoPedido = new()
+            {
+                Descricao = produto.Descricao,
+                Produto = produto,
+                Quantidade = QtdAdicionado,
+                PrecoUnitario = ValorDoProduto,
+                PrecoTotal = PrecoTotal
+            };
+
+            NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
+            await Task.Delay(50);
+            await TextFieldProd.FocusAsync();
+            StateHasChanged();
         }
-
-        float PrecoTotal = produto.TipoDeVenda != "V" ? ValorDoProduto * QtdAdicionado : ValorDoProduto;
-
-        ItensPedido ItemParaAdicionarNoPedido = new()
-        {
-            Descricao = produto.Descricao,
-            Produto = produto,
-            Quantidade = QtdAdicionado,
-            PrecoUnitario = ValorDoProduto,
-            PrecoTotal = PrecoTotal
-        };
-
-        NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
-        await Task.Delay(50);
-        await TextFieldProd.FocusAsync();
-        StateHasChanged();
     }
 
     private async void AbreModalDeAdicionarPessoa()
@@ -621,9 +685,9 @@
         {
             CarregandoProduto = true;
 
-            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 24, PesquisaDeProduto, null);
+            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 24, PesquisaDeProduto, null, ocultaDoGestorSophos: true);
 
-            Produtos = response.Data.Where(x=> x.Ativo).ToList();
+            Produtos = response.Data.Where(x => x.Ativo).ToList();
 
             StateHasChanged();
         }
@@ -644,7 +708,7 @@
         try
         {
             CarregandoProduto = true;
-            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, null, grupo.Id);
+            var response = await ProdutoService.GetProdutosPorPaginaAsync(1, 50, null, grupo.Id, ocultaDoGestorSophos: true);
             Produtos = response.Data;
         }
         catch (Exception ex)

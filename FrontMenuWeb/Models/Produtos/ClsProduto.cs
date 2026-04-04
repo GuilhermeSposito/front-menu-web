@@ -35,6 +35,7 @@ public class ClsProduto
     [JsonPropertyName("qtd_carnes")] public int QtdCarnes { get; set; }
     [JsonPropertyName("item_resgatavel")] public bool ItemResgatavel { get; set; }
     [JsonPropertyName("oculta_tablet")] public bool OcultaTablet { get; set; }
+    [JsonPropertyName("oculta_do_gestor")] public bool OcultaDoGestor { get; set; }
     [JsonPropertyName("ultiliza_produto_balanca")] public bool UltilizaProdutoNaBalanca { get; set; }
     [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("UltilizaProdutoOnline")] public bool UltilizaProdutoOnline { get; set; } = false;

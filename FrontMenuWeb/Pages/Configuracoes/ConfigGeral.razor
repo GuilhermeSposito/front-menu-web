@@ -398,6 +398,28 @@
                         }
 
                     </MudGrid>
+
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.h5">Itens Fracionados</MudText>
+                        <MudButton OnClick=@(() => { EditandoItensFracionadosBloq = !EditandoItensFracionadosBloq; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    </MudStack>
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+
+                    <MudGrid Class="p-2 mb-1">
+                        <MudItem xs="12" md="4" lg="4">
+                            <MudNumericField Disabled=EditandoItensFracionadosBloq Variant="Variant.Outlined" Label="Qtd de Itens Fracionados" @bind-Value=@Merchant.QtdsItemFracionado HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
+                        </MudItem>
+                        <MudItem xs="12" md="4" lg="4">
+                            <MudSelect Disabled=EditandoItensFracionadosBloq FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Tipo de Cobrança"
+                                       Value="@Merchant.TipoDeCobrancaItemFracionado" ValueChanged="@(async (CobrancaItemFracionado v) => { Merchant.TipoDeCobrancaItemFracionado = v; await SalvarInfosLojaAsync(); })"
+                                       T="CobrancaItemFracionado">
+                                <MudSelectItem Value="@CobrancaItemFracionado.MAIOR">Maior</MudSelectItem>
+                                <MudSelectItem Value="@CobrancaItemFracionado.MEDIA">Média</MudSelectItem>
+                                <MudSelectItem Value="@CobrancaItemFracionado.METADE">Metade</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
                 </MudStack>
             </MudPaper>
 
@@ -585,6 +607,7 @@
     private bool EditandoInfosFiscaisBloq = true;
     private bool EditandoInfosEntregaBloq = true;
     private bool EditandoIntegracaoWhatsApp = true;
+    private bool EditandoItensFracionadosBloq = true;
     private bool CarregouNovoCertificado = false;
     private bool EditandoEnderecosBloq = true;
     private bool EditandoDocumentosBloq = true;

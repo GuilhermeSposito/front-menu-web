@@ -1648,6 +1648,18 @@
                                             </MudPaper>
 
                                             <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Ocultar item do gestor ? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.OcultaDoGestor"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.OcultaDoGestor = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
                                                 <MudNumericField Immediate="false"
                                                                  Variant="Variant.Outlined"
                                                                  Label="Valor da Embalagem"

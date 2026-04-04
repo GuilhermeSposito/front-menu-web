@@ -35,6 +35,12 @@ public class ProdutoService
         return response;
     }
 
+    public async Task<List<ClsProduto>> GetProdutosFracionadosAsync()
+    {
+        List<ClsProduto> response = await _http.GetFromJsonAsync<List<ClsProduto>>("produtos/fracionados") ?? new List<ClsProduto>();
+        return response;
+    }
+
     public async Task<ReturnApiRefatored<Cest>> GetCestsAsync(string ncm)
     {
         HttpResponseMessage response = await _http.GetAsync($"produtos/cest?codigo={ncm}");
@@ -66,11 +72,14 @@ public class ProdutoService
         }
     }
 
-    public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaAsync(int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo)
+    public async Task<PaginatedResponse<ClsProduto>> GetProdutosPorPaginaAsync(int page, int pageSize, string? pesquisaNome, int? pesquisaDeGrupo, bool? ocultaDoGestorSophos = null)
     {
+        var url = $"produtos/pagination?page={page}&limit={pageSize}&descricao={pesquisaNome}&grupo={pesquisaDeGrupo}";
 
-        var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsProduto>>(
-           $"produtos/pagination?page={page}&limit={pageSize}&descricao={pesquisaNome}&grupo={pesquisaDeGrupo}");
+        if (ocultaDoGestorSophos.HasValue)
+            url += $"&OcultaDoGestorSophos={ocultaDoGestorSophos.Value}";
+
+        var response = await _http.GetFromJsonAsync<PaginatedResponse<ClsProduto>>(url);
 
         return response!;
     }

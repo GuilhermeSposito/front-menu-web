@@ -170,6 +170,7 @@ public class ItensPedido
     [JsonPropertyName("Observacoes")] public string? Observacoes { get; set; } = string.Empty;
     [JsonPropertyName("Complementos")] public List<ComplementoNoItem> Complementos { get; set; } = new List<ComplementoNoItem>();
     [JsonPropertyName("Funcionario")] public ClsFuncionario? Funcionario { get; set; }
+    [JsonPropertyName("EItemFracionadoCriadoNoGestorSophos")] public bool EItemFracionadoCriadoNoGestorSophos { get; set; } = true;
 
 }
 

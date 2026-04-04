@@ -94,6 +94,16 @@ public class ClsMerchant
     [JsonPropertyName("Latitude")] public double? Latitude { get; set; }
     [JsonPropertyName("Longitude")] public double? Longitude { get; set; }
     [JsonPropertyName("SeparaCaixaPorUsuario")] public bool SeparaCaixaPorUsuario { get; set; }
+    [JsonPropertyName("QtdsItemFracionado")] public int QtdsItemFracionado { get; set; }
+    [JsonPropertyName("TipoDeCobrancaItemFracionado")] public CobrancaItemFracionado TipoDeCobrancaItemFracionado { get; set; }
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum CobrancaItemFracionado
+{
+    MAIOR,
+    MEDIA,
+    METADE
 }
 
 
