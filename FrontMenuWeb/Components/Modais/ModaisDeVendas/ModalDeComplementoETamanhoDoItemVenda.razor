@@ -96,7 +96,7 @@
 
                                             @if (relacao.QtdMax == 1)
                                             {
-                                                <MudRadioGroup T="int" Value="@RetornaIdComplementoSelecionadoDoGrupo(relacao)" ValueChanged="@((int id) => SelecionarComplementoRadio(relacao, id))">
+                                                <MudRadioGroup T="int?" Value="@RetornaIdComplementoSelecionadoDoGrupo(relacao)" ValueChanged="@((int? id) => SelecionarComplementoRadio(relacao, id))">
                                                     <MudGrid Spacing="2">
                                                         @foreach (var complemento in relacao.Grupo.Complementos.Where(c => string.IsNullOrEmpty(ObterFiltroPorGrupo(relacao.Grupo.Id)) || c.Complemento.Descricao.Contains(ObterFiltroPorGrupo(relacao.Grupo.Id), StringComparison.OrdinalIgnoreCase)))
                                                         {
@@ -109,7 +109,7 @@
                                                                                 <MudText Typo="Typo.body1" Style="white-space:normal; word-break:break-word;">@complemento.Complemento.Descricao</MudText>
                                                                                 <MudText Typo="Typo.body2" Color="Color.Primary"> R$ @complemento.Complemento.Valor.ToString("F2")</MudText>
                                                                             </MudStack>
-                                                                            <MudRadio T="int" Value="@complemento.Complemento.Id" Color="Color.Primary" />
+                                                                            <MudRadio T="int?" Value="@((int?)complemento.Complemento.Id)" Color="Color.Primary" />
                                                                         </MudStack>
                                                                     </MudPaper>
                                                                 }
@@ -320,14 +320,15 @@
             .Sum(c => c.Quantidade);
     }
 
-    private int RetornaIdComplementoSelecionadoDoGrupo(ClsGruposDeComplementosDoProduto relacao)
+    private int? RetornaIdComplementoSelecionadoDoGrupo(ClsGruposDeComplementosDoProduto relacao)
     {
         var complemento = Complementos.FirstOrDefault(c => c.RelacaoGrupoComlpemento.Grupo.Id == relacao.Grupo.Id);
-        return complemento?.Complemento?.Id ?? 0;
+        return complemento?.Complemento?.Id;
     }
 
-    private void SelecionarComplementoRadio(ClsGruposDeComplementosDoProduto relacao, int complementoId)
+    private void SelecionarComplementoRadio(ClsGruposDeComplementosDoProduto relacao, int? complementoId)
     {
+        if (complementoId is null) return;
         var complemento = relacao.Grupo.Complementos.FirstOrDefault(c => c.Complemento.Id == complementoId)?.Complemento;
         if (complemento is not null && Produto.Fracionado && complemento.EProduto && complemento.Produto is not null && complemento.Produto.Fracionado)
         {
