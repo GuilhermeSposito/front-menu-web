@@ -115,7 +115,7 @@ public class IfoodServices
         }
     }
 
-    public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto, List<PollingIfoodDto>? Poolings = null, bool EnviaConfirmacao = true)
+    public async Task<ReturnApiRefatored<object>> AddOrUpdateOrders(WebHookIfoodDto dto, List<PollingIfoodDto>? Poolings = null)
     {
         try
         {
@@ -184,7 +184,7 @@ public class IfoodServices
                     break;
             }
 
-            if (PollingsToAcknowledge.Count > 0 && EnviaConfirmacao)
+            if (PollingsToAcknowledge.Count > 0)
                 await EnviaAcknowledgmentPolling(PollingsToAcknowledge);
 
             return new ReturnApiRefatored<object> { Status = "success", Messages = new List<string> { "Pedido processado com Sucesso!" } };

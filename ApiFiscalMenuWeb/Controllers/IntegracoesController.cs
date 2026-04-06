@@ -124,7 +124,7 @@ public class IntegracoesController : Controller
 
 
         if (dto is not null && dto.FullCode != "KEEPALIVE")
-            await _ifoodService.AddOrUpdateOrders(dto, false);
+            await _ifoodService.AddOrUpdateOrders(dto);
 
         return Accepted(new { dto?.MerchantIds });
     }
