@@ -127,6 +127,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<LancamentoFinanceiroS
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ComplementosServices>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<FuncionariosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MesasServices>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MotoboyService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineService>());

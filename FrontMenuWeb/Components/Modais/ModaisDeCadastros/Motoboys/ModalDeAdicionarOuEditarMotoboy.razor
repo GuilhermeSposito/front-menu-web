@@ -1,0 +1,157 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+@inject MotoboyService MotoboyService
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+
+            @if (!CarregandoMotoboy)
+            {
+                @if (!ECriacao)
+                {
+                    <MudStack Row=true Class="mb-2" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                            <MudText Typo="Typo.body1">ATIVO</MudText>
+                            <MudSwitch T="bool" @bind-Value=@Motoboy.Ativo Color="Color.Success" />
+                        </MudStack>
+                    </MudStack>
+                }
+
+                <MudDivider DividerType="DividerType.FullWidth" Class="mb-2" Light=true />
+
+                <MudStack Class="w-100" Spacing="3">
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+
+                        <MudGrid>
+                            <MudItem xs="12" md="8">
+                                <MudTextField T="string"
+                                              Immediate=true
+                                              @bind-Value=Motoboy.Nome
+                                              Required=true
+                                              RequiredError="O Nome é obrigatório"
+                                              Variant="Variant.Filled"
+                                              Label="Nome" />
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string"
+                                              Immediate=true
+                                              @bind-Value=Motoboy.Cpf
+                                              Variant="Variant.Filled"
+                                              Label="CPF" />
+                            </MudItem>
+                        </MudGrid>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string"
+                                              Immediate=true
+                                              @bind-Value=Motoboy.Celular
+                                              Variant="Variant.Filled"
+                                              Label="Celular" />
+                            </MudItem>
+                        </MudGrid>
+
+                    </MudFocusTrap>
+                </MudStack>
+            }
+            else
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="8">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudSkeleton Height="80px" Width="100%" Animation="Animation.Wave" />
+                        </MudItem>
+                    </MudGrid>
+                </MudStack>
+            }
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Submit">@(ECriacao ? "Adicionar" : "Atualizar")</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public bool ECriacao { get; set; }
+    [Parameter] public int IdDoMotoboy { get; set; } = 0;
+
+    private ClsMotoboy Motoboy = new ClsMotoboy();
+    private bool CarregandoMotoboy = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!ECriacao)
+            {
+                Motoboy = await MotoboyService.GetMotoboyByIdAsync(IdDoMotoboy);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar motoboy: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoMotoboy = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Motoboy.Nome))
+            {
+                Snackbar.Add("O nome do motoboy é obrigatório.", Severity.Error);
+                return;
+            }
+
+            ReturnApiRefatored<ClsMotoboy> responseApi;
+
+            if (ECriacao)
+            {
+                responseApi = await MotoboyService.CreateMotoboyAsync(Motoboy);
+            }
+            else
+            {
+                responseApi = await MotoboyService.UpdateMotoboyAsync(Motoboy);
+            }
+
+            string mensagem = string.Join(", ", responseApi.Status == "success" ? responseApi.Data.Messages : responseApi.Messages);
+            Snackbar.Add(mensagem, responseApi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (responseApi.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar motoboy: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar()
+    {
+        MudDialog.Cancel();
+    }
+}

@@ -1,0 +1,204 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/motoboys"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Motoboys
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+
+@inject MotoboyService MotoboyService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Motoboys</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de Motoboys cadastrados.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="CarregandoMotoboys"
+                           OnClick="@(async () => await AbreModalDeAdicionarOuEditar(true))">
+                    Novo Motoboy
+                </MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsMotoboy"
+                     Items="MotoboysFiltrados"
+                     Class="rounded-3 custom-striped"
+                     Loading="CarregandoMotoboys"
+                     Hover>
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Motoboys" />
+            </NoRecordsContent>
+            <ToolBarContent>
+                <MudStack Class="p-2 w-100 mt-2">
+                    <MudTextField T="string"
+                                  Value="FiltroPorNome"
+                                  Placeholder="Digite o nome para filtrar"
+                                  Label="Motoboy"
+                                  Variant="Variant.Filled"
+                                  Adornment="Adornment.End"
+                                  AdornmentIcon="@Icons.Material.Outlined.Search"
+                                  Clearable
+                                  Immediate=true
+                                  ValueChanged="@(v => { FiltroPorNome = v; StateHasChanged(); })" />
+                </MudStack>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Nome" Title="Nome" />
+                <TemplateColumn T="ClsMotoboy" Title="Celular">
+                    <CellTemplate Context="context">
+                        @FormatarTelefone(context.Item.Celular)
+                    </CellTemplate>
+                </TemplateColumn>
+                <PropertyColumn Property="x => x.Cpf" Title="CPF" />
+                <TemplateColumn T="ClsMotoboy" Title="Status">
+                    <CellTemplate Context="context">
+                        <MudChip T="string"
+                                 Color="@(context.Item.Ativo ? Color.Success : Color.Error)"
+                                 Size="Size.Small">
+                            @(context.Item.Ativo ? "Ativo" : "Inativo")
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn T="ClsMotoboy">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para mais" Color="Color.Primary">
+                            <MudMenu Dense
+                                     Variant="Variant.Text"
+                                     Size="Size.Medium"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.TwoTone.MoreVert">
+                                <MudTooltip Text="Clique para editar" Color="Color.Primary">
+                                    <MudMenuItem OnClick="@(async () => await AbreModalDeAdicionarOuEditar(false, context.Item))"
+                                                 Icon="@Icons.Material.TwoTone.Edit"
+                                                 IconColor="Color.Primary"
+                                                 Label="Editar" />
+                                </MudTooltip>
+                                <MudTooltip Text="Clique para deletar" Color="Color.Error">
+                                    <MudMenuItem OnClick="@(async () => await DeletaMotoboy(context.Item))"
+                                                 Icon="@Icons.Material.TwoTone.Delete"
+                                                 IconColor="Color.Error"
+                                                 Label="Deletar" />
+                                </MudTooltip>
+                            </MudMenu>
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="ClsMotoboy"
+                                  RowsPerPageString="Motoboys por página"
+                                  PageSizeOptions=@(new int[] { 20, 30, 50 }) />
+            </PagerContent>
+        </MudDataGrid>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private List<ClsMotoboy> Motoboys = new List<ClsMotoboy>();
+    private bool CarregandoMotoboys = true;
+    private string FiltroPorNome = string.Empty;
+
+    private IEnumerable<ClsMotoboy> MotoboysFiltrados =>
+        string.IsNullOrWhiteSpace(FiltroPorNome)
+            ? Motoboys
+            : Motoboys.Where(m => m.Nome.Contains(FiltroPorNome, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarMotoboys();
+    }
+
+    private async Task CarregarMotoboys()
+    {
+        try
+        {
+            CarregandoMotoboys = true;
+            Motoboys = await MotoboyService.GetMotoboysAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar motoboys: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoMotoboys = false;
+        }
+    }
+
+    private async Task AbreModalDeAdicionarOuEditar(bool adicionando = false, ClsMotoboy? motoboyParaEditar = null)
+    {
+        var idDoMotoboy = motoboyParaEditar?.Id ?? 0;
+
+        var parameters = new DialogParameters
+        {
+            { "IdDoMotoboy", idDoMotoboy },
+            { "ECriacao", adicionando }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarOuEditarMotoboy>(
+            adicionando ? "Adicionar Motoboy" : "Editar Motoboy",
+            parameters,
+            options);
+
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await CarregarMotoboys();
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeletaMotoboy(ClsMotoboy motoboy)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                { x => x.ContentText, $"Você tem certeza que deseja excluir o motoboy {motoboy.Nome}? Essa ação não pode ser desfeita." },
+                { x => x.ButtonText, "Sim" },
+                { x => x.Color, Color.Error }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var respostaApi = await MotoboyService.DeleteMotoboyAsync(motoboy);
+
+                string mensagem = string.Join(", ", respostaApi.Status == "success" ? respostaApi.Data.Messages : respostaApi.Messages);
+                Snackbar.Add(mensagem, respostaApi.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (respostaApi.Status == "success")
+                    await CarregarMotoboys();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao excluir motoboy: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string FormatarTelefone(string? telefone)
+    {
+        if (string.IsNullOrWhiteSpace(telefone)) return "";
+
+        telefone = new string(telefone.Where(char.IsDigit).ToArray());
+
+        if (telefone.Length == 11)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 00000-0000");
+        if (telefone.Length == 10)
+            return Convert.ToUInt64(telefone).ToString(@"(00) 0000-0000");
+
+        return telefone;
+    }
+}

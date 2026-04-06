@@ -822,18 +822,18 @@ public class IfoodServices
 
             "CASH" => formas.FirstOrDefault(f => f.EDinheiro || f.Descricao.Contains("DINHEIRO", StringComparison.OrdinalIgnoreCase)),
 
-            "CREDIT" => formas.FirstOrDefault(f => f.ECredito || f.Descricao.Contains("CRÉDITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("CREDITO", StringComparison.OrdinalIgnoreCase)),
+            "CREDIT" => formas.Where(x=> x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.ECredito || f.Descricao.Contains("CRÉDITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("CREDITO", StringComparison.OrdinalIgnoreCase)),
 
-            "DEBIT" => formas.FirstOrDefault(f => f.EDEbito || f.Descricao.Contains("DÉBITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("DEBITO", StringComparison.OrdinalIgnoreCase)),
+            "DEBIT" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.EDEbito || f.Descricao.Contains("DÉBITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("DEBITO", StringComparison.OrdinalIgnoreCase)),
 
-            "MEAL_VOUCHER" => formas.FirstOrDefault(f => f.Descricao.Contains("REFEI", StringComparison.OrdinalIgnoreCase)),
+            "MEAL_VOUCHER" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.Descricao.Contains("REFEI", StringComparison.OrdinalIgnoreCase)),
 
-            "FOOD_VOUCHER" => formas.FirstOrDefault(f => f.Descricao.Contains("ALIMENT", StringComparison.OrdinalIgnoreCase)),
+            "FOOD_VOUCHER" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.Descricao.Contains("ALIMENT", StringComparison.OrdinalIgnoreCase)),
 
-            "GIFT_CARD" => formas.FirstOrDefault(f => f.Descricao.Contains("PRESENTE", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("GIFT", StringComparison.OrdinalIgnoreCase)),
+            "GIFT_CARD" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.Descricao.Contains("PRESENTE", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("GIFT", StringComparison.OrdinalIgnoreCase)),
 
 
-            "PIX" => formas.FirstOrDefault(f => f.EPix || f.Descricao.Contains("PIX", StringComparison.OrdinalIgnoreCase)),
+            "PIX" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.EPix || f.Descricao.Contains("PIX", StringComparison.OrdinalIgnoreCase)),
 
             _ => formas.FirstOrDefault()
         };

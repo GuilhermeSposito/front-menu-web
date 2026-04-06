@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.DTOS;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
 using SophosSyncDesktop.DataBase.Db;
@@ -12,6 +13,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Linq;
 using DANFe = Unimake.Unidanfe;
 
@@ -157,8 +159,8 @@ public class ImpressaoService
 
                                 List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedidoMesa = DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoAtualizadoComItensAgrupadosAuxiliar, AppQueEnviou);
 
-                                    for (var interador = 0; interador < AppState.MerchantLogado?.QtdViasDaComanda; interador++)
-                                        await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
+                                for (var interador = 0; interador < AppState.MerchantLogado?.QtdViasDaComanda; interador++)
+                                    await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
 
                                 IndiceDoItemAtual++;
                             }
@@ -597,7 +599,6 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
 
-
         foreach (var pagamento in pedido.Pagamentos)
         {
             if (pagamento.FormaDePagamento is not null)
@@ -613,6 +614,24 @@ public class ImpressaoService
             }
         }
 
+        if (pedido.CriadoPor == "IFOOD")
+        {
+            try
+            {
+                var PedidoIfood = JsonSerializer.Deserialize<PedidoIfoodDto>(pedido.JsonPedidoDeIntegracao ?? "") ?? throw new Exception("Erro ao desserializr pedido do ifood");
+                if (PedidoIfood.Customer.DocumentNumber is not null)
+                {
+                    AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+                    AdicionaConteudo(Conteudo, $"{PedidoIfood.Customer.DocumentType} na NFce: {PedidoIfood.Customer.DocumentNumber}", FonteInfosPagamento);
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+        }
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
