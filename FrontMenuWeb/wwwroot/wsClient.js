@@ -250,7 +250,7 @@ window.startIfoodWidget = async function (merchantIds) {
 
       
         iFoodWidget.init({
-            widgetId: 'a1ff7bc4-b660-44fb-af64-afc98b4ce06e',
+            widgetId: 'd36b10d4-2f47-41cb-b282-b92eafc5ec1b',
             merchantIds: merchantIds,
         });
 
