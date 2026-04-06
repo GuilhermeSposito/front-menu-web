@@ -1,0 +1,133 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using FrontMenuWeb.Models.Merchant
+@using System.Globalization
+@inject IJSRuntime JS
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="4">
+
+            @* ── Totais gerais ── *@
+            <MudGrid>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Pedidos</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Primary">@Resumo.QuantidadePedidos</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Pedidos</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Success">@Resumo.TotalPedidos.ToString("C", _ptBR)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Entregas</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Warning">@Resumo.TotalEntregas.ToString("C", _ptBR)</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider />
+
+            @* ── Por motoboy ── *@
+            @if (Resumo.Motoboys.Any())
+            {
+                <MudText Typo="Typo.subtitle1"><b>Por motoboy</b></MudText>
+                @foreach (var m in Resumo.Motoboys)
+                {
+                    <MudPaper Class="pa-3 rounded-3" Elevation="0" Style="border: 1px solid var(--mud-palette-divider);">
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body1"><b>@m.Nome</b></MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Tertiary">@m.QuantidadePedidos pedido(s)</MudText>
+                            </MudStack>
+                            <MudStack AlignItems="AlignItems.End" Spacing="0">
+                                <MudText Typo="Typo.body2" Color="Color.Success">@m.TotalPedidos.ToString("C", _ptBR)</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Warning">Entrega: @m.TotalEntregas.ToString("C", _ptBR)</MudText>
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+            }
+
+            <MudDivider />
+
+            @* ── Pagamentos por forma ── *@
+            @if (Resumo.Pagamentos.Any())
+            {
+                <MudText Typo="Typo.subtitle1"><b>Formas de recebimento</b></MudText>
+                <MudSimpleTable Dense=true Hover=true>
+                    <thead>
+                        <tr>
+                            <th>Forma</th>
+                            <th style="text-align:right">Qtd</th>
+                            <th style="text-align:right">Total</th>
+                            <th style="text-align:right">Trocos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Resumo.Pagamentos)
+                        {
+                            <tr>
+                                <td>@p.FormaDePagamento</td>
+                                <td style="text-align:right">@p.Quantidade</td>
+                                <td style="text-align:right">@p.Total.ToString("C", _ptBR)</td>
+                                <td style="text-align:right">@p.TotalTrocos.ToString("C", _ptBR)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+            @* ── Trocos ── *@
+            @if (Resumo.Trocos.HouveTroco)
+            {
+                <MudAlert Severity="Severity.Warning" Dense=true>
+                    Troco total: <b>@Resumo.Trocos.TotalTrocos.ToString("C", _ptBR)</b>
+                    em @Resumo.Trocos.QuantidadePedidosComTroco pedido(s)
+                </MudAlert>
+            }
+
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Info"
+                   Variant="Variant.Outlined"
+                   StartIcon="@Icons.Material.Filled.Download"
+                   OnClick="BaixarJson">
+            Imprimir fechamento
+        </MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Outlined"
+                   StartIcon="@Icons.Custom.Brands.WhatsApp"
+                   Disabled="true">
+            WhatsApp
+        </MudButton>
+        <MudButton Color="Color.Warning"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.DoneAll"
+                   OnClick="Confirmar">
+            Confirmar fechamento
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ClsResumoExpedicao Resumo { get; set; } = new();
+
+    private CultureInfo _ptBR = CultureInfo.GetCultureInfo("pt-BR");
+
+    private async Task BaixarJson()
+    {
+        var nomeArquivo = $"fechamento-motoboys-{Resumo.GeradoEm:yyyy-MM-dd_HH-mm}.json";
+        await JS.InvokeVoidAsync("baixarJSON", Resumo, nomeArquivo);
+    }
+
+    private void Confirmar() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancelar() => MudDialog.Cancel();
+}

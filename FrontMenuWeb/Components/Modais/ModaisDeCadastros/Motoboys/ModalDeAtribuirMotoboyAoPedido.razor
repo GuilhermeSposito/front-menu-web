@@ -1,0 +1,187 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject MotoboyService MotoboyService
+@inject AppState AppState
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+            @if (!Carregando)
+            {
+                <MudStack Spacing="3" Class="w-100">
+                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" Color="Color.Primary" Size="Size.Large" />
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.h6">Pedido #@Pedido.Id</MudText>
+                            @if (!string.IsNullOrEmpty(Pedido.DisplayId) && Pedido.DisplayId != "0000")
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@Pedido.DisplayId</MudText>
+                            }
+                        </MudStack>
+                        @if (Pedido.CriadoPor != "SOPHOS")
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Integrado</MudChip>
+                        }
+                    </MudStack>
+
+                    <MudDivider Light=true />
+
+                    <MudSelect T="ClsMotoboy"
+                               @bind-Value="MotoboySelecionado"
+                               ToStringFunc="m => m?.Nome"
+                               Label="Motoboy"
+                               Variant="Variant.Filled"
+                               Required=true
+                               RequiredError="Selecione um motoboy">
+                        @foreach (var m in Motoboys)
+                        {
+                            <MudSelectItem Value="m">@m.Nome</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudNumericField T="float"
+                                     @bind-Value="ValorEntrega"
+                                     Label="@(CalculandoDistancia ? "Calculando valor..." : "Valor da Entrega")"
+                                     Variant="Variant.Filled"
+                                     Format="N2"
+                                     Culture="@_pt"
+                                     AdornmentText="R$"
+                                     Adornment="Adornment.Start"
+                                     HideSpinButtons=true
+                                     Disabled="CalculandoDistancia"
+                                     Min="0" />
+                    @if (InfoDistancia is not null)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                            @InfoDistancia.DistanciaTexto — @InfoDistancia.DuracaoTexto
+                        </MudText>
+                    }
+
+                    <MudNumericField T="float"
+                                     @bind-Value="ValorPedido"
+                                     Label="Valor do Pedido"
+                                     Variant="Variant.Filled"
+                                     Format="N2"
+                                     Culture="@_pt"
+                                     AdornmentText="R$"
+                                     Adornment="Adornment.Start"
+                                     HideSpinButtons=true
+                                     Min="0" />
+                </MudStack>
+            }
+            else
+            {
+                <MudStack Spacing="2">
+                    <MudSkeleton Height="60px" Width="100%" Animation="Animation.Wave" />
+                    <MudSkeleton Height="60px" Width="100%" Animation="Animation.Wave" />
+                    <MudSkeleton Height="60px" Width="100%" Animation="Animation.Wave" />
+                </MudStack>
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" Disabled="MotoboySelecionado is null" OnClick="Confirmar">
+                Expedir
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public ClsPedido Pedido { get; set; } = new();
+    [Parameter] public ClsMotoboy? MotoboyPreSelecionado { get; set; }
+
+    private List<ClsMotoboy> Motoboys = new();
+    private ClsMotoboy? MotoboySelecionado = null;
+    private float ValorEntrega = 0f;
+    private float ValorPedido = 0f;
+    private bool Carregando = true;
+    private bool CalculandoDistancia = false;
+    private ClsDistanciaEntrega? InfoDistancia = null;
+    private CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Motoboys = await MotoboyService.GetMotoboysAsync(apenasAtivos: true);
+            ValorPedido = Pedido.ValorTotal;
+
+            if (MotoboyPreSelecionado is not null)
+                MotoboySelecionado = Motoboys.FirstOrDefault(m => m.Id == MotoboyPreSelecionado.Id);
+
+            await CalcularDistancia();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar motoboys: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task CalcularDistancia()
+    {
+        var enderecoMerchant = AppState.MerchantLogado.EnderecosMerchant.FirstOrDefault()?.EnderecoFormatado;
+        var enderecoPedido = Pedido.Endereco?.EnderecoFormatado;
+
+        if (string.IsNullOrEmpty(enderecoMerchant) || string.IsNullOrEmpty(enderecoPedido))
+            return;
+
+        try
+        {
+            CalculandoDistancia = true;
+            StateHasChanged();
+
+            InfoDistancia = await MotoboyService.GetDistanciaEntregaAsync(enderecoMerchant, enderecoPedido);
+
+            if (InfoDistancia is not null)
+                ValorEntrega = InfoDistancia.ValorMotoboy;
+        }
+        catch
+        {
+            // silencioso — usuário preenche manualmente se a API de distância falhar
+        }
+        finally
+        {
+            CalculandoDistancia = false;
+        }
+    }
+
+    private async Task Confirmar()
+    {
+        if (MotoboySelecionado is null) return;
+
+        try
+        {
+            var entrega = new ClsPedidoMotoboy
+            {
+                MotoboyId = MotoboySelecionado.Id,
+                PedidoCaixaId = Pedido.Id,
+                ValorPedido = ValorPedido,
+                ValorEntrega = ValorEntrega
+            };
+
+            var resultado = await MotoboyService.CriarEntregaAsync(entrega);
+
+            string mensagem = string.Join(", ", resultado.Status == "success" ? resultado.Data.Messages : resultado.Messages);
+            Snackbar.Add(mensagem, resultado.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (resultado.Status == "success")
+                MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao expedir pedido: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

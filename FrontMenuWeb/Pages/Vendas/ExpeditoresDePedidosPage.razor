@@ -1,0 +1,475 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/expedicoes"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Motoboys
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@using System.Globalization
+@using System.Text.Json
+
+@inject PedidosService PedidosService
+@inject MotoboyService MotoboyService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top: 50px; padding: 16px;">
+
+    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+        <MudText Typo="Typo.h4">Expedições</MudText>
+        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="2">
+            <MudSelect T="ClsMotoboy"
+                       Value="MotoboyFiltrado"
+                       ValueChanged="OnMotoboyFiltradoChanged"
+                       ToStringFunc="MotoboyParaString"
+                       Label="Filtrar motoboy"
+                       Variant="Variant.Outlined"
+                       Style="min-width: 200px;"
+                       Clearable="true">
+                @foreach (var m in TodosMotoboys)
+                {
+                    <MudSelectItem Value="m">@m.Nome</MudSelectItem>
+                }
+            </MudSelect>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.DoneAll"
+                       Disabled="!EntregasAtuais.Any() || FechandoAtribuidos"
+                       OnClick="FecharAtribuidos">
+                @(FechandoAtribuidos ? "Fechando..." : "Fechar Atribuídos")
+            </MudButton>
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Default"
+                           OnClick="Recarregar"
+                           Disabled="Carregando" />
+        </MudStack>
+    </MudStack>
+
+    @if (Carregando)
+    {
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudSkeleton Height="120px" Class="mb-2 rounded-3" Animation="Animation.Wave" />
+                <MudSkeleton Height="120px" Class="mb-2 rounded-3" Animation="Animation.Wave" />
+                <MudSkeleton Height="120px" Class="rounded-3" Animation="Animation.Wave" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSkeleton Height="120px" Class="mb-2 rounded-3" Animation="Animation.Wave" />
+                <MudSkeleton Height="120px" Class="rounded-3" Animation="Animation.Wave" />
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudGrid>
+
+            @* ── Painel Esquerdo: Pedidos aguardando expedição ── *@
+            <MudItem xs="12" md="6">
+                <MudCard Class="rounded-3 h-100" Style="border: 2px solid var(--mud-palette-primary); min-height: 500px;">
+                    <MudCardHeader Style="background-color: var(--mud-palette-primary); color: white;">
+                        <CardHeaderContent>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.Inbox" />
+                                    <MudText Typo="Typo.h6">Pedidos</MudText>
+                                </MudStack>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Surface">
+                                    @PedidosAguardando.Count()
+                                </MudChip>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Style="overflow-y: auto; max-height: 70vh; padding: 12px;">
+                        @if (!PedidosAguardando.Any())
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 200px;">
+                                <MudIcon Icon="@Icons.Material.Outlined.Inbox" Size="Size.Large" Color="Color.Tertiary" />
+                                <MudText Typo="Typo.body1" Color="Color.Tertiary">Nenhum pedido aguardando</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            @foreach (var pedido in PedidosAguardando)
+                            {
+                                <MudCard Class="rounded-3 mb-2 cursor-pointer"
+                                         Style="border: 2px dashed var(--mud-palette-primary);"
+                                         @onclick="@(async () => await AbrirModalDeAtribuicao(pedido))">
+                                    <MudCardContent Style="padding: 12px;">
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudStack Spacing="0">
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                                    <MudAvatar Color="Color.Primary">
+                                                        <MudImage Src="@AppState.GetIconeDoApp(pedido.CriadoPor)"></MudImage>
+                                                    </MudAvatar>
+                                                    <MudText Typo="Typo.h6" Color="Color.Primary">
+                                                        Pedido @(string.IsNullOrEmpty(pedido.DisplayId) || pedido.DisplayId == "0000" ? pedido.Id.ToString() : pedido.DisplayId)
+                                                    </MudText>
+                                                    @if (pedido.CriadoPor != "SOPHOS")
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Style="height:22px">Integrado</MudChip>
+                                                    }
+                                                </MudStack>
+                                                @if (pedido.Cliente is not null)
+                                                {
+                                                    <MudText Typo="Typo.body2">@pedido.Cliente.Nome</MudText>
+                                                }
+                                                <MudText Typo="Typo.caption" Color="Color.Tertiary">@pedido.CriadoEm.ToString("HH:mm")</MudText>
+                                            </MudStack>
+                                            <MudStack AlignItems="AlignItems.End" Spacing="0">
+                                                <MudText Typo="Typo.h6" Style="color: var(--mud-palette-success);">
+                                                    @pedido.ValorTotal.ToString("C", _ptBR)
+                                                </MudText>
+                                                <MudTooltip Text="Clique para expedir">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.DeliveryDining"
+                                                                   Color="Color.Primary"
+                                                                   Size="Size.Small" />
+                                                </MudTooltip>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            @* ── Painel Direito: Pedidos Expedidos ── *@
+            <MudItem xs="12" md="6">
+                <MudCard Class="rounded-3 h-100" Style="border: 2px solid var(--mud-palette-success); min-height: 500px;">
+                    <MudCardHeader Style="background-color: var(--mud-palette-success); color: white;">
+                        <CardHeaderContent>
+                            <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.LocalShipping" />
+                                    <MudText Typo="Typo.h6">Pedidos Expedidos</MudText>
+                                </MudStack>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Surface">
+                                    @EntregasAtuais.Count()
+                                </MudChip>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent Style="overflow-y: auto; max-height: 70vh; padding: 12px;">
+                        @if (!EntregasAtuais.Any())
+                        {
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 200px;">
+                                <MudIcon Icon="@Icons.Material.Outlined.LocalShipping" Size="Size.Large" Color="Color.Tertiary" />
+                                <MudText Typo="Typo.body1" Color="Color.Tertiary">Nenhum pedido expedido</MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            @foreach (var entrega in EntregasAtuais)
+                            {
+                                var pedido = TodosPedidos.FirstOrDefault(p => p.Id == entrega.PedidoCaixaIdFinal);
+                                <MudCard Class="rounded-3 mb-2"
+                                         Style="border: 2px solid var(--mud-palette-success);">
+                                    <MudCardContent Style="padding: 12px;">
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                            <MudStack Spacing="0">
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                                    <MudText Typo="Typo.h6" Color="Color.Success">
+                                                        Pedido @(pedido is not null && (!string.IsNullOrEmpty(pedido.DisplayId) && pedido.DisplayId != "0000") ? pedido.DisplayId : entrega.PedidoCaixaIdFinal.ToString())
+                                                    </MudText>
+                                                    @if (pedido is not null && pedido.CriadoPor != "SOPHOS")
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Style="height:22px">Integrado</MudChip>
+                                                    }
+                                                </MudStack>
+                                                @if (entrega.Motoboy is not null)
+                                                {
+                                                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Color="Color.Tertiary" />
+                                                        <MudText Typo="Typo.body2">@entrega.Motoboy.Nome</MudText>
+                                                    </MudStack>
+                                                }
+                                                <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                                    Entrega: @entrega.ValorEntrega.ToString("C", _ptBR)
+                                                </MudText>
+                                            </MudStack>
+                                            <MudStack AlignItems="AlignItems.End" Spacing="1">
+                                                <MudText Typo="Typo.h6" Style="color: var(--mud-palette-success);">
+                                                    @entrega.ValorPedido.ToString("C", _ptBR)
+                                                </MudText>
+                                                <MudTooltip Text="Remover expedição">
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                                   Color="Color.Error"
+                                                                   Size="Size.Small"
+                                                                   OnClick="@(async () => await RemoverEntrega(entrega))" />
+                                                </MudTooltip>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+        </MudGrid>
+    }
+
+</MudPaper>
+
+@code {
+    private List<ClsPedido> TodosPedidos = new();
+    private List<ClsPedidoMotoboy> TodasAsEntregas = new();
+    private List<ClsMotoboy> TodosMotoboys = new();
+    private ClsMotoboy? MotoboyFiltrado = null;
+    private bool Carregando = true;
+    private bool FechandoAtribuidos = false;
+    private CultureInfo _ptBR = CultureInfo.GetCultureInfo("pt-BR");
+
+    // Apenas entregas com pedido_caixa ainda existente (caixa aberto) + filtro por motoboy
+    private IEnumerable<ClsPedidoMotoboy> EntregasAtuais =>
+        TodasAsEntregas
+            .Where(e => e.PedidoCaixaObj is not null)
+            .Where(e => MotoboyFiltrado is null || e.Motoboy?.Id == MotoboyFiltrado.Id);
+
+    // IDs dos pedidos já expedidos (caixa ativo)
+    private HashSet<int> PedidosExpedidosIds =>
+        TodasAsEntregas
+            .Where(e => e.PedidoCaixaObj is not null)
+            .Select(e => e.PedidoCaixaIdFinal)
+            .ToHashSet();
+
+    private IEnumerable<ClsPedido> PedidosAguardando =>
+        TodosPedidos.Where(p => !PedidosExpedidosIds.Contains(p.Id));
+
+    protected override async Task OnInitializedAsync() => await Recarregar();
+
+    private async Task Recarregar()
+    {
+        try
+        {
+            Carregando = true;
+            StateHasChanged();
+
+            var queryPedidos = new QuerysDePedidos
+            {
+                Page = 1,
+                PageSize = 300,
+                TipoPedido = TiposDePedido.DELIVERY
+            };
+
+            var pedidosTask = PedidosService.GetPedidosPorPaginaAsync(queryPedidos);
+            var entregasTask = MotoboyService.GetTodasAsEntregasAsync();
+            var motoboysTask = MotoboyService.GetMotoboysAsync(apenasAtivos: true);
+
+            await Task.WhenAll(pedidosTask, entregasTask, motoboysTask);
+
+            TodosPedidos = pedidosTask.Result?.Data ?? new List<ClsPedido>();
+            TodasAsEntregas = entregasTask.Result;
+            TodosMotoboys = motoboysTask.Result;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar expedições: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private string MotoboyParaString(ClsMotoboy? m) => m?.Nome ?? string.Empty;
+
+    private ClsResumoExpedicao GerarResumo()
+    {
+        var entregas = EntregasAtuais.ToList();
+
+        // Junta cada entrega com o pedido correspondente
+        var pares = entregas
+            .Select(e => (Entrega: e, Pedido: TodosPedidos.FirstOrDefault(p => p.Id == e.PedidoCaixaIdFinal)))
+            .Where(x => x.Pedido is not null)
+            .ToList();
+
+        // Totais gerais
+        float totalPedidos  = entregas.Sum(e => e.ValorPedido);
+        float totalEntregas = entregas.Sum(e => e.ValorEntrega);
+
+        // Resumo por motoboy
+        var porMotoboy = entregas
+            .GroupBy(e => e.Motoboy?.Nome ?? "Sem motoboy")
+            .Select(g => new ClsResumoMotoboy
+            {
+                Nome              = g.Key,
+                QuantidadePedidos = g.Count(),
+                TotalPedidos      = g.Sum(e => e.ValorPedido),
+                TotalEntregas     = g.Sum(e => e.ValorEntrega),
+            })
+            .OrderBy(m => m.Nome)
+            .ToList();
+
+        // Todos os pagamentos dos pedidos atribuídos
+        var todosPagamentos = pares
+            .Where(x => x.Pedido!.Pagamentos.Any())
+            .SelectMany(x => x.Pedido!.Pagamentos)
+            .ToList();
+
+        // Resumo por forma de pagamento
+        var porForma = todosPagamentos
+            .GroupBy(p => p.FormaDePagamento?.Descricao ?? "Não informado")
+            .Select(g => new ClsResumoPagamento
+            {
+                FormaDePagamento = g.Key,
+                Quantidade       = g.Count(),
+                Total            = g.Sum(p => p.ValorTotal),
+                TotalTrocos      = g.Sum(p => p.Troco),
+            })
+            .OrderBy(p => p.FormaDePagamento)
+            .ToList();
+
+        // Trocos
+        var pagamentosComTroco = todosPagamentos.Where(p => p.Troco > 0).ToList();
+        var trocos = new ClsResumoTrocos
+        {
+            HouveTroco                = pagamentosComTroco.Any(),
+            TotalTrocos               = pagamentosComTroco.Sum(p => p.Troco),
+            QuantidadePedidosComTroco = pares.Count(x => x.Pedido!.Pagamentos.Any(p => p.Troco > 0)),
+        };
+
+        // Detalhe por pedido
+        var pedidosFechados = pares
+            .Select(x =>
+            {
+                var displayId = !string.IsNullOrEmpty(x.Pedido!.DisplayId) && x.Pedido.DisplayId != "0000"
+                    ? x.Pedido.DisplayId
+                    : x.Pedido.Id.ToString();
+
+                var formas = x.Pedido.Pagamentos.Any()
+                    ? string.Join(", ", x.Pedido.Pagamentos
+                        .Select(p => p.FormaDePagamento?.Descricao ?? "Não informado")
+                        .Distinct())
+                    : "Não informado";
+
+                return new ClsResumoPedidoFechado
+                {
+                    DisplayId          = displayId,
+                    Motoboy            = x.Entrega.Motoboy?.Nome ?? "Sem motoboy",
+                    FormasDeRecebimento = formas,
+                    TaxaMotoboy        = x.Entrega.ValorEntrega,
+                    ValorTotal         = x.Entrega.ValorPedido,
+                };
+            })
+            .OrderBy(p => p.DisplayId)
+            .ToList();
+
+        return new ClsResumoExpedicao
+        {
+            GeradoEm          = DateTime.Now,
+            QuantidadePedidos = entregas.Count,
+            TotalPedidos      = totalPedidos,
+            TotalEntregas     = totalEntregas,
+            TotalGeral        = totalPedidos + totalEntregas,
+            Motoboys          = porMotoboy,
+            Pagamentos        = porForma,
+            Trocos            = trocos,
+            Pedidos           = pedidosFechados,
+        };
+    }
+
+    private void OnMotoboyFiltradoChanged(ClsMotoboy? motoboy)
+    {
+        MotoboyFiltrado = motoboy;
+        StateHasChanged();
+    }
+
+    private async Task AbrirModalDeAtribuicao(ClsPedido pedido)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Pedido", pedido },
+            { "MotoboyPreSelecionado", MotoboyFiltrado }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDeAtribuirMotoboyAoPedido>(
+            "Expedir Pedido",
+            parameters,
+            options);
+
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            await Recarregar();
+    }
+
+    private async Task RemoverEntrega(ClsPedidoMotoboy entrega)
+    {
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                { x => x.ContentText, $"Deseja remover a expedição do pedido #{entrega.PedidoCaixaIdFinal}?" },
+                { x => x.ButtonText, "Remover" },
+                { x => x.Color, Color.Error }
+            };
+
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Remover Expedição", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                var resposta = await MotoboyService.DeletarEntregaAsync(entrega.Id);
+                string mensagem = string.Join(", ", resposta.Status == "success" ? resposta.Data.Messages : resposta.Messages);
+                Snackbar.Add(mensagem, resposta.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (resposta.Status == "success")
+                    await Recarregar();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao remover expedição: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task FecharAtribuidos()
+    {
+        if (!EntregasAtuais.Any()) return;
+
+        var resumo = GerarResumo();
+
+        var parameters = new DialogParameters<ModalDeFechamentoMotoboy>
+        {
+            { x => x.Resumo, resumo }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeFechamentoMotoboy>("Fechamento de Expedições", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled || result.Data is not bool sucesso || !sucesso) return;
+
+        try
+        {
+            FechandoAtribuidos = true;
+
+            foreach (var entrega in EntregasAtuais.ToList())
+            {
+                var pedido = TodosPedidos.FirstOrDefault(p => p.Id == entrega.PedidoCaixaIdFinal);
+                if (pedido is not null)
+                    await PedidosService.UpdatePedidoFinalizadoo(pedido);
+            }
+
+            Snackbar.Add("Pedidos expedidos finalizados com sucesso!", Severity.Success);
+            await Recarregar();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao fechar pedidos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            FechandoAtribuidos = false;
+        }
+    }
+}

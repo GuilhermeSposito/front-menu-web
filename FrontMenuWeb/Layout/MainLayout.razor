@@ -143,8 +143,9 @@
 
                         <MudNavLink Icon="@Icons.Material.Filled.RoomService" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/gestao-de-mesas", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Gestão de @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced</MudNavLink>
 
-                        <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixa", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Caixa</MudNavLink>
+                        <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/expedicoes", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Expedições</MudNavLink>
 
+                        <MudNavLink Icon="@Icons.Material.Filled.Article" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixa", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Caixa</MudNavLink>
 
                         <MudNavGroup Title="Catálogo" Icon="@Icons.Material.Filled.Inventory" Expanded="false">
 
@@ -161,8 +162,9 @@
                             <MudNavLink Icon="@Icons.Material.Filled.Percent" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/aliquotas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeAliquotas); })">Alíquotas</MudNavLink>
                             <MudNavLink Icon="@(AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced == "Mesa" ? Icons.Material.Filled.TableRestaurant : @Icons.Material.Filled.CreditCard)" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/mesas-comandas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastraMesaOuComandas); })">@AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.TwoWheeler" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/empresas-entrega-integradas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Empresas de Entrega</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.Fastfood" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/empresas-ifood-integradas", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Empresas Ifood</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.Fastfood" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/empresas-ifood-integradas", AppState.MerchantLogado.FuncionarioLogado?.AcessoConfiguracoes); })">Empresas Ifood</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.Place" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/raios-de-entrega", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Raios de Entrega</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.TwoWheeler" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/motoboys", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Motoboys</MudNavLink>
                         </MudNavGroup>
 
                         @*Financeiro*@
