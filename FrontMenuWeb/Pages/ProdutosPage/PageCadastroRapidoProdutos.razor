@@ -1,0 +1,986 @@
+@page "/cadastrorapidoprodutos"
+@page "/cadastrorapidoprodutos/{idProdutoBase}"
+@using FrontMenuWeb.Components.Modais.ModaisDeGrupo
+@using FrontMenuWeb.Models.Fiscal
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject ProdutoService ProdutoService
+@inject GrupoServices GrupoService
+@inject AliquotaService AliquotaService
+@inject ComplementosServices ComplementosServices
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; padding: 16px;">
+
+    @if (isLoading)
+    {
+        <div class="w-100 d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <MudStack Spacing="3">
+
+            @* Cabeçalho *@
+            <MudPaper Elevation="2" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.h6">Cadastro Rápido de Produtos</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Próximo código: <strong>@NovoCodigoRecomendado</strong>
+                        </MudText>
+                    </MudStack>
+                    @if (ProdutosCadastrados.Count > 0)
+                    {
+                        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">
+                            @ProdutosCadastrados.Count produto(s) cadastrado(s)
+                        </MudChip>
+                    }
+                </MudStack>
+            </MudPaper>
+
+            @* Formulário principal *@
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudGrid Spacing="3">
+
+                    @* Código + Nome *@
+                    <MudItem xs="12">
+                        <MudStack Row="true" AlignItems="AlignItems.End">
+                            <MudTextField @bind-Value="NovoCodigoRecomendado"
+                                          Disabled="true"
+                                          Label="Código"
+                                          Variant="Variant.Outlined"
+                                          Style="max-width: 120px;" />
+                            <MudTextField @ref="_campoNome"
+                                          @bind-Value="Produto.Descricao"
+                                          Label="Nome do produto"
+                                          Variant="Variant.Outlined"
+                                          FullWidth="true"
+                                          Immediate="false" />
+                        </MudStack>
+                    </MudItem>
+
+                    @* Grupo + Categoria *@
+                    <MudItem xs="12" sm="6">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudSelect @bind-Value="Produto.Grupo"
+                                       T="ClsGrupo"
+                                       ToStringFunc="g => g.Descricao"
+                                       Label="Grupo"
+                                       Variant="Variant.Outlined"
+                                       FullWidth="true"
+                                       AdornmentIcon="@Icons.Material.Filled.Fastfood"
+                                       AdornmentColor="Color.Primary">
+                                @foreach (var grupo in Grupos)
+                                {
+                                    <MudSelectItem Value="@grupo">@grupo.Descricao</MudSelectItem>
+                                }
+                            </MudSelect>
+                            <MudTooltip Text="Novo grupo">
+                                <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                               Color="Color.Primary"
+                                               Variant="Variant.Filled"
+                                               OnClick="OpenDialogAddGrupoAsync" />
+                            </MudTooltip>
+                        </MudStack>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudSelect @bind-Value="Produto.Categoria"
+                                   T="Categoria"
+                                   ToStringFunc="g => g.Descricao"
+                                   Label="Categoria"
+                                   Variant="Variant.Outlined"
+                                   FullWidth="true"
+                                   AdornmentIcon="@Icons.Material.Filled.FoodBank"
+                                   AdornmentColor="Color.Primary">
+                            @foreach (var categoria in Categorias)
+                            {
+                                <MudSelectItem Value="@categoria">@categoria.Descricao</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    @* Código de barras *@
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="Produto.CodBarras"
+                                      Label="Código de Barras"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.QrCode"
+                                      AdornmentColor="Color.Default"
+                                      UserAttributes="@_selectAll" />
+                    </MudItem>
+
+                    @* Preço de custo + Estoque *@
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="float"
+                                         @bind-Value="Produto.PrecoCusto"
+                                         Label="Preço de custo"
+                                         Format="N2"
+                                         Culture="_pt"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                         AdornmentColor="Color.Default"
+                                         UserAttributes="@_selectAll" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudNumericField T="float"
+                                         @bind-Value="Produto.QtdEmEstoque"
+                                         Label="Qtd em estoque"
+                                         Format="N2"
+                                         Culture="_pt"
+                                         HideSpinButtons="true"
+                                         Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Inventory"
+                                         AdornmentColor="Color.Default"
+                                         UserAttributes="@_selectAll" />
+                    </MudItem>
+
+                    @* Preço de venda *@
+                    <MudItem xs="12">
+                        <MudPaper Elevation="0" Outlined="true" Class="pa-3">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                <MudText Typo="Typo.subtitle2">Preço de venda</MudText>
+                                <MudRadioGroup T="bool"
+                                               Value="Produto.TamanhoUnico"
+                                               ValueChanged="@(v => { Produto.TamanhoUnico = v; AjustarPrecos(); })">
+                                    <MudRadio Value="true" Color="Color.Primary">Tamanho único</MudRadio>
+                                    <MudRadio Value="false" Color="Color.Secondary">Múltiplos tamanhos</MudRadio>
+                                </MudRadioGroup>
+                            </MudStack>
+
+                            @if (Produto.TamanhoUnico)
+                            {
+                                var preco = Produto.Precos.FirstOrDefault();
+                                @if (preco is not null)
+                                {
+                                    <MudNumericField T="float"
+                                                     @bind-Value="preco.Valor"
+                                                     Label="Valor de venda"
+                                                     Format="N2"
+                                                     Culture="_pt"
+                                                     HideSpinButtons="true"
+                                                     UserAttributes="@_selectAll"
+                                                     Variant="Variant.Outlined"
+                                                     Style="max-width: 200px;" />
+                                }
+                            }
+                            else
+                            {
+                                <MudStack Class="mt-2" Spacing="2">
+                                    @foreach (var preco in Produto.Precos)
+                                    {
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudTextField @bind-Value="preco.DescricaoDoTamanho"
+                                                          Label="Tamanho"
+                                                          Variant="Variant.Outlined"
+                                                          Style="max-width: 150px;" />
+                                            <MudNumericField T="float"
+                                                             @bind-Value="preco.Valor"
+                                                             Label="Valor"
+                                                             Format="N2"
+                                                             Culture="_pt"
+                                                             HideSpinButtons="true"
+                                                             Variant="Variant.Outlined"
+                                                             UserAttributes="@_selectAll"
+                                                             Style="max-width: 150px;" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Color="Color.Error"
+                                                           OnClick="@(() => RemoverPreco(preco))"
+                                                           Disabled="@(Produto.Precos.Count <= 1)" />
+                                        </MudStack>
+                                    }
+                                    <MudButton StartIcon="@Icons.Material.Filled.Add"
+                                               Color="Color.Primary"
+                                               Variant="Variant.Text"
+                                               OnClick="AdicionarPreco">
+                                        Adicionar tamanho
+                                    </MudButton>
+                                </MudStack>
+                            }
+                        </MudPaper>
+                    </MudItem>
+
+                    @* Impressoras *@
+                    <MudItem xs="12" sm="6">
+                        <MudSelect @bind-Value="Produto.ImpressoraComanda1"
+                                   T="string"
+                                   Label="Comanda 1"
+                                   Variant="Variant.Outlined"
+                                   AdornmentIcon="@Icons.Material.Filled.Print"
+                                   AdornmentColor="Color.Default">
+                            <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                            <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                            <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                            <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudSelect @bind-Value="Produto.ImpressoraComanda2"
+                                   T="string"
+                                   Label="Comanda 2"
+                                   Variant="Variant.Outlined"
+                                   AdornmentIcon="@Icons.Material.Filled.Print"
+                                   AdornmentColor="Color.Default">
+                            <MudSelectItem Value="@("Cz1")">Cozinha 1</MudSelectItem>
+                            <MudSelectItem Value="@("Cz2")">Cozinha 2</MudSelectItem>
+                            <MudSelectItem Value="@("Cz3")">Cozinha 3</MudSelectItem>
+                            <MudSelectItem Value="@("Bar")">Bar</MudSelectItem>
+                            <MudSelectItem Value="@("Nao")">Não Imprime</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+
+                    @* Grupos de Complementos *@
+                    <MudItem xs="12">
+                        <MudExpansionPanels Elevation="3">
+                            <MudExpansionPanel Text="Grupos de Complementos"
+                                              Expanded="false"
+                                              Style="border-left: 4px solid var(--mud-palette-success); background-color: var(--mud-palette-surface);"
+                                              TitleClass="font-weight-bold">
+                                <MudStack Spacing="3">
+                                    <MudSelect T="ClsGrupoDeComplemento"
+                                               MultiSelection="true"
+                                               SelectedValues="@GruposDeSelecionados"
+                                               SelectedValuesChanged="OnGruposComplementoChanged"
+                                               ToStringFunc="g => g.Descricao"
+                                               Label="Selecione os grupos"
+                                               Variant="Variant.Outlined"
+                                               AdornmentIcon="@Icons.Material.Filled.LibraryAdd"
+                                               AdornmentColor="Color.Success"
+                                               AnchorOrigin="Origin.BottomCenter">
+                                        @foreach (var gc in GruposDeComplementosDisponiveis)
+                                        {
+                                            <MudSelectItem Value="@gc">@gc.Descricao</MudSelectItem>
+                                        }
+                                    </MudSelect>
+
+                                    @if (GruposDeSelecionados.Any())
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Configure o mínimo e máximo de escolhas por grupo:</MudText>
+                                        @foreach (var gc in GruposDeSelecionados)
+                                        {
+                                            <MudPaper Outlined="true" Class="pa-3">
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                                    <MudText Style="min-width:160px; font-weight:500" Class="flex-grow-1">@gc.Descricao</MudText>
+                                                    <MudNumericField T="int"
+                                                                     @bind-Value="gc.QtdMin"
+                                                                     Label="Mín"
+                                                                     Variant="Variant.Outlined"
+                                                                     UserAttributes="@_selectAll"
+                                                                     Min="0" Max="99"
+                                                                     HideSpinButtons="true"
+                                                                     Style="max-width:80px" />
+                                                    <MudNumericField T="int"
+                                                                     @bind-Value="gc.QtdMax"
+                                                                     Label="Máx"
+                                                                     Variant="Variant.Outlined"
+                                                                     UserAttributes="@_selectAll"
+                                                                     Min="0" Max="99"
+                                                                     HideSpinButtons="true"
+                                                                     Style="max-width:80px" />
+                                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                                   Color="Color.Error"
+                                                                   Size="Size.Small"
+                                                                   OnClick="@(() => GruposDeSelecionados.Remove(gc))" />
+                                                </MudStack>
+                                            </MudPaper>
+                                        }
+                                    }
+                                </MudStack>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+
+                    @* Mais opções *@
+                    <MudItem xs="12">
+                        <MudExpansionPanels Elevation="3" MultiExpansion="true">
+                            <MudExpansionPanel Text="Mais opções"
+                                              Expanded="false"
+                                              Style="border-left: 4px solid var(--mud-palette-primary); background-color: var(--mud-palette-surface);"
+                                              TitleClass="font-weight-bold"
+                                              Class="mb-2">
+                                <MudGrid Spacing="2" Justify="Justify.Center">
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Fracionado?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.Fracionado" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Tipo de venda</MudText>
+                                        <MudRadioGroup T="string" @bind-Value="Produto.TipoDeVenda" Class="d-flex justify-content-center">
+                                            <MudRadio Value="@("Q")" Color="Color.Primary">Qtd</MudRadio>
+                                            <MudRadio Value="@("V")" Color="Color.Primary">Valor</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Obs na venda?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.ObsNaVenda" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Forma de venda</MudText>
+                                        <MudRadioGroup T="string" @bind-Value="Produto.FormaDeVenda" Class="d-flex justify-content-center">
+                                            <MudRadio Value="@("unidade")" Color="Color.Primary">Unidade</MudRadio>
+                                            <MudRadio Value="@("peso")" Color="Color.Primary">Peso</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Vende pela internet?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.UltilizaProdutoOnline" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Usa na balança?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.UltilizaProdutoNaBalanca" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Ocultar no app?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.OcultaTablet" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Ocultar do gestor?</MudText>
+                                        <MudRadioGroup T="bool" @bind-Value="Produto.OcultaDoGestor" Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                        <MudText Typo="Typo.caption" Align="Align.Center">Item resgatável por pontos?</MudText>
+                                        <MudRadioGroup T="bool"
+                                                       Value="Produto.ItemResgatavel"
+                                                       ValueChanged="@(v => { Produto.ItemResgatavel = v; StateHasChanged(); })"
+                                                       Class="d-flex justify-content-center">
+                                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                                        </MudRadioGroup>
+                                    </MudItem>
+                                    @if (Produto.ItemResgatavel)
+                                    {
+                                        <MudItem xs="6" sm="4" Class="d-flex flex-column align-items-center">
+                                            <MudNumericField T="int"
+                                                             @bind-Value="Produto.AcumulaQuanto"
+                                                             Label="Qtd que acumula"
+                                                             Variant="Variant.Outlined"
+                                                             UserAttributes="@_selectAll"
+                                                             Step="1" Min="0" Max="100" />
+                                        </MudItem>
+                                    }
+                                    <MudItem xs="12" sm="6">
+                                        <MudNumericField T="float"
+                                                         @bind-Value="Produto.TaxaDeViagem"
+                                                         Label="Valor da Embalagem"
+                                                         Format="N2"
+                                                         Culture="_pt"
+                                                         HideSpinButtons="true"
+                                                         Variant="Variant.Outlined" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel Text="Tributação"
+                                              Expanded="false"
+                                              Style="border-left: 4px solid var(--mud-palette-warning); background-color: var(--mud-palette-surface);"
+                                              TitleClass="font-weight-bold"
+                                              Class="mb-2">
+                                <MudGrid Spacing="2">
+
+                                    @* NCM + CEST *@
+                                    <MudItem xs="12" sm="4">
+                                        <MudTextField T="string"
+                                                      Value="Produto.NCM"
+                                                      DebounceInterval="500"
+                                                      ValueChanged="MudouValorNcm"
+                                                      Label="NCM"
+                                                      MaxLength="8"
+                                                      Variant="Variant.Outlined" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="8">
+                                        <MudStack Spacing="1">
+                                            <MudSelect T="Cest"
+                                                       Label="CEST"
+                                                       Variant="Variant.Outlined"
+                                                       Value="CestSelecionado"
+                                                       Clearable="true"
+                                                       ValueChanged="OnCestChanged">
+                                                @if (!ListaDeCests.Any())
+                                                {
+                                                    <MudSelectItem Disabled="true" Value="@(default(Cest))">Nenhum CEST encontrado</MudSelectItem>
+                                                }
+                                                @foreach (var cest in ListaDeCests)
+                                                {
+                                                    <MudSelectItem Value="@cest">@cest.CestReferente - @cest.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                            @if (InsereuCestManualmente)
+                                            {
+                                                <MudTextField T="string"
+                                                              @bind-Value="Produto.CEST"
+                                                              Label="CEST Manual"
+                                                              Variant="Variant.Outlined" />
+                                            }
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => InsereuCestManualmente = !InsereuCestManualmente)">
+                                                Inserir CEST manual
+                                            </MudButton>
+                                        </MudStack>
+                                    </MudItem>
+
+                                    @* CST ou CSOSN *@
+                                    <MudItem xs="12">
+                                        @if (AppState.MerchantLogado.CrtMerchant == 1)
+                                        {
+                                            <MudSelect @bind-Value="Produto.CSOSNSelected"
+                                                       T="CSOSN"
+                                                       ToStringFunc="g => g.Descricao"
+                                                       Label="CSOSN"
+                                                       Variant="Variant.Outlined">
+                                                @foreach (var csosn in ListaDeCSOSN)
+                                                {
+                                                    <MudSelectItem Value="@csosn">@csosn.Id - @csosn.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        }
+                                        else
+                                        {
+                                            <MudSelect @bind-Value="Produto.CSTSelected"
+                                                       T="CST"
+                                                       ToStringFunc="g => g.Descricao"
+                                                       Label="CST"
+                                                       Variant="Variant.Outlined">
+                                                @foreach (var cst in ListaDeCSTS)
+                                                {
+                                                    <MudSelectItem Value="@cst">@cst.Id - @cst.Descricao</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        }
+                                    </MudItem>
+
+                                    @* Alíquota *@
+                                    <MudItem xs="12">
+                                        <MudSelect @bind-Value="Produto.Aliquota"
+                                                   T="ClsAliquota"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Alíquota"
+                                                   Variant="Variant.Outlined"
+                                                   AdornmentIcon="@Icons.Material.Filled.Percent"
+                                                   AdornmentColor="Color.Default">
+                                            @foreach (var aliquota in ListaDeAliquotas)
+                                            {
+                                                <MudSelectItem Value="@aliquota">@aliquota.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+
+                                    @* Tributação PIS/COFINS *@
+                                    <MudItem xs="12">
+                                        <MudSelect @bind-Value="Produto.TribPisCofinsSelected"
+                                                   T="ClsTribPisConfins"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Tributação PIS/COFINS"
+                                                   Variant="Variant.Outlined"
+                                                   Clearable="true">
+                                            @foreach (var trib in ListaDeTibPisCOnfins)
+                                            {
+                                                <MudSelectItem Value="@trib">@trib.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+
+                                    @* Origem do produto *@
+                                    <MudItem xs="12">
+                                        <MudSelect @bind-Value="Produto.OrigemProdutoSelected"
+                                                   T="ClsOrigemProduto"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="Origem do Produto"
+                                                   Variant="Variant.Outlined"
+                                                   Clearable="true">
+                                            @foreach (var origem in ListaDeOrigemDoProdutos)
+                                            {
+                                                <MudSelectItem Value="@origem">@origem.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+
+                                </MudGrid>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudItem>
+
+                </MudGrid>
+            </MudPaper>
+
+            @* Ações *@
+            <MudPaper Elevation="2" Class="pa-3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               StartIcon="@Icons.Material.Filled.Cancel"
+                               OnClick="Cancelar">
+                        Cancelar e sair
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AddCircle"
+                               OnClick="AdicionarProdutoEContinuar"
+                               Disabled="isSaving">
+                        @if (isSaving)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        }
+                        Adicionar e continuar
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
+            @* Lista dos cadastrados na sessão *@
+            @if (ProdutosCadastrados.Count > 0)
+            {
+                <MudPaper Elevation="2" Class="pa-3">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Cadastrados nesta sessão</MudText>
+                    <MudTable Items="ProdutosCadastrados" Dense="true" Hover="true" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Código</MudTh>
+                            <MudTh>Nome</MudTh>
+                            <MudTh>Grupo</MudTh>
+                            <MudTh>Preço(s)</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.CodigoInterno</MudTd>
+                            <MudTd>@context.Descricao</MudTd>
+                            <MudTd>@context.Grupo?.Descricao</MudTd>
+                            <MudTd>@string.Join(" | ", context.Precos.Select(p => p.Valor.ToString("C", _pt)))</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            }
+
+        </MudStack>
+    }
+
+</MudPaper>
+
+@code {
+
+    [Parameter] public string? idProdutoBase { get; set; }
+    [Parameter][SupplyParameterFromQuery] public string? cilp { get; set; }
+
+    private ClsProduto Produto { get; set; } = new ClsProduto();
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private string NovoCodigoRecomendado = "0000";
+    private List<ClsProduto> ProdutosCadastrados { get; set; } = new();
+    private MudTextField<string>? _campoNome;
+    private bool _focarDescricao = false;
+    private static readonly Dictionary<string, object> _selectAll = new() { ["onclick"] = "this.select()" };
+
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    private List<ClsGrupo> Grupos { get; set; } = new();
+    private List<Categoria> Categorias { get; set; } = new()
+    {
+        new Categoria { Descricao = "INSUMO", Id = 1 },
+        new Categoria { Descricao = "CARDÁPIO", Id = 2 },
+        new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 }
+    };
+    private List<ClsAliquota> ListaDeAliquotas { get; set; } = new();
+    public List<CST> ListaDeCSTS = CST.Lista;
+    public List<CSOSN> ListaDeCSOSN = CSOSN.Lista;
+    public List<ClsTribPisConfins> ListaDeTibPisCOnfins = ClsTribPisConfins.Lista;
+    public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
+    public List<Cest> ListaDeCests { get; set; } = new();
+    private Cest? CestSelecionado;
+    private bool InsereuCestManualmente = false;
+
+    private List<ClsGrupoDeComplemento> GruposDeComplementosDisponiveis { get; set; } = new();
+    private List<ClsGrupoDeComplemento> GruposDeSelecionados { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await Task.WhenAll(AtualizaGrupos(), AtualizaAliquotas(), AtualizaGruposDeComplementos());
+
+            ClsProduto? produtoBase = null;
+
+            if (!string.IsNullOrWhiteSpace(idProdutoBase))
+            {
+                produtoBase = await ProdutoService.GetProdutoAsync(idProdutoBase);
+            }
+
+            InicializarCodigo(cilp ?? produtoBase?.CodigoInterno);
+            await AplicarProdutoBase(produtoBase);
+
+            // Pré-popula grupos de complementos do produto base
+            // Usa as referências reais de GruposDeComplementosDisponiveis para o MudSelect reconhecer como selecionados
+            if (produtoBase?.GruposDeComplementosDoProduto is { Count: > 0 })
+            {
+                GruposDeSelecionados = produtoBase.GruposDeComplementosDoProduto
+                    .Select(r =>
+                    {
+                        var disponivel = GruposDeComplementosDisponiveis.FirstOrDefault(g => g.Id == r.Grupo.Id);
+                        if (disponivel is null) return null;
+                        disponivel.QtdMin = r.QtdMin;
+                        disponivel.QtdMax = r.QtdMax;
+                        return disponivel;
+                    })
+                    .Where(g => g is not null)
+                    .Select(g => g!)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            _focarDescricao = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_focarDescricao && _campoNome is not null)
+        {
+            _focarDescricao = false;
+            await _campoNome.FocusAsync();
+        }
+    }
+
+    private void InicializarCodigo(string? ultimoCodigo)
+    {
+        if (!string.IsNullOrWhiteSpace(ultimoCodigo) && int.TryParse(ultimoCodigo.Trim(), out int codigo))
+        {
+            codigo++;
+            NovoCodigoRecomendado = codigo.ToString("D4");
+        }
+        else
+        {
+            NovoCodigoRecomendado = "0001";
+        }
+    }
+
+    // Aplica os atributos de um produto base (clonando), ou inicializa com defaults se null
+    private async Task AplicarProdutoBase(ClsProduto? base_)
+    {
+        CestSelecionado = null;
+        ListaDeCests = new();
+        InsereuCestManualmente = false;
+
+        if (base_ is null)
+        {
+            Produto = new ClsProduto
+            {
+                CodigoInterno = NovoCodigoRecomendado,
+                Categoria = new Categoria { Id = 2, Descricao = "CARDÁPIO" },
+                TamanhoUnico = true,
+                TipoDeVenda = "Q",
+                FormaDeVenda = "unidade",
+                ImpressoraComanda1 = "Nao",
+                ImpressoraComanda2 = "Nao",
+                Precos = new List<Preco> { new Preco { DescricaoDoTamanho = "Padrão", Valor = 0f } },
+                CSTSelected = ListaDeCSTS.FirstOrDefault(x => x.Id == 0) ?? new CST { Id = 0, Descricao = "Não definido" },
+                CSOSNSelected = ListaDeCSOSN.FirstOrDefault(x => x.Id == 0) ?? new CSOSN { Id = 0, Descricao = "Não definido" },
+                OrigemProdutoSelected = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == 0) ?? new ClsOrigemProduto { Id = 0, Descricao = "Não definido" },
+                TribPisCofinsSelected = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == 0) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" }
+            };
+            Produto.CategoriaId = Produto.Categoria.Id;
+            return;
+        }
+
+        // Resolve tributação a partir dos campos string (como a API retorna) ou dos objetos já populados
+        var cstId = int.TryParse(base_.CST, out int ci) ? ci : base_.CSTSelected?.Id ?? 0;
+        var csosnId = int.TryParse(base_.csosn, out int csi) ? csi : base_.CSOSNSelected?.Id ?? 0;
+        var origId = int.TryParse(base_.OrigemProduto, out int oi) ? oi : base_.OrigemProdutoSelected?.Id ?? 0;
+        var tribId = int.TryParse(base_.TribPisCofins, out int ti) ? ti : base_.TribPisCofinsSelected?.Id ?? 0;
+
+        var cstResolvido = ListaDeCSTS.FirstOrDefault(x => x.Id == cstId) ?? new CST { Id = 0, Descricao = "Não definido" };
+        var csosnResolvido = ListaDeCSOSN.FirstOrDefault(x => x.Id == csosnId) ?? new CSOSN { Id = 0, Descricao = "Não definido" };
+        var origResolvida = ListaDeOrigemDoProdutos.FirstOrDefault(x => x.Id == origId) ?? new ClsOrigemProduto { Id = 0, Descricao = "Não definido" };
+        var tribResolvida = ListaDeTibPisCOnfins.FirstOrDefault(x => x.Id == tribId) ?? new ClsTribPisConfins { Id = 0, Descricao = "Não definido" };
+        var aliquotaResolvida = base_.Aliquota ?? ListaDeAliquotas.FirstOrDefault();
+
+        // Clona todos os atributos do produto base
+        Produto = new ClsProduto
+        {
+            Id = null,
+            CodigoInterno = NovoCodigoRecomendado,
+            Descricao = string.Empty,       // nome sempre limpo para o usuário digitar
+            CodBarras = string.Empty,       // código de barras sempre limpo
+
+            Categoria = base_.Categoria,
+            CategoriaId = base_.CategoriaId,
+            Grupo = base_.Grupo,
+            GrupoId = base_.GrupoId,
+
+            TamanhoUnico = base_.TamanhoUnico,
+            Fracionado = base_.Fracionado,
+            TipoDeVenda = base_.TipoDeVenda,
+            FormaDeVenda = base_.FormaDeVenda,
+            ObsNaVenda = base_.ObsNaVenda,
+            UltilizaProdutoOnline = base_.UltilizaProdutoOnline,
+            UltilizaProdutoNaBalanca = base_.UltilizaProdutoNaBalanca,
+            OcultaTablet = base_.OcultaTablet,
+            OcultaDoGestor = base_.OcultaDoGestor,
+            ItemResgatavel = base_.ItemResgatavel,
+            AcumulaQuanto = base_.AcumulaQuanto,
+            TaxaDeViagem = base_.TaxaDeViagem,
+
+            PrecoCusto = base_.PrecoCusto,
+            QtdEmEstoque = 0,               // estoque sempre zerado para novo produto
+
+            ImpressoraComanda1 = base_.ImpressoraComanda1 ?? "Nao",
+            ImpressoraComanda2 = base_.ImpressoraComanda2 ?? "Nao",
+
+            NCM = base_.NCM,
+            CEST = base_.CEST,
+
+            CSTSelected = cstResolvido,
+            CSOSNSelected = csosnResolvido,
+            Aliquota = aliquotaResolvida,
+            TribPisCofinsSelected = tribResolvida,
+            OrigemProdutoSelected = origResolvida,
+
+            // Clona preços com IDs nulos
+            Precos = base_.Precos.Select(p => new Preco
+            {
+                Id = null,
+                DescricaoDoTamanho = p.DescricaoDoTamanho,
+                Valor = p.Valor
+            }).ToList()
+        };
+
+        // Reconstrói CEST a partir do NCM clonado
+        if (!string.IsNullOrWhiteSpace(Produto.NCM))
+        {
+            try
+            {
+                var resposta = await ProdutoService.GetCestsAsync(Produto.NCM);
+                if (resposta.Status != "error")
+                    ListaDeCests = resposta.Data.Lista ?? new();
+
+                if (!string.IsNullOrWhiteSpace(Produto.CEST))
+                    CestSelecionado = ListaDeCests.FirstOrDefault(c => c.CestReferente == Produto.CEST);
+            }
+            catch { /* silencioso — CEST não é crítico */ }
+        }
+    }
+
+    private void OnCestChanged(Cest? cest)
+    {
+        CestSelecionado = cest;
+        Produto.CEST = cest?.CestReferente ?? string.Empty;
+    }
+
+    private async Task MudouValorNcm(string novoValor)
+    {
+        Produto.NCM = novoValor;
+        if (novoValor.Length <= 8)
+        {
+            try
+            {
+                var resposta = await ProdutoService.GetCestsAsync(Produto.NCM);
+                if (resposta.Status != "error")
+                    ListaDeCests = resposta.Data.Lista ?? new();
+
+                if (ListaDeCests?.Count == 1)
+                    OnCestChanged(ListaDeCests.First());
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao obter CEST: {ex.Message}", Severity.Error);
+            }
+        }
+        else
+        {
+            CestSelecionado = null;
+            Produto.CEST = string.Empty;
+            ListaDeCests = new();
+        }
+
+        StateHasChanged();
+    }
+
+    private void AjustarPrecos()
+    {
+        if (Produto.Precos.Count == 0)
+            Produto.Precos.Add(new Preco { DescricaoDoTamanho = Produto.TamanhoUnico ? "Padrão" : "Novo Tamanho", Valor = 0f });
+    }
+
+    private void AdicionarPreco()
+    {
+        Produto.Precos.Add(new Preco { DescricaoDoTamanho = "Novo Tamanho", Valor = 0f });
+    }
+
+    private void RemoverPreco(Preco preco)
+    {
+        if (Produto.Precos.Count > 1)
+            Produto.Precos.Remove(preco);
+    }
+
+    private async Task AdicionarProdutoEContinuar()
+    {
+        if (string.IsNullOrWhiteSpace(Produto.Descricao))
+        {
+            Snackbar.Add("Informe o nome do produto.", Severity.Warning);
+            return;
+        }
+
+        if (Produto.Grupo is null || !Grupos.Any(g => g.Id == Produto.Grupo.Id))
+        {
+            Snackbar.Add("Grupo inválido ou não encontrado. Selecione um grupo da lista.", Severity.Warning);
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            Produto.Id = null;
+            Produto.CodigoInterno = NovoCodigoRecomendado;
+            Produto.CategoriaId = Produto.Categoria?.Id ?? 2;
+            Produto.GrupoId = Produto.Grupo?.Id ?? 0;
+
+            foreach (var preco in Produto.Precos)
+                preco.Id = null;
+
+            var resposta = await ProdutoService.AdicionaProdutoAsync(Produto);
+
+            if (resposta.Status == "success")
+            {
+                var idProdutoCriado = resposta.Data?.Objeto?.Id;
+
+                // Vincula grupos de complementos silenciosamente
+                if (!string.IsNullOrWhiteSpace(idProdutoCriado) && GruposDeSelecionados.Any())
+                {
+                    var errosDeVinculo = new List<string>();
+                    foreach (var gc in GruposDeSelecionados)
+                    {
+                        var vinculo = await ComplementosServices.VincularGrupoDeComplementoAoProduto(
+                            new ClsGruposDeComplementosDoProduto
+                            {
+                                ProdutoId = idProdutoCriado,
+                                GrupoId = gc.Id,
+                                QtdMin = gc.QtdMin,
+                                QtdMax = gc.QtdMax
+                            });
+
+                        if (vinculo.Status == "error")
+                            errosDeVinculo.Add(gc.Descricao);
+                    }
+
+                    if (errosDeVinculo.Any())
+                        Snackbar.Add($"Produto criado, mas houve erro ao vincular: {string.Join(", ", errosDeVinculo)}", Severity.Warning);
+                }
+
+                Snackbar.Add($"Produto \"{Produto.Descricao}\" adicionado!", Severity.Success);
+
+                ProdutosCadastrados.Add(new ClsProduto
+                {
+                    CodigoInterno = Produto.CodigoInterno,
+                    Descricao = Produto.Descricao,
+                    Grupo = Produto.Grupo,
+                    Precos = Produto.Precos.Select(p => new Preco { DescricaoDoTamanho = p.DescricaoDoTamanho, Valor = p.Valor }).ToList()
+                });
+
+                // Incrementa código e clona atributos do produto recém-salvo
+                var produtoAnterior = Produto;
+                InicializarCodigo(Produto.CodigoInterno);
+                await AplicarProdutoBase(produtoAnterior);
+                _focarDescricao = true;
+                StateHasChanged(); // garante render dedicado para OnAfterRenderAsync capturar a flag
+            }
+            else
+            {
+                var errorMessage = string.Join(", ", resposta.Data?.Messages ?? new List<string>());
+                Snackbar.Add($"Erro ao adicionar produto: {errorMessage}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Cancelar()
+    {
+        Navigation.NavigateTo("/produtos");
+    }
+
+    private async Task AtualizaGrupos()
+    {
+        try { Grupos = await GrupoService.GetGrupos() ?? new(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private async Task AtualizaGruposDeComplementos()
+    {
+        try { GruposDeComplementosDisponiveis = await ComplementosServices.GetGruposDeComplementos() ?? new(); }
+        catch (Exception ex) { Snackbar.Add($"Erro ao carregar grupos de complementos: {ex.Message}", Severity.Error); }
+    }
+
+    private void OnGruposComplementoChanged(IEnumerable<ClsGrupoDeComplemento> novos)
+    {
+        // Preserva QtdMin/QtdMax dos que já estavam selecionados.
+        // Usa a referência real de GruposDeComplementosDisponiveis (que é o próprio "g" vindo do MudSelect)
+        // para garantir que o MudSelect continue reconhecendo os itens como selecionados.
+        var existentes = GruposDeSelecionados.ToDictionary(g => g.Id);
+
+        GruposDeSelecionados = novos.Select(g =>
+        {
+            if (existentes.TryGetValue(g.Id, out var existente))
+                return existente; // já tem QtdMin/QtdMax definidos pelo usuário
+
+            // g é a referência real de GruposDeComplementosDisponiveis — só inicializa os campos de UI
+            g.QtdMin = 0;
+            g.QtdMax = 1;
+            return g;
+        }).ToList();
+    }
+
+    private async Task AtualizaAliquotas()
+    {
+        try { ListaDeAliquotas = await AliquotaService.GetAliquotas() ?? new(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private async Task OpenDialogAddGrupoAsync()
+    {
+        var parameters = new DialogParameters { { "Grupos", Grupos } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarGrupo>("Adicionar Grupo", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add("Grupo adicionado com sucesso!", Severity.Success);
+            await AtualizaGrupos();
+            StateHasChanged();
+        }
+    }
+
+}

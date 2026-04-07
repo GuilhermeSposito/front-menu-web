@@ -328,6 +328,11 @@
     {
         if (firstRender)
         {
+            // Solicita permissão de download automático ao navegador (só na primeira vez)
+            bool permissaoConcedida = await JS.InvokeAsync<bool>("requestDownloadPermission");
+            if (!permissaoConcedida)
+                Snackbar.Add("Permita downloads automáticos nas configurações do navegador para que a impressão de pedidos funcione corretamente.", MudBlazor.Severity.Warning);
+
             _pedidoRecebidoGlobalHandler = pedido => InvokeAsync(() => ImprimirPedidoGlobal(pedido));
             _pedidoMesaRecebidoGlobalHandler = pedido => InvokeAsync(() => ImprimirPedidoMesaGlobal(pedido));
 
@@ -359,9 +364,9 @@
                     {
                         if (pedido.StatusPedido != "ABERTO")
                         {
-                            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
-                            await PedidoService.UpdatePedidoImpresso(pedido);
                             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                            bool baixou = await JS.InvokeAsync<bool>("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+                            if (baixou) await PedidoService.UpdatePedidoImpresso(pedido);
 
 
                             if (pedido.CriadoPor == "SOPHOS CARDAPIO" && pedido.StatusPedido != "ABERTO")

@@ -51,11 +51,16 @@ public class ProdutoService
         return deserializedResponse ?? new ReturnApiRefatored<Cest> { Status = "error", Messages = new List<string> { "Erro ao obter Cest" } };
     }
 
+    private static readonly JsonSerializerOptions _opcoesComCaseInsensitive = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals
+    };
+
     public async Task<ClsProduto> GetProdutoAsync(string ProdutoID)
     {
-        ClsProduto response = await _http.GetFromJsonAsync<ClsProduto>($"produtos/{ProdutoID}") ?? new ClsProduto();
-
-        return response;
+        ClsProduto produto = await _http.GetFromJsonAsync<ClsProduto>($"produtos/{ProdutoID}", _opcoesComCaseInsensitive) ?? new ClsProduto();
+        return produto;
     }
 
     public async Task<ClsProduto?> GetProdutoPorCodigoInternoAsync(string MerchantSophosId, string cod)
@@ -92,11 +97,13 @@ public class ProdutoService
         return response!;
     }
 
-    public async Task<HttpResponseMessage> AdicionaProdutoAsync(ClsProduto produto)
+    public async Task<ReturnApiRefatored<ClsProduto>> AdicionaProdutoAsync(ClsProduto produto)
     {
         var response = await _http.PostAsJsonAsync<ClsProduto>($"produtos/create", produto);
 
-        return response;
+        var content = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsProduto>>();
+
+        return content;
     }
 
     public async Task<HttpResponseMessage> EditaProduto(ClsProduto produto)
@@ -140,14 +147,14 @@ public class ProdutoService
     }
 
 
-    public async Task<ReturnApiRefatored<ClsProduto>> AdicionarFotoAoProduto(MemoryStream ms,string filename, string IdProduto)
+    public async Task<ReturnApiRefatored<ClsProduto>> AdicionarFotoAoProduto(MemoryStream ms, string filename, string IdProduto)
     {
         using var content = new MultipartFormDataContent();
 
-        var fileContent = new ByteArrayContent(ms.ToArray()); 
-        fileContent.Headers.ContentType =new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        var fileContent = new ByteArrayContent(ms.ToArray());
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
         content.Add(fileContent, "foto", filename);
-        var response = await _http.PatchAsync($"produtos/update/imagem/{IdProduto}", content );
+        var response = await _http.PatchAsync($"produtos/update/imagem/{IdProduto}", content);
 
         var resultado = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsProduto>>();
 

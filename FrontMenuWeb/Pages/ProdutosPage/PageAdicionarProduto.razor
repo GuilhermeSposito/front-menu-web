@@ -915,14 +915,14 @@
 
             var resposta = await ProdutoService.AdicionaProdutoAsync(Produto);
 
-            if (resposta.IsSuccessStatusCode)
+            if (resposta.Status == "success")
             {
                 Snackbar.Add("Produto adicionado com sucesso!", Severity.Success);
                 await BackToPage(true);
             }
             else
             {
-                var errorMessage = await resposta.Content.ReadAsStringAsync();
+                var errorMessage = string.Join(",", resposta.Messages);
                 throw new Exception($"Erro ao adicionar produto: {errorMessage}");
             }
         }

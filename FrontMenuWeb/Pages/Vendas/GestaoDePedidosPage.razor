@@ -778,9 +778,10 @@
                     if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
                     {
                         var response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
-                        if (response.Status == "success"){
-                            await ImprimirPedido(item.Pedido, false);
-                            await PedidosService.UpdatePedidoImpresso(item.Pedido);
+                        if (response.Status == "success")
+                        {
+                            bool baixou = await ImprimirPedido(item.Pedido, false);
+                            if (baixou) await PedidosService.UpdatePedidoImpresso(item.Pedido);
                         }
                     }
 
@@ -969,8 +970,8 @@
                     {
                         Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
                         await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                        await ImprimirPedido(Pedido, false);
-                        await PedidosService.UpdatePedidoImpresso(Pedido);
+                        bool baixou = await ImprimirPedido(Pedido, false);
+                        if (baixou) await PedidosService.UpdatePedidoImpresso(Pedido);
                     }
             }
         }
@@ -1079,7 +1080,7 @@
     #endregion
 
     #region Funções de Impressão e WebSocket
-    private async Task ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true)
+    private async Task<bool> ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true)
     {
         bool confirmaImpressao = true;
 
@@ -1096,19 +1097,18 @@
             var result = await dialog.Result;
 
             confirmaImpressao = !result!.Canceled && result.Data is bool sucesso && sucesso;
-
         }
-        if (confirmaImpressao)
+
+        if (!confirmaImpressao) return false;
+
+        bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+        if (impressaoDesabilita)
         {
-            bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
-
-            if (!ImpressaoDesabilita)
-                await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
-            else
-                Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
-
+            Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+            return false;
         }
 
+        return await JS.InvokeAsync<bool>("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
     }
 
     private Task PedidoRecebidoHandler(ClsPedido pedido)
@@ -1155,11 +1155,8 @@
                         if (pedido.CriadoPor != "SOPHOS")
                         {
                             await VizualizaSeNaoExistePedidoNaTela(pedido);
-
-                        }
-                        else
-                        {
-                            await PedidosService.UpdatePedidoImpresso(pedido);
+                            bool baixou = await ImprimirPedido(pedido, false);
+                            if (baixou) await PedidosService.UpdatePedidoImpresso(pedido);
                         }
                     }
                 }
@@ -1211,9 +1208,6 @@
                 //if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
                 //await VerificaPedidosNaoImpressos();
 
-                if (!novoPedido.PedidoAgendado)
-                    await PedidosService.UpdatePedidoImpresso(novoPedido);
-
                 await InvokeAsync(StateHasChanged);
                 return;
             }
@@ -1244,17 +1238,6 @@
             });
 
             await InvokeAsync(StateHasChanged);
-        }
-
-        /**if (pedido.EtapaPedido == "PREPARANDO")
-            await EnviaMensagemNoWhatsAppDeUpdateDoPedido(pedido, EtapasPedido.PREPARANDO);*/
-
-        if (pedido.CriadoPor != "SOPHOS")
-        {
-            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!pedido.PedidoAgendado && !(pedido.StatusPedido == "ABERTO")))
-            {
-                await PedidosService.UpdatePedidoImpresso(pedido);
-            }
         }
     }
     #endregion
