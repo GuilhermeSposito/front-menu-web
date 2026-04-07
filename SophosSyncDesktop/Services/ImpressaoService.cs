@@ -1,5 +1,6 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
 using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
 using SophosSyncDesktop.DataBase.Db;
@@ -296,6 +297,34 @@ public class ImpressaoService
             Console.Write(ex.ToString());
         }
     }
+
+    public async Task ImprimirFechamentoMotoboy(string jsonDoFechamentoDoMotoboy)
+    {
+        try
+        {
+            AtualizaTamanhoDeFontesParametrizados();
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                ClsResumoExpedicao Fechamento = JsonSerializer.Deserialize<ClsResumoExpedicao>(jsonDoFechamentoDoMotoboy) ?? throw new Exception("Erro ao desserializr fechamento");
+
+                //primeiro imprime pedido
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+                {
+                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDoFechamentodeMotoboyParaImpressao(Fechamento);
+                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 14);
+                }
+
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+
+
 
     #endregion
 
@@ -648,7 +677,7 @@ public class ImpressaoService
     }
     #endregion
 
-    #region Definição do fechamento de caixa para impressão
+    #region Definição do fechamento de caixa e motoboy para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentoParaImpressao(ClsFechamentoDeCaixa Fechamento)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
@@ -723,6 +752,33 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
+        return Conteudo;
+    }
+
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentodeMotoboyParaImpressao(ClsResumoExpedicao fechamento)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"FECHAMENTO DOS MOTOBOYS", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, $"{fechamento.GeradoEm:G}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"MOTOBOY(S) SELECIONADO(S)", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //-----------------------------------------------------------------------------------------
+        AdicionaConteudo(Conteudo, $"NOME        TELEFONE         VALOR TOTAL", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //-----------------------------------------------------------------------------------------
+        foreach (var motoboy in fechamento.Motoboys)
+        {
+            AdicionaConteudo(Conteudo, $"{motoboy.Nome} - {motoboy.Telefone}", FonteFechamentoDeCaixa);
+        }
+
+
         return Conteudo;
     }
     #endregion

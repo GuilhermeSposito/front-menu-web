@@ -16,6 +16,7 @@ namespace SophosSyncDesktop;
 public partial class PaginaInicial : Form
 {
     private FileSystemWatcher watcherPedidos;
+    private FileSystemWatcher watcherFechamentosMotoboys;
     private FileSystemWatcher watcherFechamentos;
     private FileSystemWatcher WatcherNFs;
     private FileSystemWatcher WatcherMesas;
@@ -50,6 +51,7 @@ public partial class PaginaInicial : Form
         IniciarMonitoramentoMesa();
         IniciarMonitoramentoDeFechamentoDeCaixa();
         IniciarMonitoramentoDeNfs();
+        IniciarMonitoramentoFechamentoDeMotoboy();
 
     }
     protected override async void OnLoad(EventArgs e)
@@ -140,6 +142,61 @@ public partial class PaginaInicial : Form
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
                 await _impressaoService.Imprimir(conteudo, "SOPHOS");
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex) { Console.WriteLine("Erro ao imprimir pedido"); }
+        }
+    }
+    private void IniciarMonitoramentoFechamentoDeMotoboy()
+    {
+        try
+        {
+            if (watcherFechamentosMotoboys != null)
+            {
+                watcherFechamentosMotoboys.EnableRaisingEvents = false; // Para o monitoramento
+                watcherFechamentosMotoboys.Renamed -= OnWatcherRenamedFechamentoDeMotoboy; // Remove o evento (veja nota abaixo)
+                watcherFechamentosMotoboys.Dispose(); // Limpa da memória
+            }
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                {
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+                }
+
+                watcherFechamentosMotoboys = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*", // todos os arquivos
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                watcherFechamentosMotoboys.Renamed += OnWatcherRenamedFechamentoDeMotoboy;
+
+                watcherFechamentosMotoboys.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Erro ao iniciar monitoramento de pedidos, Por favor abra o aplicativo novamente.", "erro", buttons: MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    private async void OnWatcherRenamedFechamentoDeMotoboy(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("fechamento-motoboys", StringComparison.OrdinalIgnoreCase) &&
+            !e.Name.Contains("MESA", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(100);
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                await _impressaoService.ImprimirFechamentoMotoboy(conteudo);
                 File.Delete(e.FullPath);
             }
             catch (Exception ex) { Console.WriteLine("Erro ao imprimir pedido"); }

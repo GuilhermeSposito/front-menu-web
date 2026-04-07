@@ -8,7 +8,6 @@ public class ClsResumoExpedicao
     [JsonPropertyName("quantidadePedidos")] public int QuantidadePedidos { get; set; }
     [JsonPropertyName("totalPedidos")] public float TotalPedidos { get; set; }
     [JsonPropertyName("totalEntregas")] public float TotalEntregas { get; set; }
-    [JsonPropertyName("totalGeral")] public float TotalGeral { get; set; }
     [JsonPropertyName("motoboys")] public List<ClsResumoMotoboy> Motoboys { get; set; } = new();
     [JsonPropertyName("pagamentos")] public List<ClsResumoPagamento> Pagamentos { get; set; } = new();
     [JsonPropertyName("trocos")] public ClsResumoTrocos Trocos { get; set; } = new();
@@ -18,6 +17,7 @@ public class ClsResumoExpedicao
 public class ClsResumoMotoboy
 {
     [JsonPropertyName("nome")] public string Nome { get; set; } = string.Empty;
+    [JsonPropertyName("Telefone")] public string Telefone { get; set; } = string.Empty;
     [JsonPropertyName("quantidadePedidos")] public int QuantidadePedidos { get; set; }
     [JsonPropertyName("totalPedidos")] public float TotalPedidos { get; set; }
     [JsonPropertyName("totalEntregas")] public float TotalEntregas { get; set; }
