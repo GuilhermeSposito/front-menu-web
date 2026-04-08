@@ -10,22 +10,28 @@
 
             @* ── Totais gerais ── *@
             <MudGrid>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
                         <MudText Typo="Typo.caption" Color="Color.Tertiary">Pedidos</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Primary">@Resumo.QuantidadePedidos</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
                         <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Pedidos</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Success">@Resumo.TotalPedidos.ToString("C", _ptBR)</MudText>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="3">
                     <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
                         <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Entregas</MudText>
                         <MudText Typo="Typo.h6" Color="Color.Warning">@Resumo.TotalEntregas.ToString("C", _ptBR)</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="3">
+                    <MudPaper Class="pa-3 rounded-3" Elevation="1" Style="text-align:center;">
+                        <MudText Typo="Typo.caption" Color="Color.Tertiary">Total Dinheiro</MudText>
+                        <MudText Typo="Typo.h6" Color="Color.Info">@Resumo.TotalDinheiro.ToString("C", _ptBR)</MudText>
                     </MudPaper>
                 </MudItem>
             </MudGrid>

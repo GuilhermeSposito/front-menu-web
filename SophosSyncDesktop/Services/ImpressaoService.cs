@@ -41,6 +41,7 @@ public class ImpressaoService
     public Font FonteDetalhesDoPedido { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteLegendaDoTamanho { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteSophos { get; set; } = new Font("Montserrat", 15, FontStyle.Bold);
+    public Font FonteAlinhada { get; set; } = new Font("Courier New", 8, FontStyle.Bold);
     public int ValorEspacamento = 19;
     #endregion
 

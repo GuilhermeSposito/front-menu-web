@@ -321,13 +321,18 @@
             .OrderBy(p => p.FormaDePagamento)
             .ToList();
 
+        // Total em dinheiro
+        float totalDinheiro = todosPagamentos
+            .Where(p => p.FormaDePagamento?.EDinheiro == true)
+            .Sum(p =>p.Troco - p.ValorTotal);
+
         // Trocos
         var pagamentosComTroco = todosPagamentos.Where(p => p.Troco > 0).ToList();
         var trocos = new ClsResumoTrocos
         {
             HouveTroco = pagamentosComTroco.Any(),
-            TotalTrocos = pagamentosComTroco.Sum(p => p.Troco),
-            QuantidadePedidosComTroco = pares.Count(x => x.Pedido!.Pagamentos.Any(p => p.Troco > 0 - p.ValorTotal)),
+            TotalTrocos = pagamentosComTroco.Sum(p => p.ValorTotal - p.Troco),
+            QuantidadePedidosComTroco = pares.Count(x => x.Pedido!.Pagamentos.Any(p => p.Troco - p.ValorTotal > 0)),
         };
 
         // Detalhe por pedido
@@ -365,6 +370,7 @@
             Motoboys = porMotoboy,
             Pagamentos = porForma,
             Trocos = trocos,
+            TotalDinheiro = totalDinheiro,
             Pedidos = pedidosFechados,
         };
     }

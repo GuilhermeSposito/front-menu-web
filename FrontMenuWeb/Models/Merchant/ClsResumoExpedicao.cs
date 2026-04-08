@@ -11,6 +11,7 @@ public class ClsResumoExpedicao
     [JsonPropertyName("motoboys")] public List<ClsResumoMotoboy> Motoboys { get; set; } = new();
     [JsonPropertyName("pagamentos")] public List<ClsResumoPagamento> Pagamentos { get; set; } = new();
     [JsonPropertyName("trocos")] public ClsResumoTrocos Trocos { get; set; } = new();
+    [JsonPropertyName("totalDinheiro")] public float TotalDinheiro { get; set; }
     [JsonPropertyName("pedidos")] public List<ClsResumoPedidoFechado> Pedidos { get; set; } = new();
 }
 
