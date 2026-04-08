@@ -1,4 +1,5 @@
 using FrontMenuWeb.Models.Merchant;
+using FrontMenuWeb.Models.Pedidos;
 using Microsoft.Win32;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
@@ -20,6 +21,8 @@ public partial class PaginaInicial : Form
     private FileSystemWatcher watcherFechamentos;
     private FileSystemWatcher WatcherNFs;
     private FileSystemWatcher WatcherMesas;
+
+    private Dictionary<int, DateTime> PedidosImpressos = new Dictionary<int, DateTime>();
 
     private readonly ImpressaoService _impressaoService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
@@ -71,7 +74,7 @@ public partial class PaginaInicial : Form
 
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
-        SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
+        SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E vocÃª jÃ¡ estÃ¡ pronto para imprimir pedidos!";
         SophosSync.BalloonTipIcon = ToolTipIcon.Info;
         SophosSync.ShowBalloonTip(1000); // 1 segundos
 
@@ -88,7 +91,7 @@ public partial class PaginaInicial : Form
         if (e.CloseReason == CloseReason.UserClosing)
         {
             e.Cancel = true;   // Cancela o fechamento
-            this.Hide();       // Apenas esconde o formulário
+            this.Hide();       // Apenas esconde o formulï¿½rio
         }
     }
     private void IniciarMonitoramento()
@@ -99,7 +102,7 @@ public partial class PaginaInicial : Form
             {
                 watcherPedidos.EnableRaisingEvents = false; // Para o monitoramento
                 watcherPedidos.Renamed -= OnWatcherRenamedLeituraDePedido; // Remove o evento (veja nota abaixo)
-                watcherPedidos.Dispose(); // Limpa da memória
+                watcherPedidos.Dispose(); // Limpa da memï¿½ria
             }
 
             using (AppDbContext db = new AppDbContext())
@@ -141,6 +144,26 @@ public partial class PaginaInicial : Form
             try
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+
+                try
+                {
+                    ClsPedido? Pedido = JsonSerializer.Deserialize<ClsPedido>(conteudo);
+                    if (Pedido is not null)
+                    {
+                        if (PedidosImpressos.TryGetValue(Pedido.Id, out DateTime ultimaImpressao) && (DateTime.Now - ultimaImpressao).TotalSeconds < 10)
+                        {
+                            File.Delete(e.FullPath);
+                            return;
+                        }
+
+                        PedidosImpressos[Pedido.Id] = DateTime.Now;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
                 await _impressaoService.Imprimir(conteudo, "SOPHOS");
                 File.Delete(e.FullPath);
             }
@@ -155,7 +178,7 @@ public partial class PaginaInicial : Form
             {
                 watcherFechamentosMotoboys.EnableRaisingEvents = false; // Para o monitoramento
                 watcherFechamentosMotoboys.Renamed -= OnWatcherRenamedFechamentoDeMotoboy; // Remove o evento (veja nota abaixo)
-                watcherFechamentosMotoboys.Dispose(); // Limpa da memória
+                watcherFechamentosMotoboys.Dispose(); // Limpa da memï¿½ria
             }
 
             using (AppDbContext db = new AppDbContext())
@@ -384,13 +407,13 @@ public partial class PaginaInicial : Form
                     string mesAno = DateTime.Now.ToString("MM-yyyy");
                     string destino = CaminhoDeSalvamentoDaNfe + @$"\{mesAno}";
 
-                    // cria a pasta caso não exista
+                    // cria a pasta caso nï¿½o exista
                     if (!Directory.Exists(destino))
                         Directory.CreateDirectory(destino);
 
                     string destinoArquivo = Path.Combine(destino, e.Name);
 
-                    // Se já existir um arquivo com o mesmo nome, sobrescreve
+                    // Se jï¿½ existir um arquivo com o mesmo nome, sobrescreve
                     if (File.Exists(destinoArquivo))
                         File.Delete(destinoArquivo);
 
@@ -453,7 +476,7 @@ public partial class PaginaInicial : Form
             instancia.comboBoxImpressoraDanfe.Items.Add(imp);
         }
     }
-  
+
     private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
     {
         string? valorSelecionado = comboBox1.SelectedItem?.ToString();
@@ -463,11 +486,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraCaixa = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -490,11 +513,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraAux = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -517,11 +540,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraCz1 = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -544,11 +567,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraCz2 = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -571,11 +594,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraCz3 = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -598,11 +621,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraBar = valorSelecionado };
                 db.Impressoras.Add(config);
             }
@@ -620,7 +643,7 @@ public partial class PaginaInicial : Form
     {
         ConfigsGeral teste = new ConfigsGeral();
         teste.ShowDialog();
-        IniciarMonitoramento(); // Reinicia o monitoramento para pegar possíveis mudanças no caminho de salvamento
+        IniciarMonitoramento(); // Reinicia o monitoramento para pegar possï¿½veis mudanï¿½as no caminho de salvamento
         IniciarMonitoramentoMesa();
     }
     private void labeLogin_Click(object sender, EventArgs e)
@@ -637,11 +660,11 @@ public partial class PaginaInicial : Form
 
         using (AppDbContext db = new AppDbContext())
         {
-            // Verifica se já existe uma configuração salva
+            // Verifica se jï¿½ existe uma configuraï¿½ï¿½o salva
             var config = db.Impressoras.FirstOrDefault();
             if (config == null)
             {
-                // Se não existir, cria uma nova
+                // Se nï¿½o existir, cria uma nova
                 config = new ImpressorasConfigs { ImpressoraDanfe = valorSelecionado };
                 db.Impressoras.Add(config);
             }
