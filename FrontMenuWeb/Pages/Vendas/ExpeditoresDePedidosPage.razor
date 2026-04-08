@@ -316,7 +316,7 @@
                 FormaDePagamento = g.Key,
                 Quantidade = g.Count(),
                 Total = g.Sum(p => p.ValorTotal),
-                TotalTrocos = g.Sum(p => p.Troco),
+                TotalTrocos = g.Sum(p => p.Troco - p.ValorTotal),
             })
             .OrderBy(p => p.FormaDePagamento)
             .ToList();
@@ -327,7 +327,7 @@
         {
             HouveTroco = pagamentosComTroco.Any(),
             TotalTrocos = pagamentosComTroco.Sum(p => p.Troco),
-            QuantidadePedidosComTroco = pares.Count(x => x.Pedido!.Pagamentos.Any(p => p.Troco > 0)),
+            QuantidadePedidosComTroco = pares.Count(x => x.Pedido!.Pagamentos.Any(p => p.Troco > 0 - p.ValorTotal)),
         };
 
         // Detalhe por pedido

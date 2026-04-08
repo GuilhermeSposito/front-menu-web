@@ -768,16 +768,40 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================        
         AdicionaConteudo(Conteudo, $"MOTOBOY(S) SELECIONADO(S)", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //-----------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"NOME        TELEFONE         VALOR TOTAL", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"NOME     TELEFONE    QTDE    VALOR TOTAL", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //-----------------------------------------------------------------------------------------
         foreach (var motoboy in fechamento.Motoboys)
         {
-            AdicionaConteudo(Conteudo, $"{motoboy.Nome} - {motoboy.Telefone}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, $"{motoboy.Nome} - {motoboy.Telefone} - {motoboy.QuantidadePedidos} - {motoboy.TotalEntregas:C}", FonteFechamentoDeCaixa, eObs: true);
         }
+        AdicionaConteudo(Conteudo, $"\n", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"PEDIDOS ATRIBUIDOS", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"NMR     MOTOBOY    FORMA     VALOR TOTAL", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        //-----------------------------------------------------------------------------------------
+        foreach (var pedido in fechamento.Pedidos)
+        {
+            AdicionaConteudo(Conteudo, $"Nº{pedido.DisplayId} - {pedido.Motoboy}  {pedido.FormasDeRecebimento} - {pedido.ValorTotal:C}", FonteFechamentoDeCaixa, eObs: true);
+        }
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================        
+        AdicionaConteudo(Conteudo, $"FECHAMENTO (TOTALIZADORES)", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        //========================================================================================
+        if (fechamento.Trocos is not null && fechamento.Trocos.HouveTroco)
+            AdicionaConteudo(Conteudo, $"TROCO:                       {fechamento.Trocos.TotalTrocos:C}", FonteFechamentoDeCaixa, eObs: true);
 
+        AdicionaConteudo(Conteudo, $"TOTAL DOS PEDIDOS:           {fechamento.TotalPedidos:C}", FonteFechamentoDeCaixa, eObs: true);
+        AdicionaConteudo(Conteudo, $"VALOR A RECEBER:             {fechamento.TotalEntregas:C}", FonteFechamentoDeCaixa, eObs: true);
+
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
         return Conteudo;
     }
