@@ -1304,7 +1304,6 @@
                                 <MudGrid Class="d-flex align-items-stretch">
                                     <MudItem xs="12">
                                         <MudPaper Class="d-flex align-center justify-center py-8">
-
                                             <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.CodigoInterno Disabled="true" Class="w-25 m-2" Label="Codigo do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                             <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.Descricao @onfocusout=@(async prop => await OnSaveChanges(ProdutoSelecionadoParaEdicao)) Class="w-75 m-2" Label="Nome do produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                         </MudPaper>
@@ -1318,6 +1317,9 @@
                                         </MudExpansionPanels>
 
 
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                         <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.ProdutoInfos Disabled="true" Class="w-100 m-2" Label="Informações do Produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
                                     </MudItem>
                                     <MudItem xs="12" sm="6">
                                         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">

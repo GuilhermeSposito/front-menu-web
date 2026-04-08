@@ -12,6 +12,7 @@ public class ClsProduto
     [JsonPropertyName("CriadoEm")] public DateTime CriadoEm { get; set; }
     [JsonPropertyName("ModificadoEm")] public DateTime ModificadoEm { get; set; }
     [JsonPropertyName("descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("produto_infos")] public string ProdutoInfos { get; set; } = string.Empty;
     [JsonPropertyName("ncm")] public string? NCM { get; set; }
     [JsonPropertyName("cest")] public string? CEST { get; set; }
     [JsonPropertyName("GruposDeComplementosDoProduto")] public List<ClsGruposDeComplementosDoProduto>? GruposDeComplementosDoProduto { get; set; }

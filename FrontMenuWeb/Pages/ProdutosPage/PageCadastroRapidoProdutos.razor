@@ -58,6 +58,10 @@
                                           FullWidth="true"
                                           Immediate="false" />
                         </MudStack>
+                        <MudTextField @bind-Value=@Produto.ProdutoInfos
+                                      Label="Informações do Produto"
+                                      Placeholder="Digite as informações do produto como (ingredientes, tamanho, litragem)"
+                                      Variant="Variant.Outlined" Class="w-100"/>
                     </MudItem>
 
                     @* Grupo + Categoria *@
