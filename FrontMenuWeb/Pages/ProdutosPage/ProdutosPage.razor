@@ -1178,7 +1178,7 @@
                 var response = await ProdutoService.AdicionarFotoAoProduto(ms, file.Name, ProdutoSelecionadoParaEdicao.Id);
 
                 MostraMensagem(response);
-                if(response.Status == "success")
+                if (response.Status == "success")
                 {
                     carregandoProdutoParaEdicao = true;
                     await CarregaProdutoParaEdicao(ProdutoSelecionadoParaEdicao.Id);
@@ -1256,7 +1256,7 @@
                                 </ActivatorContent>
                             </MudFileUpload>
                         </MudStack>
-                        @if(ProdutoSelecionadoParaEdicao is not null)
+                        @if (ProdutoSelecionadoParaEdicao is not null)
                         {
                             <MudText style="font-weight:30; font-size: 10px; margin-top: 15px">
                                 Produto Adicionado em @ProdutoSelecionadoParaEdicao.CriadoEm.ToString("dd/MM/yyyy")
@@ -1265,7 +1265,7 @@
                                 Ultima Modificação/Venda em @ProdutoSelecionadoParaEdicao.ModificadoEm.ToString("dd/MM/yyyy")
                             </MudText>
                         }
-                       
+
                     }
                 </MudPaper>
                 @*-----------------------------PRIMEIRA ETAPA FOTO----------------------------------------*@
@@ -1319,7 +1319,9 @@
 
                                     </MudItem>
                                     <MudItem xs="12">
-                                         <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.ProdutoInfos Disabled="true" Class="w-100 m-2" Label="Informações do Produto" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                                        <MudPaper Class="d-flex align-center justify-center py-8">
+                                            <MudTextField @bind-Value=@ProdutoSelecionadoParaEdicao.ProdutoInfos Class="w-100" Label="Informações do Produto" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+                                        </MudPaper>
                                     </MudItem>
                                     <MudItem xs="12" sm="6">
                                         <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
