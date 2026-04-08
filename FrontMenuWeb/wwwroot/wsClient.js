@@ -152,36 +152,6 @@ window.baixarJSON = (dados, nomeArquivo = "dados.json") => {
     });
 };
 
-// Solicita permissão do navegador para downloads automáticos.
-// Dispara um download mínimo na primeira vez para que o navegador mostre o prompt.
-// Armazena o resultado em localStorage para não perguntar novamente.
-window.requestDownloadPermission = () => {
-    return new Promise((resolve) => {
-        const storageKey = "sophosDownloadPermissionGranted";
-        if (localStorage.getItem(storageKey) === "true") {
-            resolve(true);
-            return;
-        }
-        try {
-            const blob = new Blob(["{}"], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = ".sophos-permissao.json";
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 200);
-            localStorage.setItem(storageKey, "true");
-            resolve(true);
-        } catch (e) {
-            console.error("Erro ao solicitar permissão de download:", e);
-            resolve(false);
-        }
-    });
-};
-
 window.baixarXMLNF = (dados, nomeArquivo = "proc-nfe.xml") => {
     const blob = new Blob([dados], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
