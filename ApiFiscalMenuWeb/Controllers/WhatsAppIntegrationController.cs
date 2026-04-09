@@ -28,13 +28,17 @@ public class WhatsAppIntegrationController : Controller
 
     #region Região de Webhooks (Pontos de extremidade)
     [HttpGet("endpoint-webhook")]
-    public async Task<IActionResult> EndpointDeConexaoComWebHook()
+    public IActionResult EndpointDeConexaoComWebHook(
+        [FromQuery(Name = "hub.mode")] string mode,
+        [FromQuery(Name = "hub.challenge")] string challenge,
+        [FromQuery(Name = "hub.verify_token")] string verifyToken)
     {
-        var signature = HttpContext.Request.Headers["HUB.VERIFY_TOKEN"].ToString();
-        if (signature == "token")
-            return Ok();
+        if (mode == "subscribe" && verifyToken == "token")
+        {
+            return Content(challenge, "text/plain");
+        }
 
-        return Ok();
+        return Unauthorized();
     }
 
     [HttpPost("endpoint-webhook")]
