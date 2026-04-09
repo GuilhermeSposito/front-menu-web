@@ -44,9 +44,10 @@ public class WhatsAppIntegrationController : Controller
     [HttpPost("endpoint-webhook")]
     public async Task<IActionResult> EndpointDeConexaoComWebHookPost()
     {
-        var signature = HttpContext.Request.Headers["HUB.VERIFY_TOKEN"].ToString();
-        if (signature == "token")
-            return Ok();
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync();
+
+        Console.WriteLine(body);
 
         return Ok();
     }
