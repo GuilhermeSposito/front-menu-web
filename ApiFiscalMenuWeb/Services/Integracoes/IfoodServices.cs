@@ -32,6 +32,8 @@ public class IfoodServices
     private List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
     private readonly IConfiguration _configuration;
 
+    private List<string> TamanhosExitentes = ["G", "M", "P", "B", "LAN", "PRC", "C", "MC", "9000001", "9000002", "9000003", "C530", "E1150"];
+
     public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger, EmailService emailService, IConfiguration configuration)
     {
         _factory = factory;
@@ -512,14 +514,42 @@ public class IfoodServices
     private async Task<List<ItensPedido>> RetornaItensSophos(List<ItemIfoodDto> ItensIfood, string MerchantSophosId)
     {
         //Fazer integração depois para buscar o produto no banco de dados do sophos e preencher o Id do produto e o Id do preço, por enquanto vai ser só a descrição mesmo
-
         var ItensSophos = new List<ItensPedido>();
 
         foreach (var item in ItensIfood)
         {
+            ClsProduto? ProdutoSophos = null;
             var ResultadoConversaoCodPdv = EditaCodigoPdvIfoodParaPadroSophos(item);
+            if (ResultadoConversaoCodPdv.Codigo is not null && TamanhosExitentes.Any(t => ResultadoConversaoCodPdv.Codigo.Contains(t)))
+            {
+                //Os sabores das pizzas vem nos options.
+                List<OptionsIfoodDto> OpcoesComSaboresParaSerExcluido = new List<OptionsIfoodDto>();
+                foreach (var op in item.Options)
+                {
+                    ClsProduto? ProdutoSophosDentroDoComplemento = await _nestApiService.RetornaProdutoEncontrado(op.ExternalCode ?? "", MerchantSophosId);
+                    if (ProdutoSophosDentroDoComplemento is not null)
+                    {
+                        if (ProdutoSophos is null)
+                        {
+                            ProdutoSophos = ProdutoSophosDentroDoComplemento;
+                            item.Name = ProdutoSophos.Descricao;
+                        }
+                        else
+                            item.Name += $" - {ProdutoSophosDentroDoComplemento.Descricao}";
 
-            ClsProduto? ProdutoSophos = await _nestApiService.RetornaProdutoEncontrado(ResultadoConversaoCodPdv.Codigo, MerchantSophosId);
+
+                        OpcoesComSaboresParaSerExcluido.Add(op);
+                    }
+                }
+
+                if(OpcoesComSaboresParaSerExcluido.Count > 0)
+                    item.Options = item.Options.Except(OpcoesComSaboresParaSerExcluido).ToList();
+            }
+            else
+            {
+                ProdutoSophos = await _nestApiService.RetornaProdutoEncontrado(ResultadoConversaoCodPdv.Codigo, MerchantSophosId);
+            }
+
             ItensPedido ItemSophos = new ItensPedido
             {
                 Descricao = item.Name,
@@ -540,8 +570,14 @@ public class IfoodServices
 
             foreach (var complemento in item.Options)
             {
-                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode);
+                if (!String.IsNullOrEmpty(RetornaTamanhoDoItem(complemento.ExternalCode)))
+                {
+                    //Se entrar aqui é porque o external code é de tamanho
+                    ItemSophos.LegTamanhoEscolhido = RetornaTamanhoDoItem(complemento.ExternalCode);
+                    continue;
+                }
 
+                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode);
                 ComplementoNoItem ComplementoSophos = new ComplementoNoItem
                 {
                     Descricao = complemento.Name,
@@ -726,12 +762,16 @@ public class IfoodServices
                 return "CENTO";
             case "MC":
                 return "MEIO CENTO";
-            case "F":
+            case "9000001":
                 return "FOGAZZA";
-            case "MIN":
+            case "9000002":
                 return "MINI";
-            case "S":
+            case "9000003":
                 return "SUPER";
+            case "C530":
+                return "COPO 530G";
+            case "E1150":
+                return "EMBALAGEM 1150G";
             default:
                 return null;
         }
@@ -787,13 +827,14 @@ public class IfoodServices
         if (eCodigoSimples)
             return (itemIfoodDto.ExternalCode, null);
 
-        List<string> legendasExistentes = ["G", "M", "P", "B", "LAN", "PRC", "C", "MC", "F", "MIN", "S"];
-
-        foreach (var legenda in legendasExistentes)
+        foreach (var legenda in TamanhosExitentes)
         {
             if (itemIfoodDto.ExternalCode.Contains(legenda))
             {
                 var codigoLimpo = itemIfoodDto.ExternalCode.Replace(legenda, "");
+                if (string.IsNullOrEmpty(codigoLimpo))
+                    codigoLimpo = itemIfoodDto.ExternalCode;
+
                 string? LegendaFormatada = RetornaTamanhoDoItem(legenda);
                 return (codigoLimpo, LegendaFormatada);
             }
@@ -822,7 +863,7 @@ public class IfoodServices
 
             "CASH" => formas.FirstOrDefault(f => f.EDinheiro || f.Descricao.Contains("DINHEIRO", StringComparison.OrdinalIgnoreCase)),
 
-            "CREDIT" => formas.Where(x=> x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.ECredito || f.Descricao.Contains("CRÉDITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("CREDITO", StringComparison.OrdinalIgnoreCase)),
+            "CREDIT" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.ECredito || f.Descricao.Contains("CRÉDITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("CREDITO", StringComparison.OrdinalIgnoreCase)),
 
             "DEBIT" => formas.Where(x => x.PagamentoOnline == PagOnline).FirstOrDefault(f => f.EDEbito || f.Descricao.Contains("DÉBITO", StringComparison.OrdinalIgnoreCase) || f.Descricao.Contains("DEBITO", StringComparison.OrdinalIgnoreCase)),
 
