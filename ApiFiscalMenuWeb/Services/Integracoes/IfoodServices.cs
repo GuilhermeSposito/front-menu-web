@@ -31,8 +31,8 @@ public class IfoodServices
     private readonly EmailService _emailService;
     private List<PollingIfoodDto> PollingsToAcknowledge = new List<PollingIfoodDto>();
     private readonly IConfiguration _configuration;
-
     private List<string> TamanhosExitentes = ["G", "M", "P", "B", "LAN", "PRC", "C", "MC", "9000001", "9000002", "9000003", "C530", "E1150"];
+
 
     public IfoodServices(IHttpClientFactory factory, NestApiServices nestApiService, ILogger<IfoodServices> logger, EmailService emailService, IConfiguration configuration)
     {
@@ -460,6 +460,8 @@ public class IfoodServices
     #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
     private async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos)
     {
+        var json = JsonSerializer.Serialize(PedidoIfood);
+
         ClsPedido PedidoSophos = new ClsPedido
         {
             IfoodID = PedidoIfood.Id,
@@ -473,7 +475,8 @@ public class IfoodServices
             ValorTotal = (float)PedidoIfood.Total.OrderAmount,
             AcrescimoValor = (float)PedidoIfood.Total.AddtionalFees,
             TaxaEntregaValor = (float)PedidoIfood.Total.DeliveryFee,
-            ObservacaoDoPedido = PedidoIfood.ExtraInfo
+            ObservacaoDoPedido = PedidoIfood.ExtraInfo,
+            JsonPedidoDeIntegracao = json
         };
 
         if (!MerchantSophos.AceitaPedidoAutDeIntegracoes)
@@ -490,9 +493,6 @@ public class IfoodServices
         PedidoSophos.Cliente = RetornaClienteSophos(PedidoIfood.Customer);
         //Definir o Endereço de Entrega
         PedidoSophos.Endereco = RetornaEnderecoDoClienteSophos(PedidoIfood.Delivery.DeliveryAddress);
-
-        var json = JsonSerializer.Serialize(PedidoIfood);
-        PedidoSophos.JsonPedidoDeIntegracao = json;
 
         //DEFINIR PEDIDOS AGENDADOS
         if (PedidoIfood.OrderTiming == "SCHEDULED")
@@ -831,10 +831,8 @@ public class IfoodServices
         {
             if (itemIfoodDto.ExternalCode.Contains(legenda))
             {
-                var codigoLimpo = itemIfoodDto.ExternalCode.Replace(legenda, "");
-                if (string.IsNullOrEmpty(codigoLimpo))
-                    codigoLimpo = itemIfoodDto.ExternalCode;
-
+                var codigoLimpo = (legenda  == itemIfoodDto.ExternalCode) ? itemIfoodDto.ExternalCode : itemIfoodDto.ExternalCode.Replace(legenda, "");
+      
                 string? LegendaFormatada = RetornaTamanhoDoItem(legenda);
                 return (codigoLimpo, LegendaFormatada);
             }
