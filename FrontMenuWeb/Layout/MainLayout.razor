@@ -286,7 +286,8 @@
         if (!_widgetInitialized && AppState.MerchantLogado is not null && AppState.MerchantLogado.IntegraIfood)
         {
             _widgetInitialized = true;
-            await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
+            Console.WriteLine($"[Widget] Iniciando widget. EmpresasIfood count: {AppState.MerchantLogado.EmpresasIfood?.Count ?? 0}");
+            await IniciarWidget(AppState.MerchantLogado.EmpresasIfood ?? new());
         }
     }
 

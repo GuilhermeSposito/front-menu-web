@@ -248,15 +248,21 @@ window.FocoNoProximoCampoDeEstoque = (name) => {
 window.startIfoodWidget = async function (merchantIds) {
     try {
 
-        if (!merchantIds) {
+        if (!merchantIds || merchantIds.length === 0) {
             return { success: false, message: "MerchantId inválido" };
         }
 
-        if (typeof iFoodWidget === "undefined") {
-            return { success: false, message: "iFoodWidget não carregado" };
+        // Aguarda o script do widget carregar (até 10 segundos)
+        let tentativas = 0;
+        while (typeof iFoodWidget === "undefined" && tentativas < 100) {
+            await new Promise(r => setTimeout(r, 100));
+            tentativas++;
         }
 
-      
+        if (typeof iFoodWidget === "undefined") {
+            return { success: false, message: "iFoodWidget não carregado após aguardar" };
+        }
+
         iFoodWidget.init({
             widgetId: 'd36b10d4-2f47-41cb-b282-b92eafc5ec1b',
             merchantIds: merchantIds,
