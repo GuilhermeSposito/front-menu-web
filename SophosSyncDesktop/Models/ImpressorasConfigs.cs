@@ -22,5 +22,6 @@ public class ImpressorasConfigs
     [Column("caminho_salvamento_nfe")] public string CaminhoSalvamentoDasNfe { get; set; } = @$"C:\ArqNfe\Autorizadas\";
     [Column("imprimir_ifood")] public bool ImprimirIfood { get; set; } = true;
     [Column("imprimir_sophos_cardapio")] public bool ImprimirSophosCardapio { get; set; } = true;
+    [Column("imprimir_comanda_mesa")] public bool ImprimirComandaMesa { get; set; } = true;
 
 }

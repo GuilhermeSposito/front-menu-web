@@ -84,11 +84,37 @@ public class WebSocketPedidosService : IDisposable
                             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                         if (pedido is not null)
+                        {
+                            SomService.TocarPedidoDelivery();
                             await ProcessarPedidoAsync(pedido, json).ConfigureAwait(false);
+                        }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"[WS] Erro ao processar pedido-recebido: {ex.Message}");
+                    }
+                });
+            });
+
+            _client.On("pedido-recebido-mesa", response =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var json = response.GetValue<JsonElement>().GetRawText();
+
+                        SomService.TocarPedidoMesa();
+
+                        using var db = new AppDbContext();
+                        var config = db.Impressoras.FirstOrDefault();
+                        if (config is null || !config.ImprimirComandaMesa) return;
+
+                        await _impressaoService.ImprimirComanda(json, "SOPHOS", EMesa: true).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[WS] Erro ao processar pedido-recebido-mesa: {ex.Message}");
                     }
                 });
             });

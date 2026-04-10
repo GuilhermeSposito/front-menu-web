@@ -49,6 +49,7 @@
             labelIntegracoes = new Label();
             checkBoxImprimirIfood = new CheckBox();
             checkBoxImprimirCardapio = new CheckBox();
+            checkBoxImprimirComandaMesa = new CheckBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)BackButton).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -277,6 +278,7 @@
             panelIntegracoes.Controls.Add(labelIntegracoes);
             panelIntegracoes.Controls.Add(checkBoxImprimirIfood);
             panelIntegracoes.Controls.Add(checkBoxImprimirCardapio);
+            panelIntegracoes.Controls.Add(checkBoxImprimirComandaMesa);
             panelIntegracoes.Location = new Point(61, 275);
             panelIntegracoes.Name = "panelIntegracoes";
             panelIntegracoes.Size = new Size(820, 112);
@@ -320,6 +322,20 @@
             checkBoxImprimirCardapio.UseVisualStyleBackColor = false;
             checkBoxImprimirCardapio.BackColor = Color.Transparent;
             checkBoxImprimirCardapio.CheckedChanged += checkBoxImprimirCardapio_CheckedChanged;
+            //
+            // checkBoxImprimirComandaMesa
+            //
+            checkBoxImprimirComandaMesa.AutoSize = true;
+            checkBoxImprimirComandaMesa.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirComandaMesa.ForeColor = Color.White;
+            checkBoxImprimirComandaMesa.Location = new Point(510, 55);
+            checkBoxImprimirComandaMesa.Name = "checkBoxImprimirComandaMesa";
+            checkBoxImprimirComandaMesa.Size = new Size(190, 27);
+            checkBoxImprimirComandaMesa.TabIndex = 3;
+            checkBoxImprimirComandaMesa.Text = "Imprimir Comanda Mesa";
+            checkBoxImprimirComandaMesa.UseVisualStyleBackColor = false;
+            checkBoxImprimirComandaMesa.BackColor = Color.Transparent;
+            checkBoxImprimirComandaMesa.CheckedChanged += checkBoxImprimirComandaMesa_CheckedChanged;
             //
             // ConfigsGeral
             //
@@ -377,5 +393,6 @@
         private Label labelIntegracoes;
         private CheckBox checkBoxImprimirIfood;
         private CheckBox checkBoxImprimirCardapio;
+        private CheckBox checkBoxImprimirComandaMesa;
     }
 }

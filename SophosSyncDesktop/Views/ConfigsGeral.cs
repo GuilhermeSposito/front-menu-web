@@ -32,6 +32,7 @@ public partial class ConfigsGeral : Form
                 CaminhoParaPastaDeArqNfe.Text = configs?.CaminhoSalvamentoDasNfe;
                 checkBoxImprimirIfood.Checked = configs?.ImprimirIfood ?? true;
                 checkBoxImprimirCardapio.Checked = configs?.ImprimirSophosCardapio ?? true;
+                checkBoxImprimirComandaMesa.Checked = configs?.ImprimirComandaMesa ?? true;
             }
 
         }
@@ -72,6 +73,17 @@ public partial class ConfigsGeral : Form
         if (configs is not null)
         {
             configs.ImprimirSophosCardapio = checkBoxImprimirCardapio.Checked;
+            await dbContext.SaveChangesAsync();
+        }
+    }
+
+    private async void checkBoxImprimirComandaMesa_CheckedChanged(object sender, EventArgs e)
+    {
+        using AppDbContext dbContext = new AppDbContext();
+        var configs = await dbContext.Impressoras.FirstOrDefaultAsync();
+        if (configs is not null)
+        {
+            configs.ImprimirComandaMesa = checkBoxImprimirComandaMesa.Checked;
             await dbContext.SaveChangesAsync();
         }
     }

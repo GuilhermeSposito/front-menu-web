@@ -199,20 +199,6 @@
     {
         try
         {
-            bool? IntegraIfood = AppState.MerchantLogado.IntegraIfood;
-
-            bool? impressaoSophosCardapio = await LocalStorage.GetItemAsync<bool?>("ImpressaoSophosCardapio");
-            if (impressaoSophosCardapio is null)
-            {
-                bool defaultValue = IntegraIfood ?? false;
-                ImpressaoSophosCardapioLocalStoragePreference = defaultValue;
-                await LocalStorage.SetItemAsync("ImpressaoSophosCardapio", defaultValue);
-            }
-            else
-            {
-                ImpressaoSophosCardapioLocalStoragePreference = impressaoSophosCardapio.Value;
-            }
-
 
             if (await LocalStorage.ContainKeyAsync(ThemePreferenceKey))
             {
@@ -262,11 +248,6 @@
             }
 
 
-            if (IntegraIfood is not null && IntegraIfood == true)
-            {
-                await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
-                IntegraIfoodSettingsLocalStoragePreference = true;
-            }
 
             await AtualizaStatusDoCaixa();
         }
@@ -297,10 +278,13 @@
             {
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", MudBlazor.Severity.Error);
             }
+
+            if (AppState.MerchantLogado.IntegraIfood)
+                await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
         }
     }
 
-    private async Task ImprimirPedidoGlobal(ClsPedido pedido)
+    private async Task ImprimirPedidoGlobal(ClsPedido pedido) //Não imprime mais, a logica foi transferida pro desktop.
     {
         bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
         if (!impressaoDesabilita)
@@ -311,12 +295,7 @@
                     var pedidoParaImpressao = await PedidoService.GetPedidoById(pedido.Id);
                     if (pedidoParaImpressao is not null && !pedidoParaImpressao.Imprimiu)
                     {
-                        if (pedido.StatusPedido != "ABERTO")
-                        {
-                            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                            return;
-                        }
-                        else
+                        if (pedido.StatusPedido == "ABERTO")
                         {
                             Snackbar.Add("Você tem pedido em aberto esperando ser aceito !", severity: Severity.Warning);
                             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
@@ -327,7 +306,6 @@
 
             }
 
-
         if (pedido.CriadoPor == "SOPHOS")
         {
             Snackbar.Add("Novo Pedido", severity: Severity.Info);
@@ -336,12 +314,8 @@
 
     }
 
-    private async Task ImprimirPedidoMesaGlobal(PedidoMesaDto pedido)
+    private async Task ImprimirPedidoMesaGlobal(PedidoMesaDto pedido) //Não imprime mais, a logica foi transferida pro desktop.
     {
-        bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
-        if (!impressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.IdentificacaoMesaOuComanda}-MESA.json");
-
         await JS.InvokeVoidAsync("playNotificationSound");
     }
 

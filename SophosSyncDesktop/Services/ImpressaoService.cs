@@ -342,10 +342,12 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
         AdicionaConteudo(Conteudo, $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+        //========================================================================================       
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"              Tam. ", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $" Tam. ", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
