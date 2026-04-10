@@ -188,6 +188,7 @@
     private Color ColorStatusCaixa = Color.Error;
 
     private bool ImpressaoDesabilita = false;
+    private bool _widgetInitialized = false;
 
     // Handlers globais de impressão via WebSocket
     private Func<ClsPedido, Task>? _pedidoRecebidoGlobalHandler;
@@ -279,8 +280,13 @@
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", MudBlazor.Severity.Error);
             }
 
-            if (AppState.MerchantLogado.IntegraIfood)
-                await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
+        }
+
+        // Inicializa o widget se o merchant já estiver carregado (pode acontecer em renders subsequentes)
+        if (!_widgetInitialized && AppState.MerchantLogado is not null && AppState.MerchantLogado.IntegraIfood)
+        {
+            _widgetInitialized = true;
+            await IniciarWidget(AppState.MerchantLogado.EmpresasIfood);
         }
     }
 
