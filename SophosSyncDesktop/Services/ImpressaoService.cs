@@ -345,12 +345,26 @@ public class ImpressaoService
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"              Tam.  V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudo(Conteudo, $"              Tam. ", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
-            AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+            if (item.Produto?.Fracionado == true && AppState.MerchantLogado is not null && AppState.MerchantLogado.PulaItensFracionadosParaProximaLinha)
+            {
+                var partesFracionado = item.Descricao.Split('&');
+                for (int i = 0; i < partesFracionado.Length; i++)
+                {
+                    var nome = partesFracionado[i].Trim();
+                    if (!string.IsNullOrEmpty(nome))
+                        AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}  {nome}" : $"   {nome}", FonteItens2);
+                }
+
+            }
+            else
+            {
+
+                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            }
 
             if (item.Complementos.Count > 0)
             {
@@ -430,9 +444,7 @@ public class ImpressaoService
         //========================================================================================
         if (ItemSeparadoPorComanda)
         {
-            int IndiceDoItemAtualMaisUm = IndiceDoItemAtual; //isso pra não mudar o valor original que veio do for 
-
-            AdicionaConteudo(Conteudo, $"Item: {IndiceDoItemAtualMaisUm}/{qtdItens}", FonteDetalhesDoPedido);
+            AdicionaConteudo(Conteudo, $"Item: {IndiceDoItemAtual}/{qtdItens}", FonteDetalhesDoPedido);
         }
 
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
@@ -440,7 +452,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            if (item.Produto?.Fracionado == true)
+            if (item.Produto?.Fracionado == true && AppState.MerchantLogado is not null && AppState.MerchantLogado.PulaItensFracionadosParaProximaLinha)
             {
                 var partesFracionadoComanda = item.Descricao.Split('&');
                 for (int i = 0; i < partesFracionadoComanda.Length; i++)
@@ -597,7 +609,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            if (item.Produto?.Fracionado == true)
+            if (item.Produto?.Fracionado == true && AppState.MerchantLogado is not null && AppState.MerchantLogado.PulaItensFracionadosParaProximaLinha)
             {
                 var partesFracionado = item.Descricao.Split('&');
                 for (int i = 0; i < partesFracionado.Length; i++)
@@ -679,7 +691,7 @@ public class ImpressaoService
             try
             {
                 var PedidoIfood = JsonSerializer.Deserialize<PedidoIfoodDto>(pedido.JsonPedidoDeIntegracao ?? "") ?? throw new Exception("Erro ao desserializr pedido do ifood");
-                if (PedidoIfood.Customer.DocumentNumber is not null)
+                if (!string.IsNullOrEmpty(PedidoIfood.Customer.DocumentNumber))
                 {
                     AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
                     AdicionaConteudo(Conteudo, $"{PedidoIfood.Customer.DocumentType} na NFce: {PedidoIfood.Customer.DocumentNumber}", FonteInfosPagamento);

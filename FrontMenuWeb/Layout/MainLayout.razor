@@ -199,16 +199,7 @@
     {
         try
         {
-            bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
-            if (IntegraIfood is null)
-            {
-                IntegraIfoodSettingsLocalStoragePreference = false;
-                await LocalStorage.SetItemAsync("IntegraIfood", false);
-            }
-            else
-            {
-                IntegraIfoodSettingsLocalStoragePreference = IntegraIfood.Value;
-            }
+            bool? IntegraIfood = AppState.MerchantLogado.IntegraIfood;
 
             bool? impressaoSophosCardapio = await LocalStorage.GetItemAsync<bool?>("ImpressaoSophosCardapio");
             if (impressaoSophosCardapio is null)
