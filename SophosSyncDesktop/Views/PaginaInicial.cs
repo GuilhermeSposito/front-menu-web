@@ -25,15 +25,32 @@ public partial class PaginaInicial : Form
     private Dictionary<int, DateTime> PedidosImpressos = new Dictionary<int, DateTime>();
 
     private readonly ImpressaoService _impressaoService;
+    private readonly WebSocketPedidosService _webSocketService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
-    public PaginaInicial(ImpressaoService ImpressaoService)
+
+    // Label criado em código para não exigir alteração no .resx do designer
+    private Label _labelWsStatus = new Label();
+
+    public PaginaInicial(ImpressaoService ImpressaoService, WebSocketPedidosService webSocketService)
     {
         _impressaoService = ImpressaoService;
+        _webSocketService = webSocketService;
+
+        _webSocketService.StatusChanged += OnWebSocketStatusChanged;
 
         InitializeComponent();
         _clsEstiloComponentes.CriaBordaArredondada(panelDeSelects, 24);
         _clsEstiloComponentes.CriaBordaArredondada(panel1, 24);
         _clsEstiloComponentes.CriaBordaArredondada(this, 24);
+
+        // Configura label de status do WebSocket
+        _labelWsStatus.AutoSize = true;
+        _labelWsStatus.Font = new Font("Segoe UI", 8f, FontStyle.Regular);
+        _labelWsStatus.ForeColor = Color.Gray;
+        _labelWsStatus.BackColor = Color.Transparent;
+        _labelWsStatus.Text = "WebSocket: aguardando conexão...";
+        _labelWsStatus.Location = new Point(8, panel1.Height - 22);
+        panel1.Controls.Add(_labelWsStatus);
 
         AlimentaComboBoxsDeImpressoras(this);
         AlimentaComboBoxDeImpressorasEmAdicionarNovaImpressora(this);
@@ -72,6 +89,9 @@ public partial class PaginaInicial : Form
             }
         }
 
+        // Inicia conexão WebSocket após login — a partir daqui o WF imprime
+        // pedidos IFOOD e SOPHOS CARDAPIO diretamente, sem depender do browser
+        await _webSocketService.ConectarAsync();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
@@ -79,6 +99,20 @@ public partial class PaginaInicial : Form
         SophosSync.ShowBalloonTip(1000); // 1 segundos
 
         this.Hide();
+    }
+
+    private void OnWebSocketStatusChanged(bool conectado, string mensagem)
+    {
+        // Atualiza UI na thread correta (evento vem de thread do socket)
+        if (InvokeRequired)
+        {
+            Invoke(() => OnWebSocketStatusChanged(conectado, mensagem));
+            return;
+        }
+
+        _labelWsStatus.Text = $"WebSocket: {mensagem}";
+        _labelWsStatus.ForeColor = conectado ? Color.LimeGreen : Color.OrangeRed;
+        SophosSync.Text = $"Sophos Sync — WS: {mensagem}";
     }
     private void ShowWindow()
     {
@@ -91,8 +125,13 @@ public partial class PaginaInicial : Form
         if (e.CloseReason == CloseReason.UserClosing)
         {
             e.Cancel = true;   // Cancela o fechamento
-            this.Hide();       // Apenas esconde o formul�rio
+            this.Hide();       // Apenas esconde o formulário
+            return;
         }
+
+        // Fechamento real (ex: Application.Exit) — desconecta o WebSocket
+        _webSocketService.StatusChanged -= OnWebSocketStatusChanged;
+        _ = _webSocketService.DesconectarAsync().ContinueWith(_ => _webSocketService.Dispose());
     }
     private void IniciarMonitoramento()
     {
@@ -145,12 +184,15 @@ public partial class PaginaInicial : Form
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
 
+                ClsPedido? Pedido = null;
                 try
                 {
-                    ClsPedido? Pedido = JsonSerializer.Deserialize<ClsPedido>(conteudo);
+                    Pedido = JsonSerializer.Deserialize<ClsPedido>(conteudo);
                     if (Pedido is not null)
                     {
-                        if (PedidosImpressos.TryGetValue(Pedido.Id, out DateTime ultimaImpressao) && (DateTime.Now - ultimaImpressao).TotalSeconds < 10)
+                        // Dedup: evita reimpressão do mesmo pedido em menos de 10 segundos
+                        if (PedidosImpressos.TryGetValue(Pedido.Id, out DateTime ultimaImpressao) &&
+                            (DateTime.Now - ultimaImpressao).TotalSeconds < 10)
                         {
                             File.Delete(e.FullPath);
                             return;

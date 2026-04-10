@@ -440,7 +440,22 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
+            if (item.Produto?.Fracionado == true)
+            {
+                var partesFracionadoComanda = item.Descricao.Split('&');
+                for (int i = 0; i < partesFracionadoComanda.Length; i++)
+                {
+                    var nome = partesFracionadoComanda[i].Trim();
+                    if (!string.IsNullOrEmpty(nome))
+                        AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}X  {nome}" : $"       {nome}", FonteItensComanda);
+                }
+            }
+            else
+            {
+
+                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
+            }
+
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
@@ -503,7 +518,7 @@ public class ImpressaoService
         }
         //========================================================================================       
         AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
-        AdicionaConteudo(Conteudo, $"Criado às: {pedido.CriadoEm:t}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Criado em: {pedido.CriadoEm:G}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
         AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
@@ -582,7 +597,22 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
-            AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            if (item.Produto?.Fracionado == true)
+            {
+                var partesFracionado = item.Descricao.Split('&');
+                for (int i = 0; i < partesFracionado.Length; i++)
+                {
+                    var nome = partesFracionado[i].Trim();
+                    if (!string.IsNullOrEmpty(nome))
+                        AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}  {nome}" : $"   {nome}", FonteItens2);
+                }
+
+            }
+            else
+            {
+
+                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+            }
             AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
@@ -813,22 +843,33 @@ public class ImpressaoService
 
     #region Funções de impressão
 
-    public static async Task ImprimirPagina(List<ClsImpressaoDefinicoes> conteudo, string impressora1, int espacamento)
+    public static Task ImprimirPagina(List<ClsImpressaoDefinicoes> conteudo, string impressora1, int espacamento)
     {
+        var tcs = new TaskCompletionSource<bool>();
 
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                PrintDocument printDocument = new PrintDocument();
+                printDocument.PrinterSettings.PrinterName = impressora1;
+                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 280, 500000);
+                printDocument.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10);
+                printDocument.PrintPage += (sender, e) => PrintPageHandler(sender, e, conteudo, espacamento);
+                printDocument.Print();
+                tcs.SetResult(true);
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
+        });
 
-        string printerName = impressora1;
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.IsBackground = true;
+        thread.Start();
 
-        PrintDocument printDocument = new PrintDocument();
-        printDocument.PrinterSettings.PrinterName = printerName;
-
-        printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 280, 500000);
-        printDocument.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10);
-
-        printDocument.PrintPage += (sender, e) => PrintPageHandler(sender, e, conteudo, espacamento);
-
-        printDocument.Print();
-
+        return tcs.Task;
     }
 
     public static void PrintPageHandler(object sender, PrintPageEventArgs e, List<ClsImpressaoDefinicoes> conteudo, int separacao)

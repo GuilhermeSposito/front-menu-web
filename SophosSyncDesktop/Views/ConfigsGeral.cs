@@ -30,6 +30,8 @@ public partial class ConfigsGeral : Form
 
                 CaminhoDoSalvamentoDoJson.Text = configs?.CaminhoSalvamentoDoJson;
                 CaminhoParaPastaDeArqNfe.Text = configs?.CaminhoSalvamentoDasNfe;
+                checkBoxImprimirIfood.Checked = configs?.ImprimirIfood ?? true;
+                checkBoxImprimirCardapio.Checked = configs?.ImprimirSophosCardapio ?? true;
             }
 
         }
@@ -50,6 +52,28 @@ public partial class ConfigsGeral : Form
     private void pictureBox2_Click(object sender, EventArgs e)
     {
         this.Close();
+    }
+
+    private async void checkBoxImprimirIfood_CheckedChanged(object sender, EventArgs e)
+    {
+        using AppDbContext dbContext = new AppDbContext();
+        var configs = await dbContext.Impressoras.FirstOrDefaultAsync();
+        if (configs is not null)
+        {
+            configs.ImprimirIfood = checkBoxImprimirIfood.Checked;
+            await dbContext.SaveChangesAsync();
+        }
+    }
+
+    private async void checkBoxImprimirCardapio_CheckedChanged(object sender, EventArgs e)
+    {
+        using AppDbContext dbContext = new AppDbContext();
+        var configs = await dbContext.Impressoras.FirstOrDefaultAsync();
+        if (configs is not null)
+        {
+            configs.ImprimirSophosCardapio = checkBoxImprimirCardapio.Checked;
+            await dbContext.SaveChangesAsync();
+        }
     }
 
     private void tabControleConfigs_DrawItem(object sender, DrawItemEventArgs e)

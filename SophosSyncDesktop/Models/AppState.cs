@@ -19,7 +19,7 @@ public static class AppState
     public static ClsMerchant? MerchantLogado { get; set; }
     public static string? Token { get; set; }
 
-    private static void AddHmacHeaders(HttpClient client)
+    public static void AddHmacHeaders(HttpClient client)
     {
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
         var key = Encoding.UTF8.GetBytes(HMAC_SECRET);

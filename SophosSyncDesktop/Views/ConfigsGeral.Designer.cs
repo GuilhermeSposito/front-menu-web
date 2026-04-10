@@ -45,6 +45,10 @@
             pictureBox1 = new PictureBox();
             CaminhoDoSalvamentoDoJson = new TextBox();
             label12 = new Label();
+            panelIntegracoes = new Panel();
+            labelIntegracoes = new Label();
+            checkBoxImprimirIfood = new CheckBox();
+            checkBoxImprimirCardapio = new CheckBox();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)BackButton).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -55,6 +59,7 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
             panelCaminhobanco.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            panelIntegracoes.SuspendLayout();
             SuspendLayout();
             // 
             // panel1
@@ -153,6 +158,7 @@
             tabPage1.BackColor = Color.FromArgb(16, 22, 40);
             tabPage1.BackgroundImage = (Image)resources.GetObject("tabPage1.BackgroundImage");
             tabPage1.BackgroundImageLayout = ImageLayout.Zoom;
+            tabPage1.Controls.Add(panelIntegracoes);
             tabPage1.Controls.Add(panel2);
             tabPage1.Controls.Add(panelCaminhobanco);
             tabPage1.Location = new Point(4, 32);
@@ -263,9 +269,60 @@
             label12.Size = new Size(532, 28);
             label12.TabIndex = 2;
             label12.Text = "Caminho para o salvamento do pedido para impressão:";
-            // 
+            //
+            // panelIntegracoes
+            //
+            panelIntegracoes.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            panelIntegracoes.BackColor = Color.FromArgb(25, 36, 54);
+            panelIntegracoes.Controls.Add(labelIntegracoes);
+            panelIntegracoes.Controls.Add(checkBoxImprimirIfood);
+            panelIntegracoes.Controls.Add(checkBoxImprimirCardapio);
+            panelIntegracoes.Location = new Point(61, 275);
+            panelIntegracoes.Name = "panelIntegracoes";
+            panelIntegracoes.Size = new Size(820, 112);
+            panelIntegracoes.TabIndex = 7;
+            //
+            // labelIntegracoes
+            //
+            labelIntegracoes.AutoSize = true;
+            labelIntegracoes.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelIntegracoes.ForeColor = Color.White;
+            labelIntegracoes.Location = new Point(34, 14);
+            labelIntegracoes.Name = "labelIntegracoes";
+            labelIntegracoes.Size = new Size(220, 28);
+            labelIntegracoes.TabIndex = 0;
+            labelIntegracoes.Text = "Impressão de integrações";
+            //
+            // checkBoxImprimirIfood
+            //
+            checkBoxImprimirIfood.AutoSize = true;
+            checkBoxImprimirIfood.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirIfood.ForeColor = Color.White;
+            checkBoxImprimirIfood.Location = new Point(34, 55);
+            checkBoxImprimirIfood.Name = "checkBoxImprimirIfood";
+            checkBoxImprimirIfood.Size = new Size(130, 27);
+            checkBoxImprimirIfood.TabIndex = 1;
+            checkBoxImprimirIfood.Text = "Imprimir iFood";
+            checkBoxImprimirIfood.UseVisualStyleBackColor = false;
+            checkBoxImprimirIfood.BackColor = Color.Transparent;
+            checkBoxImprimirIfood.CheckedChanged += checkBoxImprimirIfood_CheckedChanged;
+            //
+            // checkBoxImprimirCardapio
+            //
+            checkBoxImprimirCardapio.AutoSize = true;
+            checkBoxImprimirCardapio.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirCardapio.ForeColor = Color.White;
+            checkBoxImprimirCardapio.Location = new Point(240, 55);
+            checkBoxImprimirCardapio.Name = "checkBoxImprimirCardapio";
+            checkBoxImprimirCardapio.Size = new Size(185, 27);
+            checkBoxImprimirCardapio.TabIndex = 2;
+            checkBoxImprimirCardapio.Text = "Imprimir Sophos Cardápio";
+            checkBoxImprimirCardapio.UseVisualStyleBackColor = false;
+            checkBoxImprimirCardapio.BackColor = Color.Transparent;
+            checkBoxImprimirCardapio.CheckedChanged += checkBoxImprimirCardapio_CheckedChanged;
+            //
             // ConfigsGeral
-            // 
+            //
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(25, 36, 54);
@@ -293,6 +350,8 @@
             panelCaminhobanco.ResumeLayout(false);
             panelCaminhobanco.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            panelIntegracoes.ResumeLayout(false);
+            panelIntegracoes.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -314,5 +373,9 @@
         private Label label3;
         private PictureBox pictureBox3;
         private PictureBox pictureBox1;
+        private Panel panelIntegracoes;
+        private Label labelIntegracoes;
+        private CheckBox checkBoxImprimirIfood;
+        private CheckBox checkBoxImprimirCardapio;
     }
 }

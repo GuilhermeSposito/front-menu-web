@@ -42,12 +42,30 @@ public class WhatsAppIntegrationController : Controller
     }
 
     [HttpPost("endpoint-webhook")]
-    public async Task<IActionResult> EndpointDeConexaoComWebHookPost()
+    public async Task<IActionResult> EndpointDeConexaoComWebHookPost([FromBody] WhatsAppWebhookDto dto)
     {
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
+        var change = dto?.Entry?.FirstOrDefault()?.Changes?.FirstOrDefault();
+        var value = change?.Value;
 
-        Console.WriteLine(body);
+        var mensagem = value?.Messages?.FirstOrDefault();
+        var status = value?.Statuses?.FirstOrDefault();
+
+        if (mensagem != null)
+        {
+            Console.WriteLine("=== MENSAGEM RECEBIDA ===");
+            Console.WriteLine($"Tipo: {mensagem.Type}");
+            Console.WriteLine($"De: {mensagem.From}");
+            Console.WriteLine($"Texto: {mensagem.Text?.Body}");
+            Console.WriteLine($"Id: {mensagem.Id}");
+        }
+
+        if (status != null)
+        {
+            Console.WriteLine("=== STATUS RECEBIDO ===");
+            Console.WriteLine($"Id: {status.Id}");
+            Console.WriteLine($"Status: {status.Status}");
+            Console.WriteLine($"RecipientId: {status.RecipientId}");
+        }
 
         return Ok();
     }

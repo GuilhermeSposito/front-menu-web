@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Services;
+using SophosSyncDesktop.Views;
 using System.Diagnostics;
 using System.Threading;
 
@@ -23,7 +24,7 @@ namespace SophosSyncDesktop
 
                 if (processos.Length > 1)
                 {
-                    MessageBox.Show("O aplicativo j· est· em execuÁ„o.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("O aplicativo j√° est√° em execu√ß√£o.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                     return;
                 }
@@ -34,7 +35,11 @@ namespace SophosSyncDesktop
                 }
 
                 ApplicationConfiguration.Initialize();
-                Application.Run(new PaginaInicial(new ImpressaoService()));
+
+                var impressaoService = new ImpressaoService();
+                var webSocketService = new WebSocketPedidosService(impressaoService);
+
+                Application.Run(new PaginaInicial(impressaoService, webSocketService));
             }
             catch (Exception ex)
             {

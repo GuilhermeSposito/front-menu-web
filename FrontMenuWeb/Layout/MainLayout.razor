@@ -71,43 +71,6 @@
                         </MudPaper>
                     </MudMenuItem>
 
-                    <!-- Ifood -->
-                    <MudMenuItem>
-                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
-                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudAvatar Color="Color.Primary">
-                                        <MudImage Src="@AppState.GetIconeDoApp("IFOOD")"></MudImage>
-                                    </MudAvatar>
-                                    <MudText Typo="Typo.h6">Impressão Ifood</MudText>
-                                </MudStack>
-                                <MudSwitch T="bool" @bind-Value=IntegraIfoodSettingsLocalStoragePreference @onclick="OnIfoodChanged" UncheckedColor="Color.Error" Color="Color.Success" />
-                            </MudStack>
-                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
-                                @(IntegraIfoodSettingsLocalStoragePreference ? "Sua impressão do ifood esta ativa" : "Sua Impressão do iFood está desativado.")
-                            </MudText>
-                        </MudPaper>
-                    </MudMenuItem>
-
-
-                    <!-- Sophos Cardápio -->
-                    <MudMenuItem>
-                        <MudPaper Class="p-3 rounded-xl shadow-sm w-80">
-                            <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudAvatar Color="Color.Secondary">
-                                        <MudImage Src="@AppState.GetIconeDoApp("SOPHOS")"></MudImage>
-                                    </MudAvatar>
-                                    <MudText Typo="Typo.h6">Impressão Sophos Cardápio</MudText>
-                                </MudStack>
-                                <MudSwitch T="bool" @bind-Value=ImpressaoSophosCardapioLocalStoragePreference @onclick="OnSophosCardapioChanged" UncheckedColor="Color.Error" Color="Color.Success" />
-                            </MudStack>
-                            <MudText Typo="Typo.body2" Class="mt-1 text-gray-600">
-                                @(ImpressaoSophosCardapioLocalStoragePreference ? "Sua impressão do Sophos Cardápio está ativa" : "Sua impressão do Sophos Cardápio está desativada.")
-                            </MudText>
-                        </MudPaper>
-                    </MudMenuItem>
-
                     <!-- Entregas -->
                     @if (AppState.MerchantLogado is not null && AppState.MerchantLogado.EnviaPedidoAutTaxyMachine)
                     {
@@ -142,7 +105,7 @@
                         <MudNavLink Icon="@Icons.Material.Filled.ListAlt" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/gestao-de-pedidos", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Gestão De Pedidos</MudNavLink>
 
                         <MudNavLink Icon="@Icons.Material.Filled.RoomService" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/gestao-de-mesas", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Gestão de @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced</MudNavLink>
-             
+
                         <MudNavLink Icon="@Icons.Material.Filled.Article" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/expedicoes", AppState.MerchantLogado.FuncionarioLogado?.AcessoCadastroDeMotoboy); })">Expedições</MudNavLink>
 
                         <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(() => { HandleNavClick(AppState.MerchantLogado, "/caixa", AppState.MerchantLogado.FuncionarioLogado?.AcessoLancaVenda); })">Caixa</MudNavLink>
@@ -360,13 +323,13 @@
                         if (pedido.StatusPedido != "ABERTO")
                         {
                             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                            bool baixou = await JS.InvokeAsync<bool>("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
-                            if (baixou) await PedidoService.UpdatePedidoImpresso(pedido);
+                            return;
                         }
                         else
                         {
                             Snackbar.Add("Você tem pedido em aberto esperando ser aceito !", severity: Severity.Warning);
                             await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                            return;
                         }
                     }
                 }
@@ -376,9 +339,7 @@
 
         if (pedido.CriadoPor == "SOPHOS")
         {
-            if (pedido.EtapaPedido == "PREPARANDO" && pedido.Cliente is not null && AppState.MerchantLogado.UsaIntegracaoDoWhatsApp && ImpressaoSophosCardapioLocalStoragePreference)
-                await PedidoService.UpdatePedidoPreparandoProtected(pedido);
-
+            Snackbar.Add("Novo Pedido", severity: Severity.Info);
             await JS.InvokeVoidAsync("playNotificationSound");
         }
 

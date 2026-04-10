@@ -448,6 +448,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="SocketIOClient" Version="3.1.2" />
     <PackageReference Include="Unimake.Unidanfe" Version="20260114.1430.18" />
   </ItemGroup>
 
