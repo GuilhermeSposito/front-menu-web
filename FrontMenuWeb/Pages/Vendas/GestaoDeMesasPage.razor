@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/gestao-de-mesas"
 @inject IJSRuntime JS
@@ -28,6 +28,7 @@
 @inject MesasServices MesasServices
 @implements IDisposable
 @inject BalancaService BalancaService
+@inject SangriasService AutorizacaoService
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidosMesa Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
     <MudLayout>
@@ -350,9 +351,12 @@
 
     #endregion
 
-    #region Função de Fechar Conta
+    #region Região de validação de permissão e fechamento de pedido
+
     private async Task FecharPedido(ClsMesasEComandas MesaOuComanda)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
+
         var PedidoMesADto = await CarregaMesaOuComanda(MesaOuComanda);
         if (PedidoMesADto is null)
         {

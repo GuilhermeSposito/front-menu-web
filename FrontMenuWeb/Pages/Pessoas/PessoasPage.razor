@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/pessoas"
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
@@ -15,6 +15,11 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject PessoasService PessoasService
 @inject NfService NfService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager Navigation
 @using MudBlazor.Extensions.Services
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
@@ -668,6 +673,7 @@
 
     private async Task AbreModalDAdicionarPessoa()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         var parameters = new DialogParameters
         {
             { "Pessoas", Pessoas }
@@ -688,6 +694,7 @@
 
     private async Task AbreModalDeAdicionarEndereco(ClsPessoas pessoaSelecionadaParaEdicao)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         var parameters = new DialogParameters
         {
             { "Pessoa", pessoaSelecionadaParaEdicao }
@@ -710,6 +717,7 @@
 
     private async Task DeletarPessoa(ClsPessoas pessoa)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -781,6 +789,7 @@
 
     private async Task ImprimirPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
         bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
 
         if (!ImpressaoDesabilita)
@@ -792,6 +801,7 @@
     private bool CarregandoParteFiscal = false;
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
         CarregandoParteFiscal = true;
         try
         {
@@ -925,6 +935,7 @@
 
     private async Task EditaPessoa(ClsPessoas pessoa)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         try
         {
             _PessoaNaoEditavel = !_PessoaNaoEditavel; // Alterna o estado de edição
@@ -967,6 +978,7 @@
 
     private async Task DeletarEndereco(ClsPessoas pessoa, EnderecoPessoa endereco)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

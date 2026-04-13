@@ -44,6 +44,7 @@ builder.Services.AddScoped<PedidosService>();
 builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<IntegracoesSophosService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
+builder.Services.AddScoped<AuthorizationService>();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("Api"));
 
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
@@ -130,6 +131,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MotoboyService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<SangriasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasMachineService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<DistanciasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());

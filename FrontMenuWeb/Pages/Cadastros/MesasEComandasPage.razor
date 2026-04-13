@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/mesas-comandas"
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
@@ -19,6 +19,9 @@
 @using QRCoder
 @inject MesasServices MesasServices
 @inject IJSRuntime JS
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -147,6 +150,7 @@
 
     private async Task AbreEdicaoOuCriacaoDeMesaOuComanda(bool eCriacao = false, ClsMesasEComandas? mesaParaEditar = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraMesaOuComandas")) return;
         var IdDaMesa = 0;
 
         if (mesaParaEditar is not null)
@@ -174,6 +178,7 @@
 
     private async Task DeletarMesaOuComanda()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraMesaOuComandas")) return;
         List<int> ListaDeIds = new List<int>();
 
         ListaDeIds.AddRange(MesasSelecionadas.Select(m => m.Id));
@@ -213,6 +218,7 @@
 
     private async void GerarQr() // Pode ser void se não houver await
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraMesaOuComandas")) return;
 
         MarkupString qrCodeMarkup;
         foreach (var mesa in MesasSelecionadas)

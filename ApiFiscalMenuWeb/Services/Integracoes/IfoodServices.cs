@@ -7,19 +7,8 @@ using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
-using FrontMenuWeb.Services;
-using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Drawing;
-using System.Net;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Text.Json;
-using Unimake.Business.DFe.Servicos;
-using Unimake.MessageBroker.Primitives.Contract.Response;
-
 namespace ApiFiscalMenuWeb.Services.Integracoes;
 
 public class IfoodServices

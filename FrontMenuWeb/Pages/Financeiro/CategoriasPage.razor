@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/categorias"
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
@@ -160,6 +160,7 @@
 
     private async Task AbreModalDeAdicionarCategoria()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
 
@@ -176,6 +177,7 @@
 
     private async Task AbreModalDeAdicionarSubCategoria(int idDaCategoria)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
         var parameters = new DialogParameters
         {
            { "IdCategoria", idDaCategoria }
@@ -196,6 +198,7 @@
 
     private async Task ExcluirCategoria(ClsCategoria categoria)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -230,6 +233,7 @@
 
     private async Task AbreModalDeEditarCategoria(ClsCategoria categoria)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
         try
         {
             var parameters = new DialogParameters
@@ -256,6 +260,7 @@
 
     private async Task AbreModalDeEditarSubCategoria(ClsSubCategoria categoria)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
         try
         {
             var parameters = new DialogParameters
@@ -282,6 +287,7 @@
 
     private async Task ExcluirSubCategoria(ClsSubCategoria subCategoria)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeCategoriasFinanceiro")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

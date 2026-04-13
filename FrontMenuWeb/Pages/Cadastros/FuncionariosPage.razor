@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/funcionarios"
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
@@ -11,8 +11,11 @@
 @using MudBlazor.Extensions
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
-@inject IHttpClientFactory HttpClientFactory
-@inject FuncionariosService FuncionariosService
+ @inject IHttpClientFactory HttpClientFactory
+ @inject FuncionariosService FuncionariosService
+ @inject AuthorizationService AuthorizationService
+ @inject ISnackbar Snackbar
+ @inject IDialogService DialogService
 @using MudBlazor.Extensions.Services
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
@@ -230,6 +233,7 @@
 
     private async Task AbreModalDeAdicionarOuEditar(bool AdicionandoFuncionario = false, ClsFuncionario? FuncionarioParaEditar = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeFuncionarios")) return;
         var IdDoFuncionario = 0;
 
         if (FuncionarioParaEditar is not null)
@@ -257,6 +261,7 @@
 
     private async Task DeletaFuncionario(ClsFuncionario funcionario)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeFuncionarios")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

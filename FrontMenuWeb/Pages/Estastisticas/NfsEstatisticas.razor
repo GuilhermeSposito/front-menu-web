@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/nfs-estatisticas"
 @inject IJSRuntime JS
@@ -352,6 +352,7 @@
 
     private async Task DeletaRegistro(NFEmitidasDto Registro)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -399,6 +400,7 @@
 
     private async Task ReimprimirNF(NFEmitidasDto registro)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         await JS.InvokeVoidAsync("baixarXMLNF", registro.XmlDistribuicao, $"{registro.ChaveNf}-procnfe-copia.xml");
     }
 
@@ -409,6 +411,7 @@
 
     private async Task InutilizarNFsSelecionadas()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         if (NfsSelecionados.Count == 0)
         {
             Snackbar.Add("Nenhuma NF selecionada para inutilização.", Severity.Warning);
@@ -526,6 +529,7 @@
 
     private async void UploadArquivo(IBrowserFile file)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         try
         {
             string? EmailCadastrado = AppState.MerchantLogado?.EmailParaEnvioFiscais;

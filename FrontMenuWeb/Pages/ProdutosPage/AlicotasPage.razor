@@ -1,7 +1,10 @@
-﻿@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
+@using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Services
 @inject AliquotaService AliquotaService
 @inject ProdutoService ProdutoService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 @page "/aliquotas"
 
@@ -181,6 +184,7 @@
 
     private async Task MofificaAlicota(ClsAliquota Aliquota)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeAliquotas")) return;
         try
         {
             var ProcuraAliquotaParaModificar = await AliquotaService.GetAliquota(Aliquota);
@@ -210,6 +214,7 @@
 
     private async Task AbreModalDeAdicioarAliquotas()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeAliquotas")) return;
         var parameters = new DialogParameters
         {
             { "AliquotasExistentes", Aliquotas }
@@ -230,6 +235,7 @@
 
     private async Task DeletarAliquota(ClsAliquota Aliquota)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeAliquotas")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

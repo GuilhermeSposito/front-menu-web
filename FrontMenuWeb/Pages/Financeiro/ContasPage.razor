@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/contas"
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
@@ -132,6 +132,7 @@
 
     private async Task DeletarConta(ClsConta conta)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeContas")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -170,6 +171,7 @@
 
     private async Task AbrirEdicaoDeConta(ClsConta conta)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeContas")) return;
         try
         {
             var parameters = new DialogParameters
@@ -197,6 +199,7 @@
 
     private async Task AbreModalDeAdicionarConta()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeContas")) return;
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, CloseOnEscapeKey = true };
 

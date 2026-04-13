@@ -1,4 +1,4 @@
-﻿using FrontMenuWeb.Models;
+using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Produtos;
 using System.Net.Http.Json;
@@ -9,9 +9,28 @@ namespace FrontMenuWeb.Services;
 public class MerchantServices
 {
     public HttpClient _HttpClient { get; set; }
-    public MerchantServices(HttpClient http)
+    private readonly AppState _appState;
+
+    public MerchantServices(HttpClient http, AppState appState)
     {
         _HttpClient = http;
+        _appState = appState;
+    }
+
+    public async Task<bool> CheckPermissionAsync(string action)
+    {
+        // Se não for funcionário (é o proprietário), tem permissão total
+        if (!_appState.IsFuncionario) return true;
+
+        try
+        {
+            var response = await _HttpClient.GetFromJsonAsync<FrontMenuWeb.DTOS.CheckPermissionResponse>($"merchants/check-permission/{action}");
+            return response?.Allowed ?? false;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<ClsMerchant> GetMerchantAsync()
@@ -122,6 +141,11 @@ public class MerchantServices
                 Status = "error",
                 Messages = new List<string> { "Erro desconhecido" }
             };
+    }
+
+    public async Task<ClsMerchant?> GetSessionInfoAsync()
+    {
+        return await _HttpClient.GetFromJsonAsync<ClsMerchant>("merchants/session-info");
     }
 }
 

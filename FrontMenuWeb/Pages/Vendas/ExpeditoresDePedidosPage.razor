@@ -10,6 +10,7 @@
 
 @inject PedidosService PedidosService
 @inject MotoboyService MotoboyService
+@inject SangriasService AutorizacaoService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top: 5px; padding: 16px;">
 
@@ -407,8 +408,10 @@
             await Recarregar();
     }
 
+
     private async Task RemoverEntrega(ClsPedidoMotoboy entrega)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -441,6 +444,7 @@
     private async Task FecharAtribuidos()
     {
         if (!EntregasAtuais.Any()) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
 
         var resumo = GerarResumo();
 

@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/produtos"
 @inject IJSRuntime JS
@@ -18,6 +18,7 @@
 @inject ProdutoService ProdutoService
 @inject AliquotaService AliquotaService
 @inject ComplementosServices ComplementosServices
+@inject AuthorizationService AuthorizationService
 @implements IBrowserViewportObserver
 @implements IAsyncDisposable
 
@@ -29,7 +30,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(() => { AddProduto(produtoParaReultilizar: null); })">Novo Produto</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(async () => { await AddProduto(produtoParaReultilizar: null); })">Novo Produto</MudButton>
             </div>
         </div>
 
@@ -149,7 +150,7 @@
                 <TemplateColumn T="ClsProduto" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar o produto" Color="Color.Primary">
-                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { if (await AuthorizationService.ValidateAsync("AcessoEditarProduto")) { context.Item.Ativo = valor; await OnSaveChanges(context.Item); } })" />
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
@@ -240,8 +241,9 @@
     public List<ClsOrigemProduto> ListaDeOrigemDoProdutos = ClsOrigemProduto.Lista;
     private ClsGrupo _selectedGrupo = null!;
 
-    private void AddProduto(ClsProduto? produtoParaReultilizar)
+    private async Task AddProduto(ClsProduto? produtoParaReultilizar)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroProduto")) return;
         try
         {
             if (produtoParaReultilizar is null)
@@ -472,6 +474,7 @@
 
     private async Task OnSaveChanges(ClsProduto produtoModificado)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             produtoModificado.ImpressoraComanda1 = TraduzImpressora(produtoModificado.ImpressoraComanda1!);
@@ -500,6 +503,7 @@
 
     private async Task AdicionarNovoValor(ClsProduto prod)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             var parameters = new DialogParameters
@@ -532,6 +536,7 @@
 
     private async Task DeletaPreco(Preco preco, ClsProduto produto)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             if (produto.Precos.Count > 1)
@@ -602,6 +607,7 @@
 
     private async Task AtualizaValorDoProduto(Preco preco, bool eMudancaRapida = false, string? idProduto = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             if (eMudancaRapida && Produtos is not null)
@@ -647,6 +653,7 @@
 
     private async Task DeletaProduto(ClsProduto Prod)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoDeletaProduto")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -698,6 +705,7 @@
 
     public async Task SalvarPrecos()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             if (PrecosParaModificar.Count > 0)
@@ -959,6 +967,7 @@
 
     private async Task AbreModalDeAdicionarGruposDeComplementos(ClsProduto produto)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         var parameters = new DialogParameters
         {
            { "Produto", produto}
@@ -988,6 +997,7 @@
 
     private async Task AbreModalDeRemoverGrupoDeComplementoDoProduto(ClsGruposDeComplementosDoProduto grupo)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -1032,6 +1042,7 @@
 
     public async Task AbrirModalDeAdicionarOuEditarComplemento(bool criandoGrupo = false, ClsComplemento? ComplementoParaEditar = null, int IdDoGrupoQueJaVaiRelacionar = 0)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         //ModalDeAdicionarEEditarUmGrupoDeComplementos
         var IdDoComplemento = 0;
 
@@ -1064,6 +1075,7 @@
 
     private async Task PausaEDespausaComplemento(ClsComplemento complementoEnviado)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             var Complemento = new ClsComplemento();
@@ -1167,6 +1179,7 @@
 
     private async Task UploadImagemDoProduto(IBrowserFile file)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditarProduto")) return;
         try
         {
             using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);

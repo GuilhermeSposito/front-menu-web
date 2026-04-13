@@ -27,6 +27,7 @@ public partial class PaginaInicial : Form
     private readonly ImpressaoService _impressaoService;
     private readonly WebSocketPedidosService _webSocketService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
+    private System.Timers.Timer _timer;
 
     // Label criado em código para não exigir alteração no .resx do designer
     private Label _labelWsStatus = new Label();
@@ -91,7 +92,8 @@ public partial class PaginaInicial : Form
 
         // Inicia conexão WebSocket após login — a partir daqui o WF imprime
         // pedidos IFOOD e SOPHOS CARDAPIO diretamente, sem depender do browser
-        await _webSocketService.ConectarAsync();
+         await _webSocketService.ConectarAsync();
+        IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
@@ -99,6 +101,14 @@ public partial class PaginaInicial : Form
         SophosSync.ShowBalloonTip(1000); // 1 segundos
 
         this.Hide();
+    }
+
+    public void IniciarMonitoramentoImpressaoDePedidosNaoImpressos()
+    {
+        _timer = new System.Timers.Timer(20000);
+        _timer.Elapsed += async (s, e) => await _webSocketService.BuscarPedidosNaoImpressosAsync();
+        _timer.AutoReset = true;
+        _timer.Start();
     }
 
     private void OnWebSocketStatusChanged(bool conectado, string mensagem)

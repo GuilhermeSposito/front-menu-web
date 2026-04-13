@@ -1,6 +1,5 @@
 ﻿using ApiFiscalMenuWeb.Models;
 using ApiFiscalMenuWeb.Models.Dtos;
-using FrontMenuWeb.Components.Modais.ModaisDeVendas;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Financeiro;
 using FrontMenuWeb.Models.Fiscal;
@@ -10,7 +9,6 @@ using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Nextended.Core.Extensions;
 using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;

@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/raios-de-entrega"
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Funcionarios
@@ -16,6 +16,9 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject FuncionariosService FuncionariosService
 @inject EntregasService EntregasService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -115,7 +118,7 @@
                 <TemplateColumn T="RaioDeEntrega" Title="Ativo">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para ativar/desativar o produto" Color="Color.Primary">
-                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { context.Item.Ativo = valor; await SalvarAlteracoes(context.Item); })" />
+                            <MudSwitch T="bool" Value=@context.Item.Ativo Color="Color.Success" ValueChanged="@(async valor => { if (await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) { context.Item.Ativo = valor; await SalvarAlteracoes(context.Item); } })" />
                         </MudTooltip>
                     </CellTemplate>
                 </TemplateColumn>
@@ -178,6 +181,7 @@
     #region Função De Interação com o Raio
     private async Task SalvarAlteracoes(RaioDeEntrega raio)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         try
         {
             Carregando = true;
@@ -199,6 +203,7 @@
 
     private async Task CriarRaioDeEntrega()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         var UltimoRaio = RaiosExistentes.LastOrDefault();
 
         if (UltimoRaio is null)
@@ -240,6 +245,7 @@
 
     private async Task DeletarRaioDeEntrega(RaioDeEntrega raio)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         try
         {
             Carregando = true;

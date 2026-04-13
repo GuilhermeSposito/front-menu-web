@@ -1,5 +1,6 @@
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Produtos;
 using SocketIOClient;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
@@ -13,6 +14,11 @@ public class WebSocketPedidosService : IDisposable
 {
     private readonly ImpressaoService _impressaoService;
     private SocketIOClient.SocketIO? _client;
+
+    // Evita impressão duplicada: guarda IDs de pedidos em processamento ou recentemente impressos
+    private readonly Dictionary<int, DateTime> _pedidosProcessados = new();
+    private readonly object _lockPedidos = new();
+    private static readonly TimeSpan _janelaDeDedup = TimeSpan.FromSeconds(30);
 
     public bool EstaConectado { get; private set; }
 
@@ -83,9 +89,8 @@ public class WebSocketPedidosService : IDisposable
                         var pedido = JsonSerializer.Deserialize<ClsPedido>(json,
                             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                        if (pedido is not null)
-                        {
-                            SomService.TocarPedidoDelivery();
+                        if (pedido is not null && pedido.CriadoPor != "SOPHOS")
+                        {         
                             await ProcessarPedidoAsync(pedido, json).ConfigureAwait(false);
                         }
                     }
@@ -132,12 +137,24 @@ public class WebSocketPedidosService : IDisposable
     private async Task ProcessarPedidoAsync(ClsPedido pedido, string json)
     {
         // Apenas pedidos de integrações externas (IFOOD, SOPHOS CARDAPIO)
-        if (pedido.CriadoPor != "IFOOD" && pedido.CriadoPor != "SOPHOS CARDAPIO")
+        if (pedido.CriadoPor == "SOPHOS")
             return;
 
         // Pedido ainda não aceito — aguarda aceitação
         if (pedido.StatusPedido == "ABERTO")
             return;
+
+        // Bloqueia processamento duplicado: simultâneo (race condition) ou sequencial (API emitindo duas vezes)
+        lock (_lockPedidos)
+        {
+            if (_pedidosProcessados.TryGetValue(pedido.Id, out var ultimaVez) &&
+                (DateTime.Now - ultimaVez) < _janelaDeDedup)
+                return;
+
+            _pedidosProcessados[pedido.Id] = DateTime.Now;
+        }
+
+        SomService.TocarPedidoDelivery();
 
         // Verifica preferências no banco local
         using var db = new AppDbContext();
@@ -150,7 +167,7 @@ public class WebSocketPedidosService : IDisposable
 
         if (!deveImprimir) return;
 
-        // Consulta API para confirmar que não foi impresso ainda (evita duplicata)
+        // Consulta API para confirmar que não foi impresso ainda
         var pedidoAtualizado = await BuscarPedidoAsync(pedido.Id).ConfigureAwait(false);
         if (pedidoAtualizado is null || pedidoAtualizado.Imprimiu) return;
 
@@ -158,8 +175,6 @@ public class WebSocketPedidosService : IDisposable
         await _impressaoService.Imprimir(json, "SOPHOS").ConfigureAwait(false);
 
         // Marca como impresso na API
-        // O flag Imprimiu=true impede que o FileSystemWatcher reimprima
-        // caso o browser ainda baixe o JSON por race condition
         await MarcarComoImpressoAsync(pedido).ConfigureAwait(false);
     }
 
@@ -196,6 +211,37 @@ public class WebSocketPedidosService : IDisposable
         {
             Console.WriteLine($"[WS] Erro ao marcar pedido {pedido.Id} como impresso: {ex.Message}");
         }
+    }
+
+    public async Task BuscarPedidosNaoImpressosAsync()
+    {
+        try
+        {
+            using var http = CriarHttpClient();
+            var response = await http.GetAsync($"{ApiUrl}/pedidos?Imprimiu=false");
+
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var result = await response.Content
+                .ReadFromJsonAsync<PaginatedResponse<ClsPedido>>(options);
+
+            var Pedidos = result?.Data ?? new List<ClsPedido>();
+
+            if (Pedidos.Count == 0)
+                return;
+
+            foreach (var pedido in Pedidos)
+            {
+                await ProcessarPedidoAsync(pedido, JsonSerializer.Serialize(pedido, options)).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WS] Erro ao buscar pedidos não impressos: {ex.Message}");
+        }
+      
     }
 
     private HttpClient CriarHttpClient()

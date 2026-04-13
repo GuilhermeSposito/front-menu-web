@@ -1,4 +1,4 @@
-﻿using Blazored.LocalStorage;
+using Blazored.LocalStorage;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -14,18 +14,20 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
 {
     private readonly ILocalStorageService _localStorage;
     private readonly HttpClient _httpClient;
+    private readonly AppState _appState;
 
-    public CustomAuthStateProvider(ILocalStorageService localStorage, HttpClient httpClient)
+    public CustomAuthStateProvider(ILocalStorageService localStorage, HttpClient httpClient, AppState appState)
     {
         _localStorage = localStorage;
         _httpClient = httpClient;
+        _appState = appState;
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {      
         try
         {
-            var ValidarOToken = await _httpClient.GetAsync("merchants/details");
+            var ValidarOToken = await _httpClient.GetAsync("merchants/session-info");
 
             if (!ValidarOToken.IsSuccessStatusCode)
             {
@@ -35,6 +37,9 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
             else
             {
                 var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
+                _appState.MerchantLogado = merchant ?? new ClsMerchant();
+                _appState.IsFuncionario = merchant?.FuncionarioLogado != null;
+
                 var merchantJson = JsonSerializer.Serialize(merchant);
 
                 var claims = new List<Claim>

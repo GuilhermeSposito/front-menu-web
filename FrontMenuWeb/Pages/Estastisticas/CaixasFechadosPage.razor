@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/caixas-fechados"
 @inject IJSRuntime JS
@@ -301,6 +301,7 @@
 
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         ProgressoFiscal = 0;
         _progressCts = new CancellationTokenSource();
 
@@ -375,6 +376,7 @@
     #region Função de impressão do pedido sem valor fiscal
     private async Task ImprimirPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
 
         if (!ImpressaoDesabilita)
@@ -401,6 +403,7 @@
 
     private async Task CancelarPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaVenda")) return;
         var parameters = new DialogParameters<ModalDeExcluir>
                 {
                   { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },

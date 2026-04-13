@@ -1,8 +1,9 @@
-﻿using ApiFiscalMenuWeb.Models.Dtos;
+﻿
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
+using FrontMenuWebSheredModels.DTOS;
 using SophosSyncDesktop.DataBase.Db;
 using SophosSyncDesktop.Models;
 using System;

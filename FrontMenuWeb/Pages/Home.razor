@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/"
 @using FrontMenuWeb.Dtos
@@ -8,6 +8,8 @@
 @inject PedidosService PedidosService
 @inject CaixaEPagamentosService CaixaService
 @inject NfService NFService
+@inject AuthorizationService AuthorizationService
+@inject MerchantServices MerchantServices
 
 <MudStack Class="pagina-home min-vh-100">
 
@@ -33,8 +35,8 @@
             <div class="overlay-blur">
                 <div class="overlay-conteudo">
                     <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Large" Color="Color.Error" />
-                    <MudText Typo="Typo.h5" Class="mt-2">Acesso Negado</MudText>
-                    <MudText Typo="Typo.body1">
+                    <MudText Color="Color.Secondary" Typo="Typo.h5" Class="mt-2">Acesso Negado</MudText>
+                    <MudText Color="Color.Secondary" Typo="Typo.body1">
                         Infelizmente o seu perfil de usuário não permite acesso à Dashboard. Caso precise dessa funcionalidade, solicite autorização ao administrador.
                     </MudText>
                 </div>
@@ -340,22 +342,8 @@
 
             await AtualizaInfosDosPedidos();
 
-            if (AppState.MerchantLogado.FuncionarioLogado is not null)
-            {
-                if (AppState.MerchantLogado.FuncionarioLogado.AcessoDashboard)
-                {
-                    UsuarioPermitidoAcessarDashboard = true;
-                }
-                else
-                {
-                    UsuarioPermitidoAcessarDashboard = false;
-                }
-            }
-            else
-            {
-                UsuarioPermitidoAcessarDashboard = true;
-            }
-
+            // Verifica permissão de acesso à Dashboard via backend
+            UsuarioPermitidoAcessarDashboard = await MerchantServices.CheckPermissionAsync("AcessoDashboard");
         }
         catch (Exception ex)
         {
@@ -412,7 +400,7 @@
 
     public async Task AtualizaInfosDosPedidos()
     {
-        ReturnApiRefatored<ClsPedido> returno = await CaixaService.VerificaSeHaCaixaAberto(AppState.MerchantLogado.FuncionarioLogado?.Id);
+        ReturnApiRefatored<ClsPedido> returno = await CaixaService.VerificaSeHaCaixaAberto();
 
         if (returno.Status == "error")
         {
@@ -604,6 +592,7 @@
 
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         ProgressoFiscal = 0;
         _progressCts = new CancellationTokenSource();
 
@@ -704,6 +693,7 @@
 
     private async Task CancelarPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaVenda")) return;
         var parameters = new DialogParameters<ModalDeExcluir>
                 {
                   { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },

@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/grupos"
 @using FrontMenuWeb.Components.Modais.ModaisDeGrupo
@@ -6,6 +6,7 @@
 @inject GrupoServices GrupoService
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
+@inject AuthorizationService AuthorizationService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh;">
     <MudLayout>
@@ -105,6 +106,7 @@
 
     private async Task OpenDialogAddGrupoAsync()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroGrupoProduto")) return;
         var parameters = new DialogParameters
         {
             { "Grupos", grupos }
@@ -127,6 +129,7 @@
 
     private async Task RemoveGrupo(ClsGrupo grupo)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroGrupoProduto")) return;
         var parameters = new DialogParameters<ModalDeExcluir>
         {
             { x => x.ContentText, $"Você tem certeza que deseja excluir o grupo {grupo.Descricao}? Essa operação não pode ser desfeita. " },
@@ -151,6 +154,7 @@
 
     private async Task EditaGrupo(ClsGrupo grupo)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroGrupoProduto")) return;
         var parameters = new DialogParameters
         {
             { "Grupo", grupo }

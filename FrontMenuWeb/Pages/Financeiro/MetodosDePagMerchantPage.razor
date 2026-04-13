@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/metodos"
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeConta
@@ -15,6 +15,7 @@
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
 @inject MetodosDePagMerchantService MetodosService
+@inject AuthorizationService AuthorizationService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -123,6 +124,7 @@
 
     private async Task AtivaEDesativaMetodo(ClsMetodosDePagMerchant metodo)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraFormaDePagamento")) return;
         try
         {
             var responseAPi = await MetodosService.UpdateMetodoAsync(metodo);
@@ -144,6 +146,7 @@
 
     private async Task DeletarMetodo(ClsMetodosDePagMerchant metodo)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraFormaDePagamento")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -180,6 +183,7 @@
 
     public async Task AbreModalDeAdicionarOuEditarMetodo(bool criandoMetodo = false, ClsMetodosDePagMerchant? metodoParaEditar = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastraFormaDePagamento")) return;
         var IdMetodo = 0;
 
         if(metodoParaEditar is not null)

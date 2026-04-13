@@ -26,4 +26,8 @@
     <Folder Include="wwwroot\merchants\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FrontMenuSharedModels\FrontMenuSharedModels.csproj" />
+  </ItemGroup>
+
 </Project>

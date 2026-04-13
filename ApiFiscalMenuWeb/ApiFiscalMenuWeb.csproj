@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FrontMenuSharedModels\FrontMenuSharedModels.csproj" />
     <ProjectReference Include="..\FrontMenuWeb\FrontMenuWeb.csproj" />
   </ItemGroup>
 

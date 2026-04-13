@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
@@ -242,7 +242,7 @@
                                     @*Carrinho*@
                                     <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
                                         <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
-                                        <MudButton OnClick="@(() => { NovoPedido.Itens.Clear(); })">Limpar</MudButton>
+                                        <MudButton OnClick="LimparCarrinho">Limpar</MudButton>
                                     </MudStack>
 
                                     @*itens*@
@@ -264,7 +264,7 @@
                                                                 <MudIconButton OnClick=@(async () => { await AbreModalParaEditarItemCompleto(produtoNoPedido); }) Icon="@Icons.Material.TwoTone.Edit" Color="Color.Primary" />
                                                             </MudTooltip>
                                                             <MudTooltip Text="Remover Item" Color="Color.Primary">
-                                                                <MudIconButton OnClick=@(() => { NovoPedido.Itens.Remove(produtoNoPedido); }) Icon="@Icons.Material.Filled.Close" Color="Color.Primary" />
+                                                                <MudIconButton OnClick=@(async () => { await RemoverItemDoCarrinho(produtoNoPedido); }) Icon="@Icons.Material.Filled.Close" Color="Color.Primary" />
                                                             </MudTooltip>
                                                         </MudStack>
                                                     </MudStack>
@@ -381,6 +381,28 @@
 
     //Criação de Pizza(Item Fracionado)
     private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado ?? 2;
+    #endregion
+
+    #region Funções de Carrinho
+    private async Task RemoverItemDoCarrinho(ItensPedido item)
+    {
+        if (await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda"))
+        {
+            NovoPedido.Itens.Remove(item);
+            Snackbar.Add("Item removido do carrinho.", Severity.Info);
+        }
+    }
+
+    private async Task LimparCarrinho()
+    {
+        if (NovoPedido.Itens.Count == 0) return;
+
+        if (await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda"))
+        {
+            NovoPedido.Itens.Clear();
+            Snackbar.Add("Carrinho limpo com sucesso.", Severity.Info);
+        }
+    }
     #endregion
 
     #region Funções Auxiliares

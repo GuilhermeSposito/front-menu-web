@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/gestao-de-pedidos"
 @implements IDisposable
@@ -38,6 +38,8 @@
 @inject MessageWhatsAppService MessageService
 @inject IntegracoesSophosService IntegracoesSophosService
 @inject BalancaService BalancaService
+@inject SangriasService SangriasService
+@inject AuthorizationService AuthorizationService
 
 
 <MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidos Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor gestao-pedido-page" : "gestao-pedido-page"))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
@@ -578,6 +580,8 @@
 
     private async Task AbrirCriacaoDePedido(TiposDePedido? tipoDePedido = TiposDePedido.BALCAO, ClsPedido? PedidoAberto = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
+
         if (AppState.CaixaAberto)
         {
             var parameters = new DialogParameters
@@ -642,6 +646,8 @@
 
     private async Task AbreModalDeCodigoDeBarrasParaProximaEtapa()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
+
         if (AppState.CaixaAberto)
         {
 
@@ -846,8 +852,11 @@
         Snackbar.Add(message, severity);
     }
 
+
     private async Task CancelarPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaVenda")) return;
+
         var parameters = new DialogParameters<ModalDeExcluir>
                 {
                   { x => x.ContentText, "Atenção: ao excluir este pedido, essa ação não poderá ser desfeita. O estoque será reincorporado automaticamente. Deseja continuar?" },
@@ -1018,6 +1027,8 @@
 
     private async Task EmiteNFCe(ClsPedido Pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
+
         LabelDeCarregamento = "Emitindo NFC-e..";
         ProgressoFiscal = 0;
         _progressCts = new CancellationTokenSource();
@@ -1245,6 +1256,8 @@
     #region Funções de edicao do pedido
     private async Task EditarPedidoPagamento(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditaVenda")) return;
+
         //Primeiro fazer a requisição para ver se existe pagamentos para ser editado
         ReturnApiRefatored<PagamentoDoPedido>
          ReturnFromApi = await CaixasService.GetPagamentosDoPedidoAsync(pedido);
@@ -1282,6 +1295,8 @@
 
     private async Task EditarPedido(ClsPedido pedido)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditaVenda")) return;
+
         ClsPedido? Pedido = await PedidosService.GetPedidoById(pedido.Id);
         if (Pedido is null)
         {

@@ -19,11 +19,9 @@ public class CaixaEPagamentosService
         _HttpClient = http;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> VerificaSeHaCaixaAberto(int? FuncionarioId = null)
+    public async Task<ReturnApiRefatored<ClsPedido>> VerificaSeHaCaixaAberto()
     {
-        string QueryString = FuncionarioId.HasValue ? $"?funcionario_id={FuncionarioId.Value}" : string.Empty;
-
-        var request = new HttpRequestMessage(HttpMethod.Get, $"caixas/aberto{QueryString}");
+        var request = new HttpRequestMessage(HttpMethod.Get, $"caixas/aberto");
         var response = await _HttpClient.SendAsync(request);
         string json = await response.Content.ReadAsStringAsync();
         var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<ClsPedido>>(json, new JsonSerializerOptions

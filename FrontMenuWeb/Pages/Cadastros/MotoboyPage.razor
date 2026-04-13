@@ -6,6 +6,9 @@
 @using FrontMenuWeb.Services
 
 @inject MotoboyService MotoboyService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -132,6 +135,7 @@
 
     private async Task AbreModalDeAdicionarOuEditar(bool adicionando = false, ClsMotoboy? motoboyParaEditar = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         var idDoMotoboy = motoboyParaEditar?.Id ?? 0;
 
         var parameters = new DialogParameters
@@ -158,6 +162,7 @@
 
     private async Task DeletaMotoboy(ClsMotoboy motoboy)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

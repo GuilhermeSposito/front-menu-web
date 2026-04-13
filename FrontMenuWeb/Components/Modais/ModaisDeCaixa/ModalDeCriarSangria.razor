@@ -1,0 +1,123 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Caixa
+@using FrontMenuWeb.Services
+@using System.Globalization
+
+@inject SangriasService SangriasService
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.MoneyOff" Color="Color.Warning" />
+            <MudText Typo="Typo.h6">Nova Sangria de Caixa</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_formValido">
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    Caixa <strong>#@CaixaId</strong> está aberto. Informe o valor e a descrição da sangria.
+                </MudAlert>
+
+                <MudNumericField T="decimal"
+                                 @bind-Value="_valor"
+                                 Label="Valor da Sangria (R$)"
+                                 Adornment="Adornment.Start"
+                                 AdornmentText="R$"
+                                 Min="0.01m"
+                                 Format="N2"
+                                 Culture="@CultureInfo.GetCultureInfo("pt-BR")"
+                                 Required="true"
+                                 RequiredError="O valor é obrigatório e deve ser maior que zero."
+                                 Variant="Variant.Outlined" />
+
+                <MudTextField @bind-Value="_descricao"
+                              Label="Descrição"
+                              Required="true"
+                              RequiredError="A descrição é obrigatória."
+                              MaxLength="500"
+                              Lines="3"
+                              Variant="Variant.Outlined"
+                              Placeholder="Ex: Retirada para pagamento de fornecedor..." />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar" Disabled="_salvando">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Warning"
+                   OnClick="Confirmar"
+                   Disabled="_salvando || !_formValido"
+                   StartIcon="@Icons.Material.Filled.MoneyOff">
+            @if (_salvando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Registrando...</span>
+            }
+            else
+            {
+                <span>Registrar Sangria</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int CaixaId { get; set; }
+
+    private MudForm _form = default!;
+    private bool _formValido = false;
+    private bool _salvando = false;
+    private decimal _valor = 0m;
+    private string _descricao = string.Empty;
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private async Task Confirmar()
+    {
+        await _form.Validate();
+        if (!_formValido) return;
+
+        if (_valor <= 0)
+        {
+            Snackbar.Add("O valor da sangria deve ser maior que zero.", Severity.Warning);
+            return;
+        }
+
+        _salvando = true;
+        try
+        {
+            var dto = new CreateSangriaDto
+            {
+                CaixaId = CaixaId,
+                Descricao = _descricao,
+                Valor = _valor
+            };
+
+            var resultado = await SangriasService.CreateSangriaAsync(dto);
+
+            if (resultado.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                string mensagem = string.Join(", ", resultado.Messages);
+                Snackbar.Add(mensagem, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao registrar sangria: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+}

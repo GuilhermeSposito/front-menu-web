@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/formas-de-recebimento"
 @using FrontMenuWeb.Components.Modais.ModaisDoFinanceiro.ModaisDeCategorias
@@ -121,6 +121,7 @@
 
     private async Task AbreModalDeAdicionarOuEditarForma(bool CriandoForma = false, ClsFormaDeRecebimento? FormaParaEditar = null)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroFormasDeRecebimento")) return;
 
         var IdDaForma = 0;
 
@@ -150,6 +151,7 @@
 
     private async Task DeletarForma(ClsFormaDeRecebimento forma)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroFormasDeRecebimento")) return;
         try
         {
             var parameters = new DialogParameters<ModalDeExcluir>

@@ -464,8 +464,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ApiFiscalMenuWeb\ApiFiscalMenuWeb.csproj" />
-    <ProjectReference Include="..\FrontMenuWeb\FrontMenuWeb.csproj" />
+    <ProjectReference Include="..\FrontMenuSharedModels\FrontMenuSharedModels.csproj" />
   </ItemGroup>
 
   <ItemGroup>

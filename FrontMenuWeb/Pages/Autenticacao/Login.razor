@@ -1,4 +1,4 @@
-﻿@page "/login"
+@page "/login"
 @rendermode RenderMode.InteractiveWebAssembly
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json.Serialization
@@ -174,5 +174,8 @@
 
         [JsonPropertyName("expiresIn")]
         public int ExpiresIn { get; set; }
+
+        [JsonPropertyName("isFuncionario")]
+        public bool IsFuncionario { get; set; }
     }
 }

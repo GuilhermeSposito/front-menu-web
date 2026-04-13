@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/empresas-entrega-integradas"
 @using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresasDeEntrega
@@ -16,6 +16,9 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
 @inject EntregasMachineService EntregasMachineService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @using MudBlazor.Extensions.Services
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
@@ -119,6 +122,7 @@
     #region função de abrir modal de criação/edição
     private async Task AbrirModalCriacaoEdicao(EmpresaMachine empresa, bool eCriacao = true)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         var parameters = new DialogParameters
         {
            { "ECriacao", eCriacao},
@@ -141,6 +145,7 @@
     #region Funções de Ações
     private async Task DeletarEmpresa(EmpresaMachine empresa)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeMotoboy")) return;
         var Response = await EntregasMachineService.DeleteEmpresa(empresa.Id);
         var sucesso = Response.Status == "success";
         var Mensagem = sucesso ? "Empresa deletada com sucesso!" : $"Erro ao deletar empresa";

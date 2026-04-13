@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/financeiro/lancamentos"
 @inject IJSRuntime JS
@@ -20,6 +20,7 @@
 @inject LancamentoFinanceiroService LancamentoFinanceiroService
 @inject PessoasService PessoasService
 @inject MetodosDePagMerchantService MetodosDePagMerchantService
+@inject AuthorizationService AuthorizationService
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -560,12 +561,7 @@
 
     private async Task AbreModalDeAdicionarOuEditar(bool CriandoLancamento = false, ClsLancamentoFinanceiro? LancamentoParaEditar = null)
     {
-        bool TemPermissao = await VerificaPermissao();
-        if (!TemPermissao)
-        {
-            await AbreMensagemDeAcessoNegado();
-            return;
-        }
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
 
         var IdDoLancamento = 0;
 
@@ -635,8 +631,6 @@
         }
 
         FiltroPorPeriodoSelecionados = filtros;
-
-
     }
 
     void Closed(MudChip<ClsLancamentoFinanceiro> chip)
@@ -658,6 +652,7 @@
 
     private async Task GerarPdf()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
         await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdf", "RelatorioPedidos.pdf");
     }
 
@@ -709,29 +704,6 @@
         }
     }
 
-    private async Task AbreMensagemDeAcessoNegado()
-    {
-        try
-        {
-            var parameters = new DialogParameters<ModalDeAcessoNegado>
-            {
-                  { x => x.ContentText, $"Desculpe. Infelizmente você não tem acesso a essa ação." },
-                  { x => x.ButtonText, "OK" },
-                  { x => x.Color, Color.Success}
-             };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
-            var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Acesso Negado", parameters, options);
-            var result = await dialog.Result;
-
-
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Erro ao declarar acesso negado: {ex.Message}", Severity.Error);
-        }
-
-    }
-
     private async Task AtualizarPeriodoRapido(int index)
     {
 
@@ -773,14 +745,9 @@
     #region Funções de Ações
     private async Task DeletaLancamento(ClsLancamentoFinanceiro Lancamento)
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
         try
         {
-            bool TemPermissao = await VerificaPermissao();
-            if (!TemPermissao)
-            {
-                await AbreMensagemDeAcessoNegado();
-                return;
-            }
 
             var parameters = new DialogParameters<ModalDeExcluir>
                 {
@@ -811,12 +778,7 @@
 
     private async Task AtualizaLancamnto(ClsLancamentoFinanceiro lancamento, bool atualizandoPago = false)
     {
-        bool TemPermissao = await VerificaPermissao();
-        if (!TemPermissao)
-        {
-            await AbreMensagemDeAcessoNegado();
-            return;
-        }
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
 
         if (atualizandoPago && lancamento.Pago)
         {
@@ -837,14 +799,9 @@
 
     private async Task DeclaraPagos()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
         try
         {
-            bool TemPermissao = await VerificaPermissao();
-            if (!TemPermissao)
-            {
-                await AbreMensagemDeAcessoNegado();
-                return;
-            }
 
             if (LancamentosSelecionados is not null)
             {
@@ -874,14 +831,10 @@
 
     private async Task ApagaTodos()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
         try
         {
-            bool TemPermissao = await VerificaPermissao();
-            if (!TemPermissao)
-            {
-                await AbreMensagemDeAcessoNegado();
-                return;
-            }
+        
 
             var parameters = new DialogParameters<ModalDeExcluir>
                 {
@@ -918,18 +871,7 @@
 
     }
 
-    private async Task<bool> VerificaPermissao()
-    {
-        if (AppState.MerchantLogado.FuncionarioLogado is not null)
-        {
-            if (!AppState.MerchantLogado.FuncionarioLogado.AcessoCadastraLancamento)
-            {
-                return false;
-            }
-        }
 
-        return true;
-    }
 
     #endregion
 

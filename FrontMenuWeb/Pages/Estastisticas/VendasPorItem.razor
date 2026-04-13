@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/vendas/vendas-por-item"
 @inject IJSRuntime JS
@@ -151,6 +151,7 @@
 
     private async Task GerarPdf()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         if (Produtos.Count == 0)
         {
             Snackbar.Add("Não há dados para gerar o relatório.", Severity.Warning);

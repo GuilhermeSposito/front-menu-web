@@ -1,4 +1,4 @@
-﻿@rendermode RenderMode.InteractiveWebAssembly
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/caixa"
 @inject IJSRuntime JS
@@ -24,6 +24,7 @@
 @inject ComplementosServices ComplementosServices
 @inject PedidosService PedidosService
 @inject CaixaEPagamentosService CaixaService
+@inject SangriasService AutorizacaoService
 
 <MudPaper tabindex="0" Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout Class="vh-100">
@@ -289,6 +290,7 @@
 
     private async Task AbreCaixa()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
 
         var dialog = await DialogService.ShowAsync<ModalDeAbrirCaixa>("Abrir Caixa");
         var result = await dialog.Result;
@@ -312,8 +314,10 @@
         }
     }
 
+
     private async Task FechaCaixa()
     {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
 
         var dialog = await DialogService.ShowAsync<ModalDeFecharCaixa>("Fechar Caixa");
         var result = await dialog.Result;
