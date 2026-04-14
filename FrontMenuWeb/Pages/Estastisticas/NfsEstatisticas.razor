@@ -51,26 +51,10 @@
             </MudPaper>
         }
 
-        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-            <MudTabs Class="w-100" ActivePanelIndexChanged="AtualizarPeriodoRapido" Rounded="true" Centered="true" Color="Color.Primary">
-                <MudTabPanel Text="Mês Passado" />
-                <MudTabPanel Text="Semana Passada" />
-                <MudTabPanel Text="Hoje" />
-                <MudTabPanel Text="Esta Semana" />
-                <MudTabPanel Text="Este Mês" />
-            </MudTabs>
-
-            <MudStack Class="w-100 p-3 rounded-2 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                <MudDatePicker @bind-Date="FiltroDateTimeInicial" Label="Data Inicial" Placeholder="Escolha Uma Data Inicial" />
-                <MudDatePicker @bind-Date="FiltroDateTimeFinal" Label="Data Final" Placeholder="Escolha Uma Data Final" />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AplicarFiltros">Aplicar Filtros</MudButton>
-                @if (FiltroDateTimeFinal is not null && FiltroDateTimeInicial is not null)
-                {
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LimparFiltros">Limpar Filtros</MudButton>
-                }
-            </MudStack>
-
-        </MudStack>
+        <FiltroPeriodoRapido Class="mt-2"
+                             @bind-DataInicio="FiltroDateTimeInicial"
+                             @bind-DataFim="FiltroDateTimeFinal"
+                             OnFiltroAplicado="AplicarFiltros" />
 
         <MudDataGrid T="NFEmitidasDto"
                      @ref="dataGridRef"
@@ -298,52 +282,8 @@
     #endregion
 
     #region Funções de Ações da Página
-    private async Task AtualizarPeriodoRapido(int index)
-    {
-
-        switch (index)
-        {
-            case 0: // Mês Passado
-                var mesPassado = DateTime.Today.AddMonths(-1);
-                FiltroDateTimeInicial = new DateTime(mesPassado.Year, mesPassado.Month, 1);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
-                break;
-            case 1: // Semana Passada
-                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
-                FiltroDateTimeInicial = lastWeekStart;
-                FiltroDateTimeFinal = lastWeekStart.AddDays(6);
-                break;
-            case 2: // Hoje
-                FiltroDateTimeInicial = DateTime.Today;
-                FiltroDateTimeFinal = DateTime.Today;
-                break;
-            case 3: // Esta Semana
-                FiltroDateTimeInicial = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddDays(6);
-                break;
-            case 4: // Este Mês
-                FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-                FiltroDateTimeFinal = FiltroDateTimeInicial.Value.AddMonths(1).AddDays(-1);
-                break;
-        }
-
-        StateHasChanged();
-        await dataGridRef!.ReloadServerData();
-    }
-
     private async Task AplicarFiltros()
     {
-        if (dataGridRef != null)
-        {
-            await dataGridRef.ReloadServerData();
-        }
-    }
-
-    private async Task LimparFiltros()
-    {
-        FiltroDateTimeInicial = null;
-        FiltroDateTimeFinal = null;
-
         if (dataGridRef != null)
         {
             await dataGridRef.ReloadServerData();

@@ -12,6 +12,7 @@ public class AppDbContext: DbContext
 {
     public DbSet<ImpressorasConfigs> Impressoras { get; set; }
     public DbSet<InfosDeLogin> InfosDeLogin { get; set; }
+    public DbSet<ParametrosLocais> ParametrosLocais { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SophosSync","configs.db");

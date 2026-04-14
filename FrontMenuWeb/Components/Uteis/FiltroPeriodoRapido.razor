@@ -1,0 +1,116 @@
+@using MudBlazor.Extensions
+
+<MudStack Class="@($"w-100 p-3 rounded-2 {Class}")" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+    <MudTabs Class="w-100" ActivePanelIndex="@_activePanelIndex" ActivePanelIndexChanged="OnTabChanged" Rounded="true" Centered="true" Color="@Color">
+        <MudTabPanel Text="Mês Passado" />
+        <MudTabPanel Text="Semana Passada" />
+        <MudTabPanel Text="Hoje" />
+        <MudTabPanel Text="Esta Semana" />
+        <MudTabPanel Text="Este Mês" />
+    </MudTabs>
+
+    <MudStack Class="w-100 mt-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Wrap="Wrap.Wrap" Spacing="3">
+        <MudDatePicker Date="DataInicio" DateChanged="OnDataInicioChanged" Label="Data Inicial" Placeholder="Escolha uma data inicial" />
+        <MudDatePicker Date="DataFim" DateChanged="OnDataFimChanged" Label="Data Final" Placeholder="Escolha uma data final" />
+
+        @if (FiltroExtra is not null)
+        {
+            @FiltroExtra
+        }
+
+        <MudButton Variant="Variant.Filled" Color="@Color" StartIcon="@Icons.Material.Filled.Search" OnClick="OnAplicarFiltros">
+            Aplicar Filtros
+        </MudButton>
+
+        @if (DataInicio is not null || DataFim is not null)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.Material.Filled.Clear" OnClick="LimparFiltros">
+                Limpar
+            </MudButton>
+        }
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter] public DateTime? DataInicio { get; set; }
+    [Parameter] public EventCallback<DateTime?> DataInicioChanged { get; set; }
+
+    [Parameter] public DateTime? DataFim { get; set; }
+    [Parameter] public EventCallback<DateTime?> DataFimChanged { get; set; }
+
+    [Parameter] public EventCallback OnFiltroAplicado { get; set; }
+
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+
+    /// <summary>Slot para filtros adicionais (ex: chipset de status) renderizados entre as datas e o botão aplicar.</summary>
+    [Parameter] public RenderFragment? FiltroExtra { get; set; }
+
+    /// <summary>Classes CSS adicionais aplicadas ao container raiz.</summary>
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private int _activePanelIndex = 4; // Inicia em "Este Mês"
+
+    private async Task OnDataInicioChanged(DateTime? value)
+    {
+        await DataInicioChanged.InvokeAsync(value);
+    }
+
+    private async Task OnDataFimChanged(DateTime? value)
+    {
+        await DataFimChanged.InvokeAsync(value);
+    }
+
+    private async Task OnAplicarFiltros()
+    {
+        await OnFiltroAplicado.InvokeAsync();
+    }
+
+    private async Task LimparFiltros()
+    {
+        await DataInicioChanged.InvokeAsync(null);
+        await DataFimChanged.InvokeAsync(null);
+        await OnFiltroAplicado.InvokeAsync();
+    }
+
+    private async Task OnTabChanged(int index)
+    {
+        _activePanelIndex = index;
+        await AtualizarPeriodoRapido(index);
+    }
+
+    private async Task AtualizarPeriodoRapido(int index)
+    {
+        DateTime? inicio = null;
+        DateTime? fim = null;
+
+        switch (index)
+        {
+            case 0: // Mês Passado
+                var mesPassado = DateTime.Today.AddMonths(-1);
+                inicio = new DateTime(mesPassado.Year, mesPassado.Month, 1);
+                fim = inicio.Value.AddMonths(1).AddDays(-1);
+                break;
+            case 1: // Semana Passada
+                var lastWeekStart = DateTime.Today.StartOfWeek(DayOfWeek.Monday).AddDays(-7);
+                inicio = lastWeekStart;
+                fim = lastWeekStart.AddDays(6);
+                break;
+            case 2: // Hoje
+                inicio = DateTime.Today;
+                fim = DateTime.Today;
+                break;
+            case 3: // Esta Semana
+                inicio = DateTime.Today.StartOfWeek(DayOfWeek.Monday);
+                fim = inicio.Value.AddDays(6);
+                break;
+            case 4: // Este Mês
+                inicio = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                fim = inicio.Value.AddMonths(1).AddDays(-1);
+                break;
+        }
+
+        await DataInicioChanged.InvokeAsync(inicio);
+        await DataFimChanged.InvokeAsync(fim);
+        await OnFiltroAplicado.InvokeAsync();
+    }
+}

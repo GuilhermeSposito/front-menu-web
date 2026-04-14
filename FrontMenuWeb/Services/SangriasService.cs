@@ -29,12 +29,18 @@ public class SangriasService
         return response ?? new ReturnApiRefatored<ClsSangria> { Status = "error", Messages = ["Erro ao buscar sangrias"] };
     }
 
-    public async Task<PaginatedResponse<ClsSangria>> GetAllSangriasPaginatedAsync(int page = 1, int limit = 10, string? status = null)
+    public async Task<PaginatedResponse<ClsSangria>> GetAllSangriasPaginatedAsync(int page = 1, int limit = 10, string? status = null, DateTime? dataInicio = null, DateTime? dataFim = null)
     {
         var queryParams = new List<string> { $"page={page}", $"limit={limit}" };
 
         if (!string.IsNullOrEmpty(status))
             queryParams.Add($"status={status}");
+
+        if (dataInicio.HasValue)
+            queryParams.Add($"dataInicio={dataInicio.Value.Date:yyyy-MM-dd}T00:00:00");
+
+        if (dataFim.HasValue)
+            queryParams.Add($"dataFim={dataFim.Value.Date:yyyy-MM-dd}T23:59:59");
 
         var url = $"sangrias/all?{string.Join("&", queryParams)}";
 

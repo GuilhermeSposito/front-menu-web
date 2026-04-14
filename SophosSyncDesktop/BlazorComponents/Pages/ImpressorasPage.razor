@@ -1,0 +1,81 @@
+@using System.Drawing.Printing
+@inject NavigationManager Nav
+
+<div style="font-family: 'Segoe UI', sans-serif; padding: 24px; background: #f5f5f5; min-height: 100vh;">
+
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+        <h2 style="color: #333; font-size: 20px; font-weight: 600;">Impressoras Instaladas</h2>
+        @if (carregando)
+        {
+            <span style="color:#888; font-size:13px;">buscando...</span>
+        }
+        else
+        {
+            <span style="background: #F88113; color: white; border-radius: 12px; padding: 2px 10px; font-size: 13px; font-weight: 500;">
+                @impressoras.Count
+            </span>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div style="background: #fee; border-left: 4px solid red; border-radius: 8px; padding: 16px; color: #c00;">
+            Erro: @erro
+        </div>
+    }
+    else if (carregando)
+    {
+        <div style="color: #888;">Buscando impressoras...</div>
+    }
+    else if (impressoras.Count == 0)
+    {
+        <div style="background: white; border-radius: 10px; padding: 32px; text-align: center; color: #888;">
+            Nenhuma impressora encontrada.
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            @foreach (var imp in impressoras)
+            {
+                <div style="background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 14px; border-left: 4px solid #F88113;">
+                    <span style="font-size: 22px;">🖨️</span>
+                    <span style="font-size: 14px; font-weight: 500; color: #222;">@imp</span>
+                </div>
+            }
+        </div>
+    }
+
+    <button @onclick='() => Nav.NavigateTo("/pedidos")'
+            style="margin-top:24px; padding:8px 16px; background:#F88113; color:white; border:none; border-radius:6px; cursor:pointer;">
+        Ir para Pedidos (teste)
+    </button>
+</div>
+
+@code {
+    private List<string> impressoras = new();
+    private bool carregando = true;
+    private string erro = "";
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return Task.CompletedTask;
+
+        try
+        {
+            foreach (string nome in PrinterSettings.InstalledPrinters)
+                impressoras.Add(nome);
+        }
+        catch (Exception ex)
+        {
+            erro = ex.Message;
+        }
+        finally
+        {
+            carregando = false;
+        }
+
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

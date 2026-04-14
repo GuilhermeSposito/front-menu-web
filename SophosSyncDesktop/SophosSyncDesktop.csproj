@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,7 +7,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>Images\SOPHOS.ico</ApplicationIcon>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
+
+  <ItemGroup>
+    <RazorComponent Include="BlazorComponents\**\*.razor" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Images\SOPHOS.ico" />
@@ -193,6 +198,11 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Sounds\pedido-delivery.mp3">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\hybrid\index.html">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -458,6 +468,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView.WindowsForms" Version="9.0.0" />
+    <PackageReference Include="MudBlazor" Version="9.3.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="SocketIOClient" Version="3.1.2" />
     <PackageReference Include="Unimake.Unidanfe" Version="20260114.1430.18" />
@@ -481,5 +493,65 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <!--
+    O staticwebassets.runtime.json gerado pelo build contém caminhos absolutos da máquina do
+    desenvolvedor (NuGet cache). No ClickOnce esses caminhos não existem no cliente, então o
+    BlazorWebView não consegue servir os assets do MudBlazor.
+    Solução: copiar MudBlazor.min.css e MudBlazor.min.js para wwwroot\hybrid\_content\MudBlazor\
+    (content root do BlazorWebView) durante o build, para que o ClickOnce os inclua como
+    arquivos físicos e o PhysicalFileProvider os sirva corretamente.
+  -->
+  <Target Name="CopyAssetsParaClickOnce" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <_MudBlazorVersao>9.3.0</_MudBlazorVersao>
+      <_MudBlazorNuGetDir>$(NuGetPackageRoot)mudblazor\$(_MudBlazorVersao)\staticwebassets</_MudBlazorNuGetDir>
+      <_MudBlazorDstDir>$(MSBuildProjectDirectory)\wwwroot\hybrid\_content\MudBlazor</_MudBlazorDstDir>
+      <_ImagensSrc>$(MSBuildProjectDirectory)\wwwroot\images</_ImagensSrc>
+      <_ImagensDst>$(MSBuildProjectDirectory)\wwwroot\hybrid\images</_ImagensDst>
+    </PropertyGroup>
+
+    <!-- MudBlazor JS/CSS -->
+    <MakeDir Directories="$(_MudBlazorDstDir)" Condition="!Exists('$(_MudBlazorDstDir)')" />
+    <Copy
+      SourceFiles="$(_MudBlazorNuGetDir)\MudBlazor.min.css;$(_MudBlazorNuGetDir)\MudBlazor.min.js"
+      DestinationFolder="$(_MudBlazorDstDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_MudBlazorNuGetDir)\MudBlazor.min.js')" />
+
+    <!-- Imagens: copia wwwroot\images\ → wwwroot\hybrid\images\ (content root do BlazorWebView) -->
+    <MakeDir Directories="$(_ImagensDst)" Condition="!Exists('$(_ImagensDst)')" />
+    <ItemGroup>
+      <_ImagensParaCopiar Include="$(_ImagensSrc)\**\*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(_ImagensParaCopiar)"
+      DestinationFiles="@(_ImagensParaCopiar->'$(_ImagensDst)\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(_ImagensSrc)')" />
+
+    <ItemGroup>
+      <!-- MudBlazor assets -->
+      <Content Include="wwwroot\hybrid\_content\MudBlazor\MudBlazor.min.css"
+               Condition="Exists('$(MSBuildProjectDirectory)\wwwroot\hybrid\_content\MudBlazor\MudBlazor.min.css')">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <Content Include="wwwroot\hybrid\_content\MudBlazor\MudBlazor.min.js"
+               Condition="Exists('$(MSBuildProjectDirectory)\wwwroot\hybrid\_content\MudBlazor\MudBlazor.min.js')">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <!-- Imagens copiadas para o content root -->
+      <Content Include="wwwroot\hybrid\images\**\*"
+               Condition="Exists('$(MSBuildProjectDirectory)\wwwroot\hybrid\images')">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+    </ItemGroup>
+  </Target>
 
 </Project>

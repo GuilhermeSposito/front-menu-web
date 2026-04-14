@@ -37,6 +37,12 @@
             label2 = new Label();
             tabControleConfigs = new TabControl();
             tabPage1 = new TabPage();
+            panelIntegracoes = new Panel();
+            labelIntegracoes = new Label();
+            checkBoxImprimirIfood = new CheckBox();
+            checkBoxImprimirCardapio = new CheckBox();
+            checkBoxImprimirComandaMesa = new CheckBox();
+            checkBoxUsaDesktop = new CheckBox();
             panel2 = new Panel();
             pictureBox3 = new PictureBox();
             CaminhoParaPastaDeArqNfe = new TextBox();
@@ -45,22 +51,18 @@
             pictureBox1 = new PictureBox();
             CaminhoDoSalvamentoDoJson = new TextBox();
             label12 = new Label();
-            panelIntegracoes = new Panel();
-            labelIntegracoes = new Label();
-            checkBoxImprimirIfood = new CheckBox();
-            checkBoxImprimirCardapio = new CheckBox();
-            checkBoxImprimirComandaMesa = new CheckBox();
+            label4 = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)BackButton).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)LogoImageSophos).BeginInit();
             tabControleConfigs.SuspendLayout();
             tabPage1.SuspendLayout();
+            panelIntegracoes.SuspendLayout();
             panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
             panelCaminhobanco.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            panelIntegracoes.SuspendLayout();
             SuspendLayout();
             // 
             // panel1
@@ -169,6 +171,89 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Config de Salvamento";
             // 
+            // panelIntegracoes
+            // 
+            panelIntegracoes.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            panelIntegracoes.BackColor = Color.FromArgb(25, 36, 54);
+            panelIntegracoes.Controls.Add(label4);
+            panelIntegracoes.Controls.Add(labelIntegracoes);
+            panelIntegracoes.Controls.Add(checkBoxImprimirIfood);
+            panelIntegracoes.Controls.Add(checkBoxImprimirCardapio);
+            panelIntegracoes.Controls.Add(checkBoxImprimirComandaMesa);
+            panelIntegracoes.Controls.Add(checkBoxUsaDesktop);
+            panelIntegracoes.Font = new Font("Segoe UI", 7.20000029F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            panelIntegracoes.Location = new Point(61, 275);
+            panelIntegracoes.Name = "panelIntegracoes";
+            panelIntegracoes.Size = new Size(820, 140);
+            panelIntegracoes.TabIndex = 7;
+            // 
+            // labelIntegracoes
+            // 
+            labelIntegracoes.AutoSize = true;
+            labelIntegracoes.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            labelIntegracoes.ForeColor = Color.White;
+            labelIntegracoes.Location = new Point(34, 14);
+            labelIntegracoes.Name = "labelIntegracoes";
+            labelIntegracoes.Size = new Size(253, 28);
+            labelIntegracoes.TabIndex = 0;
+            labelIntegracoes.Text = "Impressão de integrações";
+            // 
+            // checkBoxImprimirIfood
+            // 
+            checkBoxImprimirIfood.AutoSize = true;
+            checkBoxImprimirIfood.BackColor = Color.Transparent;
+            checkBoxImprimirIfood.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirIfood.ForeColor = Color.White;
+            checkBoxImprimirIfood.Location = new Point(34, 55);
+            checkBoxImprimirIfood.Name = "checkBoxImprimirIfood";
+            checkBoxImprimirIfood.Size = new Size(144, 27);
+            checkBoxImprimirIfood.TabIndex = 1;
+            checkBoxImprimirIfood.Text = "Imprimir iFood";
+            checkBoxImprimirIfood.UseVisualStyleBackColor = false;
+            checkBoxImprimirIfood.CheckedChanged += checkBoxImprimirIfood_CheckedChanged;
+            // 
+            // checkBoxImprimirCardapio
+            // 
+            checkBoxImprimirCardapio.AutoSize = true;
+            checkBoxImprimirCardapio.BackColor = Color.Transparent;
+            checkBoxImprimirCardapio.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirCardapio.ForeColor = Color.White;
+            checkBoxImprimirCardapio.Location = new Point(240, 55);
+            checkBoxImprimirCardapio.Name = "checkBoxImprimirCardapio";
+            checkBoxImprimirCardapio.Size = new Size(232, 27);
+            checkBoxImprimirCardapio.TabIndex = 2;
+            checkBoxImprimirCardapio.Text = "Imprimir Sophos Cardápio";
+            checkBoxImprimirCardapio.UseVisualStyleBackColor = false;
+            checkBoxImprimirCardapio.CheckedChanged += checkBoxImprimirCardapio_CheckedChanged;
+            // 
+            // checkBoxImprimirComandaMesa
+            // 
+            checkBoxImprimirComandaMesa.AutoSize = true;
+            checkBoxImprimirComandaMesa.BackColor = Color.Transparent;
+            checkBoxImprimirComandaMesa.Font = new Font("Segoe UI", 10F);
+            checkBoxImprimirComandaMesa.ForeColor = Color.White;
+            checkBoxImprimirComandaMesa.Location = new Point(510, 55);
+            checkBoxImprimirComandaMesa.Name = "checkBoxImprimirComandaMesa";
+            checkBoxImprimirComandaMesa.Size = new Size(221, 27);
+            checkBoxImprimirComandaMesa.TabIndex = 3;
+            checkBoxImprimirComandaMesa.Text = "Imprimir Comanda Mesa";
+            checkBoxImprimirComandaMesa.UseVisualStyleBackColor = false;
+            checkBoxImprimirComandaMesa.CheckedChanged += checkBoxImprimirComandaMesa_CheckedChanged;
+            // 
+            // checkBoxUsaDesktop
+            // 
+            checkBoxUsaDesktop.AutoSize = true;
+            checkBoxUsaDesktop.BackColor = Color.Transparent;
+            checkBoxUsaDesktop.Font = new Font("Segoe UI", 10F);
+            checkBoxUsaDesktop.ForeColor = Color.White;
+            checkBoxUsaDesktop.Location = new Point(34, 90);
+            checkBoxUsaDesktop.Name = "checkBoxUsaDesktop";
+            checkBoxUsaDesktop.Size = new Size(127, 27);
+            checkBoxUsaDesktop.TabIndex = 4;
+            checkBoxUsaDesktop.Text = "Usa Desktop";
+            checkBoxUsaDesktop.UseVisualStyleBackColor = false;
+            checkBoxUsaDesktop.CheckedChanged += checkBoxUsaDesktop_CheckedChanged;
+            // 
             // panel2
             // 
             panel2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
@@ -205,7 +290,7 @@
             CaminhoParaPastaDeArqNfe.ForeColor = Color.White;
             CaminhoParaPastaDeArqNfe.Location = new Point(34, 45);
             CaminhoParaPastaDeArqNfe.Name = "CaminhoParaPastaDeArqNfe";
-            CaminhoParaPastaDeArqNfe.Size = new Size(714, 34);
+            CaminhoParaPastaDeArqNfe.Size = new Size(714, 27);
             CaminhoParaPastaDeArqNfe.TabIndex = 3;
             CaminhoParaPastaDeArqNfe.TextChanged += CaminhoParaPastaDeArqNfe_TextChanged;
             // 
@@ -256,7 +341,7 @@
             CaminhoDoSalvamentoDoJson.ForeColor = Color.White;
             CaminhoDoSalvamentoDoJson.Location = new Point(34, 56);
             CaminhoDoSalvamentoDoJson.Name = "CaminhoDoSalvamentoDoJson";
-            CaminhoDoSalvamentoDoJson.Size = new Size(714, 34);
+            CaminhoDoSalvamentoDoJson.Size = new Size(714, 27);
             CaminhoDoSalvamentoDoJson.TabIndex = 3;
             CaminhoDoSalvamentoDoJson.TextChanged += CaminhoDoSalvamentoDoJson_TextChanged;
             // 
@@ -270,75 +355,20 @@
             label12.Size = new Size(532, 28);
             label12.TabIndex = 2;
             label12.Text = "Caminho para o salvamento do pedido para impressão:";
-            //
-            // panelIntegracoes
-            //
-            panelIntegracoes.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            panelIntegracoes.BackColor = Color.FromArgb(25, 36, 54);
-            panelIntegracoes.Controls.Add(labelIntegracoes);
-            panelIntegracoes.Controls.Add(checkBoxImprimirIfood);
-            panelIntegracoes.Controls.Add(checkBoxImprimirCardapio);
-            panelIntegracoes.Controls.Add(checkBoxImprimirComandaMesa);
-            panelIntegracoes.Location = new Point(61, 275);
-            panelIntegracoes.Name = "panelIntegracoes";
-            panelIntegracoes.Size = new Size(820, 112);
-            panelIntegracoes.TabIndex = 7;
-            //
-            // labelIntegracoes
-            //
-            labelIntegracoes.AutoSize = true;
-            labelIntegracoes.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            labelIntegracoes.ForeColor = Color.White;
-            labelIntegracoes.Location = new Point(34, 14);
-            labelIntegracoes.Name = "labelIntegracoes";
-            labelIntegracoes.Size = new Size(220, 28);
-            labelIntegracoes.TabIndex = 0;
-            labelIntegracoes.Text = "Impressão de integrações";
-            //
-            // checkBoxImprimirIfood
-            //
-            checkBoxImprimirIfood.AutoSize = true;
-            checkBoxImprimirIfood.Font = new Font("Segoe UI", 10F);
-            checkBoxImprimirIfood.ForeColor = Color.White;
-            checkBoxImprimirIfood.Location = new Point(34, 55);
-            checkBoxImprimirIfood.Name = "checkBoxImprimirIfood";
-            checkBoxImprimirIfood.Size = new Size(130, 27);
-            checkBoxImprimirIfood.TabIndex = 1;
-            checkBoxImprimirIfood.Text = "Imprimir iFood";
-            checkBoxImprimirIfood.UseVisualStyleBackColor = false;
-            checkBoxImprimirIfood.BackColor = Color.Transparent;
-            checkBoxImprimirIfood.CheckedChanged += checkBoxImprimirIfood_CheckedChanged;
-            //
-            // checkBoxImprimirCardapio
-            //
-            checkBoxImprimirCardapio.AutoSize = true;
-            checkBoxImprimirCardapio.Font = new Font("Segoe UI", 10F);
-            checkBoxImprimirCardapio.ForeColor = Color.White;
-            checkBoxImprimirCardapio.Location = new Point(240, 55);
-            checkBoxImprimirCardapio.Name = "checkBoxImprimirCardapio";
-            checkBoxImprimirCardapio.Size = new Size(185, 27);
-            checkBoxImprimirCardapio.TabIndex = 2;
-            checkBoxImprimirCardapio.Text = "Imprimir Sophos Cardápio";
-            checkBoxImprimirCardapio.UseVisualStyleBackColor = false;
-            checkBoxImprimirCardapio.BackColor = Color.Transparent;
-            checkBoxImprimirCardapio.CheckedChanged += checkBoxImprimirCardapio_CheckedChanged;
-            //
-            // checkBoxImprimirComandaMesa
-            //
-            checkBoxImprimirComandaMesa.AutoSize = true;
-            checkBoxImprimirComandaMesa.Font = new Font("Segoe UI", 10F);
-            checkBoxImprimirComandaMesa.ForeColor = Color.White;
-            checkBoxImprimirComandaMesa.Location = new Point(510, 55);
-            checkBoxImprimirComandaMesa.Name = "checkBoxImprimirComandaMesa";
-            checkBoxImprimirComandaMesa.Size = new Size(190, 27);
-            checkBoxImprimirComandaMesa.TabIndex = 3;
-            checkBoxImprimirComandaMesa.Text = "Imprimir Comanda Mesa";
-            checkBoxImprimirComandaMesa.UseVisualStyleBackColor = false;
-            checkBoxImprimirComandaMesa.BackColor = Color.Transparent;
-            checkBoxImprimirComandaMesa.CheckedChanged += checkBoxImprimirComandaMesa_CheckedChanged;
-            //
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Cursor = Cursors.Hand;
+            label4.Location = new Point(709, 14);
+            label4.Name = "label4";
+            label4.Size = new Size(98, 17);
+            label4.TabIndex = 6;
+            label4.Text = "Desktop Viwer";
+            label4.Click += label4_Click;
+            // 
             // ConfigsGeral
-            //
+            // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(25, 36, 54);
@@ -360,14 +390,14 @@
             ((System.ComponentModel.ISupportInitialize)LogoImageSophos).EndInit();
             tabControleConfigs.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
+            panelIntegracoes.ResumeLayout(false);
+            panelIntegracoes.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).EndInit();
             panelCaminhobanco.ResumeLayout(false);
             panelCaminhobanco.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            panelIntegracoes.ResumeLayout(false);
-            panelIntegracoes.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -394,5 +424,7 @@
         private CheckBox checkBoxImprimirIfood;
         private CheckBox checkBoxImprimirCardapio;
         private CheckBox checkBoxImprimirComandaMesa;
+        private CheckBox checkBoxUsaDesktop;
+        private Label label4;
     }
 }

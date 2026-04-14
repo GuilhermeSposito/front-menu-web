@@ -56,6 +56,7 @@ public partial class PaginaInicial : Form
         AlimentaComboBoxsDeImpressoras(this);
         AlimentaComboBoxDeImpressorasEmAdicionarNovaImpressora(this);
 
+
         // Configura o NotifyIcon
         SophosSync.Visible = true;
 

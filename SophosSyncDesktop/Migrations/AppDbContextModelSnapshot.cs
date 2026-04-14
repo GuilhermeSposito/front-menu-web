@@ -33,18 +33,6 @@ namespace SophosSyncDesktop.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("caminho_salvamento_json");
 
-                    b.Property<bool>("ImprimirIfood")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("imprimir_ifood");
-
-                    b.Property<bool>("ImprimirSophosCardapio")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("imprimir_sophos_cardapio");
-
-                    b.Property<bool>("ImprimirComandaMesa")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("imprimir_comanda_mesa");
-
                     b.Property<string>("ImpressoraAux")
                         .IsRequired()
                         .HasColumnType("TEXT")
@@ -80,6 +68,18 @@ namespace SophosSyncDesktop.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("impressora_Danfe");
 
+                    b.Property<bool>("ImprimirComandaMesa")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("imprimir_comanda_mesa");
+
+                    b.Property<bool>("ImprimirIfood")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("imprimir_ifood");
+
+                    b.Property<bool>("ImprimirSophosCardapio")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("imprimir_sophos_cardapio");
+
                     b.HasKey("Id");
 
                     b.ToTable("impressoras");
@@ -110,6 +110,22 @@ namespace SophosSyncDesktop.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("infos_de_login");
+                });
+
+            modelBuilder.Entity("SophosSyncDesktop.Models.ParametrosLocais", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("UsaDesktop")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("usa_desktop");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("parametros_locais");
                 });
 #pragma warning restore 612, 618
         }

@@ -380,7 +380,7 @@
     private string LabelDeCliente = "Cliente";
 
     //Criação de Pizza(Item Fracionado)
-    private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado ?? 2;
+    private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado > 0 ? AppState.MerchantLogado!.QtdsItemFracionado : 2;
     #endregion
 
     #region Funções de Carrinho
@@ -463,6 +463,7 @@
             List<ClsProduto> ProdutosFracionados = await ProdutoService.GetProdutosFracionadosAsync();
             ProdutosFracionados = ProdutosFracionados.Where(p => p.Id != produto.Id).ToList(); //Remove o produto principal da lista de complementos para não aparecer como opção de sabor
             produto.GruposDeComplementosDoProduto?.RemoveAll(g => g.Grupo.Descricao.StartsWith("Sabor "));
+            produto.GruposDeComplementosDoProduto ??= new List<ClsGruposDeComplementosDoProduto>();
 
             //Adiciona os grupos de complemento para os sabores, dependendo da quantidade de sabores aceitos
             //Decrementa 1 do QtdDeSaboresAceitos pq ele ja selecionou um sabor na tela inicial
@@ -485,14 +486,15 @@
                                 Descricao = p.Descricao,
                                 ProdutoId = p.Id,
                                 Produto = p,
-                                EProduto = true
+                                EProduto = true,
+                                Ativo = true
                             }
                         }).ToList()
                     }
                 };
 
 
-                produto.GruposDeComplementosDoProduto?.Insert(0, NovoGrupoDeComplemento);
+                produto.GruposDeComplementosDoProduto.Insert(0, NovoGrupoDeComplemento);
             }
 
 

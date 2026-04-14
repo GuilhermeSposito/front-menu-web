@@ -1,0 +1,7 @@
+@inject NavigationManager Nav
+
+@code {
+    [Parameter] public string To { get; set; } = "/impressoras";
+
+    protected override void OnInitialized() => Nav.NavigateTo(To, replace: true);
+}

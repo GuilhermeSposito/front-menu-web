@@ -111,12 +111,16 @@
                             <MudNavLink Icon="@Icons.Material.Filled.Article" OnClick="@(async () => await HandleNavClick("/expedicoes", "AcessoCadastroDeMotoboy"))">Expedições</MudNavLink>
                         }
 
-                        <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(async () => await HandleNavClick("/caixa", "AcessoLancaVenda"))">Caixa</MudNavLink>
-                        
-                        @if (AppState.CaixaAberto)
-                        {
-                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOff" OnClick="@(async () => await HandleNavClick("/sangrias", "AcessoGerenciaSangrias"))">Sangrias de Caixa</MudNavLink>
-                        }
+                        <MudNavGroup Title="Caixa" Icon="@Icons.Material.Filled.PointOfSale" Expanded="false">
+                            <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(async () => await HandleNavClick("/caixa", "AcessoLancaVenda"))">Gestão de Caixa</MudNavLink>
+
+                            @if (AppState.CaixaAberto)
+                            {
+                                <MudNavLink Icon="@Icons.Material.Filled.MoneyOff" OnClick="@(async () => await HandleNavClick("/sangrias", "AcessoGerenciaSangrias"))">Sangrias de Caixa</MudNavLink>
+                                <MudNavLink Icon="@Icons.Material.Filled.Savings" OnClick="@(async () => await HandleNavClick("/suprimentos", "AcessoGerenciaSuprimentos"))">Suprimentos de Caixa</MudNavLink>
+                            }
+
+                        </MudNavGroup>
 
                         <MudNavGroup Title="Catálogo" Icon="@Icons.Material.Filled.Inventory" Expanded="false">
 
@@ -149,9 +153,14 @@
 
                         <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                             <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(async () => await HandleNavClick("/nfs-estatisticas", "AcessoEstatisticas"))">NF-e NFC-e Emitidas</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(async () => await HandleNavClick("/vendas/historico-de-vendas", "AcessoEstatisticas"))">Vendas Realizadas</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.Assessment" OnClick="@(async () => await HandleNavClick("/vendas/vendas-por-item", "AcessoEstatisticas"))">Vendas Por Item</MudNavLink>
+                        </MudNavGroup>
+
+                        <MudNavGroup Title="Históricos" Icon="@Icons.Material.Filled.PunchClock" Expanded="false">
+                            <MudNavLink Icon="@Icons.Material.Filled.AttachMoney" OnClick="@(async () => await HandleNavClick("/vendas/historico-de-vendas", "AcessoEstatisticas"))">Vendas Realizadas</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(async () => await HandleNavClick("/caixas-fechados", "AcessoEstatisticas"))">Caixas Fechados</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.MoneyOff" OnClick="@(async () => await HandleNavClick("/historico-sangrias", "AcessoGerenciaSangrias"))">Histórico de Sangrias</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.Savings" OnClick="@(async () => await HandleNavClick("/historico-suprimentos", "AcessoGerenciaSuprimentos"))">Histórico de Suprimentos</MudNavLink>
                         </MudNavGroup>
 
                         <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">

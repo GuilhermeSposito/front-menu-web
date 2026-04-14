@@ -1,0 +1,234 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/historico-suprimentos"
+@using FrontMenuWeb.Models.Caixa
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Components.Uteis
+@using System.Globalization
+
+@inject SuprimentosService SuprimentosService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
+    <MudLayout>
+
+        @* Cabeçalho *@
+        <MudStack Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="p-2">
+                <MudText Typo="Typo.h4">Histórico de Suprimentos</MudText>
+                <MudText Class="mb-1" Typo="Typo.body1">Consulte o histórico completo de suprimentos de todos os caixas</MudText>
+            </MudStack>
+        </MudStack>
+
+        @* Filtros rápidos por período *@
+        <FiltroPeriodoRapido Class="mt-2"
+                             @bind-DataInicio="_dataInicio"
+                             @bind-DataFim="_dataFim"
+                             OnFiltroAplicado="AplicarFiltros"
+                             Color="Color.Primary">
+            <FiltroExtra>
+                <MudChipSet T="string" SelectedValue="_filtroStatus" SelectedValueChanged="OnStatusChanged" SelectionMode="SelectionMode.SingleSelection">
+                    <MudChip T="string" Value="@("")" Color="Color.Default" Variant="Variant.Outlined">Todos</MudChip>
+                    <MudChip T="string" Value="@("Ativa")" Color="Color.Success" Variant="Variant.Outlined">Ativos</MudChip>
+                    <MudChip T="string" Value="@("Cancelada")" Color="Color.Error" Variant="Variant.Outlined">Cancelados</MudChip>
+                </MudChipSet>
+            </FiltroExtra>
+        </FiltroPeriodoRapido>
+
+        @* Cards de resumo *@
+        @if (_totais is not null)
+        {
+            <MudGrid Spacing="2" Class="mt-2">
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-3 rounded-3" Style="background-color: var(--mud-palette-surface);">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption">Total de Registros</MudText>
+                            <MudText Typo="Typo.h5"><strong>@_totais.Total</strong></MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-3 rounded-3" Style="background-color: var(--mud-palette-surface);">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption">Total em Suprimentos Ativos</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Success">
+                                <strong>@_totais.Data.Where(s => s.Status == "Ativa").Sum(s => s.Valor).ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</strong>
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-3 rounded-3" Style="background-color: var(--mud-palette-surface);">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption">Suprimentos Ativos</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Success">
+                                <strong>@_totais.Data.Count(s => s.Status == "Ativa")</strong>
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-3 rounded-3" Style="background-color: var(--mud-palette-surface);">
+                        <MudStack Spacing="1">
+                            <MudText Typo="Typo.caption">Suprimentos Cancelados</MudText>
+                            <MudText Typo="Typo.h5" Color="Color.Error">
+                                <strong>@_totais.Data.Count(s => s.Status == "Cancelada")</strong>
+                            </MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        }
+
+        @* Tabela com paginação server-side *@
+        <MudDataGrid T="ClsSuprimento"
+                     @ref="_dataGridRef"
+                     Class="rounded-3 mt-2"
+                     Loading="_carregando"
+                     Hover="true"
+                     ServerData="CarregarDados">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="#" Sortable="false" />
+
+                <TemplateColumn Title="Data / Hora" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">
+                            @context.Item.CriadoEm.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR"))
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição" Sortable="false" />
+
+                <TemplateColumn Title="Valor" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2" Color="Color.Success">
+                            <strong>@context.Item.Valor.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</strong>
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Status" Sortable="false">
+                    <CellTemplate Context="context">
+                        @if (context.Item.Status == "Ativa")
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle">
+                                Ativo
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Cancel">
+                                Cancelado
+                            </MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Funcionário" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">@(context.Item.Funcionario?.Nome ?? "—")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Cancelado Por" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">@(context.Item.CanceladoPorFuncionario?.Nome ?? "—")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Cancelado Em" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">
+                            @(context.Item.CanceladoEm.HasValue
+                                ? context.Item.CanceladoEm.Value.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR"))
+                                : "—")
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Motivo Cancelamento" Sortable="false">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">@(context.Item.MotivoCancelamento ?? "—")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+
+            <NoRecordsContent>
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-6">
+                    <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Nenhum suprimento encontrado</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Tente ajustar os filtros para encontrar registros.</MudText>
+                </MudStack>
+            </NoRecordsContent>
+
+            <LoadingContent>
+                <MudStack AlignItems="AlignItems.Center" Class="pa-6">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Success" />
+                    <MudText>Carregando histórico de suprimentos...</MudText>
+                </MudStack>
+            </LoadingContent>
+
+            <PagerContent>
+                <MudDataGridPager T="ClsSuprimento"
+                                  RowsPerPageString="Registros por página"
+                                  ShowPageNumber="false"
+                                  PageSizeOptions="@(new int[] { 10, 20, 50, 100 })" />
+            </PagerContent>
+        </MudDataGrid>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private MudDataGrid<ClsSuprimento>? _dataGridRef;
+    private bool _carregando = false;
+    private string _filtroStatus = string.Empty;
+    private DateTime? _dataInicio = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _dataFim = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1);
+    private PaginatedResponse<ClsSuprimento>? _totais;
+
+    private async Task<GridData<ClsSuprimento>> CarregarDados(GridState<ClsSuprimento> state)
+    {
+        try
+        {
+            _carregando = true;
+
+            int page = state.Page + 1;
+            int pageSize = state.PageSize;
+            string? status = string.IsNullOrEmpty(_filtroStatus) ? null : _filtroStatus;
+
+            var resultado = await SuprimentosService.GetAllSuprimentosPaginatedAsync(page, pageSize, status, _dataInicio, _dataFim);
+            _totais = resultado;
+
+            StateHasChanged();
+
+            return new GridData<ClsSuprimento>
+            {
+                Items = resultado.Data,
+                TotalItems = resultado.Total
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar histórico de suprimentos: {ex.Message}", Severity.Error);
+            return new GridData<ClsSuprimento>();
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task OnStatusChanged(string status)
+    {
+        _filtroStatus = status;
+        await AplicarFiltros();
+    }
+
+    private async Task AplicarFiltros()
+    {
+        if (_dataGridRef is not null)
+            await _dataGridRef.ReloadServerData();
+    }
+
+}

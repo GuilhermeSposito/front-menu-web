@@ -771,8 +771,13 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"VALOR ESPERADO EM DIN. : (=)  {Fechamento.ValorEsperadoEmDinheiro.ToString("C")}", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"FALTOU . . . . . . . . : (=)  {Fechamento.Faltou.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        var labelFaltouSobrou = Fechamento.Faltou <= 0 ? "FALTOU" : "SOBROU";
+        var valorAbs = Math.Abs(Fechamento.Faltou);
+        if (valorAbs > 0)
+        {
+            AdicionaConteudo(Conteudo, $"{labelFaltouSobrou} . . . . . . . . : (=)  {valorAbs.ToString("C")}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);

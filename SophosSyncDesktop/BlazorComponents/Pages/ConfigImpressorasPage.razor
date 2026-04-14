@@ -1,0 +1,213 @@
+@page "/impressoras"
+@using System.Drawing.Printing
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+@inject ISnackbar Snackbar
+@inject AppShellService Shell
+
+<div style="padding: 24px;">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <div>
+            <MudText Typo="Typo.h5" Style="font-weight:700;">Configuração de Impressoras</MudText>
+            <MudText Typo="Typo.body2" Style="color:var(--mud-palette-text-secondary);">
+                Selecione a impressora para cada função. Salvo automaticamente.
+            </MudText>
+        </div>
+        <MudChip T="string" Icon="@Icons.Material.Filled.Print" Color="Color.Primary">
+            @impressorasDoSistema.Count impressoras no sistema
+        </MudChip>
+    </div>
+
+    @if (carregando)
+    {
+        <div style="display:flex; justify-content:center; padding:48px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate />
+        </div>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🖨️ Impressora Caixa
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraCaixa"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraCaixa = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🖨️ Impressora Auxiliar
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraAux"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraAux = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🍳 Impressora Cozinha 1
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraCz1"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraCz1 = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🍳 Impressora Cozinha 2
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraCz2"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraCz2 = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🍳 Impressora Cozinha 3
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraCz3"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraCz3 = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        🍹 Impressora Bar
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraBar"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraBar = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle2" Class="mb-3" Style="color:var(--mud-palette-text-secondary); text-transform:uppercase; font-size:11px; letter-spacing:1px;">
+                        📄 Impressora DANFE
+                    </MudText>
+                    <MudSelect T="string"
+                               Value="@config.ImpressoraDanfe"
+                               ValueChanged="@(v => SalvarCampo(v, c => c.ImpressoraDanfe = v))"
+                               Label="Selecionar impressora"
+                               Variant="Variant.Outlined"
+                               Dense="true">
+                        @foreach (var imp in impressorasDoSistema)
+                        {
+                            <MudSelectItem Value="@imp">@imp</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+    }
+
+</div>
+
+@code {
+    private ImpressorasConfigs config = new();
+    private List<string> impressorasDoSistema = new();
+    private bool carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Lista impressoras instaladas no sistema
+        foreach (string nome in PrinterSettings.InstalledPrinters)
+            impressorasDoSistema.Add(nome);
+
+        // Carrega config salva no banco
+        config = await Db.Impressoras.FirstOrDefaultAsync() ?? new ImpressorasConfigs();
+
+        carregando = false;
+    }
+
+    private async Task SalvarCampo(string valor, Action<ImpressorasConfigs> aplicar)
+    {
+        if (string.IsNullOrEmpty(valor)) return;
+
+        aplicar(config);
+
+        var salvo = await Db.Impressoras.FirstOrDefaultAsync();
+        if (salvo is null)
+        {
+            Db.Impressoras.Add(config);
+        }
+        else
+        {
+            salvo.ImpressoraCaixa   = config.ImpressoraCaixa;
+            salvo.ImpressoraAux     = config.ImpressoraAux;
+            salvo.ImpressoraCz1     = config.ImpressoraCz1;
+            salvo.ImpressoraCz2     = config.ImpressoraCz2;
+            salvo.ImpressoraCz3     = config.ImpressoraCz3;
+            salvo.ImpressoraBar     = config.ImpressoraBar;
+            salvo.ImpressoraDanfe   = config.ImpressoraDanfe;
+        }
+
+        await Db.SaveChangesAsync();
+        Shell.AtualizarImpressoras();
+        Snackbar.Add("Impressora salva!", Severity.Success, cfg => cfg.VisibleStateDuration = 1500);
+    }
+}

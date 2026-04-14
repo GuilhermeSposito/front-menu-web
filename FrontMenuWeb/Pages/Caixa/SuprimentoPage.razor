@@ -1,0 +1,298 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/suprimentos"
+@using FrontMenuWeb.Components.Modais.ModaisDeCaixa
+@using FrontMenuWeb.Models.Caixa
+@using FrontMenuWeb.Services
+@using System.Globalization
+@using System.Text.Json
+
+@inject SuprimentosService SuprimentosService
+@inject CaixaEPagamentosService CaixaService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+
+        @* Cabeçalho *@
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.h4">Suprimento de Caixa</MudText>
+                <MudText Typo="Typo.body1">Registre e gerencie os suprimentos do caixa</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                @if (!_caixaAberto)
+                {
+                    <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-0">
+                        Nenhum caixa aberto. Abra o caixa para registrar suprimentos.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.PointOfSale" Size="Size.Large">
+                        Caixa #@_caixaId aberto
+                    </MudChip>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Success"
+                               StartIcon="@((AppState.MerchantLogado?.FuncionarioLogado?.AcessoGerenciaSuprimentos ?? true) ? Icons.Material.Filled.Savings : Icons.Material.Filled.Lock)"
+                               Disabled="_carregando"
+                               OnClick="@(async () => await AbrirModalDeCriarSuprimento())">
+                        Novo Suprimento
+                    </MudButton>
+                }
+            </MudStack>
+        </MudStack>
+
+        @* Filtros *@
+        <MudPaper Elevation="1" Class="pa-3 mb-3 rounded-3">
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+                <MudText Typo="Typo.subtitle2">Filtrar por status:</MudText>
+                <MudChipSet T="string" SelectedValue="_filtroStatus" SelectedValueChanged="OnStatusChanged" SelectionMode="SelectionMode.SingleSelection">
+                    <MudChip T="string" Value="@("")" Color="Color.Default" Variant="Variant.Outlined">Todos</MudChip>
+                    <MudChip T="string" Value="@("Ativa")" Color="Color.Success" Variant="Variant.Outlined">Ativos</MudChip>
+                    <MudChip T="string" Value="@("Cancelada")" Color="Color.Error" Variant="Variant.Outlined">Cancelados</MudChip>
+                </MudChipSet>
+            </MudStack>
+        </MudPaper>
+
+        @* Tabela *@
+        <MudDataGrid T="ClsSuprimento"
+                     Items="@_suprimentos"
+                     Loading="_carregando"
+                     Hover="true"
+                     Dense="false"
+                     class="rounded-3"
+                     SortMode="SortMode.Multiple">
+            <Columns>
+                <PropertyColumn Property="x => x.Id" Title="#" />
+
+                <TemplateColumn Title="Data / Hora">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">
+                            @context.Item.CriadoEm.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR"))
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+
+                <TemplateColumn Title="Valor">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2" Color="Color.Success">
+                            <strong>@context.Item.Valor.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</strong>
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Status">
+                    <CellTemplate Context="context">
+                        @if (context.Item.Status == "Ativa")
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle">
+                                Ativo
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Cancel">
+                                Cancelado
+                            </MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Funcionário">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">
+                            @(context.Item.Funcionario?.Nome ?? "—")
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Motivo Cancelamento">
+                    <CellTemplate Context="context">
+                        <MudText Typo="Typo.body2">
+                            @(context.Item.MotivoCancelamento ?? "—")
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Ações">
+                    <CellTemplate Context="context">
+                        @if (context.Item.Status == "Ativa")
+                        {
+                            bool temPermissao = AppState.MerchantLogado?.FuncionarioLogado?.AcessoGerenciaSuprimentos ?? true;
+                            <MudTooltip Text="@(temPermissao ? "Cancelar suprimento" : "Requer autorização para cancelar")" Color="@(temPermissao ? Color.Error : Color.Default)">
+                                <MudIconButton Icon="@(temPermissao ? Icons.Material.Filled.Cancel : Icons.Material.Filled.Lock)"
+                                               Color="@(temPermissao ? Color.Error : Color.Default)"
+                                               Size="Size.Small"
+                                               OnClick="@(async () => await AbrirModalDeCancelarSuprimento(context.Item))" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+
+            <NoRecordsContent>
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-6">
+                    <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">Nenhum suprimento encontrado</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(_caixaAberto ? "Clique em \"Novo Suprimento\" para registrar." : "Abra um caixa para começar.")
+                    </MudText>
+                </MudStack>
+            </NoRecordsContent>
+
+            <LoadingContent>
+                <MudStack AlignItems="AlignItems.Center" Class="pa-6">
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                    <MudText>Carregando suprimentos...</MudText>
+                </MudStack>
+            </LoadingContent>
+        </MudDataGrid>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private List<ClsSuprimento> _suprimentos = new();
+    private bool _carregando = true;
+    private bool _caixaAberto = false;
+    private int _caixaId = 0;
+    private string _filtroStatus = string.Empty;
+
+    private async Task OnStatusChanged(string status)
+    {
+        _filtroStatus = status;
+        await CarregarSuprimentos();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VerificarCaixaECarregarSuprimentos();
+    }
+
+    private async Task VerificarCaixaECarregarSuprimentos()
+    {
+        _carregando = true;
+        try
+        {
+            var resultadoCaixa = await CaixaService.VerificaSeHaCaixaAberto();
+
+            if (resultadoCaixa.Status == "success")
+            {
+                _caixaAberto = true;
+
+                if (resultadoCaixa.Data.ExtraData.TryGetValue("caixa", out var caixaElement))
+                {
+                    _caixaId = caixaElement.TryGetProperty("id", out var idEl) ? idEl.GetInt32() : 0;
+                }
+
+                if (_caixaId > 0)
+                {
+                    await CarregarSuprimentos();
+                }
+                else
+                {
+                    Snackbar.Add("Não foi possível identificar o ID do caixa aberto.", Severity.Error);
+                }
+            }
+            else
+            {
+                _caixaAberto = false;
+                _suprimentos = new();
+                string msg = string.Join(", ", resultadoCaixa.Messages);
+                Snackbar.Add($"Caixa fechado: {msg}", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao verificar caixa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task CarregarSuprimentos()
+    {
+        if (_caixaId == 0) return;
+
+        _carregando = true;
+        try
+        {
+            string? statusFiltro = string.IsNullOrEmpty(_filtroStatus) ? null : _filtroStatus;
+            var resultado = await SuprimentosService.GetSuprimentosAsync(_caixaId, statusFiltro);
+
+            if (resultado.Status == "success")
+            {
+                if (resultado.Data.ExtraData.TryGetValue("suprimentos", out var suprimentosEl))
+                {
+                    _suprimentos = JsonSerializer.Deserialize<List<ClsSuprimento>>(suprimentosEl.GetRawText()) ?? new();
+                }
+            }
+            else
+            {
+                string mensagem = string.Join(", ", resultado.Messages);
+                Snackbar.Add(mensagem, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar suprimentos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task AbrirModalDeCriarSuprimento()
+    {
+        if (!_caixaAberto || _caixaId == 0)
+        {
+            Snackbar.Add("Nenhum caixa aberto. Não é possível registrar suprimento.", Severity.Warning);
+            return;
+        }
+
+        if (!await AuthorizationService.ValidateAsync("AcessoGerenciaSuprimentos")) return;
+
+        var parameters = new DialogParameters<ModalDeCriarSuprimento>
+        {
+            { x => x.CaixaId, _caixaId }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeCriarSuprimento>("Novo Suprimento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add("Suprimento registrado com sucesso!", Severity.Success);
+            await CarregarSuprimentos();
+        }
+    }
+
+    private async Task AbrirModalDeCancelarSuprimento(ClsSuprimento suprimento)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoGerenciaSuprimentos")) return;
+
+        var parameters = new DialogParameters<ModalDeCancelarSuprimento>
+        {
+            { x => x.SuprimentoId, suprimento.Id }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeCancelarSuprimento>($"Cancelar Suprimento #{suprimento.Id}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Snackbar.Add("Suprimento cancelado com sucesso!", Severity.Success);
+            await CarregarSuprimentos();
+        }
+    }
+}

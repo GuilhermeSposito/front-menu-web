@@ -33,6 +33,9 @@ public partial class ConfigsGeral : Form
                 checkBoxImprimirIfood.Checked = configs?.ImprimirIfood ?? true;
                 checkBoxImprimirCardapio.Checked = configs?.ImprimirSophosCardapio ?? true;
                 checkBoxImprimirComandaMesa.Checked = configs?.ImprimirComandaMesa ?? true;
+
+                var parametros = await dbContext.ParametrosLocais.FirstOrDefaultAsync();
+                checkBoxUsaDesktop.Checked = parametros?.UsaDesktop ?? false;
             }
 
         }
@@ -86,6 +89,19 @@ public partial class ConfigsGeral : Form
             configs.ImprimirComandaMesa = checkBoxImprimirComandaMesa.Checked;
             await dbContext.SaveChangesAsync();
         }
+    }
+
+    private async void checkBoxUsaDesktop_CheckedChanged(object sender, EventArgs e)
+    {
+        using AppDbContext dbContext = new AppDbContext();
+        var parametros = await dbContext.ParametrosLocais.FirstOrDefaultAsync();
+        if (parametros is null)
+        {
+            parametros = new Models.ParametrosLocais();
+            dbContext.ParametrosLocais.Add(parametros);
+        }
+        parametros.UsaDesktop = checkBoxUsaDesktop.Checked;
+        await dbContext.SaveChangesAsync();
     }
 
     private void tabControleConfigs_DrawItem(object sender, DrawItemEventArgs e)
@@ -218,6 +234,18 @@ public partial class ConfigsGeral : Form
 
                 }
             }
+        }
+    }
+
+    private void label4_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            new BlazorDesktopViwer(this).Show();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

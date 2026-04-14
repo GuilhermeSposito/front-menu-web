@@ -1,0 +1,97 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Caixa
+@using FrontMenuWeb.Services
+
+@inject SuprimentosService SuprimentosService
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
+            <MudText Typo="Typo.h6">Cancelar Suprimento #@SuprimentoId</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_formValido">
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    Atenção! Esta operação não pode ser desfeita. Informe o motivo do cancelamento.
+                </MudAlert>
+
+                <MudTextField @bind-Value="_motivo"
+                              Label="Motivo do Cancelamento"
+                              Required="true"
+                              RequiredError="O motivo é obrigatório."
+                              MaxLength="500"
+                              Lines="3"
+                              Variant="Variant.Outlined"
+                              Placeholder="Ex: Valor lançado incorretamente..." />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Fechar" Disabled="_salvando">Voltar</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Error"
+                   OnClick="Confirmar"
+                   Disabled="_salvando || !_formValido"
+                   StartIcon="@Icons.Material.Filled.Cancel">
+            @if (_salvando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Cancelando...</span>
+            }
+            else
+            {
+                <span>Confirmar Cancelamento</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public int SuprimentoId { get; set; }
+
+    private MudForm _form = default!;
+    private bool _formValido = false;
+    private bool _salvando = false;
+    private string _motivo = string.Empty;
+
+    private void Fechar() => MudDialog.Cancel();
+
+    private async Task Confirmar()
+    {
+        await _form.Validate();
+        if (!_formValido) return;
+
+        _salvando = true;
+        try
+        {
+            var dto = new CancelarSuprimentoDto { MotivoCancelamento = _motivo };
+            var resultado = await SuprimentosService.CancelarSuprimentoAsync(SuprimentoId, dto);
+
+            if (resultado.Status == "success")
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                string mensagem = string.Join(", ", resultado.Messages);
+                Snackbar.Add(mensagem, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao cancelar suprimento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+}
