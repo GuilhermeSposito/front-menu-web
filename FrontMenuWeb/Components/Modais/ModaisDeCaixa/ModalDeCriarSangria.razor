@@ -5,6 +5,7 @@
 @using System.Globalization
 
 @inject SangriasService SangriasService
+@inject IJSRuntime JS
 
 <MudDialog>
     <TitleContent>
@@ -22,6 +23,8 @@
 
                 <MudNumericField T="decimal"
                                  @bind-Value="_valor"
+                                 id="valor-sangria"
+                                 @onfocus="@(async e => await JS.InvokeVoidAsync("selectAllInput", "valor-sangria"))"
                                  Label="Valor da Sangria (R$)"
                                  Adornment="Adornment.Start"
                                  AdornmentText="R$"
