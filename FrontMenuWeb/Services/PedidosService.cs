@@ -25,6 +25,7 @@ public class PedidosService
     }
 
     public static Func<ClsPedido, Task>? PedidoRecebido;
+    public static Func<ClsPedido, Task>? PedidoEsperandoAceite;
     public static Func<PedidoMesaDto, Task>? PedidoMesaRecebido;
     public static Func<ClsMesasEComandas, Task>? PedidoMesaFechada;
     public static Func<ClsPedido, Task>? PedidoMudouEtapa;
@@ -45,6 +46,13 @@ public class PedidosService
     {
         ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
         await InvokeAllAsync(PedidoRecebido, pedido);
+    }
+
+    [JSInvokable]
+    public static async Task ReceivePedidoEsperandoAceite(string msg)
+    {
+        ClsPedido pedido = System.Text.Json.JsonSerializer.Deserialize<ClsPedido>(msg)!;
+        await InvokeAllAsync(PedidoEsperandoAceite, pedido);
     }
 
     [JSInvokable]
@@ -95,9 +103,9 @@ public class PedidosService
                 QueryDeFiltros += $"&TipoPedido={QueryDePedido.TipoPedido}";
         }
 
-        if(QueryDePedido.Imprimiu is not null)
+        if (QueryDePedido.Imprimiu is not null)
         {
-                QueryDeFiltros += $"&Imprimiu={QueryDePedido.Imprimiu}";
+            QueryDeFiltros += $"&Imprimiu={QueryDePedido.Imprimiu}";
 
         }
 
@@ -156,7 +164,7 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedidoPublicAsync(ClsPedido Pedido,ClsMerchant Merchant,CancellationToken cancellationToken = default)
+    public async Task<ReturnApiRefatored<ClsPedido>> CreatePedidoPublicAsync(ClsPedido Pedido, ClsMerchant Merchant, CancellationToken cancellationToken = default)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/public/{Merchant.Id}", Pedido, cancellationToken);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
@@ -213,7 +221,7 @@ public class PedidosService
     }
 
     public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparandoProtected(ClsPedido Pedido)
-    {  
+    {
         var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
@@ -221,7 +229,7 @@ public class PedidosService
     }
 
     public async Task<ReturnApiRefatored<ClsPedido>> UpdatePedidoPreparando(ClsPedido Pedido, string MechantSophosId)
-    {  
+    {
         var response = await _http.PutAsJsonAsync($"pedidos/preparando/{Pedido.Id}/{MechantSophosId}", Pedido);
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
@@ -328,7 +336,7 @@ public class PedidosService
             if (QueryDeHistorico.DataFinal != null)
                 parametros.Add($"DataFinal={QueryDeHistorico.DataFinal:yyyy-MM-dd}");
 
-            if(!string.IsNullOrEmpty(QueryDeHistorico.Descricao))
+            if (!string.IsNullOrEmpty(QueryDeHistorico.Descricao))
                 parametros.Add($"Descricao={QueryDeHistorico.Descricao}");
 
             parametros.Add($"limit={QueryDeHistorico.Limit}");

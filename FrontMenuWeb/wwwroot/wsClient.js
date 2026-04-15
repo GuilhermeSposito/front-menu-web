@@ -43,6 +43,14 @@ window.socketIO = {
                 }
             });
 
+            socket.off("pedido-esperando-aceite");
+            socket.on("pedido-esperando-aceite", (msg) => {
+                if (window.DotNet) {
+                    DotNet.invokeMethodAsync("FrontMenuWeb", "ReceivePedidoEsperandoAceite", JSON.stringify(msg))
+                        .catch(err => console.error("Erro ao notificar Blazor:", err));
+                }
+            });
+
 
             socket.off("pedido-recebido-mesa");
             socket.on("pedido-recebido-mesa", (msg) => {
@@ -80,13 +88,13 @@ window.socketIO = {
                 }
             });
 
-           
+
         } catch (e) {
             console.error("Erro ao conectar Socket.IO:", e);
         }
     },
 
-  
+
 
 };
 
