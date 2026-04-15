@@ -555,7 +555,7 @@
                 ? FiltroDateTimeInicial.Value.ToString("MM-yyyy")
                 : "todos";
 
-            var zipName = $"XMLs-NFs-{periodo}.zip";
+            var zipName = $"{AppState.MerchantLogado?.NomeFantasia.Replace(" ", "_")}-XMLs-NFs-{periodo}.zip";
             var returno = await MerchantServices.EnviarArquicosParaContabilidadeEmail(zipStream, zipName, EmailCadastrado);
             MostraMensagemDeRetorno(returno);
         }
