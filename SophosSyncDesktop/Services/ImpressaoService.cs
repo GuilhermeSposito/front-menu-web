@@ -728,78 +728,75 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
+        // Helper: alinha label (22 chars) + sinal (5 chars) + valor (12 chars) = 39 chars total
+        string Ln(string label, string sinal, float valor)
+        {
+            var lbl = label.Length >= 22 ? label[..22] : label.PadRight(22, '.');
+            return $"{lbl}:({sinal}) {valor.ToString("C").PadLeft(11)}";
+        }
+
+        var faturamentoBruto = Fechamento.ValorTotalEmVendas;
+        var totalDoCaixa = Fechamento.ValorDeAbertura + Fechamento.Suprimentos - Fechamento.Sangrias + faturamentoBruto;
+        var totalRecebimentos = Fechamento.RecebimentosPorTipo?.Values.Sum() ?? 0f;
+        var labelFaltouSobrou = Fechamento.Faltou > 0 ? "FALTOU" : "SOBROU";
+        var valorAbsFaltou = Math.Abs(Fechamento.Faltou);
+
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        //========================================================================================        
-        AdicionaConteudo(Conteudo, $"FECHAMENTO DO CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, $"Realizado Por: . admin", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, "FECHAMENTO DO CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteFechamentoDeCaixa);
-        //========================================================================================        
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteFechamentoDeCaixa);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa);
-        //------------------------------------------------------------------------------------------
+
+        // OPERAÇÃO DE VENDAS
+        AdicionaConteudo(Conteudo, "OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, $"TOTAL DAS VENDAS. . . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"ACRESCIMOS. . . . . . .: (+)   {Fechamento.TotalDeArescimos.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"CORTESIA/DESCONTOS. . .: (-)   {(Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos).ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"TAXAS DE ENTREGA. . . .: (+)   {Fechamento.TotalTaxaEntrega.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("TOTAL DAS VENDAS", "+", Fechamento.ValorTotalEmVendas), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("ACRESCIMOS", "+", Fechamento.TotalDeArescimos), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("CORTESIA/DESCONTOS", "-", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("TAXAS DE ENTREGA", "+", Fechamento.TotalTaxaEntrega), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"FATURAMENTO BRUTO.. . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("FATURAMENTO BRUTO", "=", faturamentoBruto), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"CAIXA INICIAL . . . . .: (+)   {Fechamento.ValorDeAbertura.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"ENTRADAS DO CAIXA . . .: (+)   {Fechamento.Suprimentos.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"SAÍDAS DO CAIXA . . . .: (+)   {Fechamento.Sangrias.ToString("C")}", FonteFechamentoDeCaixa);
+
+        // MOVIMENTAÇÕES DO CAIXA
+        AdicionaConteudo(Conteudo, Ln("CAIXA INICIAL", "+", Fechamento.ValorDeAbertura), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("ENTRADAS DO CAIXA", "+", Fechamento.Suprimentos), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("SAÍDAS DO CAIXA", "-", Fechamento.Sangrias), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("TROCOS", "-", Fechamento.Trocos), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"TOTAL DO CAIXA. . . . .: (+)   {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("TOTAL DO CAIXA", "=", totalDoCaixa), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+
+        // CONTAGEM FÍSICA
+        AdicionaConteudo(Conteudo, "CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("VALOR ESPERADO DIN.", "=", Fechamento.ValorEsperadoEmDinheiro), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"VALOR ESPERADO EM DIN. : (=)  {Fechamento.ValorEsperadoEmDinheiro.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        var labelFaltouSobrou = Fechamento.Faltou <= 0 ? "FALTOU" : "SOBROU";
-        var valorAbs = Math.Abs(Fechamento.Faltou);
-        if (valorAbs > 0)
+
+        if (valorAbsFaltou > 0)
         {
-            AdicionaConteudo(Conteudo, $"{labelFaltouSobrou} . . . . . . . . : (=)  {valorAbs.ToString("C")}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, Ln(labelFaltouSobrou, "=", valorAbsFaltou), FonteFechamentoDeCaixa);
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         }
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $" ", FonteFechamentoDeCaixa);
+
+        // DISTRIBUIÇÃO POR FORMA
+        AdicionaConteudo(Conteudo, "DISTRIBUIÇÃO POR FORMA DE RECEBIMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"DISTRIBUIÇÃO DAS FORMAS DE", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, $"  RECEBIMENTO DO CAIXA   ", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
+
         foreach (var pagamento in Fechamento.RecebimentosPorTipo ?? [])
         {
-            AdicionaConteudo(Conteudo, $"{pagamento.Key} . . . . . . :   {pagamento.Value.ToString("C")}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, Ln(pagamento.Key, "+", pagamento.Value), FonteFechamentoDeCaixa);
         }
+
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"TOTAL DOS RECEBIMENTOS : (=)  {Fechamento.ValorTotalEmVendas.ToString("C")}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("TOTAL RECEBIMENTOS", "=", totalRecebimentos), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"VENDAS A VISTA . . . . : (=)  {Fechamento.TotalEmDinheiro.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"VENDAS EM CARTÃO . . . : (=)  {Fechamento.TotalEmCartoes.ToString("C")}", FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, $"VENDAS COM PGTOS ONLINE: (=)  {0.ToString("C")}", FonteFechamentoDeCaixa);
+
+        // RESUMO POR TIPO
+        AdicionaConteudo(Conteudo, Ln("VENDAS À VISTA", "=", Fechamento.TotalEmDinheiro), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("VENDAS EM CARTÃO", "=", Fechamento.TotalEmCartoes), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, Ln("PGTOS ONLINE", "=", Fechamento.PagoOnline), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        //------------------------------------------------------------------------------------------
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);

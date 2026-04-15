@@ -21,4 +21,6 @@ public class ClsFechamentoDeCaixa
     [JsonPropertyName("ValorEsperadoEmDinheiro")] public float ValorEsperadoEmDinheiro { get; set; }
     [JsonPropertyName("TotalEmDinheiro")] public float TotalEmDinheiro { get; set; }
     [JsonPropertyName("TotalEmCartoes")] public float TotalEmCartoes { get; set; }
+    [JsonPropertyName("PagoOnline")] public float PagoOnline { get; set; }
+    [JsonPropertyName("ValorRecebimentosOnline")] public float ValorRecebimentosOnline { get; set; }
 }
