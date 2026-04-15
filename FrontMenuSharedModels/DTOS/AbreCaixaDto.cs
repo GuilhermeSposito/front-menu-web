@@ -15,5 +15,6 @@ public class FechaCaixaDto
     [JsonPropertyName("ValorRecebimentosDebito")] public float ValorRecebimentosDebito { get; set; }
     [JsonPropertyName("ValorRecebimentosPix")] public float ValorRecebimentosPix { get; set; }
     [JsonPropertyName("ValorFinalEmDinheiro")] public float ValorFinalEmDinheiro { get; set; }
+    [JsonPropertyName("ValorRecebimentosOnline")] public float ValorRecebimentosOnline { get; set; }
     [JsonPropertyName("Funcionario_id")] public int FuncionarioId { get; set; }
 }
