@@ -94,7 +94,14 @@
     private IMudDialogInstance MudDialog { get; set; }
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
 
-    private FechaCaixaDto FechaCaixaDto = new FechaCaixaDto();
+    private FechaCaixaDto FechaCaixaDto = new FechaCaixaDto
+    {
+        ValorRecebimentosDebito = 0f,
+        ValorRecebimentosCredito = 0f,
+        ValorRecebimentosPix = 0f,
+        ValorFinalEmDinheiro = 0f,
+        ValorRecebimentosOnline = 0f
+    };
 
     private MudNumericField<float?> FildDeValorDeDebito = new MudNumericField<float?>();
     private MudNumericField<float?> FildDeValorDeCredito = new MudNumericField<float?>();

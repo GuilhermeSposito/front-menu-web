@@ -271,10 +271,11 @@
     {
         var returnApiRefatored = await CaixaService.GetStatusOperacional(new FechaCaixaDto()
         {
-            ValorFinalEmDinheiro = 0,
-            ValorRecebimentosPix = 0,
-            ValorRecebimentosCredito = 0,
-            ValorRecebimentosDebito = 0
+            ValorFinalEmDinheiro = 0f,
+            ValorRecebimentosPix = 0f,
+            ValorRecebimentosCredito = 0f,
+            ValorRecebimentosDebito = 0f,
+            ValorRecebimentosOnline = 0f
         });
 
         if (returnApiRefatored.Status == "success")
@@ -337,6 +338,7 @@
             {
                 await JS.InvokeVoidAsync("baixarJSON", ResponseAPi.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-FECHA.json");
                 AppState.CaixaAberto = false;
+                StatusOperacional = new ClsFechamentoDeCaixa();
 
                 dataGridRef?.ReloadServerData();
                 StateHasChanged();
