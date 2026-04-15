@@ -11,10 +11,10 @@ public class AbreCaixaDto
 
 public class FechaCaixaDto
 {
-    [JsonPropertyName("ValorRecebimentosCredito")] public float ValorRecebimentosCredito { get; set; }
-    [JsonPropertyName("ValorRecebimentosDebito")] public float ValorRecebimentosDebito { get; set; }
-    [JsonPropertyName("ValorRecebimentosPix")] public float ValorRecebimentosPix { get; set; }
-    [JsonPropertyName("ValorFinalEmDinheiro")] public float ValorFinalEmDinheiro { get; set; }
-    [JsonPropertyName("ValorRecebimentosOnline")] public float ValorRecebimentosOnline { get; set; }
+    [JsonPropertyName("ValorRecebimentosCredito")] public float? ValorRecebimentosCredito { get; set; }
+    [JsonPropertyName("ValorRecebimentosDebito")] public float? ValorRecebimentosDebito { get; set; }
+    [JsonPropertyName("ValorRecebimentosPix")] public float? ValorRecebimentosPix { get; set; }
+    [JsonPropertyName("ValorFinalEmDinheiro")] public float? ValorFinalEmDinheiro { get; set; }
+    [JsonPropertyName("ValorRecebimentosOnline")] public float? ValorRecebimentosOnline { get; set; }
     [JsonPropertyName("Funcionario_id")] public int FuncionarioId { get; set; }
 }

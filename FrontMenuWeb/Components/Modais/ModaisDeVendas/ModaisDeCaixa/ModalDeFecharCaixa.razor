@@ -21,8 +21,7 @@
                                      Adornment="Adornment.Start"
                                      AdornmentText="R$"
                                      Margin="Margin.Dense"
-                                     Format="F2"
-                                     Immediate=true />
+                                     Format="F2" />
                 </MudItem>
 
                 <MudItem xs="6">
@@ -36,8 +35,7 @@
                                      Adornment="Adornment.Start"
                                      AdornmentText="R$"
                                      Margin="Margin.Dense"
-                                     Format="F2"
-                                     Immediate=true />
+                                     Format="F2" />
                 </MudItem>
 
                 <MudItem xs="6">
@@ -51,8 +49,7 @@
                                      Adornment="Adornment.Start"
                                      AdornmentText="R$"
                                      Margin="Margin.Dense"
-                                     Format="F2"
-                                     Immediate=true />
+                                     Format="F2" />
                 </MudItem>
 
                 <MudItem xs="6">
@@ -66,8 +63,7 @@
                                      Adornment="Adornment.Start"
                                      AdornmentText="R$"
                                      Margin="Margin.Dense"
-                                     Format="F2"
-                                     Immediate=true />
+                                     Format="F2" />
                 </MudItem>
 
                 <MudItem xs="12">
@@ -81,8 +77,7 @@
                                      Adornment="Adornment.Start"
                                      AdornmentText="R$"
                                      Margin="Margin.Dense"
-                                     Format="F2"
-                                     Immediate=true />
+                                     Format="F2" />
                 </MudItem>
 
             </MudGrid>
@@ -90,7 +85,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancelar" Color="Color.Secondary" Variant="Variant.Text">Cancelar</MudButton>
-        <MudButton OnClick="FechaCaixa" Color="Color.Primary" Variant="Variant.Filled">Fechar (CTRL + ALT)</MudButton>
+        <MudButton OnClick="FechaCaixa" Color="Color.Primary" Variant="Variant.Filled" Disabled="@CamposInvalidos">Fechar (CTRL + ALT)</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -101,11 +96,18 @@
 
     private FechaCaixaDto FechaCaixaDto = new FechaCaixaDto();
 
-    private MudNumericField<float> FildDeValorDeDebito = new MudNumericField<float>();
-    private MudNumericField<float> FildDeValorDeCredito = new MudNumericField<float>();
-    private MudNumericField<float> FildDeValorDePix = new MudNumericField<float>();
-    private MudNumericField<float> FildDeValorDeDinheiro = new MudNumericField<float>();
-    private MudNumericField<float> FildDeValorOnline = new MudNumericField<float>();
+    private MudNumericField<float?> FildDeValorDeDebito = new MudNumericField<float?>();
+    private MudNumericField<float?> FildDeValorDeCredito = new MudNumericField<float?>();
+    private MudNumericField<float?> FildDeValorDePix = new MudNumericField<float?>();
+    private MudNumericField<float?> FildDeValorDeDinheiro = new MudNumericField<float?>();
+    private MudNumericField<float?> FildDeValorOnline = new MudNumericField<float?>();
+
+    private bool CamposInvalidos =>
+        !FechaCaixaDto.ValorRecebimentosDebito.HasValue ||
+        !FechaCaixaDto.ValorRecebimentosCredito.HasValue ||
+        !FechaCaixaDto.ValorRecebimentosPix.HasValue ||
+        !FechaCaixaDto.ValorFinalEmDinheiro.HasValue ||
+        !FechaCaixaDto.ValorRecebimentosOnline.HasValue;
 
     private async Task HandleKeyDownDialog(KeyboardEventArgs e)
     {
