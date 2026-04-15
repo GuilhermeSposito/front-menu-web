@@ -13,6 +13,7 @@
 @using FrontMenuWeb.Services.Fiscal
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
+@using System.IO.Compression
 @using MudBlazor.Extensions
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
@@ -28,8 +29,8 @@
                 <MudText Typo="Typo.h4">NF-e NFC-e</MudText>
                 <MudText Class="mb-3" Typo="Typo.body1">NF-e NFC-e Emitidas (Posição Físcal)</MudText>
             </MudStack>
-            <MudStack Class="p-2" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadArquivo">
+            <MudStack Class="p-2" AlignItems="AlignItems.Center" Justify="Justify.Center" Row=true Wrap="Wrap.Wrap" Spacing="2">
+               @* <MudFileUpload T="IBrowserFile" FilesChanged="UploadArquivo">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
@@ -37,7 +38,14 @@
                             Enviar Arquivos por Email Para Contabilidade
                         </MudButton>
                     </ActivatorContent>
-                </MudFileUpload>
+                </MudFileUpload>*@
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.FolderZip"
+                           Disabled="CarregandoEnvioDeEMail"
+                           OnClick="EnviarXMLsValidosPorEmail">
+                    Enviar XMLs Válidos do Período
+                </MudButton>
             </MudStack>
         </MudStack>
 
@@ -131,7 +139,7 @@
 
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="NFEmitidasDto" RowsPerPageString="NF's por página" ShowPageNumber="false" PageSizeOptions=@(new int[] { 20, 30, 500, 600, 1000, 3000 }) />
+                <MudDataGridPager T="NFEmitidasDto" RowsPerPageString="NF's por página" ShowPageNumber="false" PageSizeOptions=@(new int[] {20, 60, 70, 3000, 10000, 30000, 40000 }) />
             </PagerContent>
         </MudDataGrid>
 
@@ -221,8 +229,8 @@
     private bool Carregando = true;
 
     //lógica do filtros
-    private DateTime? FiltroDateTimeInicial = null;
-    private DateTime? FiltroDateTimeFinal = null;
+    private DateTime? FiltroDateTimeInicial = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? FiltroDateTimeFinal = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1);
 
     //Props dos totais
     private float TotalEmNFsValidas = 0;
@@ -466,6 +474,102 @@
     #endregion
 
     #region Função de envio de email para contabilidade
+
+    private async Task EnviarXMLsValidosPorEmail()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
+        try
+        {
+            string? EmailCadastrado = AppState.MerchantLogado?.EmailParaEnvioFiscais;
+
+            if (string.IsNullOrEmpty(EmailCadastrado))
+            {
+                Snackbar.Add("Nenhum email cadastrado para envio. Por favor, informe um email.", Severity.Warning);
+
+                var optionsInputText = new DialogOptions { CloseButton = true, FullScreen = false, FullWidth = false, MaxWidth = MaxWidth.ExtraLarge, CloseOnEscapeKey = true };
+                var dialogInputText = await DialogService.ShowAsync<Components.Modais.ModaisGenericos.InputText>("Email para Envio", parameters: new DialogParameters<Components.Modais.ModaisGenericos.InputText>
+                {
+                    { x => x.ContentText, "Por favor, informe o email para envio dos arquivos de contabilidade." },
+                    { x => x.ButtonText, "Salvar" },
+                    { x => x.Color, Color.Primary },
+                    { x => x.TamanhoMinimo, false }
+                }, optionsInputText);
+                var result = await dialogInputText.Result;
+
+                if (result?.Data is string email && !string.IsNullOrEmpty(email))
+                {
+                    EmailCadastrado = email;
+
+                    if (AppState.MerchantLogado is not null)
+                    {
+                        AppState.MerchantLogado.EmailParaEnvioFiscais = email;
+                        var retorno = await MerchantServices.UpdateMerchantAsync(AppState.MerchantLogado);
+                        if (retorno.Status == "success")
+                        {
+                            ClsMerchant merchant = await MerchantServices.GetMerchantAsync();
+                            if (merchant is not null)
+                                AppState.MerchantLogado = merchant;
+                        }
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            var resultado = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, 1, 99999);
+
+            var nfsComXml = resultado.Data
+                .Where(x => (x.CStat == 100 || x.CStat == 110 || x.CStat == 150 || x.CStat == 250 || x.CStat == 301 || x.CStat == 302 || x.CStat == 303) && !string.IsNullOrEmpty(x.XmlDistribuicao))
+                .ToList();
+
+            if (nfsComXml.Count == 0)
+            {
+                Snackbar.Add("Nenhuma NF válida (CStat 100) com XML encontrada no período.", Severity.Warning);
+                return;
+            }
+
+            ProgressoFiscal = 0;
+            _progressCts = new CancellationTokenSource();
+            CarregandoEnvioDeEMail = true;
+            StateHasChanged();
+
+            _ = SimulaProgressoAsync(_progressCts.Token);
+
+            var zipStream = new MemoryStream();
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                foreach (var nf in nfsComXml)
+                {
+                    var fileName = $"{nf.ChaveNf ?? nf.Id.ToString()}.xml";
+                    var entry = archive.CreateEntry(fileName);
+                    using var entryStream = entry.Open();
+                    var xmlBytes = System.Text.Encoding.UTF8.GetBytes(nf.XmlDistribuicao!);
+                    await entryStream.WriteAsync(xmlBytes);
+                }
+            }
+            zipStream.Position = 0;
+
+            var periodo = FiltroDateTimeInicial.HasValue
+                ? FiltroDateTimeInicial.Value.ToString("MM-yyyy")
+                : "todos";
+
+            var zipName = $"XMLs-NFs-{periodo}.zip";
+            var returno = await MerchantServices.EnviarArquicosParaContabilidadeEmail(zipStream, zipName, EmailCadastrado);
+            MostraMensagemDeRetorno(returno);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar XMLs: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoEnvioDeEMail = false;
+            _progressCts?.Cancel();
+            StateHasChanged();
+        }
+    }
 
     private async void UploadArquivo(IBrowserFile file)
     {

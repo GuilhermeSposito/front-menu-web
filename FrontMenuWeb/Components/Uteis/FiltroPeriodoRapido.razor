@@ -50,6 +50,11 @@
 
     private int _activePanelIndex = 4; // Inicia em "Este Mês"
 
+    protected override async Task OnInitializedAsync()
+    {
+        await AtualizarPeriodoRapido(_activePanelIndex);
+    }
+
     private async Task OnDataInicioChanged(DateTime? value)
     {
         await DataInicioChanged.InvokeAsync(value);
