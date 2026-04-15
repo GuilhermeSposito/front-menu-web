@@ -21,13 +21,13 @@
         background-image: url("/images/logo.png"); /* coloque o caminho certo */
         background-repeat: no-repeat;
         background-position: center;
-        opacity: 0.2; /* marca d'água bem leve */
+        opacity: 0.2; /* marca d'ï¿½gua bem leve */
         pointer-events: none;
         z-index: 0;
         background-size: 98% 98%; /* preenche tudo */
     }
 
-    /* garante que o conteúdo fique acima da marca d’água */
+    /* garante que o conteï¿½do fique acima da marca dï¿½ï¿½gua */
     .dialog-fila-digital > * {
         position: relative;
         z-index: 1;
@@ -75,7 +75,7 @@
     padding: 4px;
 }
 
-/* para o diálogo de pagamento */
+/* para o diï¿½logo de pagamento */
 .dialog-pagamento-responsivo {
     width: 50vw; /* metade da tela em desktops */
     height: 100vh; /* ocupa 80% da altura da tela */
@@ -86,9 +86,8 @@
     height: 30vh; /* ocupa 80% da altura da tela */
 }
 
-.dialog-pagamento-responsivo-edicao-valor-fechamento {
-    width: 30vw; /* metade da tela em desktops */
-    height: 70vh; /* ocupa 80% da altura da tela */
+.dialog-fechar-caixa {
+    width: 38vw;
 }
 
 /* em telas menores (tablets e celulares), ocupa tudo */
@@ -102,6 +101,11 @@
     .dialog-pagamento-responsivo-edicao-valor {
         width: 100vw !important;
         height: 50vh !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    .dialog-fechar-caixa {
+        width: 100vw !important;
         margin: 0 !important;
         border-radius: 0 !important;
     }
@@ -123,13 +127,13 @@
     page-break-before: always;
 }
 
-/* força uma quebra depois do elemento */
+/* forï¿½a uma quebra depois do elemento */
 .page-break-after {
     page-break-after: always;
 }
 
 .pagina-home {
-    position: relative; /* referência para o overlay */
+    position: relative; /* referï¿½ncia para o overlay */
 }
 
 .product-card:hover {
@@ -151,7 +155,7 @@
     overflow-y: hidden;
 }
 
-/* cobre só a área da página */
+/* cobre sï¿½ a ï¿½rea da pï¿½gina */
 .overlay-blur {
     position: absolute;
     inset: 0;
@@ -191,7 +195,7 @@ nav a {
 }
 .full-height-container {
     position: relative;
-    height: 100vh; /* ou 100% se o pai já controla a altura */
+    height: 100vh; /* ou 100% se o pai jï¿½ controla a altura */
 }
 
 .dashboard-card {
@@ -563,7 +567,7 @@ body {
 
 
 
-/*------------------------------------------Pagina em Construção-----------------------------------------------*/
+/*------------------------------------------Pagina em Construï¿½ï¿½o-----------------------------------------------*/
 
 
 

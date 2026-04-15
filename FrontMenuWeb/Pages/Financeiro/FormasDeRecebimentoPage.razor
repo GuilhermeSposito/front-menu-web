@@ -44,6 +44,18 @@
                 <PropertyColumn Property="x => x.Id" Title="Código" />
                 <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
                 <PropertyColumn Property="x => x.Taxa" Title="Taxa" />
+
+                <TemplateColumn T="ClsFormaDeRecebimento" Title="Ativo" SortBy="x => x.Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="@(context.Item.Ativo ? "Clique para desativar" : "Clique para ativar")" Color="Color.Primary">
+                            <MudSwitch T="bool"
+                                       Value="context.Item.Ativo"
+                                       Color="Color.Success"
+                                       ValueChanged="@(async _ => await ToggleAtivoForma(context.Item))" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
                 <TemplateColumn T="ClsFormaDeRecebimento" Title="Deletar">
                     <CellTemplate Context="context">
                         <MudTooltip Text="Clique para excluir a forma" Color="Color.Error">
@@ -61,15 +73,12 @@
                                      Color="Color.Inherit"
                                      Icon="@Icons.Material.TwoTone.MoreVert">
 
-
                                 <MudTooltip Text="Clique para editar" Color="Color.Primary">
                                     <MudMenuItem OnClick=@(async p => { await AbreModalDeAdicionarOuEditarForma(false, context.Item); })
                                                  Icon="@Icons.Material.TwoTone.Edit"
                                                  IconColor="Color.Primary"
                                                  Label="Editar" />
-
                                 </MudTooltip>
-
 
                             </MudMenu>
                         </MudTooltip>
@@ -147,6 +156,25 @@
             StateHasChanged();
         }
 
+    }
+
+    private async Task ToggleAtivoForma(ClsFormaDeRecebimento forma)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroFormasDeRecebimento")) return;
+        try
+        {
+            forma.Ativo = !forma.Ativo;
+            var resposta = await FormasDeRecebimentoService.AtualizarFormaDeRecebimentoAsync(forma);
+            string msg = string.Join(", ", resposta.Status == "success" ? resposta.Data.Messages : resposta.Messages);
+            Snackbar.Add(msg, resposta.Status == "success" ? Severity.Success : Severity.Error);
+            if (resposta.Status != "success")
+                forma.Ativo = !forma.Ativo;
+        }
+        catch (Exception ex)
+        {
+            forma.Ativo = !forma.Ativo;
+            Snackbar.Add($"Erro ao atualizar forma: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task DeletarForma(ClsFormaDeRecebimento forma)

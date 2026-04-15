@@ -69,14 +69,6 @@
                                             </MudStack>
 
                                             <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
-                                                <MudText>Pagamento Online ?</MudText>
-
-                                                <MudTooltip Text="Clique para ativar/desativar o pagamento online da forma" Color="Color.Primary">
-                                                    <MudSwitch T="bool" Value=@FormaDeRecebimento.PagamentoOnline Color="Color.Success" ValueChanged="@(async valor => { FormaDeRecebimento.PagamentoOnline = valor; })" />
-                                                </MudTooltip>
-                                            </MudStack>
-
-                                            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
                                                 <MudText>Aceita Convenio com a forma ?</MudText>
 
                                                 <MudTooltip Text="Clique para ativar/desativar o convenio da forma" Color="Color.Primary">
@@ -103,10 +95,11 @@
                                                 <MudDivider Class="w-100" Light=true />
                                                 <MudText Typo="Typo.h6">Natureza do Recebimento</MudText>
                                                 <MudRadioGroup  T="string" Value="@Selecionado" ValueChanged="@OnFormaSelecionada">
-                                                    <MudRadio T="string" Value="@("credito")" Color="Color.Primary">Crédito</MudRadio>
-                                                    <MudRadio T="string" Value="@("debito")" Color="Color.Primary">Débito</MudRadio>
                                                     <MudRadio T="string" Value="@("dinheiro")" Color="Color.Primary">Dinheiro</MudRadio>
+                                                    <MudRadio T="string" Value="@("debito")" Color="Color.Primary">Débito</MudRadio>
+                                                    <MudRadio T="string" Value="@("credito")" Color="Color.Primary">Crédito</MudRadio>
                                                     <MudRadio T="string" Value="@("pix")" Color="Color.Primary">Pix</MudRadio>
+                                                    <MudRadio T="string" Value="@("pagamentoonline")" Color="Color.Primary">Pagamento Online</MudRadio>
                                                 </MudRadioGroup>
                                             </MudStack>
                                         </MudStack>
@@ -262,6 +255,8 @@
                     Selecionado = "dinheiro";
                 else if (FormaDeRecebimento.EPix)
                     Selecionado = "pix";
+                else if (FormaDeRecebimento.PagamentoOnline)
+                    Selecionado = "pagamentoonline";
 
 
                 if (FormaDeRecebimento.ListasDeContasDaForma.Any())
@@ -292,7 +287,7 @@
         {
             ReturnApiRefatored<ClsFormaDeRecebimento> ResponseAPi;
 
-            if (!FormaDeRecebimento.EDEbito && !FormaDeRecebimento.ECredito && !FormaDeRecebimento.EDinheiro && !FormaDeRecebimento.EPix)
+            if (!FormaDeRecebimento.EDEbito && !FormaDeRecebimento.ECredito && !FormaDeRecebimento.EDinheiro && !FormaDeRecebimento.EPix && !FormaDeRecebimento.PagamentoOnline)
             {
                 Snackbar.Add("Selecione ao menos uma natureza para a forma de pagamento.", Severity.Error);
                 return;
@@ -451,11 +446,11 @@
     private string Selecionado;
     private void OnFormaSelecionada(string valor)
     {
-        // Zera todos e ativa apenas o selecionado
         FormaDeRecebimento.ECredito = valor == "credito";
         FormaDeRecebimento.EDEbito = valor == "debito";
         FormaDeRecebimento.EDinheiro = valor == "dinheiro";
         FormaDeRecebimento.EPix = valor == "pix";
+        FormaDeRecebimento.PagamentoOnline = valor == "pagamentoonline";
 
         Selecionado = valor;
     }
