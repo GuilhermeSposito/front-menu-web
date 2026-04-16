@@ -300,7 +300,6 @@
             {
                 Snackbar.Add("Erro em criar conexão em tempo real com o servidor, por favor atualize a página", MudBlazor.Severity.Error);
             }
-
         }
 
         // Inicializa o widget se o merchant já estiver carregado (pode acontecer em renders subsequentes)
@@ -387,7 +386,7 @@
     }
 
     private void HandleAppStateChange() => InvokeAsync(StateHasChanged);
-
+    
     public void Dispose()
     {
         AppState.OnChange -= HandleAppStateChange;
