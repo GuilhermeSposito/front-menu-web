@@ -22,20 +22,20 @@ public partial class PaginaInicial : Form
     private FileSystemWatcher WatcherNFs;
     private FileSystemWatcher WatcherMesas;
 
-    private Dictionary<int, DateTime> PedidosImpressos = new Dictionary<int, DateTime>();
-
     private readonly ImpressaoService _impressaoService;
     private readonly WebSocketPedidosService _webSocketService;
+    private readonly FilaDeImpressaoService _filaService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     private System.Timers.Timer _timer;
 
     // Label criado em código para não exigir alteração no .resx do designer
     private Label _labelWsStatus = new Label();
 
-    public PaginaInicial(ImpressaoService ImpressaoService, WebSocketPedidosService webSocketService)
+    public PaginaInicial(ImpressaoService ImpressaoService, WebSocketPedidosService webSocketService, FilaDeImpressaoService filaService)
     {
         _impressaoService = ImpressaoService;
         _webSocketService = webSocketService;
+        _filaService = filaService;
 
         _webSocketService.StatusChanged += OnWebSocketStatusChanged;
 
@@ -107,7 +107,7 @@ public partial class PaginaInicial : Form
     public void IniciarMonitoramentoImpressaoDePedidosNaoImpressos()
     {
         _timer = new System.Timers.Timer(20000);
-        _timer.Elapsed += async (s, e) => await _webSocketService.BuscarPedidosNaoImpressosAsync();
+        _timer.Elapsed += async (s, e) => await _filaService.BuscarPedidosNaoImpressosAsync();
         _timer.AutoReset = true;
         _timer.Start();
     }
@@ -191,36 +191,40 @@ public partial class PaginaInicial : Form
             Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
         {
             await Task.Delay(100);
+            var pedido = (ClsPedido?)null;
             try
             {
                 string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                pedido = JsonSerializer.Deserialize<ClsPedido>(conteudo);
 
-                ClsPedido? Pedido = null;
-                try
+                // Tenta adquirir o slot — se o worker da fila já está imprimindo este pedido, descarta
+                if (pedido is not null && !_filaService.TentarReservarImpressao(pedido.Id))
                 {
-                    Pedido = JsonSerializer.Deserialize<ClsPedido>(conteudo);
-                    if (Pedido is not null)
-                    {
-                        // Dedup: evita reimpressão do mesmo pedido em menos de 10 segundos
-                        if (PedidosImpressos.TryGetValue(Pedido.Id, out DateTime ultimaImpressao) &&
-                            (DateTime.Now - ultimaImpressao).TotalSeconds < 10)
-                        {
-                            File.Delete(e.FullPath);
-                            return;
-                        }
-
-                        PedidosImpressos[Pedido.Id] = DateTime.Now;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
+                    File.Delete(e.FullPath);
+                    return;
                 }
 
+                // Impressão imediata — ação manual do usuário, não vai para a fila
                 await _impressaoService.Imprimir(conteudo, "SOPHOS");
+
+                if (pedido is not null)
+                {
+                    await _filaService.MarcarComoImpressoPublicAsync(pedido);
+                    LogLocalService.LogImpressao(pedido.DisplayId ?? pedido.Id.ToString(), "WATCHER");
+                }
+
                 File.Delete(e.FullPath);
             }
-            catch (Exception ex) { Console.WriteLine("Erro ao imprimir pedido"); }
+            catch (Exception ex)
+            {
+                LogLocalService.LogErro(pedido?.DisplayId ?? "?", "WATCHER", ex.Message);
+                Console.WriteLine($"[Watcher] Erro ao imprimir pedido: {ex.Message}");
+            }
+            finally
+            {
+                if (pedido is not null)
+                    _filaService.LiberarImpressao(pedido.Id);
+            }
         }
     }
     private void IniciarMonitoramentoFechamentoDeMotoboy()

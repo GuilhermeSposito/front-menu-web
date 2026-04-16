@@ -581,7 +581,7 @@ public class ImpressaoService
         if (pedido.Cliente is not null)
         {
             AdicionaConteudo(Conteudo, pedido.Cliente.Nome, FonteDetalhesDoPedido);
-            AdicionaConteudo(Conteudo, $"Telefone: {pedido.Cliente.Telefone}", FonteDetalhesDoPedido);
+            AdicionaConteudo(Conteudo, $"Telefone: {MascararTelefone(pedido.Cliente.Telefone)}", FonteDetalhesDoPedido);
 
             if (pedido.TipoDePedido != "DELIVERY")
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -1031,6 +1031,19 @@ public class ImpressaoService
     #endregion
 
     #region Funções auxiliares de impressão
+    private static string MascararTelefone(string? telefone)
+    {
+        if (string.IsNullOrWhiteSpace(telefone)) return "";
+
+        var digits = new string(telefone.Where(char.IsDigit).ToArray());
+
+        return digits.Length == 11
+            ? $"({digits[..2]}) {digits[2..7]}-{digits[7..]}"  // celular: (16) 99236-6175
+            : digits.Length == 10
+                ? $"({digits[..2]}) {digits[2..6]}-{digits[6..]}"  // fixo: (16) 9923-6175
+                : telefone; // formato desconhecido — retorna como veio
+    }
+
     private bool VerificaSeNaoEstaSemImpressora(string impCadastrada)
     {
         return impCadastrada != "Sem Impressora" && !string.IsNullOrEmpty(impCadastrada);

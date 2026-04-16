@@ -446,7 +446,6 @@
 
             await VerificaSeColocaEtapaNovoNaTela();
 
-            await VerificaPedidosNaoImpressos();
             VerificaSeTemPedidosAbertos();
         }
         catch (Exception ex)
@@ -786,8 +785,12 @@
                         var response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
                         if (response.Status == "success")
                         {
-                            bool baixou = await ImprimirPedido(item.Pedido, false);
-                            if (baixou) await PedidosService.UpdatePedidoImpresso(item.Pedido);
+                            bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+                            if (!impressaoDesabilita)
+                            {
+                                bool baixou = await ImprimirPedido(item.Pedido, false);
+                                if (baixou) await PedidosService.UpdatePedidoImpresso(item.Pedido);
+                            }
                         }
                     }
 
@@ -979,8 +982,12 @@
                     {
                         Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
                         await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                        bool baixou = await ImprimirPedido(Pedido, false);
-                        if (baixou) await PedidosService.UpdatePedidoImpresso(Pedido);
+                        bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+                        if (!impressaoDesabilita)
+                        {
+                            bool baixou = await ImprimirPedido(Pedido, false);
+                            if (baixou) await PedidosService.UpdatePedidoImpresso(Pedido);
+                        }
                     }
             }
         }
@@ -1142,43 +1149,9 @@
         while (await _timer.WaitForNextTickAsync(_cts.Token))
         {
             VerificaSeTemPedidosAbertos();
-            await VerificaPedidosNaoImpressos();
         }
     }
 
-    private async Task VerificaPedidosNaoImpressos()
-    {
-        try
-        {
-            bool IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood") ?? false;
-            if (!IntegraIfood)
-                return;
-
-            var result = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { PageSize = 10, Pesquisa = pesquisaTexto, TipoPedido = FiltroPorTipoDePedido, Imprimiu = false });
-
-            if (result?.Data?.Any() == true)
-            {
-                List<ClsPedido> pedidosNaoImpressos = result.Data.Where(p => !p.Imprimiu).ToList();
-                if (pedidosNaoImpressos.Count > 0)
-                {
-                    foreach (var pedido in pedidosNaoImpressos)
-                    {
-                        if (pedido.CriadoPor != "SOPHOS")
-                        {
-                            await VizualizaSeNaoExistePedidoNaTela(pedido);
-                            bool baixou = await ImprimirPedido(pedido, false);
-                            if (baixou) await PedidosService.UpdatePedidoImpresso(pedido);
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message);
-            Snackbar.Add($"Erro ao verificar pedidos não impressos: {ex.Message}", Severity.Error);
-        }
-    }
 
     private async Task OnInfoAdicionalPedidoMudou(ClsPedido Pedido)
     {

@@ -56,8 +56,9 @@ namespace SophosSyncDesktop
                 };
 
                 var impressaoService = new ImpressaoService();
-                var webSocketService = new WebSocketPedidosService(impressaoService);
-                var paginaInicial = new PaginaInicial(impressaoService, webSocketService);
+                var filaDeImpressaoService = new FilaDeImpressaoService(impressaoService);
+                var webSocketService = new WebSocketPedidosService(impressaoService, filaDeImpressaoService);
+                var paginaInicial = new PaginaInicial(impressaoService, webSocketService, filaDeImpressaoService);
 
                 bool usaDesktop;
                 using (var ctx = new AppDbContext())
