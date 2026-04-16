@@ -114,6 +114,18 @@ public class CaixaEPagamentosService
         };
     }
 
+    public async Task<ReturnApiRefatored<ClsFechamentoDeCaixa>> EditaFechamentoDeCaixaAsync(int idDoCaixa, FechaCaixaDto dto)
+    {
+        var response = await _HttpClient.PatchAsJsonAsync($"caixas/update-fechamento/{idDoCaixa}", dto);
+        string json = await response.Content.ReadAsStringAsync();
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<ClsFechamentoDeCaixa>>(json);
+        return retorno ?? new ReturnApiRefatored<ClsFechamentoDeCaixa>
+        {
+            Status = "error",
+            Messages = ["Erro ao editar fechamento de caixa"]
+        };
+    }
+
     public async Task<PaginatedResponse<Caixa>> GetCaixasFechadosAsync(QueryCaixasDto queryDto)
     {
         var queryParams = new List<string>();

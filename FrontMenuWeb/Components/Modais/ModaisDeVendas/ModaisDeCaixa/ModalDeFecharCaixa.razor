@@ -3,7 +3,7 @@
 
 <MudDialog tabindex="0" OnKeyDown=HandleKeyDownDialog Class="dialog-fechar-caixa" Style="background-color: var(--mud-palette-background);">
     <TitleContent>
-        <MudText Typo="Typo.h6" Class="ms-2">Fechar Caixa</MudText>
+        <MudText Typo="Typo.h6" Class="ms-2">@(ModoEdicao ? "Editar Fechamento de Caixa" : "Fechar Caixa")</MudText>
         <MudText Typo="Typo.caption" Class="ms-2" Color="Color.Secondary">Informe os totais recebidos por forma de pagamento</MudText>
     </TitleContent>
     <DialogContent>
@@ -85,7 +85,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancelar" Color="Color.Secondary" Variant="Variant.Text">Cancelar</MudButton>
-        <MudButton OnClick="FechaCaixa" Color="Color.Primary" Variant="Variant.Filled" Disabled="@CamposInvalidos">Fechar (CTRL + ALT)</MudButton>
+        <MudButton OnClick="FechaCaixa" Color="Color.Primary" Variant="Variant.Filled" Disabled="@CamposInvalidos">@(ModoEdicao ? "Salvar" : "Fechar (CTRL + ALT)")</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -93,6 +93,9 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    [Parameter] public FechaCaixaDto? ValoresIniciais { get; set; }
+    [Parameter] public bool ModoEdicao { get; set; }
 
     private FechaCaixaDto FechaCaixaDto = new FechaCaixaDto
     {
@@ -102,6 +105,12 @@
         ValorFinalEmDinheiro = 0f,
         ValorRecebimentosOnline = 0f
     };
+
+    protected override void OnInitialized()
+    {
+        if (ValoresIniciais is not null)
+            FechaCaixaDto = ValoresIniciais;
+    }
 
     private MudNumericField<float?> FildDeValorDeDebito = new MudNumericField<float?>();
     private MudNumericField<float?> FildDeValorDeCredito = new MudNumericField<float?>();

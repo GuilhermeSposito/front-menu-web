@@ -8,6 +8,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas.ModaisDeCaixa
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Pedidos
@@ -419,9 +420,46 @@
     #endregion
 
     #region Editar caixa
-    private void EditarCaixa(Caixa caixa)
+    private async Task EditarCaixa(Caixa caixa)
     {
-        // TODO: implementar edição do caixa
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
+
+        var valoresIniciais = new FechaCaixaDto
+        {
+            ValorRecebimentosDebito = (float)caixa.ContagemFisicaDebito,
+            ValorRecebimentosCredito = (float)caixa.ContagemFisicaCredito,
+            ValorRecebimentosPix = (float)caixa.ContagemFisicaPix,
+            ValorFinalEmDinheiro = (float)caixa.ValorCaixaEmDinFinal,
+            ValorRecebimentosOnline = 0f
+        };
+
+        var parameters = new DialogParameters<ModalDeFecharCaixa>
+        {
+            { x => x.ValoresIniciais, valoresIniciais },
+            { x => x.ModoEdicao, true }
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<ModalDeFecharCaixa>("Editar Fechamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is FechaCaixaDto dto)
+        {
+            var response = await CaixaEPagamentosService.EditaFechamentoDeCaixaAsync(caixa.Id, dto);
+            var message = string.Join(", ", response.Status == "success" ? response.Data.Messages : response.Messages);
+            Snackbar.Add(message, response.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (response.Status == "success")
+            {
+                bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+                if (!impressaoDesabilita)
+                    await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"fechamento-{DateTime.Now}-SOPHOS-FECHA.json");
+
+                if (dataGridRef is not null)
+                    await dataGridRef.ReloadServerData();
+            }
+        }
     }
     #endregion
 
