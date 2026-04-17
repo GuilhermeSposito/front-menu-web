@@ -8,6 +8,7 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas.ModaisDeCaixa
+@using FrontMenuWeb.Components.Uteis
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Vendas
@@ -44,6 +45,12 @@
                 }
             </div>
         </div>
+        <MudDivider Light=true Class="w-100" />
+
+        <MudStack Class="w-100 p-3">
+            <CarrosselDeCaixasAbertos />
+        </MudStack>
+
         <MudDivider Light=true Class="w-100" />
 
         <MudStack Class="w-100 h-100 mt-2" AlignItems="AlignItems.Center">

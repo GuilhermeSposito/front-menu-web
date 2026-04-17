@@ -126,6 +126,21 @@ public class CaixaEPagamentosService
         };
     }
 
+    public async Task<ReturnApiRefatored<CaixaAbertoStatus>> GetTodosCaixasAbertosAsync()
+    {
+        var response = await _HttpClient.GetAsync("caixas/abertos/todos");
+        string json = await response.Content.ReadAsStringAsync();
+        var retorno = JsonSerializer.Deserialize<ReturnApiRefatored<CaixaAbertoStatus>>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        return retorno ?? new ReturnApiRefatored<CaixaAbertoStatus>
+        {
+            Status = "error",
+            Messages = ["Erro ao buscar caixas abertos"]
+        };
+    }
+
     public async Task<PaginatedResponse<Caixa>> GetCaixasFechadosAsync(QueryCaixasDto queryDto)
     {
         var queryParams = new List<string>();

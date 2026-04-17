@@ -1,6 +1,7 @@
 @rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
 @page "/"
+@using FrontMenuWeb.Components.Uteis
 @using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services.Fiscal
@@ -112,6 +113,9 @@
             </MudCard>
         </MudItem>
     </MudGrid>
+
+    <CarrosselDeCaixasAbertos />
+
 
     @*------------------------- Parte de Graficos ----------------------------*@
     @if (!CarregandoInfosParaOGrafico)

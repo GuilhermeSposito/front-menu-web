@@ -1,0 +1,102 @@
+@using FrontMenuWeb.Components.Modais.ModaisDeCaixa
+@using FrontMenuWeb.Models.Vendas
+@using FrontMenuWeb.Services
+@inject CaixaEPagamentosService CaixaService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+@if (!Carregando && CaixasAbertos.Count > 0)
+{
+    <MudPaper Class="w-100 pa-3 rounded-lg" Style="background-color: var(--mud-palette-surface);">
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">Caixas Abertos</MudText>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                           Color="Color.Primary"
+                           OnClick="ScrollEsquerda" />
+
+            <div id="carrossel-caixas"
+                 style="overflow-x:auto; flex:1; scroll-behavior:smooth; scrollbar-width:none; -ms-overflow-style:none;">
+                <div style="display:flex; gap:16px; padding:8px 0; width:fit-content; margin:0 auto;">
+                    @foreach (var caixa in CaixasAbertos)
+                    {
+                        <MudCard Class="rounded-xl" Style="min-width:200px; max-width:220px; cursor:pointer; flex-shrink:0; background-color: var(--mud-palette-background);"
+                                 @onclick="() => AbreModalDeStatus(caixa)">
+                            <MudCardContent>
+                                <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Size="Size.Large" />
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center" Style="font-weight:600">
+                                        @caixa.Funcionario
+                                    </MudText>
+                                    <MudText Typo="Typo.h6" Color="Color.Success" Align="Align.Center">
+                                        @caixa.ValorTotalEmVendas.ToString("C")
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Align="Align.Center" Style="opacity:0.6">
+                                        @(caixa.DataAbertura?.ToString("dd/MM HH:mm") ?? "-")
+                                    </MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </div>
+            </div>
+
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                           Color="Color.Primary"
+                           OnClick="ScrollDireita" />
+        </div>
+    </MudPaper>
+
+    <style>
+        #carrossel-caixas::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+}
+
+@code {
+    private List<CaixaAbertoStatus> CaixasAbertos = new();
+    private bool Carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarCaixasAbertos();
+    }
+
+    private async Task CarregarCaixasAbertos()
+    {
+        Carregando = true;
+        try
+        {
+            var retorno = await CaixaService.GetTodosCaixasAbertosAsync();
+            if (retorno.Status == "success" && retorno.Data?.Lista is not null)
+            {
+                CaixasAbertos = retorno.Data.Lista;
+            }
+        }
+        catch { }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task ScrollEsquerda()
+    {
+        await JS.InvokeVoidAsync("carrosselScroll", -240);
+    }
+
+    private async Task ScrollDireita()
+    {
+        await JS.InvokeVoidAsync("carrosselScroll", 240);
+    }
+
+    private async Task AbreModalDeStatus(CaixaAbertoStatus caixa)
+    {
+        var parameters = new DialogParameters<ModalDeStatusDoCaixaAberto>
+        {
+            { x => x.Caixa, caixa }
+        };
+
+        await DialogService.ShowAsync<ModalDeStatusDoCaixaAberto>($"Status - {caixa.Funcionario}", parameters);
+    }
+}

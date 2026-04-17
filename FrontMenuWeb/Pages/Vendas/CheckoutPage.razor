@@ -178,7 +178,10 @@
                 @* Cabeçalho da tabela *@
                 <MudStack Row="true" Class="pa-3"
                           Style="background-color:var(--mud-palette-surface); border-bottom:1px solid var(--mud-palette-lines-default); flex-shrink:0;">
+
+                    <MudText Typo="Typo.overline" Class="co-col-qty">Item Nº</MudText>
                     <MudText Typo="Typo.overline" Class="co-col-desc">Descrição</MudText>
+
                     <MudText Typo="Typo.overline" Class="co-col-qty">QTD</MudText>
                     <MudText Typo="Typo.overline" Class="co-col-val">Valor</MudText>
                 </MudStack>
@@ -188,28 +191,22 @@
 
                     @* Marca d'água robusta *@
                     <div class="watermark-bg">
-                        @*if (!string.IsNullOrEmpty(AppState.MerchantLogado?.ImagemLogo))
-                        {
-                            <img src="@AppState.MerchantLogado.ImagemLogo" alt="" />
-                        }
-                        else
-                        {
-                            <img src="/pwa-erp-icon-192.png" alt="" style="filter: grayscale(100%);" />
-                        }*@
-                        <img src="/images/logo.png" alt="" style="filter: grayscale(100%);" />
+
+                        <img src="/CaixaAberto.png" alt="Caixa Aberto" />
 
                     </div>
 
                     @if (_pedido?.Itens != null)
                     {
-                        @foreach (var item in _pedido.Itens)
+                        @foreach (var (item, index) in _pedido.Itens.Select((it, i) => (it, i)))
                         {
                             <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-3"
                                       Style="@($"border-bottom:1px solid var(--mud-palette-lines-default); cursor:pointer; position:relative; z-index:2; background-color:{(_itensSelecionados.Contains(item) ? "rgba(var(--mud-palette-primary-rgb),0.2)" : "var(--mud-palette-surface)")}; {(_itensSelecionados.Contains(item) ? "border-left:3px solid var(--mud-palette-primary);" : "")}")"
                                       @onclick="() => ToggleSelecaoItem(item)">
-                                <MudText Typo="Typo.body2" Class="co-col-desc">@item.Descricao</MudText>
-                                <MudText Typo="Typo.body2" Class="co-col-qty">@item.Quantidade.ToString("0.##")x</MudText>
-                                <MudText Typo="Typo.body2" Class="co-col-val" Style="color:#4caf50; font-weight:600;">@item.PrecoTotal.ToString("C")</MudText>
+                                <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@(index + 1)</MudText>
+                                <MudText Typo="Typo.h5" Class="co-col-desc" Style="font-weight:600;">@item.Descricao</MudText>
+                                <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@item.Quantidade.ToString("0.###")x</MudText>
+                                <MudText Typo="Typo.h5" Class="co-col-val" Style="color:#4caf50; font-weight:600;">@item.PrecoTotal.ToString("C")</MudText>
                             </MudStack>
                         }
                     }
@@ -278,9 +275,9 @@
     }
 
         .watermark-bg img {
-            width: 90%;
-            height: 90%;
-            opacity: 0.2;
+            width: 99%;
+            height: 99%;
+            opacity: 0.1;
         }
 
     .items-list-scroll {
@@ -477,7 +474,7 @@
         if (_isFechamentoDeMesa)
         {
             float precoTotalCalculado = produto.TipoDeVenda != "V" ? preco * qtdAdicionado : preco;
-            
+
             var novoItemLocal = new ItensPedido
             {
                 Descricao = produto.Descricao,
@@ -493,7 +490,7 @@
                 MesaComandaId = _pedido.MesaComandaId,
                 Itens = new List<ItensPedido> { novoItemLocal }
             };
-            
+
             _enviando = true;
             StateHasChanged();
 
@@ -503,9 +500,9 @@
                 if (response.Status == "success")
                 {
                     Snackbar.Add($"{produto.Descricao} adicionado à mesa com sucesso.", Severity.Success);
-                    
+
                     var mesaAberta = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
-                    if(mesaAberta != null)
+                    if (mesaAberta != null)
                     {
                         await CarregarMesaParaCheckout(mesaAberta.CodigoExterno);
                     }
@@ -828,12 +825,12 @@
                 return;
             }
 
-            var subPedido = new ClsPedido 
-            { 
-                TipoDePedido = "BALCÃO", 
-                CriadoPor = "SOPHOS", 
+            var subPedido = new ClsPedido
+            {
+                TipoDePedido = "BALCÃO",
+                CriadoPor = "SOPHOS",
                 EtapaPedido = "FINALIZADO",
-                Itens = _itensSelecionados.ToList() 
+                Itens = _itensSelecionados.ToList()
             };
 
             var parameters = new DialogParameters { { "Pedido", subPedido } };
@@ -892,14 +889,14 @@
                 }
 
                 // Subtrai da UI os itens já pagos
-                foreach(var item in subPedido.Itens)
+                foreach (var item in subPedido.Itens)
                 {
                     _pedido.Itens.Remove(item);
                 }
                 _itensSelecionados.Clear();
-                
+
                 // Se zerou tudo, limpar toda a referência (incluindo mesa)
-                if(_pedido.Itens.Count == 0)
+                if (_pedido.Itens.Count == 0)
                 {
                     _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
                     _isFechamentoDeMesa = false;

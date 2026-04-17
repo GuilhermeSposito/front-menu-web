@@ -1,0 +1,101 @@
+@using FrontMenuWeb.Models.Vendas
+
+<MudDialog Style="background-color: var(--mud-palette-background);">
+    <DialogContent>
+        <MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.subtitle2">Funcionário:</MudText>
+                <MudText Typo="Typo.subtitle2" Style="font-weight:600">@Caixa.Funcionario</MudText>
+            </MudStack>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudText Typo="Typo.subtitle2">Aberto em:</MudText>
+                <MudText Typo="Typo.subtitle2">@(Caixa.DataAbertura?.ToString("dd/MM/yyyy HH:mm") ?? "-")</MudText>
+            </MudStack>
+            <MudDivider Light="true" Class="w-100" />
+
+            @*RESUMO DO CAIXA*@
+            <MudStack Class="rounded-2 p-2" Style="background-color:var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                <MudText Typo="Typo.subtitle1" Align="Align.Center">Resumo do Caixa:</MudText>
+
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.subtitle2">Valor Total em Vendas (+): </MudText>
+                    <MudText Typo="Typo.subtitle2">@Caixa.ValorTotalEmVendas.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.subtitle2">Tiket Médio (=): </MudText>
+                    <MudText Typo="Typo.subtitle2">@Caixa.TiketMedio.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.subtitle2">Valor Caixa Inicial (+): </MudText>
+                    <MudText Typo="Typo.subtitle2">@Caixa.ValorInicial.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Typo="Typo.subtitle2">Qtd. Pedidos: </MudText>
+                    <MudText Typo="Typo.subtitle2">@(Caixa.QtdPedidos?.TotalPedidos ?? 0)</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Color="Color.Error" Typo="Typo.subtitle2">Valor de Trocos (-): </MudText>
+                    <MudText Color="Color.Error" Typo="Typo.subtitle2">@Caixa.Trocos.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Color="Color.Error" Typo="Typo.subtitle2">Valor de Retiradas do caixa (-): </MudText>
+                    <MudText Color="Color.Error" Typo="Typo.subtitle2">@Caixa.Sangrias.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Color="Color.Success" Typo="Typo.subtitle2">Valor de Suprimentos do caixa (+): </MudText>
+                    <MudText Color="Color.Success" Typo="Typo.subtitle2">@Caixa.Suprimentos.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Color="Color.Warning" Typo="Typo.subtitle2">Valor Esperado em Dinheiro (=): </MudText>
+                    <MudText Color="Color.Warning" Typo="Typo.subtitle2">@Caixa.ValorEsperadoEmDinheiro.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+                <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <MudText Color="Color.Info" Typo="Typo.subtitle2">Valor Esperado Total (=): </MudText>
+                    <MudText Color="Color.Info" Typo="Typo.subtitle2">@Caixa.ValorEsperado.ToString("C")</MudText>
+                </MudStack>
+                <MudDivider Light="true" Class="w-100" />
+            </MudStack>
+
+            @*DISTRIBUICAO DE PAGAMENTOS*@
+            @if (Caixa.RecebimentosPorTipo is not null && Caixa.RecebimentosPorTipo.Count > 0)
+            {
+                <MudStack Class="rounded-2 p-2" Style="background-color:var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center">Total Por Tipo de Pagamento:</MudText>
+
+                    @foreach (var pagamento in Caixa.RecebimentosPorTipo)
+                    {
+                        <MudStack Class="p-2" Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudText Typo="Typo.subtitle2">@pagamento.Key (+): </MudText>
+                            <MudText Typo="Typo.subtitle2">@pagamento.Value.ToString("C")</MudText>
+                        </MudStack>
+                        <MudDivider Light="true" Class="w-100" />
+                    }
+                </MudStack>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Fechar" Color="Color.Secondary" Variant="Variant.Outlined">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public CaixaAbertoStatus Caixa { get; set; } = new();
+
+    private void Fechar()
+    {
+        MudDialog.Cancel();
+    }
+}

@@ -136,6 +136,12 @@ window.playNotificationSoundFila = () => {
     });
 };
 
+// Função para scroll do carrossel de caixas
+window.carrosselScroll = (offset) => {
+    var el = document.getElementById('carrossel-caixas');
+    if (el) el.scrollBy({ left: offset, behavior: 'smooth' });
+};
+
 //Função para baixar JSON do pedido — retorna Promise<bool> (true = disparou, false = erro)
 window.baixarJSON = (dados, nomeArquivo = "dados.json") => {
     return new Promise((resolve) => {
