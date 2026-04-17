@@ -91,10 +91,20 @@ public partial class PaginaInicial : Form
             }
         }
 
-        // Inicia conexão WebSocket após login — a partir daqui o WF imprime
-        // pedidos IFOOD e SOPHOS CARDAPIO diretamente, sem depender do browser
-         await _webSocketService.ConectarAsync();
-        IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
+        // Só ativa WebSocket e timer de pedidos não impressos se pelo menos
+        // um checkbox de impressão automática estiver habilitado
+        bool deveAtivarImpressaoAutomatica;
+        using (var db = new AppDbContext())
+        {
+            var config = db.Impressoras.FirstOrDefault();
+            deveAtivarImpressaoAutomatica = (config?.ImprimirIfood ?? true) || (config?.ImprimirSophosCardapio ?? true);
+        }
+
+        if (deveAtivarImpressaoAutomatica)
+        {
+            await _webSocketService.ConectarAsync();
+            IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
+        }
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
@@ -107,7 +117,13 @@ public partial class PaginaInicial : Form
     public void IniciarMonitoramentoImpressaoDePedidosNaoImpressos()
     {
         _timer = new System.Timers.Timer(20000);
-        _timer.Elapsed += async (s, e) => await _filaService.BuscarPedidosNaoImpressosAsync();
+        _timer.Elapsed += async (s, e) =>
+        {
+            // O timer só busca pedidos não impressos quando o WebSocket está fora do ar
+            // (fallback). Se o WS estiver conectado e recebendo eventos, ele já cuida disso.
+            if (_webSocketService.EstaConectado) return;
+            await _filaService.BuscarPedidosNaoImpressosAsync();
+        };
         _timer.AutoReset = true;
         _timer.Start();
     }

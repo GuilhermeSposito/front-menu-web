@@ -8,9 +8,17 @@
     <MudAppBar Color="Color.Primary" Elevation="1">
         @*<MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />*@
         <MudText id="ProgramName" Typo="Typo.h5" Class="ml-2 cursor-pointer">@ProgramName</MudText>
-        <MudImage Src="/images/CEREBRO-VETOR.svg" Width="30" Class="ml-2 cursor-pointer" />
-        <MudSpacer />
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+        @if (AppState.MerchantLogado is not null)
+        {
+            <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">@AppState.MerchantLogado.NomeFantasia</MudText>
+                @if (AppState.MerchantLogado.FuncionarioLogado is not null)
+                {
+                    <MudText Typo="Typo.subtitle1" id="merchantName" Class="ml-3">/  @AppState.MerchantLogado.FuncionarioLogado.Nome</MudText>
+                }
+            </MudStack>
+           
+        }
     </MudAppBar>
 
     <MudMainContent Class="pt-16 pa-4 mud-theme-background min-vh-100" Style="background-color: var(--mud-palette-background)">

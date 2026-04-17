@@ -30,9 +30,17 @@ public partial class ConfigsGeral : Form
 
                 CaminhoDoSalvamentoDoJson.Text = configs?.CaminhoSalvamentoDoJson;
                 CaminhoParaPastaDeArqNfe.Text = configs?.CaminhoSalvamentoDasNfe;
+                checkBoxImprimirIfood.CheckedChanged -= checkBoxImprimirIfood_CheckedChanged;
                 checkBoxImprimirIfood.Checked = configs?.ImprimirIfood ?? true;
+                checkBoxImprimirIfood.CheckedChanged += checkBoxImprimirIfood_CheckedChanged;
+
+                checkBoxImprimirCardapio.CheckedChanged -= checkBoxImprimirCardapio_CheckedChanged;
                 checkBoxImprimirCardapio.Checked = configs?.ImprimirSophosCardapio ?? true;
+                checkBoxImprimirCardapio.CheckedChanged += checkBoxImprimirCardapio_CheckedChanged;
+
+                checkBoxImprimirComandaMesa.CheckedChanged -= checkBoxImprimirComandaMesa_CheckedChanged;
                 checkBoxImprimirComandaMesa.Checked = configs?.ImprimirComandaMesa ?? true;
+                checkBoxImprimirComandaMesa.CheckedChanged += checkBoxImprimirComandaMesa_CheckedChanged;
 
                 var parametros = await dbContext.ParametrosLocais.FirstOrDefaultAsync();
                 checkBoxUsaDesktop.Checked = parametros?.UsaDesktop ?? false;

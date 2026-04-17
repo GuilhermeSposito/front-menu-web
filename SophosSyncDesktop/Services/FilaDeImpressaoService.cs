@@ -18,6 +18,10 @@ public class FilaDeImpressaoService : IDisposable
     // Gate de impressão: quem adicionar primeiro imprime — o outro descarta
     private readonly HashSet<int> _pedidosEmImpressao = new();
 
+    // Memória de pedidos já impressos recentemente — impede re-impressão por WS + timer na mesma janela
+    private readonly Dictionary<int, DateTime> _jaImpressos = new();
+    private static readonly TimeSpan _ttlImpresso = TimeSpan.FromMinutes(5);
+
     private readonly object _lock = new();
     private readonly CancellationTokenSource _cts = new();
 
@@ -34,6 +38,12 @@ public class FilaDeImpressaoService : IDisposable
     {
         lock (_lock)
         {
+            // Já foi impresso recentemente — descarta independente de WS ou timer
+            if (_jaImpressos.TryGetValue(pedido.Id, out var imprestoEm) &&
+                (DateTime.Now - imprestoEm) < _ttlImpresso)
+                return false;
+
+            // Já está na fila aguardando — descarta duplicata
             if (!_pedidosNaFila.Add(pedido.Id)) return false;
         }
         _canal.Writer.TryWrite((pedido, json, origem));
@@ -112,10 +122,20 @@ public class FilaDeImpressaoService : IDisposable
 
                 // Só então verifica a API — se já foi impresso por outro caminho, libera e pula
                 var atualizado = await BuscarPedidoAsync(pedido.Id).ConfigureAwait(false);
-                if (atualizado is not null && atualizado.Imprimiu) continue;
+                if (atualizado is not null && atualizado.Imprimiu)
+                {
+                    lock (_lock) { _jaImpressos[pedido.Id] = DateTime.Now; }
+                    continue;
+                }
 
                 await _impressaoService.Imprimir(json, "SOPHOS").ConfigureAwait(false);
                 await MarcarComoImpressoAsync(pedido).ConfigureAwait(false);
+
+                lock (_lock)
+                {
+                    _jaImpressos[pedido.Id] = DateTime.Now;
+                }
+
                 LogLocalService.LogImpressao(pedido.DisplayId ?? pedido.Id.ToString(), origem);
             }
             catch (Exception ex)
@@ -154,6 +174,10 @@ public class FilaDeImpressaoService : IDisposable
 
     public async Task MarcarComoImpressoPublicAsync(ClsPedido pedido)
     {
+        lock (_lock)
+        {
+            _jaImpressos[pedido.Id] = DateTime.Now;
+        }
         await MarcarComoImpressoAsync(pedido);
     }
 

@@ -44,6 +44,10 @@
                     <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
                     <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Itens Selecionado</MudButton>
                     <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
+                    @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < PedidoMesa.Itens.Count)
+                    {
+                        <MudButton OnClick="PagarPedidoParcial" Variant="Variant.Filled" Color="Color.Warning">Pagamento Parcial (F6)</MudButton>
+                    }
                     <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
                 </MudStack>
             </ToolBarContent>
@@ -133,6 +137,12 @@
         {
             await JS.InvokeVoidAsync("event.preventDefault");
             await PagarPedido();
+        }
+
+        if (e.Key == "F6")
+        {
+            await JS.InvokeVoidAsync("event.preventDefault");
+            await PagarPedidoParcial();
         }
     }
 
@@ -261,6 +271,54 @@
             StateHasChanged();
         }
 
+    }
+
+    private async Task PagarPedidoParcial()
+    {
+        if (ItensSelecionados.Count == 0)
+        {
+            Snackbar.Add("Selecione os itens para realizar o fechamento parcial.", Severity.Warning);
+            return;
+        }
+
+        ClsPedido NovoPedido = new ClsPedido
+        {
+            TipoDePedido = "MESA",
+            MesaComandaId = MesaOuComanda.Id,
+            Itens = ItensSelecionados.ToList(),
+            ItensFechamentoIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList()
+        };
+
+        var parameters = new DialogParameters { { "Pedido", NovoPedido } };
+        var options = new DialogOptions { Position = DialogPosition.Center, CloseButton = true, MaxWidth = MaxWidth.False, FullWidth = true, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento Parcial", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await PedidosService.FechaMesa(NovoPedido);
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Parcial efetuado com sucesso!", Severity.Success);
+                
+                if (ItensSelecionados.Count >= PedidoMesa.Itens.Count)
+                {
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    ItensSelecionados.Clear();
+                    if (dataGridRef is not null)
+                        await dataGridRef.ReloadServerData();
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao fechar parcial: {string.Join(",", response.Messages)}", Severity.Error);
+            }
+        }
     }
     #endregion
 

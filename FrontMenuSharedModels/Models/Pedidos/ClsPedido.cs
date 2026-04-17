@@ -136,7 +136,7 @@ public class ClsPedido
     [JsonPropertyName("PedidoAgendado")] public bool PedidoAgendado { get; set; } = false;
     [JsonPropertyName("HorarioDataAgendamento")] public DateTime? HorarioDataAgendamento { get; set; }
     [JsonPropertyName("InfosPedidoIntegradoStatusAdicionais")] public string? InfosPedidoIntegradoStatusAdicionais { get; set; }
-
+    [JsonPropertyName("ItensFechamentoIds")] public List<int>? ItensFechamentoIds { get; set; }
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

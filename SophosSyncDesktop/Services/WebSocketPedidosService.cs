@@ -1,3 +1,4 @@
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Pedidos;
 using SocketIOClient;
 using SophosSyncDesktop.DataBase.Db;
@@ -98,6 +99,11 @@ public class WebSocketPedidosService : IDisposable
                     try
                     {
                         var json = response.GetValue<JsonElement>().GetRawText();
+                        var pedidoMesa = JsonSerializer.Deserialize<PedidoMesaDto>(json,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                        if (pedidoMesa == null) return;
+
 
                         SomService.TocarPedidoMesa();
 

@@ -404,7 +404,7 @@
 @code {
     #region Propriedades
     public bool Carregando { get; set; } = true;
-    public bool ProcessandoNovoPedido { get; set; } = false;
+    private SemaphoreSlim _pedidoLock = new SemaphoreSlim(1, 1);
     private HashSet<int> _pedidosJaProcessados = new();
     public bool CarregandoParteFiscal { get; set; } = false;
     public string LabelDeCarregamento { get; set; } = "Emitindo NFC-e..";
@@ -1168,47 +1168,52 @@
     }
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
     {
-        if (!_pedidosJaProcessados.Add(novoPedido.Id) || ProcessandoNovoPedido)
-            return;
-
-        ProcessandoNovoPedido = true;
+        await _pedidoLock.WaitAsync();
         try
         {
+            // Se o pedido já está na tela, ignora completamente
+            if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
+            {
+                bool? IntegraIfoodCheck = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
+                if (IntegraIfoodCheck is true && novoPedido.CriadoPor != "SOPHOS")
+                {
+                    await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                    Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                }
+                return;
+            }
+
+            // Registra o ID para evitar reprocessamento em caso de reconexão do socket
+            if (!_pedidosJaProcessados.Add(novoPedido.Id))
+                return;
+
             bool? IntegraIfood = await LocalStorage.GetItemAsync<bool?>("IntegraIfood");
 
             if (IntegraIfood is not null && IntegraIfood == true && novoPedido.CriadoPor != "SOPHOS")
             {
-                if (_items.Any(x => x.Pedido.Id == novoPedido.Id))
-                {
-                    await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                    Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
-                    return;
-                }
-
                 await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
                 Snackbar.Add($"Novo Pedido {novoPedido.CriadoPor}", Severity.Info);
-                await VizualizaSeNaoExistePedidoNaTela(novoPedido);
-
-                //if (AppState.MerchantLogado is not null && AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes && (!novoPedido.PedidoAgendado && !(novoPedido.StatusPedido == "ABERTO")))
-                //await VerificaPedidosNaoImpressos();
-
-                await InvokeAsync(StateHasChanged);
-                return;
+            }
+            else
+            {
+                Snackbar.Add("Novo pedido recebido!", Severity.Info);
             }
 
-
-            await VizualizaSeNaoExistePedidoNaTela(novoPedido);
-            Snackbar.Add("Novo pedido recebido!", Severity.Info);
+            _items.Insert(0, new ClsDeSuporteParaMostrarPedidos
+            {
+                Pedido = novoPedido,
+                Selector = novoPedido.EtapaPedido
+            });
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao Obter pedido automaticamente, por favor atualize a página {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao obter pedido automaticamente, por favor atualize a página: {ex.Message}", Severity.Error);
         }
         finally
         {
-            ProcessandoNovoPedido = false;
+            _pedidoLock.Release();
         }
-
     }
 
     private async Task VizualizaSeNaoExistePedidoNaTela(ClsPedido pedido)
@@ -1354,6 +1359,7 @@
     {
         _cts.Cancel();
         _timer?.Dispose();
+        _pedidoLock.Dispose();
 
         PedidosService.PedidoRecebido -= PedidoRecebidoHandler;
         PedidosService.PedidoMudouEtapa -= PedidoMudouDeEtapaHandler;
