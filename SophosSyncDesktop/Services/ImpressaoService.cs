@@ -258,7 +258,7 @@ public class ImpressaoService
 
                                 ConteudoParaImpressaoDoPedido = DefineCaracteristicasDaComandaParaImpressaoDeliveryEBalcao(PedidoAtualizadoComItensAgrupadosAuxiliar, AppQueEnviou, AppState.MerchantLogado!.ImprimeComandasSeparadaPorProdutos, QtdDeItensDoPedido, IndiceDoItemAtual);
 
-                                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || (Pedido.TipoDePedido == "BALCÃO" && AppState.MerchantLogado!.ImprimeComandasBalcao))
+                                if ((Pedido.TipoDePedido == "DELIVERY" && AppState.MerchantLogado!.ImprimeComandasDelivery) || ((Pedido.TipoDePedido == "BALCÃO" || Pedido.TipoDePedido == "CHECKOUT") && AppState.MerchantLogado!.ImprimeComandasBalcao))
                                     for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
                                         await ImprimirPagina(ConteudoParaImpressaoDoPedido, Impressora, ValorEspacamento);
 
@@ -430,7 +430,7 @@ public class ImpressaoService
         {
             AdicionaConteudo(Conteudo, $"Entregar até as {EntregarAté:t}", FonteDetalhesDoPedido);
         }
-        AdicionaConteudo(Conteudo, $"Pedido {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Pedido {(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //========================================================================================       
@@ -513,7 +513,7 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, pedido.CriadoPor, FonteLegendaDoTamanho, Alinhamentos.Centro);
         }
 
-        AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : "R E T I R A D A", FonteLegendaDoTamanho);
+        AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : pedido.TipoDePedido == "CHECKOUT" ? "C A I X A" : "R E T I R A D A", FonteLegendaDoTamanho);
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido);
 
@@ -536,7 +536,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado em: {pedido.CriadoEm:G}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"Controle: {pedido.TipoDePedido}", FonteDetalhesDoPedido);
+        AdicionaConteudo(Conteudo, $"Controle: {(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta, eObs: true);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------

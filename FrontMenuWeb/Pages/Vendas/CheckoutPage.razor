@@ -300,6 +300,7 @@
     private int _quantidade = 1;
     private ClsProduto? _itemAtual;
     private HashSet<ItensPedido> _itensSelecionados = new HashSet<ItensPedido>();
+    private ClsPedido _pedido = new() { TipoDePedido = "CHECKOUT", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
 
     private void ToggleSelecaoItem(ItensPedido item)
     {
@@ -310,7 +311,6 @@
         StateHasChanged();
     }
 
-    private ClsPedido _pedido = new() { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
 
     private bool _enviando = false;
     private bool _modalAberto = false;

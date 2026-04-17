@@ -1,4 +1,4 @@
-﻿using ApiFiscalMenuWeb.Models.Dtos;
+using ApiFiscalMenuWeb.Models.Dtos;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
@@ -29,35 +29,27 @@ public class MessageService
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
 
-            HttpResponseMessage response;
-
-            try
-            {
-                response = await client.GetAsync("merchants/details", cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
-            }
-
+            var response = await client.GetAsync("merchants/details", cts.Token);
             var content = await response.Content.ReadAsStringAsync(cts.Token);
 
             if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[MessageService] Falha ao obter merchant. Status: {response.StatusCode} | Body: {content}");
                 return null;
+            }
 
             var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
 
+            if (merchant is null)
+                Console.WriteLine($"[MessageService] Desserialização retornou null. Body: {content}");
+
             return merchant;
-        }
-        catch (TaskCanceledException ex)
-        {
-            throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[MessageService] Erro ao obter merchant: {ex.Message}");
             return null;
         }
-
     }
 
     private void AdicionaTokenNaRequisicao(HttpClient client, string token)
@@ -69,76 +61,71 @@ public class MessageService
 
     public async Task SendMessageAsync(EnviaMsgDto enviaMsgDto, string TokenDaApiNest)
     {
-        ClsMerchant Merchant = await GetMerchantFromNestApi(TokenDaApiNest) ?? throw new Exception("Não foi possível obter os detalhes do comerciante.");
-
-        string Mensagem = string.Empty;
-        if(enviaMsgDto.EtapaDoPedido == EtapasPedido.PREPARANDO)
-        {
-            var HttpSophosClient = _factory.CreateClient("ApiAutorizada");
-            var GetMensagem = await HttpSophosClient.PostAsJsonAsync($"gemini/preparando?nomeestabelecimento={Merchant.NomeFantasia}", enviaMsgDto.Pedido, CancellationToken.None);
-
-            Mensagem = await GetMensagem.Content.ReadAsStringAsync() ?? throw new Exception("Não foi possível obter a mensagem para a etapa PREPARANDO");
-        }
-        else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.DESPACHADO)
-        {
-            if (enviaMsgDto.Pedido.TipoDePedido == "DELIVERY")
-            {
-                Mensagem = Merchant.MenssagemDeDeliveryDespachado ?? "";
-            }
-            else
-            {
-                Mensagem = Merchant.MenssagemDeBalcaoPronto ?? "";
-            }
-        }
-        else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.FINALIZADO)
-        {
-            if (enviaMsgDto.Pedido.TipoDePedido == "DELIVERY")
-            {
-                Mensagem = Merchant.MenssagemDeDeliveryFinalizado ?? "";
-            }
-            else
-            {
-                Mensagem = Merchant.MenssagemDeBalcaoFinalizado ?? "";
-            }
-        }
-        else
-        {
-            return;
-        }
-
-        string NomeDoCliente = enviaMsgDto.Pedido.Cliente?.Nome ?? throw new Exception("Nome do cliente não encontrado");
-        string NumeroDoCliente = enviaMsgDto.Pedido.Cliente?.Telefone ?? throw new Exception("Número do cliente não encontrado");
-        string InstanceName = Merchant.InstanceName ?? throw new Exception("Não foi possível obter o instance name");
-        string NumeroDoClienteFormatado = $"55{NumeroDoCliente}";
-        string MensagemFormatada = Mensagem.Replace("{NomeDoCliente}", NomeDoCliente).Replace("{NumeroDoPedido}", enviaMsgDto.NumeroDoPedido);
-
-        TextMessage Message = new TextMessage
-        {
-            InstanceName = InstanceName,
-            Text = MensagemFormatada,
-            To = NumeroDoClienteFormatado,
-        };
-
-        HttpClient client = _factory.CreateClient("ApiMessageBrokerUnimake");
-
         try
         {
+            ClsMerchant? Merchant = await GetMerchantFromNestApi(TokenDaApiNest);
+            if (Merchant is null) return;
+
+            string Mensagem = string.Empty;
+            if (enviaMsgDto.EtapaDoPedido == EtapasPedido.PREPARANDO)
+            {
+                var HttpSophosClient = _factory.CreateClient("ApiAutorizada");
+                AdicionaTokenNaRequisicao(HttpSophosClient, TokenDaApiNest);
+                var GetMensagem = await HttpSophosClient.PostAsJsonAsync($"gemini/preparando?nomeestabelecimento={Merchant.NomeFantasia}", enviaMsgDto.Pedido, CancellationToken.None);
+
+                if (!GetMensagem.IsSuccessStatusCode) return;
+                Mensagem = await GetMensagem.Content.ReadAsStringAsync();
+            }
+            else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.DESPACHADO)
+            {
+                Mensagem = enviaMsgDto.Pedido.TipoDePedido == "DELIVERY"
+                    ? Merchant.MenssagemDeDeliveryDespachado ?? ""
+                    : Merchant.MenssagemDeBalcaoPronto ?? "";
+            }
+            else if (enviaMsgDto.EtapaDoPedido == EtapasPedido.FINALIZADO)
+            {
+                Mensagem = enviaMsgDto.Pedido.TipoDePedido == "DELIVERY"
+                    ? Merchant.MenssagemDeDeliveryFinalizado ?? ""
+                    : Merchant.MenssagemDeBalcaoFinalizado ?? "";
+            }
+            else
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(Mensagem)) return;
+
+            string? NomeDoCliente = enviaMsgDto.Pedido.Cliente?.Nome;
+            string? NumeroDoCliente = enviaMsgDto.Pedido.Cliente?.Telefone;
+            string? InstanceName = Merchant.InstanceName;
+
+            if (string.IsNullOrEmpty(NomeDoCliente) || string.IsNullOrEmpty(NumeroDoCliente) || string.IsNullOrEmpty(InstanceName))
+            {
+                Console.WriteLine($"[MessageService] Dados insuficientes para enviar msg. Cliente: {NomeDoCliente}, Tel: {NumeroDoCliente}, Instance: {InstanceName}");
+                return;
+            }
+
+            string NumeroDoClienteFormatado = $"55{NumeroDoCliente}";
+            string MensagemFormatada = Mensagem.Replace("{NomeDoCliente}", NomeDoCliente).Replace("{NumeroDoPedido}", enviaMsgDto.NumeroDoPedido);
+
+            TextMessage Message = new TextMessage
+            {
+                InstanceName = InstanceName,
+                Text = MensagemFormatada,
+                To = NumeroDoClienteFormatado,
+            };
+
+            HttpClient client = _factory.CreateClient("ApiMessageBrokerUnimake");
             var response = await client.PostAsJsonAsync($"/umessenger/api/v1/Messages/Publish/{InstanceName}", Message);
 
             if (response.IsSuccessStatusCode)
-            {
                 Console.WriteLine("Mensagem enviada com sucesso!");
-            }
             else
-            {
                 Console.WriteLine($"Falha ao enviar mensagem. Status Code: {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
-            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro ao enviar mensagem: {ex.Message}");
+            Console.WriteLine($"[MessageService] Erro ao enviar mensagem WhatsApp: {ex.Message}");
         }
-
-
     }
 }
