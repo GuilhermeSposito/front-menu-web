@@ -24,6 +24,7 @@ public class Caixa
     [JsonPropertyName("ContagemFisicaDebito")] public decimal ContagemFisicaDebito { get; set; }
     [JsonPropertyName("ContagemFisicaCredito")] public decimal ContagemFisicaCredito { get; set; }
     [JsonPropertyName("ContagemFisicaPix")] public decimal ContagemFisicaPix { get; set; }
+    [JsonPropertyName("ContagemFisicaOnline")] public decimal ContagemFisicaOnline { get; set; }
     [JsonPropertyName("TiketMedio")] public decimal TiketMedio { get; set; }
     [JsonPropertyName("Aberto")] public bool Aberto { get; set; }
     [JsonPropertyName("DataAbertura")] public DateTime? DataAbertura { get; set; }
