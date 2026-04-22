@@ -155,6 +155,7 @@ public class MessageService
                 InstanceName = InstanceName,
                 Text = Mensagem,
                 To = NumeroFormatado,
+                PreviewUrl = true,
             };
 
             HttpClient client = _factory.CreateClient("ApiMessageBrokerUnimake");
@@ -174,35 +175,54 @@ public class MessageService
     private static string MontaMensagemMotoboy(EnviaMsgMotoboyDto dto)
     {
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"Olá {dto.NomeMotoboy}, segue o roteiro das entregas:");
-        sb.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(dto.LinkGoogleMaps))
         {
-            sb.AppendLine("Rota completa no Google Maps:");
             sb.AppendLine(dto.LinkGoogleMaps);
             sb.AppendLine();
         }
+
+        sb.AppendLine($"🏍️ *Olá, {dto.NomeMotoboy}!*");
+        sb.AppendLine($"Segue o roteiro com *{dto.Paradas.Count}* {(dto.Paradas.Count == 1 ? "entrega" : "entregas")} 👇");
+        sb.AppendLine();
+        sb.AppendLine("━━━━━━━━━━━━━━━");
+        sb.AppendLine();
 
         for (int i = 0; i < dto.Paradas.Count; i++)
         {
             var parada = dto.Paradas[i];
             string endereco = MontaEnderecoParada(parada);
-            sb.AppendLine($"Parada {i + 1}: {endereco}");
+
+            sb.AppendLine($"📍 *Parada {i + 1}*");
+            sb.AppendLine(endereco);
 
             if (parada.Lat.HasValue && parada.Lng.HasValue)
             {
-                sb.AppendLine($"https://www.google.com/maps/search/?api=1&query={parada.Lat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{parada.Lng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                string lat = parada.Lat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                string lng = parada.Lng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                sb.AppendLine($"🗺️ https://www.google.com/maps/search/?api=1&query={lat},{lng}");
             }
 
             if (!string.IsNullOrWhiteSpace(parada.Cliente))
-                sb.AppendLine($"Cliente: {parada.Cliente}");
+                sb.AppendLine($"👤 {parada.Cliente}");
 
             if (!string.IsNullOrWhiteSpace(parada.Telefone))
-                sb.AppendLine($"Telefone: {parada.Telefone}");
+                sb.AppendLine($"📞 {parada.Telefone}");
+
+            if (parada.Valor > 0)
+                sb.AppendLine($"💰 Pedido: {parada.Valor.ToString("C", new System.Globalization.CultureInfo("pt-BR"))}");
+
+            if (!string.IsNullOrWhiteSpace(parada.FormaPagamento))
+            {
+                string statusPag = parada.PagamentoOnline ? "✅ Pago online" : "💵 A receber";
+                sb.AppendLine($"{statusPag} • {parada.FormaPagamento}");
+            }
 
             sb.AppendLine();
         }
+
+        sb.AppendLine("━━━━━━━━━━━━━━━");
+        sb.AppendLine("Boas entregas! 🚀");
 
         return sb.ToString().TrimEnd();
     }
