@@ -34,4 +34,14 @@ public class MessageWhatsAppService
             Console.WriteLine($"Erro ao enviar mensagem: {response.StatusCode}");
         }
     }
+
+    public async Task EnviarMensagemMotoboy(EnviaMsgMotoboyDto dto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("message/enviar-msg-motoboy", dto);
+
+        if (response.IsSuccessStatusCode)
+            Console.WriteLine("Mensagem enviada ao motoboy com sucesso!");
+        else
+            Console.WriteLine($"Erro ao enviar mensagem ao motoboy: {response.StatusCode}");
+    }
 }

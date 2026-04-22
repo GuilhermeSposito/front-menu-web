@@ -2,6 +2,7 @@ using ApiFiscalMenuWeb.Models.Dtos;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
+using FrontMenuWeb.Models.Roteirizacao;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Unimake.MessageBroker.Primitives.Model.Messages;
@@ -127,5 +128,104 @@ public class MessageService
         {
             Console.WriteLine($"[MessageService] Erro ao enviar mensagem WhatsApp: {ex.Message}");
         }
+    }
+
+    public async Task SendMessageMotoboyAsync(EnviaMsgMotoboyDto enviaMsgMotoboyDto, string TokenDaApiNest)
+    {
+        try
+        {
+            ClsMerchant? Merchant = await GetMerchantFromNestApi(TokenDaApiNest);
+            if (Merchant is null) return;
+
+            string? InstanceName = Merchant.InstanceName;
+            string? TelefoneMotoboy = enviaMsgMotoboyDto.TelefoneMotoboy;
+
+            if (string.IsNullOrEmpty(InstanceName) || string.IsNullOrEmpty(TelefoneMotoboy) || enviaMsgMotoboyDto.Paradas.Count == 0)
+            {
+                Console.WriteLine($"[MessageService] Dados insuficientes para enviar msg ao motoboy. Tel: {TelefoneMotoboy}, Instance: {InstanceName}, Paradas: {enviaMsgMotoboyDto.Paradas.Count}");
+                return;
+            }
+
+            string Mensagem = MontaMensagemMotoboy(enviaMsgMotoboyDto);
+
+            string NumeroFormatado = FormataNumeroWhatsApp(TelefoneMotoboy);
+
+            TextMessage Message = new TextMessage
+            {
+                InstanceName = InstanceName,
+                Text = Mensagem,
+                To = NumeroFormatado,
+            };
+
+            HttpClient client = _factory.CreateClient("ApiMessageBrokerUnimake");
+            var response = await client.PostAsJsonAsync($"/umessenger/api/v1/Messages/Publish/{InstanceName}", Message);
+
+            if (response.IsSuccessStatusCode)
+                Console.WriteLine($"Mensagem enviada ao motoboy {enviaMsgMotoboyDto.NomeMotoboy} com sucesso!");
+            else
+                Console.WriteLine($"Falha ao enviar mensagem ao motoboy. Status Code: {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MessageService] Erro ao enviar mensagem ao motoboy: {ex.Message}");
+        }
+    }
+
+    private static string MontaMensagemMotoboy(EnviaMsgMotoboyDto dto)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Olá {dto.NomeMotoboy}, segue o roteiro das entregas:");
+        sb.AppendLine();
+
+        if (!string.IsNullOrWhiteSpace(dto.LinkGoogleMaps))
+        {
+            sb.AppendLine("Rota completa no Google Maps:");
+            sb.AppendLine(dto.LinkGoogleMaps);
+            sb.AppendLine();
+        }
+
+        for (int i = 0; i < dto.Paradas.Count; i++)
+        {
+            var parada = dto.Paradas[i];
+            string endereco = MontaEnderecoParada(parada);
+            sb.AppendLine($"Parada {i + 1}: {endereco}");
+
+            if (parada.Lat.HasValue && parada.Lng.HasValue)
+            {
+                sb.AppendLine($"https://www.google.com/maps/search/?api=1&query={parada.Lat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)},{parada.Lng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(parada.Cliente))
+                sb.AppendLine($"Cliente: {parada.Cliente}");
+
+            if (!string.IsNullOrWhiteSpace(parada.Telefone))
+                sb.AppendLine($"Telefone: {parada.Telefone}");
+
+            sb.AppendLine();
+        }
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static string MontaEnderecoParada(PedidoParaRota parada)
+    {
+        if (!string.IsNullOrWhiteSpace(parada.Rua) || !string.IsNullOrWhiteSpace(parada.Numero))
+        {
+            var partes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(parada.Rua)) partes.Add(parada.Rua);
+            if (!string.IsNullOrWhiteSpace(parada.Numero)) partes.Add($"nº {parada.Numero}");
+            if (!string.IsNullOrWhiteSpace(parada.Bairro)) partes.Add(parada.Bairro);
+            if (!string.IsNullOrWhiteSpace(parada.Cidade)) partes.Add(parada.Cidade);
+            return string.Join(", ", partes);
+        }
+
+        return parada.Endereco ?? string.Empty;
+    }
+
+    private static string FormataNumeroWhatsApp(string numero)
+    {
+        var digitos = new string(numero.Where(char.IsDigit).ToArray());
+        if (digitos.StartsWith("55")) return digitos;
+        return $"55{digitos}";
     }
 }

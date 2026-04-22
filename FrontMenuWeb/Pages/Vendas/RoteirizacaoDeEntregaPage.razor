@@ -2,15 +2,18 @@
 @attribute [Authorize]
 @page "/roteirizacao"
 
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Roteirizacao
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.EntregaMachine
 @using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.IntegracoesServices
 @using System.Text.Json
 @inject RoteirizacaoService RoteirizacaoService
 @inject MotoboyService MotoboyService
 @inject MachineService MachineService
 @inject EntregasMachineService EmpresasMachineService
+@inject MessageWhatsAppService MessageWhatsAppService
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject AppState AppState
@@ -62,9 +65,9 @@
             <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
                 <MudText Typo="Typo.h6" Class="mb-3">Configurar Rota</MudText>
 
-                <MudRadioGroup T="string" @bind-Value="_tipoDeAtribuicao" SelectedOptionChanged="OnTipoAtribuicaoChanged" Class="mb-3">
-                    <MudRadio T="string" Option="@("Motoboy")" Color="Color.Primary" Size="Size.Small">Motoboy Próprio</MudRadio>
-                    <MudRadio T="string" Option="@("Empresa")" Color="Color.Primary" Size="Size.Small">Empresa (Machine)</MudRadio>
+                <MudRadioGroup T="string" Value="_tipoDeAtribuicao" ValueChanged="OnTipoAtribuicaoChanged" Class="mb-3">
+                    <MudRadio T="string" Value="@("Motoboy")" Color="Color.Primary" Size="Size.Small">Motoboy Próprio</MudRadio>
+                    <MudRadio T="string" Value="@("Empresa")" Color="Color.Primary" Size="Size.Small">Empresa (Machine)</MudRadio>
                 </MudRadioGroup>
 
                 <MudSelect T="bool" @bind-Value="_retornarAoOrigem" Label="Tipo de Rota" Class="mb-3" Variant="Variant.Outlined">
@@ -451,6 +454,33 @@
         if (successCount > 0)
         {
             Snackbar.Add($"{successCount} entregas atribuídas com sucesso!", Severity.Success);
+
+            var motoboy = Motoboys.FirstOrDefault(m => m.Id == MotoboySelecionadoId.Value);
+            if (motoboy != null && !string.IsNullOrWhiteSpace(motoboy.Celular))
+            {
+                try
+                {
+                    var msgDto = new EnviaMsgMotoboyDto
+                    {
+                        NomeMotoboy = motoboy.Nome,
+                        TelefoneMotoboy = motoboy.Celular!,
+                        LinkGoogleMaps = MontaLinkGoogleMapsRota(atribuidos),
+                        Paradas = atribuidos.ToList()
+                    };
+
+                    await MessageWhatsAppService.EnviarMensagemMotoboy(msgDto);
+                    Snackbar.Add($"Mensagem enviada para {motoboy.Nome} no WhatsApp.", Severity.Info);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Falha ao enviar mensagem ao motoboy: {ex.Message}", Severity.Warning);
+                }
+            }
+            else if (motoboy != null)
+            {
+                Snackbar.Add($"Motoboy {motoboy.Nome} sem celular cadastrado. Mensagem não enviada.", Severity.Warning);
+            }
+
             foreach (var p in atribuidos) _todosPedidos.Remove(p);
             _dropContainer?.Refresh();
             await AtualizarMapaAsync();
@@ -466,6 +496,36 @@
         _atribuindo = false;
         MotoboySelecionadoId = null;
         StateHasChanged();
+    }
+
+    private string MontaLinkGoogleMapsRota(List<PedidoParaRota> paradas)
+    {
+        var comCoords = paradas.Where(p => p.Lat.HasValue && p.Lng.HasValue).ToList();
+        if (comCoords.Count == 0) return string.Empty;
+
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        string origem = $"{_latMerchant.ToString(ci)},{_lngMerchant.ToString(ci)}";
+        string destino;
+        string waypoints = string.Empty;
+
+        if (_retornarAoOrigem)
+        {
+            destino = origem;
+            waypoints = string.Join("|", comCoords.Select(p => $"{p.Lat!.Value.ToString(ci)},{p.Lng!.Value.ToString(ci)}"));
+        }
+        else
+        {
+            var ultimo = comCoords.Last();
+            destino = $"{ultimo.Lat!.Value.ToString(ci)},{ultimo.Lng!.Value.ToString(ci)}";
+            var meio = comCoords.Take(comCoords.Count - 1).ToList();
+            waypoints = string.Join("|", meio.Select(p => $"{p.Lat!.Value.ToString(ci)},{p.Lng!.Value.ToString(ci)}"));
+        }
+
+        string url = $"https://www.google.com/maps/dir/?api=1&origin={Uri.EscapeDataString(origem)}&destination={Uri.EscapeDataString(destino)}&travelmode=driving";
+        if (!string.IsNullOrEmpty(waypoints))
+            url += $"&waypoints={Uri.EscapeDataString(waypoints)}";
+
+        return url;
     }
 
     private void OnTipoAtribuicaoChanged(string val)

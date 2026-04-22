@@ -32,4 +32,16 @@ public class MessageControllers : ControllerBase
         await _messageService.SendMessageAsync(enviaMsgDto,TokenDaApiNest: token);
         return Ok();
     }
+
+    [HttpPost("enviar-msg-motoboy")]
+    public async Task<ActionResult> EnviaMsgMotoboyWhatsApp([FromBody] EnviaMsgMotoboyDto enviaMsgMotoboyDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        await _messageService.SendMessageMotoboyAsync(enviaMsgMotoboyDto, TokenDaApiNest: token);
+        return Ok();
+    }
 }
