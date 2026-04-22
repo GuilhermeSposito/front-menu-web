@@ -125,6 +125,14 @@
                         }
                     </MudSelect>
 
+                    <MudSelect T="int" @bind-Value="_minutosParaEnvio" Label="Enviar Em..." Class="mb-3" Variant="Variant.Outlined">
+                        <MudSelectItem Value="0">IMEDIATO</MudSelectItem>
+                        <MudSelectItem Value="20">20 MINUTOS</MudSelectItem>
+                        <MudSelectItem Value="30">30 MINUTOS</MudSelectItem>
+                        <MudSelectItem Value="40">40 MINUTOS</MudSelectItem>
+                        <MudSelectItem Value="60">1 HORA</MudSelectItem>
+                    </MudSelect>
+
                     <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="EnviarParaEmpresaAsync" Disabled="@(NaRota.Count == 0 || _empresaMachineSelecionada == null || _enviandoEmpresa)" FullWidth Class="mb-4">
                         @if (_enviandoEmpresa)
                         {
@@ -219,6 +227,7 @@
     private string _tipoDeAtribuicao = "Motoboy";
     private EmpresaMachine _empresaMachineSelecionada;
     private bool _enviandoEmpresa = false;
+    private int _minutosParaEnvio = 0;
     private bool _retornarAoOrigem = true;
     private double DistanciaKm, TempoMin;
     private bool _otimizando = false;
@@ -475,7 +484,7 @@
 
         try
         {
-            var response = await MachineService.EnviaVariosPedidosParaOMapa(_empresaMachineSelecionada, naRotaList, AppState, _retornarAoOrigem);
+            var response = await MachineService.EnviaVariosPedidosParaOMapa(_empresaMachineSelecionada, naRotaList, AppState, _retornarAoOrigem, _minutosParaEnvio);
             var primeiro = response.First();
             Snackbar.Add(primeiro.Key, primeiro.Value);
 

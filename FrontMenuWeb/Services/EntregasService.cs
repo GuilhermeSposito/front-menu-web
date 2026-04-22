@@ -128,7 +128,7 @@ public class MachineService
         }
     }
 
-    public async Task<Dictionary<string, Severity>> EnviaVariosPedidosParaOMapa(EmpresaMachine EmpresaMachine, List<PedidoParaRota> Pedidos, AppState EstadoAtualDoApp, bool retorno = false)
+    public async Task<Dictionary<string, Severity>> EnviaVariosPedidosParaOMapa(EmpresaMachine EmpresaMachine, List<PedidoParaRota> Pedidos, AppState EstadoAtualDoApp, bool retorno = false, int minutosAdicionais = 0)
     {
         try
         {
@@ -146,9 +146,11 @@ public class MachineService
                 ReferenciaDeOrigem = "",
             };
 
+            var HorarioAgendamento = DateTime.Now.AddMinutes(minutosAdicionais);
+
             var Solicitacoes = Pedidos.Select(p => new SolicitacaoParaSerEnviadaDto
             {
-                DataField = DateTime.Now.AddMinutes(MinutosParaAdicionar),
+                DataField = HorarioAgendamento,
                 EnderecoDeOrigem = EnderecoDeOrigem,
                 EnderecoDeDestino = new EnderecoDeDestinoDto
                 {
