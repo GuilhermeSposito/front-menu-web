@@ -146,7 +146,7 @@ public class MachineService
                 ReferenciaDeOrigem = "",
             };
 
-            var HorarioAgendamento = DateTime.Now.AddMinutes(minutosAdicionais);
+            var HorarioAgendamento = DateTime.Now.AddMinutes(minutosAdicionais + 2);
 
             var Solicitacoes = Pedidos.Select(p => new SolicitacaoParaSerEnviadaDto
             {
