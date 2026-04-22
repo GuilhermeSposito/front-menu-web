@@ -1,0 +1,501 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/roteirizacao"
+
+@using FrontMenuWeb.Models.Roteirizacao
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.EntregaMachine
+@using FrontMenuWeb.Services
+@using System.Text.Json
+@inject RoteirizacaoService RoteirizacaoService
+@inject MotoboyService MotoboyService
+@inject MachineService MachineService
+@inject EntregasMachineService EmpresasMachineService
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject AppState AppState
+
+<PageTitle>Roteirização de Entrega</PageTitle>
+
+<div class="print-only">
+    <h2>Roteiro de Entregas</h2>
+    <p><strong>Estabelecimento:</strong> @AppState.MerchantLogado?.NomeFantasia</p>
+    <p><strong>Data:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+    @if (NaRota.Any())
+    {
+        <p><strong>Distância Total Estimada:</strong> @DistanciaKm km | <strong>Tempo Total:</strong> @TempoMin min</p>
+        <table style="width:100%; border-collapse: collapse; margin-top: 15px;" border="1">
+            <thead>
+                <tr>
+                    <th style="padding: 5px;">Ordem</th>
+                    <th style="padding: 5px;">Pedido</th>
+                    <th style="padding: 5px;">Cliente</th>
+                    <th style="padding: 5px;">Telefone</th>
+                    <th style="padding: 5px;">Endereço</th>
+                    <th style="padding: 5px;">Valor</th>
+                    <th style="padding: 5px;">Taxa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (pedido, index) in NaRota.Select((p, i) => (p, i)))
+                {
+                    <tr>
+                        <td style="padding: 5px; text-align:center;">@(index + 1)</td>
+                        <td style="padding: 5px; text-align:center;">@pedido.PedidoId</td>
+                        <td style="padding: 5px;">@pedido.Cliente</td>
+                        <td style="padding: 5px;">@pedido.Telefone</td>
+                        <td style="padding: 5px;">@pedido.Endereco</td>
+                        <td style="padding: 5px; text-align:right;">@pedido.Valor.ToString("C")</td>
+                        <td style="padding: 5px; text-align:right;">@pedido.TaxaEntrega.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-5 no-print">
+    <MudText Typo="Typo.h5" Class="mb-4">Roteirização e Emissão de Entregas</MudText>
+
+    <MudGrid Class="d-flex align-content-stretch">
+        <MudItem xs="12" md="4" Class="d-flex">
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">Configurar Rota</MudText>
+
+                <MudRadioGroup T="string" @bind-Value="_tipoDeAtribuicao" SelectedOptionChanged="OnTipoAtribuicaoChanged" Class="mb-3">
+                    <MudRadio T="string" Option="@("Motoboy")" Color="Color.Primary" Size="Size.Small">Motoboy Próprio</MudRadio>
+                    <MudRadio T="string" Option="@("Empresa")" Color="Color.Primary" Size="Size.Small">Empresa (Machine)</MudRadio>
+                </MudRadioGroup>
+
+                <MudSelect T="bool" @bind-Value="_retornarAoOrigem" Label="Tipo de Rota" Class="mb-3" Variant="Variant.Outlined">
+                    <MudSelectItem Value="true">Rota Circular (Volta à Base)</MudSelectItem>
+                    <MudSelectItem Value="false">Apenas Ida (Para no Último)</MudSelectItem>
+                </MudSelect>
+
+                <MudStack Row="true" Spacing="2" Class="mb-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OtimizarRotaAsync" Disabled="@(NaRota.Count == 0 || _otimizando)" FullWidth>
+                        @if (_otimizando)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                            <span>Otimizando...</span>
+                        }
+                        else
+                        {
+                            <span>Otimizar Rota</span>
+                        }
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ImprimirRota" Disabled="@(NaRota.Count == 0)" FullWidth>Imprimir</MudButton>
+                </MudStack>
+
+                <MudDivider Class="my-4" />
+
+                @if (_tipoDeAtribuicao == "Motoboy")
+                {
+                    <MudSelect T="int?" @bind-Value="MotoboySelecionadoId" Label="Selecione o Motoboy" Class="mb-3" Variant="Variant.Outlined">
+                        @if (Motoboys != null)
+                        {
+                            @foreach (var motoboy in Motoboys)
+                            {
+                                <MudSelectItem T="int?" Value="@motoboy.Id">@motoboy.Nome</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="AtribuirTudoAsync" Disabled="@(NaRota.Count == 0 || MotoboySelecionadoId == null || _atribuindo)" FullWidth Class="mb-4">
+                        @if (_atribuindo)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                            <span>Atribuindo...</span>
+                        }
+                        else
+                        {
+                            <span>Atribuir Todos a Motoboy</span>
+                        }
+                    </MudButton>
+                }
+                else
+                {
+                    <MudSelect T="EmpresaMachine" @bind-Value="_empresaMachineSelecionada" Label="Selecione a Empresa" Class="mb-3" Variant="Variant.Outlined">
+                        @if (EmpresasMachine != null)
+                        {
+                            @foreach (var empresa in EmpresasMachine)
+                            {
+                                <MudSelectItem Value="@empresa">@empresa.Nome</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+
+                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="EnviarParaEmpresaAsync" Disabled="@(NaRota.Count == 0 || _empresaMachineSelecionada == null || _enviandoEmpresa)" FullWidth Class="mb-4">
+                        @if (_enviandoEmpresa)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                            <span>Enviando...</span>
+                        }
+                        else
+                        {
+                            <span>Enviar Todos para Empresa</span>
+                        }
+                    </MudButton>
+                }
+
+                <MudAlert Severity="Severity.Info" Class="mt-2">
+                    Distância: @DistanciaKm km<br />
+                    Tempo Estimado: @TempoMin min
+                </MudAlert>
+
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="8" Class="d-flex">
+            <div id="mapa-container" style="min-height: 400px; width: 100%; flex-grow: 1; border-radius: 8px; border: 1px solid var(--mud-palette-lines-default);" class="mb-4"></div>
+        </MudItem>
+    </MudGrid>
+
+    <MudDropContainer T="PedidoParaRota" @ref="_dropContainer" Items="_todosPedidos" ItemsSelector="(item, dropzone) => item.Zona == dropzone" ItemDropped="ItemUpdated" Class="d-flex flex-wrap flex-grow-1 mt-4">
+        <ChildContent>
+            <MudGrid Class="w-100">
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="2" Class="pa-4 h-100" Style="min-height: 400px;">
+                        <MudText Typo="Typo.h6" Class="mb-4">Pedidos Disponíveis do Caixa</MudText>
+                        <MudDropZone T="PedidoParaRota" Identifier="Disponiveis" Class="mud-background-gray pa-3 rounded" Style="min-height: 500px;" AllowReorder="false" />
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="2" Class="pa-4 h-100" Style="min-height: 400px;">
+                        <MudText Typo="Typo.h6" Class="mb-4">Na Rota de Entrega</MudText>
+                        <MudDropZone T="PedidoParaRota" Identifier="NaRota" Class="mud-background-gray pa-3 rounded border-dashed" Style="min-height: 500px; border: 2px dashed var(--mud-palette-primary);" AllowReorder="true" />
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </ChildContent>
+        <ItemRenderer>
+            <MudPaper Elevation="1" Class="pa-3 my-2" Style="@(context.ErroGeocode ? "border-left: 4px solid #f44336;" : "border-left: 4px solid #4caf50;")">
+                <MudStack Spacing="1">
+                    <MudText Typo="Typo.subtitle2">Pedido #@context.PedidoId - @context.Cliente</MudText>
+                    <MudText Typo="Typo.caption" Style="color: var(--mud-palette-text-secondary);">@context.Endereco</MudText>
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-1">
+                        <MudText Typo="Typo.body2" Color="Color.Primary">Total: @context.Valor.ToString("C")</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Primary">Taxa: @context.TaxaEntrega.ToString("C")</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.PagamentoOnline ? Color.Success : Color.Warning)" Variant="Variant.Filled" Style="font-size: 0.7rem; height: 20px;">
+                            @(context.PagamentoOnline ? "PAGAMENTO ONLINE" : "PAGAMENTO NO LOCAL")
+                        </MudChip>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.FormaPagamento</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </ItemRenderer>
+    </MudDropContainer>
+</MudContainer>
+
+
+<style>
+    .border-dashed {
+        border-style: dashed !important;
+    }
+
+    @@media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white; }
+    }
+    @@media screen {
+        .print-only { display: none; }
+    }
+</style>
+
+@code {
+
+    private MudDropContainer<PedidoParaRota>? _dropContainer;
+    private List<PedidoParaRota> _todosPedidos = new();
+    private List<Models.Merchant.ClsMotoboy> Motoboys = new();
+
+    private List<PedidoParaRota> NaRota => _todosPedidos.Where(x => x.Zona == "NaRota").ToList();
+
+    private List<EmpresaMachine>? EmpresasMachine = null;
+
+    private int? MotoboySelecionadoId;
+    private string _tipoDeAtribuicao = "Motoboy";
+    private EmpresaMachine _empresaMachineSelecionada;
+    private bool _enviandoEmpresa = false;
+    private bool _retornarAoOrigem = true;
+    private double DistanciaKm, TempoMin;
+    private bool _otimizando = false;
+    private bool _atribuindo = false;
+    private bool _mapaInicializado = false;
+    private bool _needsRefresh = false;
+
+    private double _latMerchant = -23.550520;
+    private double _lngMerchant = -46.633308;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Motoboys = await MotoboyService.GetMotoboysAsync(apenasAtivos: true) ?? new();
+        EmpresasMachine = await EmpresasMachineService.GetEmpresasIntegradas();
+
+        var pedidosResp = await RoteirizacaoService.GetPedidosDeliveryDoCaixaAsync();
+
+        if (pedidosResp.Status == "success" && pedidosResp.Data?.Lista != null)
+        {
+            _todosPedidos = pedidosResp.Data.Lista;
+            foreach (var item in _todosPedidos)
+            {
+                item.Zona = "Disponiveis";
+            }
+
+            _needsRefresh = true;
+            StateHasChanged();
+        }
+        else
+        {
+            var falhaMsg = pedidosResp.Messages != null && pedidosResp.Messages.Any()
+                ? string.Join(" | ", pedidosResp.Messages)
+                : "Retorno da API vazio.";
+            Snackbar.Add($"Falha ao carregar pedidos: {falhaMsg}", Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_mapaInicializado)
+        {
+            if (AppState.MerchantLogado?.Latitude is double lat && lat != 0) _latMerchant = lat;
+            if (AppState.MerchantLogado?.Longitude is double lng && lng != 0) _lngMerchant = lng;
+
+            await JS.InvokeVoidAsync("mapaRoteirizacao.init", "mapa-container", _latMerchant, _lngMerchant);
+            _mapaInicializado = true;
+            await AtualizarMapaAsync();
+        }
+
+        if (_needsRefresh && _dropContainer != null)
+        {
+            _needsRefresh = false;
+            _dropContainer.Refresh();
+            StateHasChanged();
+        }
+    }
+
+    private async void ItemUpdated(MudItemDropInfo<PedidoParaRota> dropItem)
+    {
+        if (dropItem.Item == null) return;
+
+        if (dropItem.Item.ErroGeocode && dropItem.DropzoneIdentifier == "NaRota")
+        {
+            Snackbar.Add("Endereço sem coordenadas. Não é possível adicionar à rota.", Severity.Warning);
+            return;
+        }
+
+        var item = dropItem.Item;
+        var targetZone = dropItem.DropzoneIdentifier;
+        var targetIndex = dropItem.IndexInZone;
+
+        _todosPedidos.Remove(item);
+        item.Zona = targetZone;
+
+        var zonaAtual = _todosPedidos.Where(x => x.Zona == targetZone).ToList();
+        
+        if (targetIndex >= 0 && targetIndex < zonaAtual.Count)
+        {
+            var targetItem = zonaAtual[targetIndex];
+            int globalIndex = _todosPedidos.IndexOf(targetItem);
+            _todosPedidos.Insert(globalIndex, item);
+        }
+        else
+        {
+            // Adiciona ao final da zona ou da lista
+            var ultimoDaZona = zonaAtual.LastOrDefault();
+            if (ultimoDaZona != null)
+            {
+                int globalIndex = _todosPedidos.IndexOf(ultimoDaZona);
+                _todosPedidos.Insert(globalIndex + 1, item);
+            }
+            else
+            {
+                _todosPedidos.Add(item);
+            }
+        }
+
+        await AtualizarMapaAsync();
+        StateHasChanged();
+    }
+
+    private async Task AtualizarMapaAsync()
+    {
+        if (!_mapaInicializado) return;
+
+        var pontos = NaRota.Select(p => new
+        {
+            lat = p.Lat ?? 0,
+            lng = p.Lng ?? 0,
+            cliente = p.Cliente
+        }).ToArray();
+
+        var origem = new { lat = _latMerchant, lng = _lngMerchant };
+
+        await JS.InvokeVoidAsync("mapaRoteirizacao.atualizarPontos", origem, pontos, _retornarAoOrigem);
+    }
+
+    private async Task OtimizarRotaAsync()
+    {
+        var naRotaList = NaRota;
+        if (naRotaList.Count == 0) return;
+
+        if (naRotaList.Count > 25)
+        {
+            Snackbar.Add("Limite de 25 paradas por otimização do Google Routes. Reduza a rota.", Severity.Warning);
+            return;
+        }
+
+        _otimizando = true;
+        StateHasChanged();
+
+        var dto = new OtimizarRotaDto
+        {
+            OrigemLat = _latMerchant,
+            OrigemLng = _lngMerchant,
+            VoltarAoOrigem = _retornarAoOrigem,
+            Pontos = naRotaList.Select(p => new PontoDto
+            {
+                PedidoId = p.PedidoId,
+                Lat = p.Lat ?? 0,
+                Lng = p.Lng ?? 0
+            }).ToList()
+        };
+
+        var resp = await RoteirizacaoService.OtimizarRotaAsync(dto);
+
+        if (resp.Status == "success" && resp.Data?.Objeto != null)
+        {
+            var ordem = resp.Data.Objeto.OrdemOtimizada;
+            if (ordem != null && ordem.Count > 0)
+            {
+                var byId = naRotaList.ToDictionary(x => x.PedidoId);
+                var disponiveis = _todosPedidos.Where(x => x.Zona == "Disponiveis").ToList();
+                var reordered = ordem.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
+
+                // Mantém pedidos que estavam em NaRota mas não vieram na ordem (segurança)
+                foreach (var p in naRotaList)
+                {
+                    if (!reordered.Contains(p)) reordered.Add(p);
+                }
+
+                _todosPedidos = disponiveis.Concat(reordered).ToList();
+                _dropContainer?.Refresh();
+            }
+
+            DistanciaKm = resp.Data.Objeto.DistanciaKm;
+            TempoMin = resp.Data.Objeto.TempoMin;
+
+            await AtualizarMapaAsync();
+            Snackbar.Add("Rota otimizada com sucesso!", Severity.Success);
+        }
+        else
+        {
+            var msg = resp.Messages?.FirstOrDefault() ?? "Erro desconhecido";
+            Snackbar.Add($"Erro ao otimizar rota: {msg}", Severity.Error);
+        }
+
+        _otimizando = false;
+        StateHasChanged();
+    }
+
+    private async Task ImprimirRota()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private async Task AtribuirTudoAsync()
+    {
+        var naRotaList = NaRota;
+        if (naRotaList.Count == 0 || MotoboySelecionadoId == null) return;
+
+        _atribuindo = true;
+        StateHasChanged();
+
+        int successCount = 0;
+        int errorCount = 0;
+        var atribuidos = new List<PedidoParaRota>();
+
+        foreach (var pedido in naRotaList)
+        {
+            var dto = new ClsPedidoMotoboy
+            {
+                MotoboyId = MotoboySelecionadoId.Value,
+                PedidoCaixaId = pedido.PedidoId,
+                ValorPedido = (float)pedido.Valor,
+                ValorEntrega = (float)pedido.TaxaEntrega
+            };
+
+            var resp = await MotoboyService.CriarEntregaAsync(dto);
+            if (resp.Status == "success")
+            {
+                successCount++;
+                atribuidos.Add(pedido);
+            }
+            else
+            {
+                errorCount++;
+            }
+        }
+
+        if (successCount > 0)
+        {
+            Snackbar.Add($"{successCount} entregas atribuídas com sucesso!", Severity.Success);
+            foreach (var p in atribuidos) _todosPedidos.Remove(p);
+            _dropContainer?.Refresh();
+            await AtualizarMapaAsync();
+            DistanciaKm = 0;
+            TempoMin = 0;
+        }
+
+        if (errorCount > 0)
+        {
+            Snackbar.Add($"Falha ao atribuir {errorCount} entregas.", Severity.Error);
+        }
+
+        _atribuindo = false;
+        MotoboySelecionadoId = null;
+        StateHasChanged();
+    }
+
+    private void OnTipoAtribuicaoChanged(string val)
+    {
+        _tipoDeAtribuicao = val;
+        StateHasChanged();
+    }
+
+    private async Task EnviarParaEmpresaAsync()
+    {
+        var naRotaList = NaRota;
+        if (naRotaList.Count == 0 || _empresaMachineSelecionada == null) return;
+
+        _enviandoEmpresa = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await MachineService.EnviaVariosPedidosParaOMapa(_empresaMachineSelecionada, naRotaList, AppState, _retornarAoOrigem);
+            var primeiro = response.First();
+            Snackbar.Add(primeiro.Key, primeiro.Value);
+
+            if (primeiro.Value == Severity.Success)
+            {
+                foreach (var p in naRotaList) _todosPedidos.Remove(p);
+                _dropContainer?.Refresh();
+                await AtualizarMapaAsync();
+                DistanciaKm = 0;
+                TempoMin = 0;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar para empresa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _enviandoEmpresa = false;
+            StateHasChanged();
+        }
+    }
+}

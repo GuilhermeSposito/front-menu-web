@@ -91,20 +91,8 @@ public partial class PaginaInicial : Form
             }
         }
 
-        // Só ativa WebSocket e timer de pedidos não impressos se pelo menos
-        // um checkbox de impressão automática estiver habilitado
-        bool deveAtivarImpressaoAutomatica;
-        using (var db = new AppDbContext())
-        {
-            var config = db.Impressoras.FirstOrDefault();
-            deveAtivarImpressaoAutomatica = (config?.ImprimirIfood ?? true) || (config?.ImprimirSophosCardapio ?? true);
-        }
-
-        if (deveAtivarImpressaoAutomatica)
-        {
-            await _webSocketService.ConectarAsync();
-            IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
-        }
+        await _webSocketService.ConectarAsync();
+        IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";

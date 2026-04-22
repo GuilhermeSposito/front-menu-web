@@ -1,9 +1,10 @@
-﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.EntregaMachine;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Raios;
+using FrontMenuWeb.Models.Roteirizacao;
 using MudBlazor;
 using Newtonsoft.Json;
 using System.Net.Http.Json;
@@ -124,6 +125,71 @@ public class MachineService
         catch (Exception ex)
         {
             return new Dictionary<string, Severity> { { $"Erro ao enviar pedido para o mapa: Resposta da API não pôde ser processada", Severity.Error } };
+        }
+    }
+
+    public async Task<Dictionary<string, Severity>> EnviaVariosPedidosParaOMapa(EmpresaMachine EmpresaMachine, List<PedidoParaRota> Pedidos, AppState EstadoAtualDoApp, bool retorno = false)
+    {
+        try
+        {
+            EnderecoMerchant? EnderecoMerchant = EstadoAtualDoApp.MerchantLogado?.EnderecosMerchant?.FirstOrDefault();
+            if (EnderecoMerchant is null)
+                throw new Exception("Nenhum Endereço para esse estabelecimento foi encontrado, cadastre-o para continuar");
+
+            var MinutosParaAdicionar = EstadoAtualDoApp.MerchantLogado?.TempoDeEntregaEMmin ?? 30;
+
+            var EnderecoDeOrigem = new EnderecoDeOrigemDto
+            {
+                EnderecoFormatadoOrigem = EnderecoMerchant.EnderecoFormatado,
+                BairroDeOrigem = EnderecoMerchant.Bairro,
+                ComplementoDeOrigem = "",
+                ReferenciaDeOrigem = "",
+            };
+
+            var Solicitacoes = Pedidos.Select(p => new SolicitacaoParaSerEnviadaDto
+            {
+                DataField = DateTime.Now.AddMinutes(MinutosParaAdicionar),
+                EnderecoDeOrigem = EnderecoDeOrigem,
+                EnderecoDeDestino = new EnderecoDeDestinoDto
+                {
+                    IdDeReferenciaExterna = $"{p.DisplayId} - SOPHOS",
+                    EnderecoFormatadoDestino = p.Endereco,
+                    BairroDestino = p.Bairro,
+                    ComplementoDestino = p.Complemento,
+                    ReferenciaDestino = p.Referencia,
+                    CidadeDestino = p.Cidade,
+                    EstadoDestino = p.Estado,
+                    NomeClienteDestino = p.Cliente,
+                    TelefoneClienteDestino = p.Telefone
+                },
+                FormaDePagamento = EmpresaMachine.TipoPagamento,
+                retorno = retorno
+            }).ToList();
+
+
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", EmpresaMachine.TokenApiEntrega);
+            var response = await _http.PostAsJsonAsync("pedidos-machine/cadastrar-varios-pedidos", Solicitacoes);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            RetornoApiSophosEntregaResponse? respostaApi = JsonConvert.DeserializeObject<RetornoApiSophosEntregaResponse>(responseContent);
+
+            if (respostaApi is not null)
+            {
+                if (respostaApi.Status == "success")
+                    return new Dictionary<string, Severity> { { "Pedidos enviados para o mapa de entregas com sucesso!", Severity.Success } };
+
+                else
+                    return new Dictionary<string, Severity> { { $"Erro ao enviar pedidos para o mapa: {respostaApi.Messages}", Severity.Error } };
+            }
+            else
+            {
+                return new Dictionary<string, Severity> { { $"Erro ao enviar pedidos para o mapa: Resposta da API não pôde ser processada", Severity.Error } };
+            }
+        }
+        catch (Exception ex)
+        {
+            return new Dictionary<string, Severity> { { $"Erro ao enviar pedidos para o mapa: {ex.Message}", Severity.Error } };
         }
     }
 }

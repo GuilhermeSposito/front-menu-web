@@ -870,8 +870,8 @@ public class ImpressaoService
             {
                 PrintDocument printDocument = new PrintDocument();
                 printDocument.PrinterSettings.PrinterName = impressora1;
-                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 280, 500000);
-                printDocument.DefaultPageSettings.Margins = new Margins(10, 10, 10, 10);
+                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 315, 500000);
+                printDocument.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
                 printDocument.PrintPage += (sender, e) => PrintPageHandler(sender, e, conteudo, espacamento);
                 printDocument.Print();
                 tcs.SetResult(true);
@@ -938,7 +938,7 @@ public class ImpressaoService
 
                     tamanhoFrase = e.Graphics.MeasureString(frase, item.Fonte).Width;
 
-                    if (tamanhoFrase > e.PageBounds.Width - 70 && frase != "")
+                    if (tamanhoFrase > e.MarginBounds.Width - 70 && frase != "")
                     {
                         if (item.Alinhamento == Alinhamentos.Centro)
                         {
@@ -961,7 +961,7 @@ public class ImpressaoService
                             PointF ponto = new PointF(0, Y);
 
                             SizeF tamanhoTexto = e.Graphics.MeasureString(frase, item.Fonte);
-                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.PageBounds.Width, tamanhoTexto.Height));
+                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.MarginBounds.Width, tamanhoTexto.Height));
 
                             e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
                             e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
@@ -992,7 +992,7 @@ public class ImpressaoService
                             PointF ponto = new PointF(0, Y);
 
                             SizeF tamanhoTexto = e.Graphics.MeasureString(frase, item.Fonte);
-                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.PageBounds.Width, tamanhoTexto.Height));
+                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.MarginBounds.Width, tamanhoTexto.Height));
 
 
                             e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
@@ -1007,6 +1007,16 @@ public class ImpressaoService
 
                 frase = "";
                 Y += separacao;
+
+                if (Y > e.MarginBounds.Height)
+                {
+                    e.HasMorePages = true;
+                    return;
+                }
+                else
+                {
+                    e.HasMorePages = false;
+                }
             }
 
 
@@ -1056,11 +1066,11 @@ public class ImpressaoService
 
     public static string AdicionarSeparadorSimples()
     {
-        return "---------------------------------------";
+        return "------------------------------------------";
     }
     public static string AdicionarSeparadorDuplo()
     {
-        return "=======================================";
+        return "==========================================";
     }
 
     private string RetornaImpressoraSelecionadaNoCadastroDeProduto(ImpressorasConfigs Imps, string? ImpressoraCadastrada)

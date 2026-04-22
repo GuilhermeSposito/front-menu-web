@@ -21,7 +21,9 @@ public class Data<T>
 
     [JsonPropertyName("message")] public List<string> Messages { get; set; } = new List<string>();
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    private static readonly JsonSerializerOptions _defaultOptions = new() { PropertyNameCaseInsensitive = true };
+
+    [JsonIgnore]
     public List<T>? Lista
     {
         get
@@ -30,14 +32,14 @@ public class Data<T>
             {
                 if (item.Value.ValueKind == JsonValueKind.Array)
                 {
-                    return JsonSerializer.Deserialize<List<T>>(item.Value.GetRawText());
+                    return JsonSerializer.Deserialize<List<T>>(item.Value.GetRawText(), _defaultOptions);
                 }
             }
             return null;
         }
     }
 
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore]
     public T? Objeto
     {
         get
@@ -46,7 +48,7 @@ public class Data<T>
             {
                 if (item.Value.ValueKind == JsonValueKind.Object)
                 {
-                    return JsonSerializer.Deserialize<T>(item.Value.GetRawText());
+                    return JsonSerializer.Deserialize<T>(item.Value.GetRawText(), _defaultOptions);
                 }
             }
             return default;
