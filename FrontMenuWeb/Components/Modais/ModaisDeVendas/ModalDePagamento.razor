@@ -71,6 +71,37 @@
                     </MudItem>
                 }
 
+                @if (Pedido.TipoDePedido == "MESA")
+                {
+                    <MudItem xs="12" sm="12" lg="6" xxl="6">
+                        <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                             <MudStack Row=true Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.h6">Taxa de Serviço (@AppState.MerchantLogado.TaxaDeServicoPercent%):</MudText>
+                                <MudText Typo="Typo.caption">(CTRL + S)</MudText>
+                            </MudStack>
+                            <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudText Style="font-weight:100" Typo="Typo.h5" Color="Color.Default">@ValorTaxaDeServico.ToString("C")</MudText>
+                                <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => ValorTaxaDeServico); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    @if (AppState.MerchantLogado.ValorCouvert > 0)
+                    {
+                        <MudItem xs="12" sm="12" lg="6" xxl="6">
+                            <MudPaper Class="pa-4 ma-1 rounded-lg h-100" Style="border: 1px solid var(--mud-palette-divider);">
+                                <MudStack Row=true Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.h6" Style="font-weight: 600;">Couvert Artistico (@AppState.MerchantLogado.ValorCouvert?.ToString("C") un):</MudText>
+                                </MudStack>
+                                <MudStack Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudNumericField T="int" Value="QtdPessoasCouvert" ValueChanged="UpdateQtdPessoasCouvert" Label="Pessoas" Variant="Variant.Outlined" Min="0" Class="W-25" Margin="Margin.Dense" HideSpinButtons="true" />
+                                    <MudText Typo="Typo.h5" Style="font-weight:700">@ValorTotalCouvert.ToString("C")</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+
+                }
+
                 <MudItem xs="12" sm="12" lg="6" xxl="6">
                     <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
                         <MudText Typo="Typo.h6">Total:</MudText>
@@ -230,6 +261,8 @@
     private float ValorTroco = 0f;
     private float ValorRestante = 0f;
     private float ValorTaxaDeServico = 0f;
+    private int QtdPessoasCouvert = 1;
+    private float ValorTotalCouvert => QtdPessoasCouvert * (float)(AppState.MerchantLogado?.ValorCouvert ?? 0);
     private float TotalKms = 0f;
 
     private ElementReference _focoRef;
@@ -282,6 +315,12 @@
                 ValorDosItens += item.PrecoTotal;
             }
 
+            if (Pedido.TipoDePedido == "MESA")
+            {
+                var percent = AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0;
+                ValorTaxaDeServico = (float)Math.Round(ValorDosItens * (float)(percent / 100), 2);
+            }
+
             SomaValorTotal();
             await CarregarFormasDeRecebimento();
         }
@@ -308,7 +347,7 @@
     private void SomaValorTotal()
     {
         ValorTotal = (float)Math.Round(
-            ((ValorDosItens + TaxaAdicional) - ValorDoDesconto) + TaxaDeEntrega,
+            ((ValorDosItens + TaxaAdicional + ValorTaxaDeServico + ValorTotalCouvert) - ValorDoDesconto) + TaxaDeEntrega,
             2
         );
     }
@@ -329,6 +368,7 @@
         Pedido.AcrescimoValor = TaxaAdicional;
         Pedido.TaxaEntregaValor = TaxaDeEntrega;
         Pedido.ServicoValor = ValorTaxaDeServico;
+        Pedido.CouvertValor = ValorTotalCouvert;
 
 
         MudDialog.Close(DialogResult.Ok(true));
@@ -358,9 +398,13 @@
             {
                 await AbreModalDeEditarValores(() => TaxaAdicional);
             }
-            if (e.CtrlKey && e.Key == "e" || e.Key == "E")
+            if (e.CtrlKey && (e.Key == "e" || e.Key == "E"))
             {
                 await AbreModalDeEditarValores(() => TaxaDeEntrega);
+            }
+            if (e.CtrlKey && (e.Key == "s" || e.Key == "S"))
+            {
+                await AbreModalDeEditarValores(() => ValorTaxaDeServico);
             }
             if (e.Key == "F1")
             {
@@ -527,6 +571,12 @@
                 StateHasChanged();
             }
         }
+    }
+
+    private void UpdateQtdPessoasCouvert(int val)
+    {
+        QtdPessoasCouvert = val;
+        SomaValorTotal();
     }
 
     private async Task RemovePagamentoDoPedido(PagamentoDoPedido Pagamento)

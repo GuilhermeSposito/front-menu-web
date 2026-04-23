@@ -70,6 +70,14 @@ window.socketIO = {
                 }
             });
 
+            socket.off("aviso-conta");
+            socket.on("aviso-conta", (msg) => {
+                if (window.DotNet) {
+                    DotNet.invokeMethodAsync("FrontMenuWeb", "ReceiveAvisoConta", JSON.stringify(msg))
+                        .catch(err => console.error("Erro ao notificar Blazor:", err));
+                }
+            });
+
             socket.off("pedido-mudou-etapa")
             socket.on("pedido-mudou-etapa", (msg) => {
                 // Avisando o Blazor

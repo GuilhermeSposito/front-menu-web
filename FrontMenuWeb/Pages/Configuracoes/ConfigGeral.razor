@@ -405,10 +405,10 @@
 
                     <MudGrid Class="p-2 mb-1">
                         <MudItem xs="12" md="6" lg="6">
-                            <MudNumericField Variant="Variant.Outlined" Label="Taxa de Serviço (%)" @bind-Value=@Merchant.TaxaDeServicoPercent Adornment="Adornment.End" AdornmentText="%" HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 Max=100 T="decimal?" Format="N2" />
+                            <MudNumericField Variant="Variant.Outlined" Label="Taxa de Serviço (%)" @bind-Value=@Merchant.TaxaDeServicoPercent Adornment="Adornment.End" AdornmentText="%" HideSpinButtons="true"  @onfocusout=SalvarInfosLojaAsync Min=0 Max=100 T="decimal?" Format="N2" />
                         </MudItem>
                         <MudItem xs="12" md="6" lg="6">
-                            <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
+                            <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true"  @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
                         </MudItem>
                     </MudGrid>
 

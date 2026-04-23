@@ -43,6 +43,10 @@
                 <MudStack Row=true Spacing="2" Class="flex-wrap">
                     <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
                     <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
+                    @if (AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
+                    {
+                        <MudButton OnClick="AvisarContaDaMesa" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">Imprimir Fechamento</MudButton>
+                    }
                     <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
                     @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
                     {
@@ -262,6 +266,15 @@
     #endregion
 
     #region Funções de fechar o pedido
+    private async Task AvisarContaDaMesa()
+    {
+        if (AppState.MerchantLogado?.AvisaFechamentoDeMesa != true) return;
+        bool cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
+        bool cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
+        await PedidosService.AvisarConta(PedidoMesa.Itens, MesaOuComanda.Id, cobraTaxa, cobraCouvert);
+        Snackbar.Add("Aviso de fechamento enviado ao garçom.", Severity.Success);
+    }
+
     private async Task PagarPedido()
     {
         ClsPedido NovoPedido = new ClsPedido

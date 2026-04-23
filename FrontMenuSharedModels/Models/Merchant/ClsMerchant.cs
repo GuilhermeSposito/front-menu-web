@@ -99,6 +99,7 @@ public class ClsMerchant
     [JsonPropertyName("TipoDeCobrancaItemFracionado")] public CobrancaItemFracionado TipoDeCobrancaItemFracionado { get; set; }
     [JsonPropertyName("taxa_de_servico_percent")] public decimal? TaxaDeServicoPercent { get; set; }
     [JsonPropertyName("valor_couvert")] public decimal? ValorCouvert { get; set; }
+    [JsonPropertyName("AvisaFechamentoDeMesa")] public bool AvisaFechamentoDeMesa { get; set; } = true;
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

@@ -13,14 +13,10 @@ public class PagamentoDoPedido
     [JsonPropertyName("FormaDeRecebimento")] public ClsFormaDeRecebimento? FormaDePagamento { get; set; }
     [JsonPropertyName("FormaDeRecebimentoId")] public int formaDeRecebimentoId { get; set; }
     [JsonPropertyName("CupomFiscalChave")] public string? CupomFiscalChave { get; set; }
-
+    [JsonPropertyName("TaxaEntrega")] public float TaxaEntrega { get; set; }
+    [JsonPropertyName("Desconto")] public float Desconto { get; set; }
+    [JsonPropertyName("Acrescimo")] public float Acrescimo { get; set; }
+    [JsonPropertyName("Servico")] public float Servico { get; set; }
+    [JsonPropertyName("IncentivosExternos")] public float IncentivosExternos { get; set; }
+    [JsonPropertyName("Couvert")] public float Couvert { get; set; }
 }
-
-
-/*
-   [JsonPropertyName("TaxaEntregaValor")] public float TaxaEntregaValor { get; set; }
-    [JsonPropertyName("DescontoValor")] public float DescontoValor { get; set; }
-    [JsonPropertyName("AcrescimoValor")] public float AcrescimoValor { get; set; }
-    [JsonPropertyName("ServicoValor")] public float ServicoValor { get; set; }
-    [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
- */

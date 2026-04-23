@@ -13,6 +13,8 @@ public class ClsFechamentoDeCaixa
     [JsonPropertyName("TotalDeArescimos")] public float TotalDeArescimos { get; set; }
     [JsonPropertyName("TotalEmDescontos")] public float TotalEmDescontos { get; set; }
     [JsonPropertyName("TotalEmIncentivos")] public float TotalEmIncentivos { get; set; }
+    [JsonPropertyName("TotalDeCouvert")] public float TotalDeCouvert { get; set; }
+    [JsonPropertyName("TotalDeServico")] public float TotalDeServico { get; set; }
     [JsonPropertyName("TiketMedio")] public float TiketMedio { get; set; }
     [JsonPropertyName("recebimentosPorTipo")] public Dictionary<string, float>? RecebimentosPorTipo { get; set; }
     [JsonPropertyName("trocos")] public float Trocos { get; set; }

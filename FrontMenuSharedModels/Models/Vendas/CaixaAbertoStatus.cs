@@ -12,6 +12,8 @@ public class CaixaAbertoStatus
     [JsonPropertyName("ValorTotalEmVendas")] public float ValorTotalEmVendas { get; set; }
     [JsonPropertyName("QtdPedidos")] public ClsPercentualDePedidos? QtdPedidos { get; set; }
     [JsonPropertyName("TiketMedio")] public float TiketMedio { get; set; }
+    [JsonPropertyName("TotalDeCouvert")] public float TotalDeCouvert { get; set; }
+    [JsonPropertyName("TotalDeServico")] public float TotalDeServico { get; set; }
     [JsonPropertyName("RecebimentosPorTipo")] public Dictionary<string, float>? RecebimentosPorTipo { get; set; }
     [JsonPropertyName("Trocos")] public float Trocos { get; set; }
     [JsonPropertyName("Sangrias")] public float Sangrias { get; set; }

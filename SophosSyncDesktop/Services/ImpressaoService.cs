@@ -325,7 +325,27 @@ public class ImpressaoService
         }
     }
 
+    public async Task ImprimirFechamentoDeConta(string json)
+    {
+        try
+        {
+            AtualizaTamanhoDeFontesParametrizados();
+            using var db = new AppDbContext();
+            ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+            AvisoContaDto aviso = JsonSerializer.Deserialize<AvisoContaDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? throw new Exception("Erro ao desserializar aviso de conta");
 
+            if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+            {
+                List<ClsImpressaoDefinicoes> conteudo = DefineCaracteristicasDeFechamentoDeConta(aviso);
+                await ImprimirPagina(conteudo, Imps.ImpressoraCaixa, ValorEspacamento);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
 
 
     #endregion
@@ -723,6 +743,138 @@ public class ImpressaoService
     }
     #endregion
 
+    #region Definição do aviso de conta para impressão
+    private static string SepPontilhado() => "- - - - - - - - - - - - - - - - - - - - -";
+
+    // Alinha texto à esquerda e valor à direita em ~42 chars
+    private static string LR(string esq, string dir, int W = 42)
+    {
+        var espaco = W - esq.Length - dir.Length;
+        return espaco > 0 ? esq + new string(' ', espaco) + dir : $"{esq} {dir}";
+    }
+
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDeFechamentoDeConta(AvisoContaDto aviso)
+    {
+        var legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa";
+        List<ClsImpressaoDefinicoes> Conteudo = new();
+
+        int taxaPct = aviso.SubtotalDaMesa > 0
+            ? (int)Math.Round((double)aviso.TaxaDeServicoDaMesa / aviso.SubtotalDaMesa * 100)
+            : 0;
+
+        // ── Cabeçalho ─────────────────────────────────────────────────────────
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteFechamentoDeCaixa, Alinhamentos.Centro);
+
+        AdicionaConteudo(Conteudo, "VIA DE FECHAMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, DateTime.Now.ToString("dd/MM/yyyy - HH:mm"), FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+        // ── Separado por cliente ───────────────────────────────────────────────
+        if (aviso.SepararPorCliente && aviso.Comandas is not null)
+        {
+            foreach (var comanda in aviso.Comandas)
+            {
+                var nome = string.IsNullOrEmpty(comanda.Nome) ? "Sem nome" : comanda.Nome;
+                AdicionaConteudo(Conteudo, $"Cliente: {nome}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+
+                AdicionaConteudo(Conteudo, LR("QTD  ITENS", "TOTAL"), FonteFechamentoDeCaixa);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+                foreach (var item in comanda.Itens)
+                    AdicionarLinhasDeItem(Conteudo, item);
+
+                if (comanda.Totais.TaxaDeServico > 0)
+                {
+                    AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
+                    AdicionaConteudo(Conteudo,
+                        LR($"Tx. de Serviço: ({taxaPct}% - opcional)", comanda.Totais.TaxaDeServico.ToString("C")),
+                        FonteFechamentoDeCaixa, eObs: true);
+                }
+
+                if (comanda.Totais.CouvertIndividual > 0)
+                    AdicionaConteudo(Conteudo,
+                        LR("Couvert", comanda.Totais.CouvertIndividual.ToString("C")),
+                        FonteFechamentoDeCaixa, eObs: true);
+
+                AdicionaConteudo(Conteudo, LR("TOTAL:", comanda.Totais.Total.ToString("C")), FonteFechamentoDeCaixa);
+                AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+            }
+        }
+        else if (aviso.Itens is not null)
+        {
+            // ── Lista flat ────────────────────────────────────────────────────
+            AdicionaConteudo(Conteudo, LR("QTD  ITENS", "TOTAL"), FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+            foreach (var item in aviso.Itens)
+                AdicionarLinhasDeItem(Conteudo, item);
+
+            if (aviso.TaxaDeServicoDaMesa > 0)
+            {
+           
+                AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
+                AdicionaConteudo(Conteudo,
+                    LR($"Tx. de Serviço: ({taxaPct}% - opcional)", aviso.TaxaDeServicoDaMesa.ToString("C")),
+                    FonteFechamentoDeCaixa, eObs: true);
+
+            }
+
+            AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+        }
+
+        // ── Consumo total ─────────────────────────────────────────────────────
+        AdicionaConteudo(Conteudo, "Consumo Total", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, LR("Valor dos Itens", aviso.SubtotalDaMesa.ToString("C")), FonteFechamentoDeCaixa);
+
+        if (aviso.TaxaDeServicoDaMesa > 0)
+            AdicionaConteudo(Conteudo,
+                LR($"Tx. de Serviço: ({taxaPct}% - opcional)", aviso.TaxaDeServicoDaMesa.ToString("C")),
+                FonteFechamentoDeCaixa);
+
+        if (aviso.CouvertTotalMesa > 0 && aviso.Couvert is not null)
+            AdicionaConteudo(Conteudo,
+                LR($"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C")),
+                FonteFechamentoDeCaixa);
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", aviso.TotalGeral.ToString("C")), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
+
+        return Conteudo;
+    }
+
+    private void AdicionarLinhasDeItem(List<ClsImpressaoDefinicoes> Conteudo, AvisoContaItemDto item)
+    {
+        AdicionaConteudo(Conteudo,
+            LR($"{item.Quantidade}x  {item.Descricao}", item.PrecoTotal.ToString("C")),
+            FonteFechamentoDeCaixa);
+
+        if (item.Complementos?.Count > 0)
+        {
+            var leg = !string.IsNullOrEmpty(item.LegTamanhoEscolhido)
+                ? (item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido)
+                : null;
+            var cabecalhoComp = leg is not null ? $"{item.Descricao} - {leg}:" : $"{item.Descricao} - complementos:";
+            AdicionaConteudo(Conteudo, cabecalhoComp, FonteFechamentoDeCaixa, eObs: true);
+            foreach (var c in item.Complementos)
+                AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteFechamentoDeCaixa, eObs: true);
+        }
+        else if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+        {
+            var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
+            AdicionaConteudo(Conteudo, $"  {leg}", FonteFechamentoDeCaixa, eObs: true);
+        }
+    }
+    #endregion
+
     #region Definição do fechamento de caixa e motoboy para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentoParaImpressao(ClsFechamentoDeCaixa Fechamento)
     {
@@ -870,7 +1022,7 @@ public class ImpressaoService
             {
                 PrintDocument printDocument = new PrintDocument();
                 printDocument.PrinterSettings.PrinterName = impressora1;
-                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 315, 500000);
+                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 300, 500000);
                 printDocument.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
                 printDocument.PrintPage += (sender, e) => PrintPageHandler(sender, e, conteudo, espacamento);
                 printDocument.Print();

@@ -224,11 +224,27 @@
                                                                             </MudStack>
                                                                         }
 
-                                                                        @if ((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor) > 0)
+                                                                        @if (pedido.Pedido.AcrescimoValor > 0)
                                                                         {
                                                                             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                                                 <MudText Typo="Typo.subtitle2">Acréscimo:</MudText>
-                                                                                <MudText Typo="Typo.subtitle2">@((pedido.Pedido.AcrescimoValor + pedido.Pedido.ServicoValor).ToString("C"))</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.AcrescimoValor.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
+
+                                                                        @if (pedido.Pedido.ServicoValor > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Taxa de Serviço:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.ServicoValor.ToString("C")</MudText>
+                                                                            </MudStack>
+                                                                        }
+
+                                                                        @if (pedido.Pedido.CouvertValor > 0)
+                                                                        {
+                                                                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                                                                <MudText Typo="Typo.subtitle2">Couvert Artístico:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@pedido.Pedido.CouvertValor.ToString("C")</MudText>
                                                                             </MudStack>
                                                                         }
 

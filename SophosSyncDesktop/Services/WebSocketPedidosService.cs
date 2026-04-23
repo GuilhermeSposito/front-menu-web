@@ -20,7 +20,7 @@ public class WebSocketPedidosService : IDisposable
 
     public bool EstaConectado { get; private set; }
 
-    private const string BaseUrl = "https://sophos-erp.com.br";
+    private const string BaseUrl = "http://localhost:3030";//"https://sophos-erp.com.br";
 
     public event Action<bool, string>? StatusChanged;
 
@@ -116,6 +116,22 @@ public class WebSocketPedidosService : IDisposable
                     catch (Exception ex)
                     {
                         Console.WriteLine($"[WS] Erro ao processar pedido-recebido-mesa: {ex.Message}");
+                    }
+                });
+            });
+
+            _client.On("aviso-conta", response =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var json = response.GetValue<JsonElement>().GetRawText();
+                        await _impressaoService.ImprimirFechamentoDeConta(json).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[WS] Erro ao processar aviso-conta: {ex.Message}");
                     }
                 });
             });

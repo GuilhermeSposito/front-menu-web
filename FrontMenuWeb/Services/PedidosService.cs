@@ -28,6 +28,7 @@ public class PedidosService
     public static Func<ClsPedido, Task>? PedidoEsperandoAceite;
     public static Func<PedidoMesaDto, Task>? PedidoMesaRecebido;
     public static Func<ClsMesasEComandas, Task>? PedidoMesaFechada;
+    public static Func<int, Task>? AvisarContaRecebida;
     public static Func<ClsPedido, Task>? PedidoMudouEtapa;
     public static Func<ClsPedido, Task>? PedidoMudouInfoAdicional;
 
@@ -81,6 +82,14 @@ public class PedidosService
     {
         ClsMesasEComandas mesa = System.Text.Json.JsonSerializer.Deserialize<ClsMesasEComandas>(msg)!;
         await InvokeAllAsync(PedidoMesaFechada, mesa);
+    }
+
+    [JSInvokable]
+    public static async Task ReceiveAvisoConta(string msg)
+    {
+        var doc = System.Text.Json.JsonDocument.Parse(msg);
+        var mesaId = doc.RootElement.GetProperty("MesaId").GetInt32();
+        await InvokeAllAsync(AvisarContaRecebida, mesaId);
     }
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)
@@ -194,6 +203,35 @@ public class PedidosService
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
+    }
+
+    public async Task AvisarConta(List<ItensPedido> itens, int mesaId, bool cobraTaxa, bool cobraCouvert)
+    {
+        var clientesUnicos = itens.Where(i => !string.IsNullOrEmpty(i.NomeCliente)).Select(i => i.NomeCliente).Distinct().Count();
+        var payload = new AvisarContaRequestDto
+        {
+            MesaId = mesaId,
+            CobraTaxaServico = cobraTaxa,
+            CobraCouvert = cobraCouvert,
+            SepararPorCliente = clientesUnicos > 1,
+            QtdPessoas = clientesUnicos > 0 ? clientesUnicos : null,
+            Itens = itens.Select(i => new AvisoContaItemDto
+            {
+                Descricao = i.Descricao,
+                Quantidade = (int)i.Quantidade,
+                PrecoUnitario = i.PrecoUnitario,
+                PrecoTotal = i.PrecoTotal,
+                LegTamanhoEscolhido = i.LegTamanhoEscolhido,
+                NomeCliente = i.NomeCliente,
+                Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
+                {
+                    Descricao = c.Descricao,
+                    Quantidade = (int)c.Quantidade,
+                    PrecoUnitario = c.PrecoUnitario
+                }).ToList()
+            }).ToList()
+        };
+        await _http.PostAsJsonAsync("pedidos/avisar-conta", payload);
     }
 
     public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesa(ClsPedido Pedido)

@@ -12,6 +12,7 @@ public class ClsMesasEComandas
     [JsonPropertyName("InicioDoIntervalo")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? InicioDoIntervalo { get; set; } = 0;
     [JsonPropertyName("FimDoIntervalo")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? FimDoIntervalo { get; set; } = 0;
     [JsonPropertyName("apelido")] public string? apelido { get; set; }
+    [JsonPropertyName("AguardandoPagamento")] public bool AguardandoPagamento { get; set; }
 
     [JsonIgnore] public bool AbreMenuDeOpcoes { get; set; } = false;
 }

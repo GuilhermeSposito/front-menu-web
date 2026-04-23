@@ -75,6 +75,7 @@ public class ClsPedido
         AcrescimoValor = pedido.AcrescimoValor;
         ServicoValor = pedido.ServicoValor;
         IncentivosExternosValor = pedido.IncentivosExternosValor;
+        CouvertValor = pedido.CouvertValor;
         ValorTotal = pedido.ValorTotal;
         MesaComandaId = pedido.MesaComandaId;
         MesaApelido = pedido.MesaApelido;
@@ -127,6 +128,7 @@ public class ClsPedido
     [JsonPropertyName("AcrescimoValor")] public float AcrescimoValor { get; set; }
     [JsonPropertyName("ServicoValor")] public float ServicoValor { get; set; }
     [JsonPropertyName("IncentivosExternosValor")] public float IncentivosExternosValor { get; set; }
+    [JsonPropertyName("CouvertValor")] public float CouvertValor { get; set; }
     [JsonPropertyName("ValorTotal")] public float ValorTotal { get; set; }
     [JsonPropertyName("MesaComandaId")] public int MesaComandaId { get; set; }
     [JsonPropertyName("MesaApelido")] public string? MesaApelido { get; set; }

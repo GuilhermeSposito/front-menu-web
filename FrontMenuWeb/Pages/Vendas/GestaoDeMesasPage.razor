@@ -54,7 +54,7 @@
                     {
                         <MudItem xs="6" sm="4" md="3" lg="2">
                             <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa); }) Class="rounded-3 text-center cursor-pointer mesa-card"
-                                     Style="@(mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;": "background-color: #DAE1E7; color: #000000;")">
+                                     Style="@(mesa.AguardandoPagamento ? "background-color: #FFC107; color: #000000;" : mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
 
                                 <MudCardContent>
                                     <MudStack>
@@ -108,6 +108,7 @@
 
     private Func<PedidoMesaDto, Task>? _pedidoMesaRecebidoHandler;
     private Func<ClsMesasEComandas, Task>? _pedidoMesaFechadaHandler;
+    private Func<int, Task>? _avisarContaRecebidaHandler;
 
     //props de mesas
     private List<ClsMesasEComandas> _todasMesas { get; set; } = new();
@@ -145,9 +146,11 @@
 
             _pedidoMesaRecebidoHandler = pedido => InvokeAsync(() => OnPedidoRecebido(pedido));
             _pedidoMesaFechadaHandler = pedido => InvokeAsync(() => OnPedidoMesaFechada(pedido));
+            _avisarContaRecebidaHandler = mesaId => InvokeAsync(() => OnAvisarContaRecebida(mesaId));
 
             PedidosService.PedidoMesaRecebido += _pedidoMesaRecebidoHandler;
             PedidosService.PedidoMesaFechada += _pedidoMesaFechadaHandler;
+            PedidosService.AvisarContaRecebida += _avisarContaRecebidaHandler;
 
             StateHasChanged();
         }
@@ -311,9 +314,18 @@
 
     private async Task OnPedidoMesaFechada(ClsMesasEComandas mesa)
     {
-        await CarregarMesasEComandas();
-        await InvokeAsync(StateHasChanged);
+        var m = _todasMesas.FirstOrDefault(x => x.Id == mesa.Id);
+        if (m is not null) { m.Ocupada = false; m.AguardandoPagamento = false; }
+        FiltrarMesas(pesquisaTexto);
         Snackbar.Add($"Mesa/Comanda {mesa.CodigoExterno} Fechada!", Severity.Info);
+    }
+
+    private Task OnAvisarContaRecebida(int mesaId)
+    {
+        var m = _todasMesas.FirstOrDefault(x => x.Id == mesaId);
+        if (m is not null) { m.AguardandoPagamento = true; }
+        FiltrarMesas(pesquisaTexto);
+        return Task.CompletedTask;
     }
 
     private async Task ChamaImpressaoDeItensDaMesa(ClsMesasEComandas mesaEnviada)
@@ -433,6 +445,9 @@
 
         if (_pedidoMesaFechadaHandler is not null)
             PedidosService.PedidoMesaFechada -= _pedidoMesaFechadaHandler;
+
+        if (_avisarContaRecebidaHandler is not null)
+            PedidosService.AvisarContaRecebida -= _avisarContaRecebidaHandler;
     }
     #endregion
 }
