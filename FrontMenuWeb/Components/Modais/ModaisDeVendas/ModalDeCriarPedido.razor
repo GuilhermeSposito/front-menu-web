@@ -30,19 +30,19 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Style="overflow-y:;  position: relative;">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Style="overflow: hidden; position: relative; min-height: 0;">
 
 
-            <MudGrid Class="w-100 h-100">
+            <MudGrid Class="w-100 h-100" Style="overflow-y: auto; min-height: 0; align-content: stretch;">
                 @*MudItemDeGrupos*@
                 @if (!UsandoMobile)
                 {
-                    <MudItem xs=12 sm="12" md="6" lg="2">
-                        <MudPaper Class="h-100 rounded-3" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary);" Elevation="4">
+                    <MudItem xs=12 sm="12" md="6" lg="2" Style="display: flex; min-height: 0;">
+                        <MudPaper Class="h-100 rounded-3 w-100" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary); display: flex; flex-direction: column; min-height: 0; overflow: hidden;" Elevation="4">
                             <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
                                 <MudText Typo="Typo.h6">Grupos</MudText>
                             </MudStack>
-                            <MudStack Class="w-100 h-100">
+                            <MudStack Class="w-100" Style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
                                 @if (CarregandoGrupo)
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -67,13 +67,13 @@
                 }
 
                 @*MudItem De Produtos*@
-                <MudItem xs=12 sm="12" md="6" lg="7">
-                    <MudPaper Class="h-100 rounded-3 p-1" Style="background-color: var(--mud-palette-surface);border: 3px dashed var(--mud-palette-primary); overflow-y: auto" Elevation="4">
-                        <MudStack Class="w-100 h-100">
-                            <MudStack Class="w-100">
+                <MudItem xs=12 sm="12" md="6" lg="7" Style="display: flex; min-height: 0;">
+                    <MudPaper Class="h-100 rounded-3 p-1 w-100" Style="background-color: var(--mud-palette-surface);border: 3px dashed var(--mud-palette-primary); display: flex; flex-direction: column; min-height: 0; overflow: hidden;" Elevation="4">
+                        <MudStack Class="w-100" Style="flex: 1 1 auto; min-height: 0;">
+                            <MudStack Class="w-100" Style="flex: 0 0 auto;">
                                 <MudTextField @ref=TextFieldProd Value=PesquisaDeProduto @onkeydown="OnKeyDownProdutos" ValueChanged=OnPesquisaChanged Class="w-100 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por produto (Ctrl + I)" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary DebounceInterval="280"></MudTextField>
                             </MudStack>
-                            <MudStack Class="w-100 h-100" Style="overflow-y:auto">
+                            <MudStack Class="w-100" Style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
                                 @if (CarregandoProduto)
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -151,11 +151,11 @@
                 </MudItem>
 
                 @*MudItem De Carrinho*@
-                <MudItem xs=12 sm="12" md="12" lg="3">
-                    <MudPaper Class="h-100 rounded p-2" Style="background-color: var(--mud-palette-surface);  border: 3px dashed var(--mud-palette-primary);" Elevation="4">
+                <MudItem xs=12 sm="12" md="12" lg="3" Style="display: flex; min-height: 0;">
+                    <MudPaper Class="h-100 rounded p-2 w-100" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary); display: flex; flex-direction: column; min-height: 0; overflow: hidden;" Elevation="4">
                         @*Informações do pedido*@
-                        <MudStack Justify="Justify.SpaceBetween" Class="w-100 h-100 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background);">
-                            <MudStack Style="overflow-y: auto;">
+                        <MudStack Justify="Justify.SpaceBetween" Class="w-100 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background); flex: 1 1 auto; min-height: 0;">
+                            <MudStack Style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
                                 @if (NovoPedido.TipoDePedido != "MESA")
                                 {
                                     <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">

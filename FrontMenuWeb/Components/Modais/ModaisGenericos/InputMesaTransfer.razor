@@ -1,0 +1,20 @@
+@rendermode RenderMode.InteractiveWebAssembly
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField T="string" @bind-Value="Valor" Label="@Label" Variant="Variant.Filled" AutoFocus="true" Immediate="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Confirmar">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public string Label { get; set; } = "Identificação da Mesa (Número ou Apelido)";
+    public string Valor { get; set; } = "";
+
+    private void Confirmar() => MudDialog.Close(DialogResult.Ok(Valor));
+    private void Cancelar() => MudDialog.Cancel();
+}

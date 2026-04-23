@@ -1,0 +1,110 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/garcons"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Garcons
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+@inject GarconService GarconService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Garçons</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Gerenciamento de Garçons do estabelecimento.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => AbreModalDeAdicionarOuEditar(true))">Novo Garçom</MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsGarcon"
+                     Items="Garcons"
+                     Loading="Carregando"
+                     Class="rounded-3 custom-striped"
+                     Hover>
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="Garçons" />
+            </NoRecordsContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Nome" Title="Nome" />
+                <PropertyColumn Property="x => x.NomeUsuario" Title="Usuário" />
+                <PropertyColumn Property="x => x.CPF" Title="CPF" />
+                <PropertyColumn Property="x => x.Email" Title="Email" />
+                <PropertyColumn Property="x => x.ValorVendas" Title="Vendas" Format="C" />
+                <PropertyColumn Property="x => x.ValorTaxasServico" Title="Comissão/Taxas" Format="C" />
+                <TemplateColumn T="ClsGarcon">
+                    <CellTemplate Context="context">
+                        <MudStack Row Spacing="2">
+                            <MudTooltip Text="Editar">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => AbreModalDeAdicionarOuEditar(false, context.Item.Id))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Excluir">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeletarGarcon(context.Item))" />
+                            </MudTooltip>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private List<ClsGarcon> Garcons = new();
+    private bool Carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeGarcons")) return;
+        await CarregarGarcons();
+    }
+
+    private async Task CarregarGarcons()
+    {
+        Carregando = true;
+        try
+        {
+            var result = await GarconService.GetGarconsAsync();
+            Garcons = result.Data.Lista ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar garçons: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task AbreModalDeAdicionarOuEditar(bool ecriacao, int id = 0)
+    {
+        var parameters = new DialogParameters { ["ECriacao"] = ecriacao, ["IdDoGarcon"] = id };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarOuEditarGarcon>(ecriacao ? "Novo Garçom" : "Editar Garçom", parameters, options);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await CarregarGarcons();
+    }
+
+    private async Task DeletarGarcon(ClsGarcon garcon)
+    {
+        bool? result = await DialogService.ShowMessageBox("Confirmar Exclusão", $"Deseja realmente excluir o garçom {garcon.Nome}?", yesText: "Excluir!", noText: "Cancelar");
+        if (result == true)
+        {
+            var response = await GarconService.DeleteGarconAsync(garcon.Id);
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Garçom excluído!", Severity.Success);
+                await CarregarGarcons();
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+            }
+        }
+    }
+}

@@ -1,0 +1,148 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.Text.RegularExpressions
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject GarconService GarconService
+@inject ISnackbar Snackbar
+
+<MudPaper Square="false" Elevation="0">
+    <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
+        <DialogContent>
+            @if (!CarregandoGarcon)
+            {
+                <MudStack Class="w-100" Spacing="3">
+                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                        <MudGrid>
+                            <MudItem xs="12" md="12">
+                                <MudTextField T="string" Immediate=true @bind-Value=Garcon.Nome Required=true RequiredError="O Nome é Obrigatório" Variant="Variant.Filled" Label="Nome" />
+                            </MudItem>
+                            <MudItem xs="12" md="12">
+                                <MudTextField T="string" Immediate=true @bind-Value=Garcon.CPF Variant="Variant.Filled" Label="CPF" />
+                            </MudItem>
+                            @if (!ECriacao)
+                            {
+                                <MudItem xs="12" md="12">
+                                    <MudTextField T="string" ReadOnly=true @bind-Value=Garcon.NomeUsuario Variant="Variant.Filled" Label="Nome de Usuário (Gerado Automaticamente)" />
+                                </MudItem>
+                            }
+                            <MudItem xs="12" md="12">
+                                <MudTextField T="string" Immediate=true @bind-Value=Garcon.Email Required=true RequiredError="O Email é Obrigatório" Variant="Variant.Filled" Label="Email" />
+                            </MudItem>
+                            @if (ECriacao || EditandoSenha)
+                            {
+                                <MudItem xs="12" md="12">
+                                    <MudTextField T="string" Label="Senha" HelperText="Escolha uma senha"
+                                                  @bind-Value=Garcon.Senha
+                                                  InputType="InputType.Password"
+                                                  Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                                                  RequiredError="Senha é obrigatória"
+                                                  Variant="Variant.Filled"
+                                                  Immediate=true />
+                                </MudItem>
+                            }
+                        </MudGrid>
+                        @if (!ECriacao)
+                        {
+                            <MudButton Color="Color.Primary" OnClick="@(() => { EditandoSenha = !EditandoSenha; })">@(EditandoSenha ? "Cancelar Mudança de Senha" : "Mudar Senha")</MudButton>
+                            
+                            <MudDivider Class="my-4" />
+                            <MudText Typo="Typo.h6">Estatísticas de Vendas</MudText>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudField Label="Total em Vendas" Variant="Variant.Filled" Adornment="Adornment.Start" AdornmentText="R$">@Garcon.ValorVendas.ToString("N2")</MudField>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudField Label="Total em Taxas de Serviço" Variant="Variant.Filled" Adornment="Adornment.Start" AdornmentText="R$">@Garcon.ValorTaxasServico.ToString("N2")</MudField>
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudFocusTrap>
+                </MudStack>
+            }
+            else
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            }
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancelar">Cancelar</MudButton>
+            <MudButton Color="Color.Primary" OnClick="Submit">@(ECriacao ? "Adicionar" : "Atualizar")</MudButton>
+        </DialogActions>
+    </MudDialog>
+</MudPaper>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    
+    [Parameter] public bool ECriacao { get; set; }
+    [Parameter] public int IdDoGarcon { get; set; } = 0;
+
+    private ClsGarcon Garcon = new ClsGarcon();
+    private bool CarregandoGarcon = true;
+    private bool EditandoSenha = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!ECriacao)
+            {
+                Garcon = await GarconService.GetGarconByIdAsync(IdDoGarcon);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar garçom: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoGarcon = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            ReturnApiRefatored<ClsGarcon> response;
+            if (ECriacao)
+            {
+                Garcon.NomeUsuario = "PENDENTE";
+                response = await GarconService.CreateGarconAsync(Garcon);
+            }
+            else
+            {
+                response = await GarconService.UpdateGarconAsync(Garcon);
+            }
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Operação realizada com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar garçom: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private IEnumerable<string> PasswordStrength(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw) && (ECriacao || EditandoSenha))
+        {
+            yield return "Senha é Obrigatória";
+            yield break;
+        }
+        if (!string.IsNullOrWhiteSpace(pw) && pw.Length < 6)
+            yield return "Senha deve ter pelo menos 6 caracteres";
+    }
+}

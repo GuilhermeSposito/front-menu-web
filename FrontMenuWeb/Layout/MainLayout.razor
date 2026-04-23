@@ -135,6 +135,7 @@
                         <MudNavGroup Title="Cadastros" Icon="@Icons.Material.Filled.AppRegistration" Expanded="false">
                             <MudNavLink Icon="@Icons.Material.Filled.People" OnClick="@(async () => await HandleNavClick("/pessoas", "AcessoCadastroDePessoa"))">Pessoas</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.GroupWork" OnClick="@(async () => await HandleNavClick("/funcionarios", "AcessoCadastroDeFuncionarios"))">Funcionários</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.EmojiFoodBeverage" OnClick="@(async () => await HandleNavClick("/garcons", "AcessoCadastroDeGarcons"))">Garçons</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.Percent" OnClick="@(async () => await HandleNavClick("/aliquotas", "AcessoCadastroDeAliquotas"))">Alíquotas</MudNavLink>
                             <MudNavLink Icon="@(AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced == "Mesa" ? Icons.Material.Filled.TableRestaurant : @Icons.Material.Filled.CreditCard)" OnClick="@(async () => await HandleNavClick("/mesas-comandas", "AcessoCadastraMesaOuComandas"))">@AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.TwoWheeler" OnClick="@(async () => await HandleNavClick("/empresas-entrega-integradas", "AcessoCadastroDeMotoboy"))">Empresas de Entrega</MudNavLink>

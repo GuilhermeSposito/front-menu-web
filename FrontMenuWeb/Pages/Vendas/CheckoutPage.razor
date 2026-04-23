@@ -372,10 +372,21 @@
             {
                 await InvokeAsync(async () =>
                 {
-                    await CarregarMesaParaCheckout(codExterno);
+                    await CarregarMesaParaCheckout(codExterno: codExterno);
                 });
                 return [];
             }
+        }
+
+        // Padrão "ca*apelido" para carregar mesa pelo apelido
+        if (texto.StartsWith("ca*", StringComparison.OrdinalIgnoreCase))
+        {
+            var apelido = texto.Substring(3).Trim();
+            await InvokeAsync(async () =>
+            {
+                await CarregarMesaParaCheckout(apelido: apelido);
+            });
+            return [];
         }
 
         // if (texto.Length < 3) return [];
@@ -551,12 +562,21 @@
         await _autocompleteRef.FocusAsync();
     }
 
-    private async Task CarregarMesaParaCheckout(int codExterno)
+    private async Task CarregarMesaParaCheckout(int? codExterno = null, string? apelido = null)
     {
-        var mesa = _mesasAtivas.FirstOrDefault(x => x.CodigoExterno == codExterno);
+        ClsMesasEComandas? mesa = null;
+        if (codExterno.HasValue)
+        {
+            mesa = _mesasAtivas.FirstOrDefault(x => x.CodigoExterno == codExterno.Value);
+        }
+        else if (!string.IsNullOrEmpty(apelido))
+        {
+            mesa = _mesasAtivas.FirstOrDefault(x => x.apelido?.Equals(apelido, StringComparison.OrdinalIgnoreCase) ?? false);
+        }
+
         if (mesa == null)
         {
-            Snackbar.Add($"{AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced}  {codExterno} não encontrada.", Severity.Warning);
+            Snackbar.Add($"{AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? apelido)} não encontrada.", Severity.Warning);
             await _autocompleteRef.ClearAsync();
             return;
         }
@@ -568,6 +588,7 @@
             {
                 TipoDePedido = "MESA",
                 MesaComandaId = mesa.Id,
+                MesaApelido = mesa.apelido,
                 Itens = result.Data.Objeto.Itens,
                 CriadoPor = "SOPHOS"
             };
@@ -576,11 +597,11 @@
             _itemAtual = null;
             _itensSelecionados.Clear();
 
-            Snackbar.Add($"{AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {codExterno} pronta para fechamento.", Severity.Success);
+            Snackbar.Add($"{AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? mesa.apelido ?? mesa.Id.ToString())} pronta para fechamento.", Severity.Success);
         }
         else
         {
-            Snackbar.Add($"A {AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced}  {codExterno} está vazia ou não possui consumo aberto.", Severity.Warning);
+            Snackbar.Add($"A {AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? mesa.apelido ?? mesa.Id.ToString())} está vazia ou não possui consumo aberto.", Severity.Warning);
         }
 
         await _autocompleteRef.ClearAsync();
@@ -717,18 +738,38 @@
             var options = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.Large, FullWidth = false, CloseOnEscapeKey = true };
             var label = $"Número da {(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa/Comanda")}";
 
-            // Usamos InputFloatN3 para capturar o número da mesa, similar ao peso
-            var dialog = await DialogService.ShowAsync<InputFloatN3>(label, options);
+            // Usamos InputMesaTransfer que permite texto (número ou apelido)
+            var dialog = await DialogService.ShowAsync<InputMesaTransfer>(label, options);
             var result = await dialog.Result;
 
-            if (!result!.Canceled && result.Data is float numero)
+            if (!result!.Canceled && result.Data is string valor && !string.IsNullOrEmpty(valor))
             {
                 _enviando = true;
                 StateHasChanged();
                 try
                 {
                     _pedido.TipoDePedido = "MESA";
-                    _pedido.MesaComandaId = (int)numero;
+                    
+                    // Tenta converter para número (CodigoExterno), senão usa como apelido
+                    if (int.TryParse(valor, out int numero))
+                    {
+                        var mesa = _mesasAtivas.FirstOrDefault(m => m.CodigoExterno == numero);
+                        if (mesa != null)
+                        {
+                            _pedido.MesaComandaId = mesa.Id;
+                            _pedido.MesaApelido = null;
+                        }
+                        else
+                        {
+                            _pedido.MesaComandaId = numero; // Backend vai tentar achar por ID ou CodigoExterno
+                            _pedido.MesaApelido = null;
+                        }
+                    }
+                    else
+                    {
+                        _pedido.MesaComandaId = 0;
+                        _pedido.MesaApelido = valor;
+                    }
 
                     var response = await PedidosService.CreatePedidoMesa(_pedido);
 

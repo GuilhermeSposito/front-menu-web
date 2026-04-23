@@ -11,6 +11,7 @@ public class ClsMesasEComandas
     [JsonPropertyName("Reservado")] public bool Reservado { get; set; }
     [JsonPropertyName("InicioDoIntervalo")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? InicioDoIntervalo { get; set; } = 0;
     [JsonPropertyName("FimDoIntervalo")][JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public int? FimDoIntervalo { get; set; } = 0;
+    [JsonPropertyName("apelido")] public string? apelido { get; set; }
 
     [JsonIgnore] public bool AbreMenuDeOpcoes { get; set; } = false;
 }

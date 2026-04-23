@@ -40,14 +40,37 @@
                 <AvisoDeDadosVazios ReferenciaDados="Itens da mesa" />
             </NoRecordsContent>
             <ToolBarContent>
-                <MudStack Row=true>
+                <MudStack Row=true Spacing="2" Class="flex-wrap">
                     <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
-                    <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Itens Selecionado</MudButton>
+                    <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
                     <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
-                    @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < PedidoMesa.Itens.Count)
+                    @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
                     {
                         <MudButton OnClick="PagarPedidoParcial" Variant="Variant.Filled" Color="Color.Warning">Pagamento Parcial (F6)</MudButton>
                     }
+                    
+                    @if (PedidoMesa.Itens != null)
+                    {
+                        var clientes = PedidoMesa.Itens
+                            .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
+                            .Select(x => x.NomeCliente)
+                            .Distinct()
+                            .ToList();
+
+                        if (clientes.Count > 1)
+                        {
+                            @foreach (var cliente in clientes)
+                            {
+                                <MudButton OnClick="@(() => PagarPedidoPorCliente(cliente!))" 
+                                           Variant="Variant.Filled" 
+                                           Color="Color.Info" 
+                                           StartIcon="@Icons.Material.Filled.Person">
+                                    Pagar Conta @cliente
+                                </MudButton>
+                            }
+                        }
+                    }
+
                     <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
                 </MudStack>
             </ToolBarContent>
@@ -58,6 +81,12 @@
                 <PropertyColumn Property="x => x.Quantidade" Title="Quantidade do Item"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
+                <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
+                <TemplateColumn Title="Garçom">
+                    <CellTemplate>
+                        @(context.Item.Garcon?.Nome ?? "Admin")
+                    </CellTemplate>
+                </TemplateColumn>
                 <TemplateColumn Title="Funcionario">
                     <CellTemplate>
                         @(context.Item.Funcionario?.Nome ?? "Admin")
@@ -166,6 +195,11 @@
 
             var result = await PedidosService
                                             .GetMesaOcupada(MesaOuComanda.Id);
+
+            if (result.Status == "success")
+            {
+                PedidoMesa = result.Data.Objeto ?? new();
+            }
 
             StateHasChanged();
 
@@ -339,5 +373,49 @@
         }
     }
 
+    private async Task PagarPedidoPorCliente(string nomeCliente)
+    {
+        var itensDoCliente = PedidoMesa.Itens.Where(x => x.NomeCliente == nomeCliente).ToList();
+        if (itensDoCliente.Count == 0) return;
+
+        ClsPedido NovoPedido = new ClsPedido
+        {
+            TipoDePedido = "MESA",
+            MesaComandaId = MesaOuComanda.Id,
+            Itens = itensDoCliente,
+            ItensFechamentoIds = itensDoCliente.Where(x => x.Id > 0).Select(x => x.Id).ToList()
+        };
+
+        var parameters = new DialogParameters { { "Pedido", NovoPedido } };
+        var options = new DialogOptions { Position = DialogPosition.Center, CloseButton = true, MaxWidth = MaxWidth.False, FullWidth = true, CloseOnEscapeKey = true };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>($"Pagamento - Cliente {nomeCliente}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await PedidosService.FechaMesa(NovoPedido);
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add($"Conta de {nomeCliente} efetuada com sucesso!", Severity.Success);
+
+                if (itensDoCliente.Count >= PedidoMesa.Itens.Count)
+                {
+                    MudDialog.Close(DialogResult.Ok(true));
+                }
+                else
+                {
+                    ItensSelecionados.Clear();
+                    if (dataGridRef is not null)
+                        await dataGridRef.ReloadServerData();
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Erro ao fechar conta de {nomeCliente}: {string.Join(",", response.Messages)}", Severity.Error);
+            }
+        }
+    }
     #endregion
 }
