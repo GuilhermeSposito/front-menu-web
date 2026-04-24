@@ -280,7 +280,13 @@
                                                         }
                                                     }
                                                 </MudStack>
-                                                <MudTextField Class="mt-2" @bind-Value=produtoNoPedido.Observacoes Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Adicione uma observação no item" />
+                                                <MudTextField Class="mt-2" @bind-Value=produtoNoPedido.Observacoes Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Adicione uma observação no item"
+                                                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline" AdornmentColor="Color.Default" />
+                                                @if (TiposDePedido == TiposDePedido.MESA)
+                                                {
+                                                    <MudTextField Class="mt-1" @bind-Value=produtoNoPedido.NomeCliente Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Nome do cliente"
+                                                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" AdornmentColor="Color.Primary" />
+                                                }
                                             </MudPaper>
                                         }
                                     </MudStack>

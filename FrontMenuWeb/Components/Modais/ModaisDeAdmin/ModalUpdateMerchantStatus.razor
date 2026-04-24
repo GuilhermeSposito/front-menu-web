@@ -1,0 +1,139 @@
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+@inject MerchantServices MerchantService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="mr-2 mb-n1" />
+            Gerenciar Status do Cliente
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4 py-2">
+            <div class="text-center mb-2">
+                <MudText Typo="Typo.h6">@Merchant.NomeFantasia</MudText>
+                <MudText Typo="Typo.caption">ID: @Merchant.Id</MudText>
+                
+                <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
+                    <MudText Typo="Typo.caption" Style="color: var(--mud-palette-info); font-family: monospace; font-size: 0.7rem;">
+                        sophos-erp.com.br/cardapio-sophos/@Merchant.Id
+                    </MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => CopyToClipboard($"https://sophos-erp.com.br/cardapio-sophos/{Merchant.Id}"))" 
+                                   />
+                </MudStack>
+            </div>
+
+            <MudDivider Class="mb-2" />
+
+            <div class="d-flex align-center justify-space-between">
+                <MudText Typo="Typo.body1">Status da Conta</MudText>
+                <MudSwitch T="bool" @bind-Value="_ativo"
+                           Label="@(_ativo ? "Ativo" : "Inativo")"
+                           Color="@(_ativo ? Color.Success : Color.Error)" />
+            </div>
+
+            <MudDatePicker Label="Vencimento (Ativo Até)"
+                           @bind-Date="_ativoAte"
+                           Editable="true"
+                           Placeholder="Selecione a data"
+                           Color="Color.Primary"
+                           DateFormat="dd/MM/yyyy"
+                           Variant="Variant.Outlined"
+                           AdornmentIcon="@Icons.Material.Filled.CalendarToday" />
+
+            <MudAlert Severity="Severity.Info" Variant="Variant.Text" Dense="true" Class="mt-2">
+                Alterar a data de vencimento impactará o acesso do cliente ao sistema após a data selecionada.
+            </MudAlert>
+
+            @if (_isLoading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="_isLoading">
+            @if (_isLoading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Salvar Alterações</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public ClsMerchant Merchant { get; set; } = default!;
+
+    private bool _ativo;
+    private DateTime? _ativoAte;
+    private bool _isLoading;
+
+    protected override void OnInitialized()
+    {
+        _ativo = Merchant.Ativo;
+        // Se a data for DateTime.MinValue ou nula, definir para hoje + 30 dias como sugestão se inativo
+        _ativoAte = Merchant.AtivoAte == default ? DateTime.Now.AddDays(30) : Merchant.AtivoAte;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            Snackbar.Add("Link copiado para a área de transferência!", Severity.Success);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Erro ao copiar para a área de transferência.", Severity.Error);
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (_ativoAte == null)
+        {
+            Snackbar.Add("Selecione uma data de vencimento.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            var response = await MerchantService.AdminUpdateMerchantStatusAsync(Merchant.Id, _ativo, _ativoAte.Value);
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Status atualizado com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao conectar com o servidor.", Severity.Error);
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

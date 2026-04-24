@@ -1,0 +1,172 @@
+@page "/admin/login"
+@rendermode RenderMode.InteractiveWebAssembly
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json.Serialization
+@using System.Text.Json
+@using System.Text
+@layout AdminLoginLayout
+
+<link rel="stylesheet" href="css/login.css" />
+
+<div class="login-container">
+    <div class="w-100">
+        <!-- Logo e Título -->
+        <div class="text-center mb-4">
+            <div class="logo-container">
+                <img class="w-100 h-100 rounded-circle" src="/images/SOPHOSLOGOLOGIN.jpg" alt="Sophos" />
+            </div>
+            <h1 class="company-title">SOPHOS ADMIN</h1>
+            <p class="company-subtitle">Acesso Administrativo</p>
+        </div>
+
+        <!-- Card de Login -->
+        <div class="card login-card mx-auto rounded-4"
+             style="background-color: var(--mud-palette-surface); box-shadow: 0 1px 60px rgba(248,129,19,0.25);">
+            <div class="card-header text-center">
+                <h2 class="card-title">Área Restrita</h2>
+                <p class="card-description">Faça login com sua conta de administrador</p>
+            </div>
+
+            <div class="card-body px-4 pb-4">
+                <EditForm id="adminLoginForm" Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+                    <!-- Campo Email -->
+                    <div class="mb-3">
+                        <label for="adminEmail" class="form-label">Email</label>
+                        <div class="input-group">
+                            <i class="bi bi-envelope input-icon"></i>
+                            <input type="email"
+                                   class="form-control rounded-2"
+                                   id="adminEmail"
+                                   placeholder="admin@sophos.com"
+                                   @bind="loginModel.Email"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Campo Senha -->
+                    <div class="mb-3">
+                        <label for="adminPassword" class="form-label">Senha</label>
+                        <div class="input-group password-container">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="@((ShowPassword ? "text" : "password"))"
+                                   class="form-control rounded-2"
+                                   id="adminPassword"
+                                   placeholder="Digite sua senha"
+                                   @bind="loginModel.Senha"
+                                   required>
+                            <button type="button"
+                                    class="password-toggle"
+                                    id="passwordToggleIcon"
+                                    @onclick="TogglePasswordVisibility">
+                                <i class="bi @(ShowPassword ? "bi-eye-slash" : "bi-eye")"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botão -->
+                    <button type="submit"
+                            class="btn btn-login"
+                            disabled="@isLoading"
+                            style="background: linear-gradient(135deg, #F88113 0%, #FF9800 100%);">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <span>Entrando...</span>
+                        }
+                        else
+                        {
+                            <span>Entrar como Admin</span>
+                        }
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(MensagemDeErro))
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mt-3">
+                            @MensagemDeErro
+                        </MudAlert>
+                    }
+
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private AdminLoginModel loginModel = new();
+    private string MensagemDeErro = string.Empty;
+    private bool ShowPassword = false;
+    private bool isLoading = false;
+
+    private void TogglePasswordVisibility() => ShowPassword = !ShowPassword;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            isLoading = true;
+            MensagemDeErro = string.Empty;
+
+            // Serializa manualmente garantindo que is_admin seja boolean true em snake_case
+            var payload = new
+            {
+                email    = loginModel.Email,
+                senha    = loginModel.Senha,
+                is_admin = true
+            };
+
+            var json    = JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await Http.PostAsync("auth/login", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Cookie auth_token foi setado pelo backend — navega para o painel admin
+                Navigation.NavigateTo("/admin/merchants", forceLoad: true);
+            }
+            else
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = JsonDocument.Parse(body);
+                    if (doc.RootElement.TryGetProperty("message", out var msg))
+                    {
+                        MensagemDeErro = msg.ValueKind == JsonValueKind.Array
+                            ? string.Join(", ", msg.EnumerateArray().Select(x => x.GetString()))
+                            : msg.GetString() ?? "Credenciais inválidas.";
+                    }
+                    else
+                    {
+                        MensagemDeErro = "E-mail ou senha incorretos.";
+                    }
+                }
+                catch
+                {
+                    MensagemDeErro = "E-mail ou senha incorretos.";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MensagemDeErro = "Erro de conexão. Tente novamente.";
+            Console.WriteLine($"Admin login error: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class AdminLoginModel
+    {
+        [Required(ErrorMessage = "O email é obrigatório")]
+        [EmailAddress(ErrorMessage = "Email inválido")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A senha é obrigatória")]
+        public string Senha { get; set; } = string.Empty;
+    }
+}

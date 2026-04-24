@@ -46,6 +46,25 @@ public class MerchantServices
         return updatedMerchant ?? new ReturnApiRefatored<ClsMerchant>() { Status = "error", Messages = new List<string> { "Informações não alteradas" } };
     }
 
+    public async Task<ReturnApiRefatored<ClsMerchant>> AdminGetAllMerchantsAsync()
+    {
+        var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsMerchant>>("merchants/all");
+        return response ?? new ReturnApiRefatored<ClsMerchant>();
+    }
+
+    public async Task<ReturnApiRefatored<ClsMerchant>> AdminUpdateMerchantStatusAsync(string merchantId, bool ativo, DateTime ativoAte)
+    {
+        var payload = new Dictionary<string, object>
+        { 
+            { "ativo", ativo }, 
+            { "AtivoAte", ativoAte.ToString("yyyy-MM-ddTHH:mm:ssZ") } 
+        };
+        var response = await _HttpClient.PatchAsJsonAsync($"merchants/admin/update-status/{merchantId}", payload);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMerchant>>();
+        return result ?? new ReturnApiRefatored<ClsMerchant>() { Status = "error", Messages = new List<string> { "Erro ao atualizar status" } };
+    }
+
+
     public async Task<ReturnApiRefatored<ClsMerchant>> GetMerchantPublicAsync(string IdDoMerchant)
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsMerchant>>($"merchants/details/public/{IdDoMerchant}");

@@ -25,6 +25,56 @@
         </MudStack>
     </TitleContent>
     <DialogContent>
+
+        @* ── Opções de Fechamento ── *@
+        @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0 || (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+        {
+            <MudPaper Elevation="0" Class="px-4 py-2 mb-1"
+                      Style="background-color:var(--mud-palette-background); border-bottom:1px solid var(--mud-palette-lines-default);">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Class="flex-wrap">
+                    @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudSwitch @bind-Value="_cobraTaxa" Color="Color.Primary" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Taxa (@(AppState.MerchantLogado!.TaxaDeServicoPercent)%)</MudText>
+                            @if (_cobraTaxa)
+                            {
+                                <MudText Typo="Typo.caption" Style="color:var(--mud-palette-primary);">= @TaxaValor.ToString("C")</MudText>
+                            }
+                        </MudStack>
+                    }
+                    @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+                    {
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
+                            @if (_cobraCouvert)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Variant="Variant.Outlined"
+                                                   OnClick="@(() => _qtdPessoas = Math.Max(1, _qtdPessoas - 1))" />
+                                    <MudText Typo="Typo.body2" Style="min-width:20px; text-align:center;">@_qtdPessoas</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined"
+                                                   OnClick="@(() => _qtdPessoas++)" />
+                                    <MudText Typo="Typo.caption" Style="color:#a78bfa;">= @CouvertValor.ToString("C")</MudText>
+                                </MudStack>
+                            }
+                        </MudStack>
+                    }
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">Separar por cliente</MudText>
+                    </MudStack>
+                    @if (TemExtras)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">
+                            Total: @TotalGeral.ToString("C")
+                        </MudChip>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
         <MudDataGrid T="ItensPedido"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
@@ -115,6 +165,20 @@
     private MudDataGrid<ItensPedido>? dataGridRef = new();
 
     private bool Carregando { get; set; } = true;
+
+    // ── Opções de fechamento ──
+    private bool _cobraTaxa = false;
+    private bool _cobraCouvert = false;
+    private int _qtdPessoas = 1;
+    private bool _separarPorCliente = true;
+
+    private decimal SubTotalItens => (PedidoMesa.Itens?.Sum(i => (decimal)i.PrecoTotal)) ?? 0m;
+    private decimal TaxaPercent => (decimal)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
+    private decimal TaxaValor => _cobraTaxa ? SubTotalItens * (TaxaPercent / 100) : 0m;
+    private decimal CouvertPorPessoa => (decimal)(AppState.MerchantLogado?.ValorCouvert ?? 0);
+    private decimal CouvertValor => _cobraCouvert ? CouvertPorPessoa * _qtdPessoas : 0m;
+    private decimal TotalGeral => SubTotalItens + TaxaValor + CouvertValor;
+    private bool TemExtras => TaxaValor > 0 || CouvertValor > 0;
     #endregion
 
     #region Funções de Inicialização
@@ -269,9 +333,12 @@
     private async Task AvisarContaDaMesa()
     {
         if (AppState.MerchantLogado?.AvisaFechamentoDeMesa != true) return;
-        bool cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
-        bool cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
-        await PedidosService.AvisarConta(PedidoMesa.Itens, MesaOuComanda.Id, cobraTaxa, cobraCouvert);
+        var itens = ItensSelecionados.Count > 0 ? ItensSelecionados.ToList() : PedidoMesa.Itens;
+        await PedidosService.AvisarConta(
+            itens, MesaOuComanda.Id,
+            _cobraTaxa, _cobraCouvert,
+            _cobraCouvert ? _qtdPessoas : null,
+            _separarPorCliente);
         Snackbar.Add("Aviso de fechamento enviado ao garçom.", Severity.Success);
     }
 
@@ -282,6 +349,8 @@
             TipoDePedido = "MESA",
             MesaComandaId = MesaOuComanda.Id,
             Itens = PedidoMesa.Itens,
+            ServicoValor = (float)TaxaValor,
+            CouvertValor = (float)CouvertValor,
         };
 
         var parameters = new DialogParameters
@@ -333,7 +402,9 @@
             TipoDePedido = "MESA",
             MesaComandaId = MesaOuComanda.Id,
             Itens = ItensSelecionados.ToList(),
-            ItensFechamentoIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList()
+            ItensFechamentoIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList(),
+            ServicoValor = (float)TaxaValor,
+            CouvertValor = (float)CouvertValor,
         };
 
         var parameters = new DialogParameters { { "Pedido", NovoPedido } };
@@ -396,7 +467,9 @@
             TipoDePedido = "MESA",
             MesaComandaId = MesaOuComanda.Id,
             Itens = itensDoCliente,
-            ItensFechamentoIds = itensDoCliente.Where(x => x.Id > 0).Select(x => x.Id).ToList()
+            ItensFechamentoIds = itensDoCliente.Where(x => x.Id > 0).Select(x => x.Id).ToList(),
+            ServicoValor = (float)TaxaValor,
+            CouvertValor = (float)CouvertValor,
         };
 
         var parameters = new DialogParameters { { "Pedido", NovoPedido } };

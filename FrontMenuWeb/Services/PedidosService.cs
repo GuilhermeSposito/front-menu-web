@@ -28,7 +28,7 @@ public class PedidosService
     public static Func<ClsPedido, Task>? PedidoEsperandoAceite;
     public static Func<PedidoMesaDto, Task>? PedidoMesaRecebido;
     public static Func<ClsMesasEComandas, Task>? PedidoMesaFechada;
-    public static Func<int, Task>? AvisarContaRecebida;
+    public static Func<(int MesaId, bool IsFechamentoTotal), Task>? AvisarContaRecebida;
     public static Func<ClsPedido, Task>? PedidoMudouEtapa;
     public static Func<ClsPedido, Task>? PedidoMudouInfoAdicional;
 
@@ -89,7 +89,8 @@ public class PedidosService
     {
         var doc = System.Text.Json.JsonDocument.Parse(msg);
         var mesaId = doc.RootElement.GetProperty("MesaId").GetInt32();
-        await InvokeAllAsync(AvisarContaRecebida, mesaId);
+        var isFechamentoTotal = doc.RootElement.TryGetProperty("IsFechamentoTotal", out var prop) && prop.GetBoolean();
+        await InvokeAllAsync(AvisarContaRecebida, (mesaId, isFechamentoTotal));
     }
 
     public async Task<PaginatedResponse<ClsPedido>> GetPedidosPorPaginaAsync(QuerysDePedidos QueryDePedido)
@@ -205,7 +206,7 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task AvisarConta(List<ItensPedido> itens, int mesaId, bool cobraTaxa, bool cobraCouvert)
+    public async Task AvisarConta(List<ItensPedido> itens, int mesaId, bool cobraTaxa, bool cobraCouvert, int? qtdPessoas = null, bool? separarPorCliente = null)
     {
         var clientesUnicos = itens.Where(i => !string.IsNullOrEmpty(i.NomeCliente)).Select(i => i.NomeCliente).Distinct().Count();
         var payload = new AvisarContaRequestDto
@@ -213,8 +214,8 @@ public class PedidosService
             MesaId = mesaId,
             CobraTaxaServico = cobraTaxa,
             CobraCouvert = cobraCouvert,
-            SepararPorCliente = clientesUnicos > 1,
-            QtdPessoas = clientesUnicos > 0 ? clientesUnicos : null,
+            SepararPorCliente = separarPorCliente ?? clientesUnicos > 1,
+            QtdPessoas = qtdPessoas ?? (clientesUnicos > 0 ? clientesUnicos : null),
             Itens = itens.Select(i => new AvisoContaItemDto
             {
                 Descricao = i.Descricao,

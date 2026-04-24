@@ -106,22 +106,87 @@
 
             @* ── LEFT PANEL ── *@
             <MudStack Spacing="2" Style="width:340px; flex-shrink:0; border:1px solid var(--mud-palette-primary); border-radius:8px; padding:12px;">
-                @* SUB TOTAL *@
+                @* SUB TOTAL / TOTAL *@
                 <MudPaper Elevation="0" Class="pa-4"
                           Style="background-color:var(--mud-palette-background); border:2px solid var(--mud-palette-primary); border-radius:8px; text-align:center;">
                     <MudStack AlignItems="AlignItems.Center" Spacing="0">
-                        <MudText Typo="Typo.overline" Style="letter-spacing:2px;">SUB TOTAL</MudText>
+                        <MudText Typo="Typo.overline" Style="letter-spacing:2px;">@(TemExtras ? "TOTAL" : "SUB TOTAL")</MudText>
                         <MudText Typo="Typo.h4" Style="font-weight:bold; margin:4px 0;">
-                            @_pedido.Itens.Sum(i => (decimal)i.PrecoTotal).ToString("C")
+                            @TotalGeral.ToString("C")
                         </MudText>
                         <MudText Typo="Typo.caption">
                             @_pedido.Itens.Count @(_pedido.Itens.Count == 1 ? "Item" : "Itens")
                         </MudText>
+                        @if (TemExtras)
+                        {
+                            <MudDivider Class="my-1 w-100" />
+                            <MudText Typo="Typo.caption" Style="opacity:0.55;">Subtotal: @SubTotalItens.ToString("C")</MudText>
+                            @if (TaxaValor > 0)
+                            {
+                                <MudText Typo="Typo.caption" Style="color:var(--mud-palette-primary);">+ Taxa (@TaxaPercent%): @TaxaValor.ToString("C")</MudText>
+                            }
+                            @if (CouvertValor > 0)
+                            {
+                                <MudText Typo="Typo.caption" Style="color:#a78bfa;">+ Couvert (@_qtdPessoas×): @CouvertValor.ToString("C")</MudText>
+                            }
+                        }
                     </MudStack>
                 </MudPaper>
 
+                @* Opções de fechamento de mesa *@
+                @if (_isFechamentoDeMesa)
+                {
+                    <MudPaper Elevation="0" Class="pa-3"
+                              Style="background-color:var(--mud-palette-background); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+                        <MudText Typo="Typo.overline" Style="letter-spacing:1.5px; opacity:0.5; font-size:10px; display:block; margin-bottom:4px;">Opções de Fechamento</MudText>
+                        <MudStack Spacing="1">
+                            @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body2">Taxa de serviço (@(AppState.MerchantLogado!.TaxaDeServicoPercent)%)</MudText>
+                                    <MudSwitch @bind-Value="_cobraTaxa" Color="Color.Primary" Size="Size.Small" />
+                                </MudStack>
+                            }
+                            @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body2">Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
+                                    <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
+                                </MudStack>
+                            }
+                            @if (_cobraCouvert)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudText Typo="Typo.body2">Qtd. pessoas</MudText>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Variant="Variant.Outlined"
+                                                       OnClick="@(() => _qtdPessoas = Math.Max(1, _qtdPessoas - 1))" />
+                                        <MudText Typo="Typo.body1" Style="min-width:24px; text-align:center;">@_qtdPessoas</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined"
+                                                       OnClick="@(() => _qtdPessoas++)" />
+                                    </MudStack>
+                                </MudStack>
+                            }
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.body2">Separar por cliente</MudText>
+                                <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Small" />
+                            </MudStack>
+                        </MudStack>
+                    </MudPaper>
+                }
+
                 @* Botões de ação *@
                 <MudStack Spacing="1">
+                    @if (_isFechamentoDeMesa && AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
+                    {
+                        <MudButton FullWidth Variant="Variant.Filled" Color="Color.Warning"
+                                   Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
+                                   OnClick="AvisarContaDaMesa"
+                                   Disabled="@(_pedido.Itens.Count == 0 || _enviando)">
+                            <MudIcon Icon="@Icons.Material.Filled.Print" Class="me-2" Size="Size.Small" />
+                            <span>IMPRIMIR FECHAMENTO</span>
+                        </MudButton>
+                    }
                     <MudButton FullWidth Variant="Variant.Filled" Color="Color.Success"
                                Style=" color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
                                OnClick="Finalizar"
@@ -200,13 +265,70 @@
                     {
                         @foreach (var (item, index) in _pedido.Itens.Select((it, i) => (it, i)))
                         {
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-3"
-                                      Style="@($"border-bottom:1px solid var(--mud-palette-lines-default); cursor:pointer; position:relative; z-index:2; background-color:{(_itensSelecionados.Contains(item) ? "rgba(var(--mud-palette-primary-rgb),0.2)" : "var(--mud-palette-surface)")}; {(_itensSelecionados.Contains(item) ? "border-left:3px solid var(--mud-palette-primary);" : "")}")"
-                                      @onclick="() => ToggleSelecaoItem(item)">
-                                <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@(index + 1)</MudText>
-                                <MudText Typo="Typo.h5" Class="co-col-desc" Style="font-weight:600;">@item.Descricao</MudText>
-                                <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@item.Quantidade.ToString("0.###")x</MudText>
-                                <MudText Typo="Typo.h5" Class="co-col-val" Style="color:#4caf50; font-weight:600;">@item.PrecoTotal.ToString("C")</MudText>
+                            var expandido = _itemExpandido.Contains(item);
+                            var selecionado = _itensSelecionados.Contains(item);
+                            var temObs = !string.IsNullOrWhiteSpace(item.Observacoes);
+                            var temNome = !string.IsNullOrWhiteSpace(item.NomeCliente);
+
+                            <MudStack Spacing="0"
+                                      Style="@($"border-bottom:1px solid var(--mud-palette-lines-default); position:relative; z-index:2; background-color:{( selecionado ? "rgba(var(--mud-palette-primary-rgb),0.2)" : "var(--mud-palette-surface)")}; {(selecionado ? "border-left:3px solid var(--mud-palette-primary);" : "")}")">
+
+                                @* linha principal *@
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Class="pa-3"
+                                          Style="cursor:pointer;"
+                                          @onclick="() => ToggleSelecaoItem(item)">
+                                    <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@(index + 1)</MudText>
+                                    <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                                        <MudText Typo="Typo.h5" Style="font-weight:600;">@item.Descricao</MudText>
+                                        @if (temObs || temNome)
+                                        {
+                                            <MudStack Row="true" Spacing="2" Style="margin-top:2px;">
+                                                @if (temObs)
+                                                {
+                                                    <MudText Typo="Typo.caption" Style="opacity:0.5; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px;">@item.Observacoes</MudText>
+                                                }
+                                                @if (temNome)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined"
+                                                             Style="height:16px; font-size:10px; padding:0 6px;">@item.NomeCliente</MudChip>
+                                                }
+                                            </MudStack>
+                                        }
+                                    </MudStack>
+                                    <MudText Typo="Typo.h5" Class="co-col-qty" Style="font-weight:600;">@item.Quantidade.ToString("0.###")x</MudText>
+                                    <MudText Typo="Typo.h5" Class="co-col-val" Style="color:#4caf50; font-weight:600;">@item.PrecoTotal.ToString("C")</MudText>
+                                    <MudIconButton Icon="@(expandido ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.EditNote)"
+                                                   Size="Size.Small"
+                                                   Style="@($"opacity:{(expandido || temObs || temNome ? "1" : "0.25")}; margin-left:4px;")"
+                                                   OnClick="@(() => ToggleExpandirItem(item))" />
+                                </MudStack>
+
+                                @* campos expandidos *@
+                                @if (expandido)
+                                {
+                                    <MudStack Spacing="1" Class="px-3 pb-2" Style="border-top:1px solid var(--mud-palette-lines-default);">
+                                        <MudTextField @bind-Value="item.Observacoes"
+                                                      Placeholder="Observações (ex: sem cebola...)"
+                                                      Variant="Variant.Outlined"
+                                                      Margin="Margin.Dense"
+                                                      FullWidth="true"
+                                                      Lines="1"
+                                                      Adornment="Adornment.Start"
+                                                      AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline"
+                                                      AdornmentColor="Color.Default" />
+                                        @if (_isFechamentoDeMesa)
+                                        {
+                                            <MudTextField @bind-Value="item.NomeCliente"
+                                                          Placeholder="Nome do cliente"
+                                                          Variant="Variant.Outlined"
+                                                          Margin="Margin.Dense"
+                                                          FullWidth="true"
+                                                          Adornment="Adornment.Start"
+                                                          AdornmentIcon="@Icons.Material.Outlined.Person"
+                                                          AdornmentColor="Color.Primary" />
+                                        }
+                                    </MudStack>
+                                }
                             </MudStack>
                         }
                     }
@@ -297,6 +419,14 @@
     private int _quantidade = 1;
     private ClsProduto? _itemAtual;
     private HashSet<ItensPedido> _itensSelecionados = new HashSet<ItensPedido>();
+    private HashSet<ItensPedido> _itemExpandido = new HashSet<ItensPedido>();
+
+    private void ToggleExpandirItem(ItensPedido item)
+    {
+        if (_itemExpandido.Contains(item)) _itemExpandido.Remove(item);
+        else _itemExpandido.Add(item);
+        StateHasChanged();
+    }
     private ClsPedido _pedido = new() { TipoDePedido = "CHECKOUT", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
 
     private void ToggleSelecaoItem(ItensPedido item)
@@ -312,7 +442,19 @@
     private bool _enviando = false;
     private bool _modalAberto = false;
     private bool _isFechamentoDeMesa = false;
+    private bool _cobraTaxa = false;
+    private bool _cobraCouvert = false;
+    private int _qtdPessoas = 1;
+    private bool _separarPorCliente = true;
     private List<ClsMesasEComandas> _mesasAtivas = new();
+
+    private decimal SubTotalItens => _pedido.Itens.Sum(i => (decimal)i.PrecoTotal);
+    private decimal TaxaPercent => (decimal)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
+    private decimal TaxaValor => _isFechamentoDeMesa && _cobraTaxa ? SubTotalItens * (TaxaPercent / 100) : 0m;
+    private decimal CouvertPorPessoa => (decimal)(AppState.MerchantLogado?.ValorCouvert ?? 0);
+    private decimal CouvertValor => _isFechamentoDeMesa && _cobraCouvert ? CouvertPorPessoa * _qtdPessoas : 0m;
+    private decimal TotalGeral => SubTotalItens + TaxaValor + CouvertValor;
+    private bool TemExtras => TaxaValor > 0 || CouvertValor > 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -594,8 +736,13 @@
             };
 
             _isFechamentoDeMesa = true;
+            _cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
+            _cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
+            _qtdPessoas = 1;
+            _separarPorCliente = true;
             _itemAtual = null;
             _itensSelecionados.Clear();
+            _itemExpandido.Clear();
 
             Snackbar.Add($"{AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? mesa.apelido ?? mesa.Id.ToString())} pronta para fechamento.", Severity.Success);
         }
@@ -623,6 +770,20 @@
     }
 
     // ── ACTIONS ─────────────────────────────────────────────
+    private async Task AvisarContaDaMesa()
+    {
+        if (AppState.MerchantLogado?.AvisaFechamentoDeMesa != true || _pedido.MesaComandaId == 0) return;
+        var itensParaAviso = _itensSelecionados.Count > 0 ? _itensSelecionados.ToList() : _pedido.Itens;
+        await PedidosService.AvisarConta(
+            itensParaAviso,
+            _pedido.MesaComandaId,
+            _cobraTaxa,
+            _cobraCouvert,
+            _cobraCouvert ? _qtdPessoas : null,
+            _separarPorCliente);
+        Snackbar.Add("Aviso de fechamento enviado ao garçom.", Severity.Success);
+    }
+
     private async Task Finalizar()
     {
         if (_pedido.Itens.Count == 0)
@@ -712,6 +873,7 @@
                 _isFechamentoDeMesa = false;
                 _itemAtual = null;
                 _itensSelecionados.Clear();
+            _itemExpandido.Clear();
             }
         }
         finally
@@ -785,6 +947,7 @@
                         _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
                         _itemAtual = null;
                         _itensSelecionados.Clear();
+            _itemExpandido.Clear();
                     }
                     else
                     {
@@ -822,6 +985,7 @@
             foreach (var item in _itensSelecionados.ToList())
                 _pedido.Itens.Remove(item);
             _itensSelecionados.Clear();
+            _itemExpandido.Clear();
             Snackbar.Add("Itens selecionados removidos.", Severity.Info);
         }
         else
@@ -836,10 +1000,15 @@
 
     private async Task CancelarVenda()
     {
-        if (_pedido.Itens.Count == 0) return;
+        if (_pedido.Itens.Count == 0 && !_isFechamentoDeMesa) return;
         if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
 
-        _pedido.Itens.Clear();
+        _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+        _isFechamentoDeMesa = false;
+        _cobraTaxa = false;
+        _cobraCouvert = false;
+        _qtdPessoas = 1;
+        _separarPorCliente = true;
         _itemAtual = null;
         _itensSelecionados.Clear();
         Snackbar.Add("Venda cancelada.", Severity.Warning);
@@ -935,6 +1104,7 @@
                     _pedido.Itens.Remove(item);
                 }
                 _itensSelecionados.Clear();
+            _itemExpandido.Clear();
 
                 // Se zerou tudo, limpar toda a referência (incluindo mesa)
                 if (_pedido.Itens.Count == 0)

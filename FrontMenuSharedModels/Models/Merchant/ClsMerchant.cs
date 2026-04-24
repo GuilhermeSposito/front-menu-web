@@ -19,6 +19,8 @@ public class ClsMerchant
     [JsonPropertyName("FormasDeRecebimento")] public List<ClsFormaDeRecebimento> FormasDeRecebimento { get; set; } = new List<ClsFormaDeRecebimento>();
     [JsonPropertyName("ativo")] public bool Ativo { get; set; }
     [JsonPropertyName("EmitindoNfeProd")] public bool EmitindoNfeProd { get; set; }
+    [JsonPropertyName("ClienteBloqueavel")] public bool ClienteBloqueavel { get; set; }
+    [JsonPropertyName("AtivoAte")] public DateTime AtivoAte { get; set; }
     [JsonPropertyName("FuncionarioLogado")] public ClsFuncionario? FuncionarioLogado { get; set; }
     [JsonPropertyName("EmpresasIfoodIntegradas")] public List<ClsEmpresaIfood> EmpresasIfood { get; set; } = new List<ClsEmpresaIfood>();
     [JsonPropertyName("CertificadoBase64")] public string? CertificadoBase64 { get; set; }
@@ -100,6 +102,11 @@ public class ClsMerchant
     [JsonPropertyName("taxa_de_servico_percent")] public decimal? TaxaDeServicoPercent { get; set; }
     [JsonPropertyName("valor_couvert")] public decimal? ValorCouvert { get; set; }
     [JsonPropertyName("AvisaFechamentoDeMesa")] public bool AvisaFechamentoDeMesa { get; set; } = true;
+}
+
+public class AdminMerchantsResponse
+{
+    [JsonPropertyName("merchants")] public List<ClsMerchant> Merchants { get; set; } = new List<ClsMerchant>();
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

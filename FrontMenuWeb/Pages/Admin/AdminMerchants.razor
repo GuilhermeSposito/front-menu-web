@@ -1,0 +1,256 @@
+@page "/admin/merchants"
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Components.Modais.ModaisDeAdmin
+@inject MerchantServices MerchantService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@layout AdminLayout
+@rendermode RenderMode.InteractiveWebAssembly
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-2 pb-8">
+
+    <!-- Header -->
+    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-6 mt-3">
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h4" Style="font-weight: 700;">Estabelecimentos</MudText>
+            <MudText Typo="Typo.body2">@allMerchants.Count merchant(s) cadastrado(s)</MudText>
+        </MudStack>
+
+        <MudChip T="string"
+                 Color="Color.Primary"
+                 Variant="Variant.Filled"
+                 Icon="@Icons.Material.Filled.Store">
+            Total: @allMerchants.Count
+        </MudChip>
+    </MudStack>
+
+    <!-- Barra de Busca -->
+    <MudPaper Elevation="0" Class="pa-4 mb-6 rounded-xl" Style="background: var(--mud-palette-surface);">
+        <MudTextField @bind-Value="searchTerm"
+                      Placeholder="Pesquisar por nome fantasia, razão social ou email..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Variant="Variant.Outlined"
+                      IconSize="Size.Medium"
+                      Clearable="true"
+                      FullWidth="true" />
+    </MudPaper>
+
+    <!-- Conteúdo -->
+    @if (isLoading)
+    {
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 40vh;" Spacing="4">
+            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+            <MudText Typo="Typo.body1">Carregando estabelecimentos...</MudText>
+        </MudStack>
+    }
+    else if (errorMessage != null)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="rounded-xl">
+            @errorMessage
+        </MudAlert>
+    }
+    else
+    {
+        @if (!FilteredMerchants.Any())
+        {
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height: 30vh;" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.h6" Color="Color.Secondary">Nenhum estabelecimento encontrado</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Tente ajustar sua busca</MudText>
+            </MudStack>
+        }
+        else
+        {
+            <MudGrid Spacing="4">
+                @foreach (var merchant in FilteredMerchants)
+                {
+                    <MudItem xs="12" sm="6" md="4" lg="3" @key="merchant.Id">
+                        <MudCard Class="merchant-card rounded-xl mud-elevation-3 h-100"
+                                 Style="transition: transform 0.2s, box-shadow 0.2s; position: relative;">
+
+                            <!-- Overlay clicável -->
+                            <div @onclick="@(() => OpenUpdateStatusModal(merchant))" 
+                                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; cursor: pointer;">
+                            </div>
+
+                            <!-- Logo Area -->
+                            <div class="card-logo-area d-flex flex-column align-center justify-center pa-5"
+                                 style="background: linear-gradient(135deg, rgba(248,129,19,0.08) 0%, rgba(248,129,19,0.03) 100%);">
+                                @if (!string.IsNullOrEmpty(merchant.ImagemLogo))
+                                {
+                                    <MudAvatar Style="width: 90px; height: 90px; border: 3px solid rgba(248,129,19,0.3); overflow: hidden; padding: 0;">
+                                        <img src="@merchant.ImagemLogo" alt="@merchant.NomeFantasia" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    </MudAvatar>
+                                }
+                                else
+                                {
+                                    <MudAvatar Style="width: 90px; height: 90px; font-size: 2.2rem; font-weight: 700; background: linear-gradient(135deg, #F88113 0%, #FF9800 100%); color: white;">
+                                        @(string.IsNullOrEmpty(merchant.NomeFantasia) ? "?" : merchant.NomeFantasia[0].ToString().ToUpper())
+                                    </MudAvatar>
+                                }
+
+                                <!-- Status Badge sobre o avatar -->
+                                <MudChip T="string"
+                                         Color="@(merchant.Ativo ? Color.Success : Color.Error)"
+                                         Variant="Variant.Filled"
+                                         Size="Size.Small"
+                                         Style="margin-top: 10px; font-weight: 600; font-size: 0.7rem;">
+                                    @(merchant.Ativo ? "● Ativo" : "● Inativo")
+                                </MudChip>
+                            </div>
+
+                            <MudDivider />
+
+                            <!-- Informações -->
+                            <MudCardContent Class="pa-4">
+                                <MudText Typo="Typo.h6"
+                                         Style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                         Class="mb-1">
+                                    @merchant.NomeFantasia
+                                </MudText>
+                                <MudText Typo="Typo.caption"
+                                         Color="Color.Secondary"
+                                         Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;"
+                                         Class="mb-3">
+                                    @merchant.Email
+                                </MudText>
+
+                                <MudStack Spacing="2">
+                                    <!-- Bloqueável -->
+                                    <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                        <MudIcon Icon="@(merchant.ClienteBloqueavel ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)"
+                                                 Size="Size.Small"
+                                                 Color="@(merchant.ClienteBloqueavel ? Color.Warning : Color.Default)" />
+                                        <MudText Typo="Typo.body2">
+                                            <b>Bloqueável:</b> @(merchant.ClienteBloqueavel ? "Sim" : "Não")
+                                        </MudText>
+                                    </MudStack>
+
+                                    <!-- Vencimento -->
+                                    @if (merchant.ClienteBloqueavel)
+                                    {
+                                        var venceEm = merchant.AtivoAte;
+                                        var hoje = DateTime.Today;
+                                        var diasRestantes = (venceEm.Date - hoje).Days;
+                                        var corVencimento = diasRestantes < 0 ? Color.Error : (diasRestantes <= 7 ? Color.Warning : Color.Success);
+                                        var iconeVencimento = diasRestantes < 0 ? Icons.Material.Filled.EventBusy : Icons.Material.Filled.Event;
+
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIcon Icon="@iconeVencimento"
+                                                     Size="Size.Small"
+                                                     Color="@corVencimento" />
+                                            <MudText Typo="Typo.body2" Color="@corVencimento">
+                                                <b>Vence em:</b> @venceEm.ToString("dd/MM/yyyy")
+                                                @if (diasRestantes < 0)
+                                                {
+                                                    <span> (Expirado)</span>
+                                                }
+                                                else if (diasRestantes == 0)
+                                                {
+                                                    <span> (Hoje!)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span> (@diasRestantes dias)</span>
+                                                }
+                                            </MudText>
+                                        </MudStack>
+                                    }
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    }
+</MudContainer>
+
+<style>
+    .merchant-card:hover {
+        transform: translateY(-6px) !important;
+        box-shadow: 0 12px 32px rgba(248, 129, 19, 0.2) !important;
+    }
+
+    .card-logo-area {
+        min-height: 160px;
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private List<ClsMerchant> allMerchants = new();
+    private string _searchTerm = "";
+
+    private string searchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            _searchTerm = value;
+            StateHasChanged();
+        }
+    }
+
+    private IEnumerable<ClsMerchant> FilteredMerchants =>
+        string.IsNullOrWhiteSpace(searchTerm)
+            ? allMerchants
+            : allMerchants.Where(m =>
+                (m.NomeFantasia?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.RazaoSocial?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMerchants();
+    }
+
+    private async Task LoadMerchants()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            var response = await MerchantService.AdminGetAllMerchantsAsync();
+
+            if (response.Status == "success" && response.Data != null)
+            {
+                // A API retorna { data: { merchants: [...] } }
+                allMerchants = response.Data.Lista ?? new();
+            }
+            else
+            {
+                errorMessage = response.Messages?.FirstOrDefault() ?? "Erro ao carregar estabelecimentos.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ocorreu um erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenUpdateStatusModal(ClsMerchant merchant)
+    {
+        Console.WriteLine($"Abrindo modal para: {merchant.NomeFantasia}");
+        Snackbar.Add($"Abrindo: {merchant.NomeFantasia}", Severity.Info);
+        var parameters = new DialogParameters<ModalUpdateMerchantStatus> { { x => x.Merchant, merchant } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<ModalUpdateMerchantStatus>("Gerenciar Status", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadMerchants();
+        }
+    }
+}

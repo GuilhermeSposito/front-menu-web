@@ -29,48 +29,46 @@ public class CustomAuthStateProvider : AuthenticationStateProvider
         {
             var ValidarOToken = await _httpClient.GetAsync("merchants/session-info");
 
+            // 403 = token de admin (não tem sub de merchant) → não autenticado como merchant, sem erro
+            // 401 = não autenticado
+            // Qualquer não-sucesso = retorna não autenticado silenciosamente
             if (!ValidarOToken.IsSuccessStatusCode)
             {
-             
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
-            else
+
+            var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
+            if (merchant == null)
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
+
+            _appState.MerchantLogado = merchant;
+            _appState.IsFuncionario = merchant.FuncionarioLogado != null;
+
+            var merchantJson = JsonSerializer.Serialize(merchant);
+
+            var claims = new List<Claim>
             {
-                var merchant = await ValidarOToken.Content.ReadFromJsonAsync<ClsMerchant>();
-                _appState.MerchantLogado = merchant ?? new ClsMerchant();
-                _appState.IsFuncionario = merchant?.FuncionarioLogado != null;
+                new Claim(ClaimTypes.NameIdentifier, merchant.NomeFantasia),
+                new Claim(ClaimTypes.Email, merchant.Email),
+                new Claim(ClaimTypes.Name, merchant.NomeFantasia ?? merchant.RazaoSocial),
+                new Claim("merchant_id", merchant.Id),
+                new Claim("razao_social", merchant.RazaoSocial),
+                new Claim("nome_fantasia", merchant.NomeFantasia ?? ""),
+                new Claim("imagem_logo", merchant.ImagemLogo ?? ""),
+                new Claim("ativo", merchant.Ativo.ToString()),
+                new Claim("Merchant", merchantJson),
+                new Claim("emitindo_nfe", merchant.EmitindoNfeProd.ToString())
+            };
 
-                var merchantJson = JsonSerializer.Serialize(merchant);
-
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.NameIdentifier, merchant.NomeFantasia),
-                    new Claim(ClaimTypes.Email, merchant.Email),
-                    new Claim(ClaimTypes.Name, merchant.NomeFantasia ?? merchant.RazaoSocial),
-                    new Claim("merchant_id", merchant.Id),
-                    new Claim("razao_social", merchant.RazaoSocial),
-                    new Claim("nome_fantasia", merchant.NomeFantasia ?? ""),
-                    new Claim("imagem_logo", merchant.ImagemLogo ?? ""),
-                    new Claim("ativo", merchant.Ativo.ToString()),
-                    new Claim("Merchant", merchantJson),
-                    new Claim("emitindo_nfe", merchant.EmitindoNfeProd.ToString())
-                };
-
-                var identity = new ClaimsIdentity(claims, "CookieAuth");
-
-
-
-                var user = new ClaimsPrincipal(identity);
-
-                return new AuthenticationState(user);
-            }
-
+            var identity = new ClaimsIdentity(claims, "CookieAuth");
+            var user = new ClaimsPrincipal(identity);
+            return new AuthenticationState(user);
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[AuthState] Erro ao validar sessão: {ex.Message}");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
-      
     }
 
  
