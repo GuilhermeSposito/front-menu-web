@@ -153,166 +153,162 @@
                 @*MudItem De Carrinho*@
                 <MudItem xs=12 sm="12" md="12" lg="3" Style="display: flex; min-height: 0;">
                     <MudPaper Class="h-100 rounded p-2 w-100" Style="background-color: var(--mud-palette-surface); border: 3px dashed var(--mud-palette-primary); display: flex; flex-direction: column; min-height: 0; overflow: hidden;" Elevation="4">
-                        @*Informações do pedido*@
-                        <MudStack Justify="Justify.SpaceBetween" Class="w-100 mt-2 rounded-2 mb-1" Style="background-color: var(--mud-palette-background); flex: 1 1 auto; min-height: 0;">
-                            <MudStack Style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
-                                @if (NovoPedido.TipoDePedido != "MESA")
-                                {
-                                    <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                                        <MudStack>
 
-                                            <MudAutocomplete T="ClsPessoas"
-                                                             Label=@LabelDeCliente
-                                                             HelperText="Procure por Cliente (número | nome)"
-                                                             SearchFunc="BuscarPessoas"
-                                                             ToStringFunc="@(p => { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
-                                                             MinCharacters="1"
-                                                             Clearable="true"
-                                                             Dense="true"
-                                                             Variant="Variant.Outlined"
-                                                             ShowProgressIndicator="true"
-                                                             ValueChanged="SelecionarPessoa"
-                                                             OnKeyDown="OnKeyDownAutocomplete">
+                        @*Seção fixa: Informações do pedido (sem scroll para o autocomplete funcionar corretamente)*@
+                        <MudStack Class="w-100 mt-2 rounded-2" Style="background-color: var(--mud-palette-background); flex: 0 0 auto;">
+                            @if (NovoPedido.TipoDePedido != "MESA")
+                            {
+                                <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+                                    <MudStack>
+                                        <MudAutocomplete T="ClsPessoas"
+                                                         Label=@LabelDeCliente
+                                                         HelperText="Procure por Cliente (número | nome)"
+                                                         SearchFunc="BuscarPessoas"
+                                                         ToStringFunc="@(p => { if (p == null) return string.Empty; return $"{p.Nome} - {FormatarTelefone(p.Telefone)}"; })"
+                                                         MinCharacters="1"
+                                                         Clearable="true"
+                                                         Dense="true"
+                                                         Variant="Variant.Outlined"
+                                                         ShowProgressIndicator="true"
+                                                         ValueChanged="SelecionarPessoa"
+                                                         OnKeyDown="OnKeyDownAutocomplete">
+                                            <NoItemsTemplate>
+                                            </NoItemsTemplate>
+                                        </MudAutocomplete>
+                                    </MudStack>
 
-                                                <NoItemsTemplate>
-
-                                                </NoItemsTemplate>
-                                            </MudAutocomplete>
-
-                                        </MudStack>
-
-                                        <MudStack>
-                                            <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
-                                                <MudSelectItem Value="@("BALCÃO")">
-                                                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                        <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
-                                                        <span>BALCÃO</span>
-                                                    </MudStack>
-                                                </MudSelectItem>
-                                                <MudSelectItem Value="@("DELIVERY")">
-                                                    <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                        @if (NovoPedido.Endereco is null)
-                                                        {
-                                                            <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
-                                                            <span>DELIVERY</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <MudStack Row=true Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
-                                                                <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
-                                                                <span>DELIVERY - @NovoPedido.Endereco.Rua, @NovoPedido.Endereco.Numero - @NovoPedido.Endereco.Bairro</span>
-                                                                <MudIconButton OnClick=@(async () => { await AbreModalDeAtualizarEndereco(NovoPedido.Cliente, NovoPedido.Endereco); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
-                                                            </MudStack>
-                                                        }
-                                                    </MudStack>
-                                                </MudSelectItem>
-
-                                            </MudSelect>
-                                        </MudStack>
-                                        @if (NovoPedido.TipoDePedido == "DELIVERY" && NovoPedido.Cliente is not null)
-                                        {
-                                            <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
-                                                <MudStack Class="w-100">
-                                                    <MudButton Class="w-100" OnClick=@(async () => { await AbreModalDeAdicionarEndereco(NovoPedido.Cliente); }) StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">Adicionar Novo Endereço</MudButton>
+                                    <MudStack>
+                                        <MudSelect Label="Tipo do Pedido" T="string" Value=@NovoPedido.TipoDePedido ValueChanged="SelecionarTipoDePedido" Variant="Variant.Outlined">
+                                            <MudSelectItem Value="@("BALCÃO")">
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                    <MudIcon Icon="@Icons.Material.Filled.EmojiPeople" />
+                                                    <span>BALCÃO</span>
                                                 </MudStack>
-                                            </MudStack>
-                                        }
-                                    </MudFocusTrap>
-
-                                    <MudStack>
-                                        <MudExpansionPanels>
-                                            <MudExpansionPanel Icon="@Icons.Material.Filled.Notes" Text="Observações do pedido">
-                                                <MudStack Class="w-100 h-100">
-                                                    <MudTextField @bind-Value=NovoPedido.ObservacaoDoPedido T="string" Placeholder="Adicione uma observação no pedido" />
-                                                </MudStack>
-                                            </MudExpansionPanel>
-                                        </MudExpansionPanels>
-                                    </MudStack>
-                                    <MudDivider Light=true Class="w-100" />
-                                }
-
-                                @if (TiposDePedido == TiposDePedido.MESA)
-                                {
-                                    <MudStack>
-                                        <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa @onfocus=@(async () => { await TextFieldDeNumeroDeMesa.SelectAsync(); }) T="int" Label=@($"Número da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}") Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
-                                    </MudStack>
-                                }
-
-                                <MudStack>
-                                    @*Carrinho*@
-                                    <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
-                                        <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
-                                        <MudButton OnClick="LimparCarrinho">Limpar</MudButton>
-                                    </MudStack>
-
-                                    @*itens*@
-                                    <MudStack>
-                                        @foreach (var produtoNoPedido in NovoPedido.Itens)
-                                        {
-                                            <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
-                                                <MudStack>
-                                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row=true Class="w-100">
-                                                        <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
-                                                        <MudStack Row=true>
-                                                            @if (produtoNoPedido.Produto is not null && produtoNoPedido.Produto.UltilizaProdutoNaBalanca)
-                                                            {
-                                                                <MudTooltip Text="Balança" Color="Color.Primary">
-                                                                    <MudIconButton OnClick=@(async () => { await AbreModalParaEditarPrecoDeBalanca(produtoNoPedido); }) Icon="@Icons.Material.Filled.MonitorWeight" Color="Color.Primary" />
-                                                                </MudTooltip>
-                                                            }
-                                                            <MudTooltip Text="Editar" Color="Color.Primary">
-                                                                <MudIconButton OnClick=@(async () => { await AbreModalParaEditarItemCompleto(produtoNoPedido); }) Icon="@Icons.Material.TwoTone.Edit" Color="Color.Primary" />
-                                                            </MudTooltip>
-                                                            <MudTooltip Text="Remover Item" Color="Color.Primary">
-                                                                <MudIconButton OnClick=@(async () => { await RemoverItemDoCarrinho(produtoNoPedido); }) Icon="@Icons.Material.Filled.Close" Color="Color.Primary" />
-                                                            </MudTooltip>
-                                                        </MudStack>
-                                                    </MudStack>
-                                                    <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
-                                                    @if (produtoNoPedido.Complementos.Count > 0)
+                                            </MudSelectItem>
+                                            <MudSelectItem Value="@("DELIVERY")">
+                                                <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                                    @if (NovoPedido.Endereco is null)
                                                     {
-                                                        <MudDivider Light=true Class="w-100" />
-                                                        @foreach (var complemento in produtoNoPedido.Complementos)
-                                                        {
-                                                            <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
-                                                                <MudText Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
-                                                            </MudStack>
-                                                        }
+                                                        <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
+                                                        <span>DELIVERY</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudStack Row=true Justify="Justify.SpaceAround" AlignItems="AlignItems.Center">
+                                                            <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" />
+                                                            <span>DELIVERY - @NovoPedido.Endereco.Rua, @NovoPedido.Endereco.Numero - @NovoPedido.Endereco.Bairro</span>
+                                                            <MudIconButton OnClick=@(async () => { await AbreModalDeAtualizarEndereco(NovoPedido.Cliente, NovoPedido.Endereco); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+                                                        </MudStack>
                                                     }
                                                 </MudStack>
-                                                <MudTextField Class="mt-2" @bind-Value=produtoNoPedido.Observacoes Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Adicione uma observação no item"
-                                                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline" AdornmentColor="Color.Default" />
-                                                @if (TiposDePedido == TiposDePedido.MESA)
-                                                {
-                                                    <MudTextField Class="mt-1" @bind-Value=produtoNoPedido.NomeCliente Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Nome do cliente"
-                                                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" AdornmentColor="Color.Primary" />
-                                                }
-                                            </MudPaper>
-                                        }
+                                            </MudSelectItem>
+                                        </MudSelect>
                                     </MudStack>
+                                    @if (NovoPedido.TipoDePedido == "DELIVERY" && NovoPedido.Cliente is not null)
+                                    {
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudStack Class="w-100">
+                                                <MudButton Class="w-100" OnClick=@(async () => { await AbreModalDeAdicionarEndereco(NovoPedido.Cliente); }) StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">Adicionar Novo Endereço</MudButton>
+                                            </MudStack>
+                                        </MudStack>
+                                    }
+                                </MudFocusTrap>
+
+                                <MudStack>
+                                    <MudExpansionPanels>
+                                        <MudExpansionPanel Icon="@Icons.Material.Filled.Notes" Text="Observações do pedido">
+                                            <MudStack Class="w-100 h-100">
+                                                <MudTextField @bind-Value=NovoPedido.ObservacaoDoPedido T="string" Placeholder="Adicione uma observação no pedido" />
+                                            </MudStack>
+                                        </MudExpansionPanel>
+                                    </MudExpansionPanels>
                                 </MudStack>
+                                <MudDivider Light=true Class="w-100" />
+                            }
+
+                            @if (TiposDePedido == TiposDePedido.MESA)
+                            {
+                                <MudStack>
+                                    <MudNumericField Immediate=true @ref=TextFieldDeNumeroDeMesa @onfocus=@(async () => { await TextFieldDeNumeroDeMesa.SelectAsync(); }) T="int" Label=@($"Número da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}") Variant="Variant.Outlined" @bind-Value=@Mesa.CodigoExterno Disabled="false" Class="w-100 mb-2" />
+                                </MudStack>
+                            }
+                        </MudStack>
+
+                        @*Seção de scroll: Carrinho — cresce de cima pra baixo, scroll ativa quando cheio*@
+                        <MudStack Style="flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column;">
+                            @*Carrinho*@
+                            <MudStack class="p-1" Row=true Justify="Justify.SpaceBetween">
+                                <MudText Typo="Typo.h6" Style="font-weight:400">Carrinho</MudText>
+                                <MudButton OnClick="LimparCarrinho">Limpar</MudButton>
                             </MudStack>
 
-                            @if (TiposDePedido != TiposDePedido.MESA)
-                            {
-                                <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
-                                          Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-                                    <MudButton Variant="Variant.Filled" OnClick="PagarPedido" Color="Color.Primary" Class="w-100">
-                                        PAGAR (F3)
-                                    </MudButton>
-                                </MudPaper>
-                            }
-                            else
-                            {
-                                <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
-                                          Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-                                    <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
-                                        Enviar Itens Para a @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced (F3)
-                                    </MudButton>
-                                </MudPaper>
-                            }
-
+                            @*itens*@
+                            <MudStack>
+                                @foreach (var produtoNoPedido in NovoPedido.Itens)
+                                {
+                                    <MudPaper Elevation="4" Class="p-2 rounded-2" Outlined=true Style="background-color: var(--mud-palette-background); border: 2px dashed var(--mud-palette-primary);">
+                                        <MudStack>
+                                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Row=true Class="w-100">
+                                                <MudText Style="font-weight: 700">@produtoNoPedido.Descricao</MudText>
+                                                <MudStack Row=true>
+                                                    @if (produtoNoPedido.Produto is not null && produtoNoPedido.Produto.UltilizaProdutoNaBalanca)
+                                                    {
+                                                        <MudTooltip Text="Balança" Color="Color.Primary">
+                                                            <MudIconButton OnClick=@(async () => { await AbreModalParaEditarPrecoDeBalanca(produtoNoPedido); }) Icon="@Icons.Material.Filled.MonitorWeight" Color="Color.Primary" />
+                                                        </MudTooltip>
+                                                    }
+                                                    <MudTooltip Text="Editar" Color="Color.Primary">
+                                                        <MudIconButton OnClick=@(async () => { await AbreModalParaEditarItemCompleto(produtoNoPedido); }) Icon="@Icons.Material.TwoTone.Edit" Color="Color.Primary" />
+                                                    </MudTooltip>
+                                                    <MudTooltip Text="Remover Item" Color="Color.Primary">
+                                                        <MudIconButton OnClick=@(async () => { await RemoverItemDoCarrinho(produtoNoPedido); }) Icon="@Icons.Material.Filled.Close" Color="Color.Primary" />
+                                                    </MudTooltip>
+                                                </MudStack>
+                                            </MudStack>
+                                            <MudText>@produtoNoPedido.Quantidade X @produtoNoPedido.PrecoTotal.ToString("C")</MudText>
+                                            @if (produtoNoPedido.Complementos.Count > 0)
+                                            {
+                                                <MudDivider Light=true Class="w-100" />
+                                                @foreach (var complemento in produtoNoPedido.Complementos)
+                                                {
+                                                    <MudStack Class="w-100" Justify="Justify.Center" AlignItems="AlignItems.End">
+                                                        <MudText Typo="Typo.caption">@complemento.Descricao - @complemento.Quantidade X @complemento.PrecoUnitario.ToString("C")</MudText>
+                                                    </MudStack>
+                                                }
+                                            }
+                                        </MudStack>
+                                        <MudTextField Class="mt-2" @bind-Value=produtoNoPedido.Observacoes Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Adicione uma observação no item"
+                                                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline" AdornmentColor="Color.Default" />
+                                        @if (TiposDePedido == TiposDePedido.MESA)
+                                        {
+                                            <MudTextField Class="mt-1" @bind-Value=produtoNoPedido.NomeCliente Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Nome do cliente"
+                                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" AdornmentColor="Color.Primary" />
+                                        }
+                                    </MudPaper>
+                                }
+                            </MudStack>
                         </MudStack>
+
+                        @*Botão pagar — fora do scroll, fixo na base*@
+                        @if (TiposDePedido != TiposDePedido.MESA)
+                        {
+                            <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                                      Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+                                <MudButton Variant="Variant.Filled" OnClick="PagarPedido" Color="Color.Primary" Class="w-100">
+                                    PAGAR (F3)
+                                </MudButton>
+                            </MudPaper>
+                        }
+                        else
+                        {
+                            <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                                      Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+                                <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
+                                    Enviar Itens Para a @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced (F3)
+                                </MudButton>
+                            </MudPaper>
+                        }
+
                     </MudPaper>
                 </MudItem>
             </MudGrid>

@@ -18,7 +18,8 @@
       "Bash(start \"\" \"c:/Prog/projeto_menu_web/front-menu-web/FrontMenuWeb/SophosSyncDesktop/bin/Debug/net9.0-windows/SophosSyncDesktop.exe\")",
       "Bash(dotnet add:*)",
       "Bash(dotnet ef:*)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -E \"\\\\.\\(cs|razor\\)$\")"
     ]
   }
 }
