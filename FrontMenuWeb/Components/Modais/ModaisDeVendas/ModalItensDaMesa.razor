@@ -173,11 +173,14 @@
     private bool _separarPorCliente = true;
 
     private decimal SubTotalItens => (PedidoMesa.Itens?.Sum(i => (decimal)i.PrecoTotal)) ?? 0m;
+    private decimal SubTotalParaTaxa => ItensSelecionados.Count > 0
+        ? ItensSelecionados.Sum(i => (decimal)i.PrecoTotal)
+        : SubTotalItens;
     private decimal TaxaPercent => (decimal)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
-    private decimal TaxaValor => _cobraTaxa ? SubTotalItens * (TaxaPercent / 100) : 0m;
+    private decimal TaxaValor => _cobraTaxa ? SubTotalParaTaxa * (TaxaPercent / 100) : 0m;
     private decimal CouvertPorPessoa => (decimal)(AppState.MerchantLogado?.ValorCouvert ?? 0);
     private decimal CouvertValor => _cobraCouvert ? CouvertPorPessoa * _qtdPessoas : 0m;
-    private decimal TotalGeral => SubTotalItens + TaxaValor + CouvertValor;
+    private decimal TotalGeral => SubTotalParaTaxa + TaxaValor + CouvertValor;
     private bool TemExtras => TaxaValor > 0 || CouvertValor > 0;
     #endregion
 
@@ -186,6 +189,9 @@
     {
         try
         {
+            _cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
+            _cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
+
             PedidosService.PedidoMesaRecebido += async pedido =>
             {
                 await InvokeAsync(() => OnPedidoMesaRecebido(pedido));
@@ -462,13 +468,16 @@
         var itensDoCliente = PedidoMesa.Itens.Where(x => x.NomeCliente == nomeCliente).ToList();
         if (itensDoCliente.Count == 0) return;
 
+        var subtotalCliente = itensDoCliente.Sum(i => (decimal)i.PrecoTotal);
+        var taxaCliente = _cobraTaxa ? subtotalCliente * (TaxaPercent / 100) : 0m;
+
         ClsPedido NovoPedido = new ClsPedido
         {
             TipoDePedido = "MESA",
             MesaComandaId = MesaOuComanda.Id,
             Itens = itensDoCliente,
             ItensFechamentoIds = itensDoCliente.Where(x => x.Id > 0).Select(x => x.Id).ToList(),
-            ServicoValor = (float)TaxaValor,
+            ServicoValor = (float)taxaCliente,
             CouvertValor = (float)CouvertValor,
         };
 

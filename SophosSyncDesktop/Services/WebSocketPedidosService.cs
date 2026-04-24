@@ -20,7 +20,7 @@ public class WebSocketPedidosService : IDisposable
 
     public bool EstaConectado { get; private set; }
 
-    private const string BaseUrl = "http://localhost:3030"; //"http://localhost:3030";//"https://sophos-erp.com.br";
+    private const string BaseUrl = "https://sophos-erp.com.br"; //"http://localhost:3030";//"https://sophos-erp.com.br";
 
     public event Action<bool, string>? StatusChanged;
 

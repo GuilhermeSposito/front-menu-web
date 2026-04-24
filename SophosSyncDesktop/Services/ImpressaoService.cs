@@ -168,18 +168,6 @@ public class ImpressaoService
                                 IndiceDoItemAtual++;
                             }
 
-
-                            /*if (AppState.MerchantLogado is not null)
-                            {
-                                for (var interador = 0; interador < AppState.MerchantLogado.QtdViasDaComanda; interador++)
-                                    await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
-
-                            }
-                            else
-                            {
-                                await ImprimirPagina(ConteudoParaImpressaoDoPedidoMesa, Impressora, ValorEspacamento);
-                            }*/
-
                         }
 
 
@@ -356,6 +344,7 @@ public class ImpressaoService
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoMesaDto pedido, string AppQueEnviou)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+        string? NomeGarcomQueEnviou = string.Empty;
 
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
@@ -403,8 +392,21 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplementoNaComanda, eObs: true);
             }
 
+            if (!String.IsNullOrEmpty(item.NomeCliente))
+            {
+                AdicionaConteudo(Conteudo, $"Cliente: {item.NomeCliente}", FonteComplementoNaComanda, eObs: true);
+            }
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+            NomeGarcomQueEnviou = item.Garcon?.Nome ?? NomeGarcomQueEnviou;
             //------------------------------------------------------------------------------------------
+        }
+
+        if (!string.IsNullOrEmpty(NomeGarcomQueEnviou))
+        {
+            AdicionaConteudo(Conteudo, $"Garçom: {NomeGarcomQueEnviou}", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, $" ", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
+
         }
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
