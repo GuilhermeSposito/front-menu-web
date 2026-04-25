@@ -28,10 +28,19 @@ public class AvisoContaTotaisDto
     [JsonPropertyName("Total")] public float Total { get; set; }
 }
 
+public class AvisoContaCouvertClienteDto
+{
+    [JsonPropertyName("Nome")] public string Nome { get; set; } = "";
+    [JsonPropertyName("Qtd")] public int Qtd { get; set; }
+    [JsonPropertyName("Valor")] public float Valor { get; set; }
+}
+
 public class AvisoContaCouvertDto
 {
     [JsonPropertyName("ValorPorPessoa")] public float ValorPorPessoa { get; set; }
     [JsonPropertyName("QtdPessoas")] public int QtdPessoas { get; set; }
+    [JsonPropertyName("PorCliente")] public List<AvisoContaCouvertClienteDto>? PorCliente { get; set; }
+    [JsonPropertyName("Avulso")] public int? Avulso { get; set; }
 }
 
 public class AvisoContaComandaDto
@@ -61,6 +70,7 @@ public class AvisoContaDto
     [JsonPropertyName("SubtotalDaMesa")] public float SubtotalDaMesa { get; set; }
     [JsonPropertyName("TaxaDeServicoDaMesa")] public float TaxaDeServicoDaMesa { get; set; }
     [JsonPropertyName("CouvertTotalMesa")] public float CouvertTotalMesa { get; set; }
+    [JsonPropertyName("CouvertAvulso")] public float CouvertAvulso { get; set; }
     [JsonPropertyName("Couvert")] public AvisoContaCouvertDto? Couvert { get; set; }
     [JsonPropertyName("TotalGeral")] public float TotalGeral { get; set; }
 }

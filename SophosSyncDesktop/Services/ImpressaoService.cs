@@ -797,9 +797,16 @@ public class ImpressaoService
                 }
 
                 if (comanda.Totais.CouvertIndividual > 0)
+                {
+                    var qtdCouvert = aviso.Couvert?.PorCliente?.FirstOrDefault(c => c.Nome == comanda.Nome)?.Qtd ?? 1;
+                    var valorUnit = aviso.Couvert?.ValorPorPessoa ?? 0;
+                    var labelCouvert = qtdCouvert > 1
+                        ? $"Couvert ({qtdCouvert}x {valorUnit:C})"
+                        : "Couvert";
                     AdicionaConteudo(Conteudo,
-                        LR("Couvert", comanda.Totais.CouvertIndividual.ToString("C")),
+                        LR(labelCouvert, comanda.Totais.CouvertIndividual.ToString("C")),
                         FonteFechamentoDeCaixa, eObs: true);
+                }
 
                 AdicionaConteudo(Conteudo, LR("TOTAL:", comanda.Totais.Total.ToString("C")), FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
@@ -839,9 +846,27 @@ public class ImpressaoService
                 FonteFechamentoDeCaixa);
 
         if (aviso.CouvertTotalMesa > 0 && aviso.Couvert is not null)
-            AdicionaConteudo(Conteudo,
-                LR($"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C")),
-                FonteFechamentoDeCaixa);
+        {
+            if (aviso.Couvert.PorCliente != null && aviso.Couvert.PorCliente.Count > 0)
+            {
+                // Detalha couvert por cliente
+                foreach (var cc in aviso.Couvert.PorCliente.Where(c => c.Valor > 0))
+                    AdicionaConteudo(Conteudo,
+                        LR($"Couvert {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C")),
+                        FonteFechamentoDeCaixa);
+
+                if (aviso.CouvertAvulso > 0 && aviso.Couvert.Avulso > 0)
+                    AdicionaConteudo(Conteudo,
+                        LR($"Couvert Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C")),
+                        FonteFechamentoDeCaixa);
+            }
+            else
+            {
+                AdicionaConteudo(Conteudo,
+                    LR($"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C")),
+                    FonteFechamentoDeCaixa);
+            }
+        }
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", aviso.TotalGeral.ToString("C")), FonteFechamentoDeCaixa);
