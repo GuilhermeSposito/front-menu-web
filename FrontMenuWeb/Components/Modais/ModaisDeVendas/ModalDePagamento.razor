@@ -210,7 +210,8 @@
                     {
                         foreach (var pagamentoRealizado in Pedido.Pagamentos)
                         {
-                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(async () => { await RemovePagamentoDoPedido(pagamentoRealizado); })>
+                            var pagamento = pagamentoRealizado;
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(async () => { await RemovePagamentoDoPedido(pagamento); })>
                                 <ChildContent>
                                     <MudStack Row=true Spacing="-1">
                                         <MudText>@pagamentoRealizado.FormaDePagamento?.Descricao -> @pagamentoRealizado.ValorTotal.ToString("C")</MudText>
@@ -360,8 +361,10 @@
 
     private void SomaValorTotal()
     {
+        var couvert = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
+        var servico = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
         ValorTotal = (float)Math.Round(
-            ((ValorDosItens + TaxaAdicional + ValorTaxaDeServico + ValorTotalCouvert) - ValorDoDesconto) + TaxaDeEntrega,
+            ((ValorDosItens + TaxaAdicional + servico + couvert) - ValorDoDesconto) + TaxaDeEntrega,
             2
         );
     }
@@ -381,8 +384,8 @@
         Pedido.DescontoValor = ValorDoDesconto;
         Pedido.AcrescimoValor = TaxaAdicional;
         Pedido.TaxaEntregaValor = TaxaDeEntrega;
-        Pedido.ServicoValor = ValorTaxaDeServico;
-        Pedido.CouvertValor = ValorTotalCouvert;
+        Pedido.ServicoValor = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
+        Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
 
 
         MudDialog.Close(DialogResult.Ok(true));
@@ -595,11 +598,6 @@
 
     private async Task RemovePagamentoDoPedido(PagamentoDoPedido Pagamento)
     {
-        if (Pagamento.Troco > 0)
-        {
-            ValorTroco -= Pagamento.Troco;
-        }
-
         if (Editando)
         {
             var parameters = new DialogParameters<ModalDeExcluir>
@@ -614,12 +612,18 @@
 
             if (!result!.Canceled && result.Data is bool sucesso && sucesso)
             {
-                var ReturnFromApi = await CaixaService.DeletePagamento(Pagamento);
+                if (Pagamento.Troco > 0)
+                    ValorTroco -= Pagamento.Troco;
+
+                await CaixaService.DeletePagamento(Pagamento);
                 Pedido.Pagamentos.Remove(Pagamento);
                 StateHasChanged();
-                return;
             }
+            return;
         }
+
+        if (Pagamento.Troco > 0)
+            ValorTroco -= Pagamento.Troco;
 
         Pedido.Pagamentos.Remove(Pagamento);
     }

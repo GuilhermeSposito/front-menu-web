@@ -25,6 +25,7 @@ public class ImpressaoService
 {
 
     #region Fontes utilizadas na impressão
+    public static  bool DestacaObservacoes { get; set; } = true;
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public static Font FonteCódigoDeBarras = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
     public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
@@ -1084,7 +1085,7 @@ public class ImpressaoService
                     {
                         e.Graphics.DrawString(item.Texto, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
                     }
-                    else if (!item.eObs)
+                    else if (!item.eObs || !DestacaObservacoes)
                     {
                         e.Graphics.DrawString(item.Texto, item.Fonte, Brushes.Black, 0, Y);
                         Y += separacao;
@@ -1128,7 +1129,7 @@ public class ImpressaoService
                             continue;
 
                         }
-                        else if (!item.eObs)
+                        else if (!item.eObs || !DestacaObservacoes)
                         {
                             e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
                             Y += separacao;
@@ -1161,7 +1162,7 @@ public class ImpressaoService
                             e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
 
                         }
-                        else if (!item.eObs)
+                        else if (!item.eObs || !DestacaObservacoes)
                         {
                             e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
 
@@ -1367,6 +1368,8 @@ public class ImpressaoService
             FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Bold);
 
             ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
+
+            DestacaObservacoes = AppState.MerchantLogado.DestacaObsNaImpressao;
         }
     }
 }
