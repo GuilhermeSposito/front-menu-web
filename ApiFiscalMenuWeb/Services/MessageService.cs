@@ -312,7 +312,7 @@ public class MessageService
         };
 
 
-        var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", enviaMsgDto.Pedido, CancellationToken.None);
+        var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", MessageDto);
         Console.WriteLine(PostMessage.StatusCode);
         Console.WriteLine(await PostMessage.Content.ReadAsStringAsync());
 
