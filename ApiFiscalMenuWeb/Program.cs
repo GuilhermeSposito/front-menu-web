@@ -52,7 +52,7 @@ builder.Services.AddHttpClient("ApiOficialMetaWS", client =>
 {
     client.BaseAddress = new Uri("https://graph.facebook.com/v24.0/");
     client.Timeout = TimeSpan.FromSeconds(5);
-});
+}).AddHttpMessageHandler<CustomMetaWSHttpHendler>();
 
 builder.Services.AddHttpClient("ApiIfoodAuth", client =>
 {

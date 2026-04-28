@@ -70,9 +70,9 @@ public class MessageService
             ClsMerchant? Merchant = await GetMerchantFromNestApi(TokenDaApiNest);
             if (Merchant is null) return;
 
-            if(Merchant.IntegraApiOficialWS)
+            if (Merchant.IntegraApiOficialWS)
             {
-                await SendMessageOficialAsync(enviaMsgDto, Merchant);
+                await SendMessageStatusOficialAsync(enviaMsgDto, Merchant);
                 return;
             }
 
@@ -302,13 +302,13 @@ public class MessageService
                             new ParameterDto { Type = "text", Text = Merchant.Id },
                         }
                     }
-                }   
+                }
             },
         };
 
 
         var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", enviaMsgDto.Pedido, CancellationToken.None);
-
+        Console.WriteLine(PostMessage.StatusCode);
     }
 
     #endregion
