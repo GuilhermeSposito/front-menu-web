@@ -18,11 +18,8 @@ public class SendMessageDtoWS
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TipoMensagem
 {
-    [EnumMember(Value = "template")]
-    Template,
-
-    [EnumMember(Value = "text")]
-    Text
+    template,
+    text
 }
 #endregion
 
@@ -30,8 +27,7 @@ public enum TipoMensagem
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TemplatesName
 {
-    [EnumMember(Value = "status_pedido")]
-    StatusPedido
+    status_pedido
 }
 
 public class TemplateDto
@@ -49,18 +45,13 @@ public class LanguageDto
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ComponentType
 {
-    [EnumMember(Value = "header")]
-    Header,
-
-    [EnumMember(Value = "body")]
-    Body,
-
-    [EnumMember(Value = "button")]
-    Button
+    header,
+    body,
+    button
 }
 public class ComponentDto
 {
-    [JsonPropertyName("type")] public ComponentType Type { get; set; } = ComponentType.Body;
+    [JsonPropertyName("type")] public ComponentType Type { get; set; } = ComponentType.body;
     [JsonPropertyName("parameters")] public List<ParameterDto> Parameters { get; set; } = new List<ParameterDto>();
 
     [JsonPropertyName("sub_type")]

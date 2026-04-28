@@ -270,16 +270,16 @@ public class MessageService
         SendMessageDtoWS MessageDto = new SendMessageDtoWS
         {
             To = $"55{enviaMsgDto.Pedido.Cliente?.Telefone}",
-            Type = TipoMensagem.Template,
+            Type = TipoMensagem.template,
             Template = new TemplateDto
             {
-                Name = TemplatesName.StatusPedido,
+                Name = TemplatesName.status_pedido,
                 Language = new LanguageDto { Code = "pt_BR" },
                 Components = new List<ComponentDto>()
                 {
                     new ComponentDto
                     {
-                        Type = ComponentType.Header,
+                        Type = ComponentType.header,
                         Parameters = new List<ParameterDto>
                         {
                             new ParameterDto { Type = "text", Text = enviaMsgDto.Pedido.Cliente?.Nome ?? "Cliente" },
@@ -287,7 +287,7 @@ public class MessageService
                     },
                     new ComponentDto
                     {
-                        Type = ComponentType.Body,
+                        Type = ComponentType.body,
                         Parameters = new List<ParameterDto>
                         {
                             new ParameterDto { Type = "text", Text = MensagemDeAtualizacaoDeStatus },
@@ -295,7 +295,7 @@ public class MessageService
                     },
                     new ComponentDto
                     {
-                        Type = ComponentType.Button,
+                        Type = ComponentType.button,
                         SubType = "url",
                         Index = "0",
                         Parameters = new List<ParameterDto>
