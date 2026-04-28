@@ -49,6 +49,9 @@ public class LanguageDto
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ComponentType
 {
+    [EnumMember(Value = "header")]
+    Header,
+
     [EnumMember(Value = "body")]
     Body,
 

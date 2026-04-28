@@ -279,7 +279,7 @@ public class MessageService
                 {
                     new ComponentDto
                     {
-                        Type = ComponentType.Body,
+                        Type = ComponentType.Header,
                         Parameters = new List<ParameterDto>
                         {
                             new ParameterDto { Type = "text", Text = enviaMsgDto.Pedido.Cliente?.Nome ?? "Cliente" },
