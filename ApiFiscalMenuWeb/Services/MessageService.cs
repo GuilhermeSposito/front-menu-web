@@ -265,11 +265,11 @@ public class MessageService
         HttpClient WSMetaClient = _factory.CreateClient("ApiOficialMetaWS");
 
         string IdDoMerchantMeta = Merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
-        string MensagemDeAtualizacaoDeStatus = Merchant.MenssagemDeDeliveryDespachado ?? throw new BadHttpRequestException("Mensagem de atualização de status não pode ser nula.");
+        string MensagemDeAtualizacaoDeStatus = await RetornaMensagemDeStatus(enviaMsgDto.EtapaDoPedido, Pedido: enviaMsgDto.Pedido, merchant: Merchant);
 
         SendMessageDtoWS MessageDto = new SendMessageDtoWS
         {
-            To = $"55{enviaMsgDto.Pedido.Cliente?.Telefone}",
+            To = FormataNumeroWhatsApp(enviaMsgDto.Pedido.Cliente?.Telefone ?? ""),
             Type = TipoMensagem.template,
             Template = new TemplateDto
             {
@@ -313,9 +313,48 @@ public class MessageService
 
 
         var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", MessageDto);
-        Console.WriteLine(PostMessage.StatusCode);
-        Console.WriteLine(await PostMessage.Content.ReadAsStringAsync());
+    }
 
+    public async Task<string> RetornaMensagemDeStatus(EtapasPedido etapa, ClsPedido Pedido, ClsMerchant merchant)
+    {
+        try
+        {
+            string Mensagem = string.Empty;
+
+            if (etapa == EtapasPedido.PREPARANDO)
+            {
+                var HttpSophosClient = _factory.CreateClient("ApiAutorizada");
+
+                var GetMensagem = await HttpSophosClient.PostAsJsonAsync($"gemini/preparando?nomeestabelecimento={merchant.NomeFantasia}", Pedido, CancellationToken.None);
+
+                if (!GetMensagem.IsSuccessStatusCode) return "";
+                Mensagem = await GetMensagem.Content.ReadAsStringAsync();
+
+                return Mensagem;
+            }
+
+            if (Pedido.TipoDePedido == "DELIVERY")
+                return etapa switch
+                {
+                    EtapasPedido.DESPACHADO => merchant.MenssagemDeDeliveryDespachado ?? "",
+                    EtapasPedido.FINALIZADO => merchant.MenssagemDeDeliveryFinalizado ?? "",
+                    _ => ""
+                };
+
+            if (Pedido.TipoDePedido == "BALCÃO")
+                return etapa switch
+                {
+                    EtapasPedido.DESPACHADO => merchant.MenssagemDeBalcaoPronto ?? "",
+                    EtapasPedido.FINALIZADO => merchant.MenssagemDeBalcaoFinalizado ?? "",
+                    _ => ""
+                };
+
+            return "";
+        }
+        catch (Exception ex)
+        {
+            return "";
+        }
     }
 
     #endregion
