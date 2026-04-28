@@ -28,6 +28,7 @@ builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
 builder.Services.AddHostedService<IfoodPollingWorker>();
+builder.Services.AddScoped<CustomMetaWSHttpHendler>();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";
