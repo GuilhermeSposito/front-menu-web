@@ -314,6 +314,8 @@ public class MessageService
 
         var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", enviaMsgDto.Pedido, CancellationToken.None);
         Console.WriteLine(PostMessage.StatusCode);
+        Console.WriteLine(await PostMessage.Content.ReadAsStringAsync());
+
     }
 
     #endregion
