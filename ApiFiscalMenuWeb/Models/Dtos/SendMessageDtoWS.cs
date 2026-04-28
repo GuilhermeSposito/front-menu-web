@@ -62,8 +62,14 @@ public class ComponentDto
 {
     [JsonPropertyName("type")] public ComponentType Type { get; set; } = ComponentType.Body;
     [JsonPropertyName("parameters")] public List<ParameterDto> Parameters { get; set; } = new List<ParameterDto>();
-    [JsonPropertyName("sub_type")] public string SubType { get; set; } = "url"; // Apenas para componentes do tipo "button", indica o tipo de ação (ex: "url" para botões que abrem um link)
-    [JsonPropertyName("index")] public string Index { get; set; } = "0"; // Apenas para componentes do tipo "button", indica o tipo de ação (ex: "url" para botões que abrem um link)
+
+    [JsonPropertyName("sub_type")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SubType { get; set; }
+
+    [JsonPropertyName("index")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Index { get; set; }
 
 }
 

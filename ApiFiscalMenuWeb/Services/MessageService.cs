@@ -296,10 +296,15 @@ public class MessageService
                     new ComponentDto
                     {
                         Type = ComponentType.Button,
+                        SubType = "url",
                         Index = "0",
                         Parameters = new List<ParameterDto>
                         {
-                            new ParameterDto { Type = "text", Text = Merchant.Id },
+                            new ParameterDto
+                            {
+                                Type = "text",
+                                Text = Merchant.Id
+                            }
                         }
                     }
                 }
