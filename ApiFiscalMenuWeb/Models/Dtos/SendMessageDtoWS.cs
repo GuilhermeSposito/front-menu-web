@@ -7,8 +7,8 @@ public class SendMessageDtoWS
 {
     [JsonPropertyName("messaging_product")] public string MessageProduct { get; set; } = "whatsapp";
     [JsonPropertyName("to")] public string To { get; set; } = string.Empty;
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("recipient_type")] public string? RecipientType { get { if (Type == TipoMensagem.Text) return "individual"; else return null; } }
-    [JsonPropertyName("type")] public TipoMensagem Type { get; set; } = TipoMensagem.Template;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("recipient_type")] public string? RecipientType { get { if (Type == TipoMensagem.text) return "individual"; else return null; } }
+    [JsonPropertyName("type")] public TipoMensagem Type { get; set; } = TipoMensagem.template;
     [JsonPropertyName("template")] public TemplateDto? Template { get; set; }
     [JsonPropertyName("text")] public TextSimpleMessageDto? Text { get; set; }
 }
