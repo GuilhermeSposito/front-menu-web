@@ -313,6 +313,7 @@ public class MessageService
 
 
         var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", MessageDto);
+        Console.WriteLine(await PostMessage.Content.ReadAsStringAsync());
     }
 
     public async Task<string> RetornaMensagemDeStatus(EtapasPedido etapa, ClsPedido Pedido, ClsMerchant merchant)
@@ -328,6 +329,7 @@ public class MessageService
                 var GetMensagem = await HttpSophosClient.PostAsJsonAsync($"gemini/preparando?nomeestabelecimento={merchant.NomeFantasia}", Pedido, CancellationToken.None);
 
                 if (!GetMensagem.IsSuccessStatusCode) return "";
+
                 Mensagem = await GetMensagem.Content.ReadAsStringAsync();
 
                 return Mensagem;
