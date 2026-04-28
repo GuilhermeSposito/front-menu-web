@@ -3,7 +3,9 @@ using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Roteirizacao;
+using System.Drawing;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using Unimake.MessageBroker.Primitives.Model.Messages;
 using Unimake.MessageBroker.Primitives.Model.Notifications;
@@ -60,12 +62,19 @@ public class MessageService
 
     #endregion
 
+    #region Funções de envio de mensagens com a unimake
     public async Task SendMessageAsync(EnviaMsgDto enviaMsgDto, string TokenDaApiNest)
     {
         try
         {
             ClsMerchant? Merchant = await GetMerchantFromNestApi(TokenDaApiNest);
             if (Merchant is null) return;
+
+            if(Merchant.IntegraApiOficialWS)
+            {
+                await SendMessageOficialAsync(enviaMsgDto, Merchant);
+                return;
+            }
 
             string Mensagem = string.Empty;
             if (enviaMsgDto.EtapaDoPedido == EtapasPedido.PREPARANDO)
@@ -248,4 +257,60 @@ public class MessageService
         if (digitos.StartsWith("55")) return digitos;
         return $"55{digitos}";
     }
+    #endregion
+
+    #region Função para envio de mensagem com APi Oficial do WhatsApp (Meta)
+    public async Task SendMessageStatusOficialAsync(EnviaMsgDto enviaMsgDto, ClsMerchant Merchant)
+    {
+        HttpClient WSMetaClient = _factory.CreateClient("ApiOficialMetaWS");
+
+        string IdDoMerchantMeta = Merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
+        string MensagemDeAtualizacaoDeStatus = Merchant.MenssagemDeDeliveryDespachado ?? throw new BadHttpRequestException("Mensagem de atualização de status não pode ser nula.");
+
+        SendMessageDtoWS MessageDto = new SendMessageDtoWS
+        {
+            To = $"55{enviaMsgDto.Pedido.Cliente?.Telefone}",
+            Type = TipoMensagem.Template,
+            Template = new TemplateDto
+            {
+                Name = TemplatesName.StatusPedido,
+                Language = new LanguageDto { Code = "pt_BR" },
+                Components = new List<ComponentDto>()
+                {
+                    new ComponentDto
+                    {
+                        Type = ComponentType.Body,
+                        Parameters = new List<ParameterDto>
+                        {
+                            new ParameterDto { Type = "text", Text = enviaMsgDto.Pedido.Cliente?.Nome ?? "Cliente" },
+                        }
+                    },
+                    new ComponentDto
+                    {
+                        Type = ComponentType.Body,
+                        Parameters = new List<ParameterDto>
+                        {
+                            new ParameterDto { Type = "text", Text = MensagemDeAtualizacaoDeStatus },
+                        }
+                    },
+                    new ComponentDto
+                    {
+                        Type = ComponentType.Button,
+                        Index = "0",
+                        Parameters = new List<ParameterDto>
+                        {
+                            new ParameterDto { Type = "text", Text = Merchant.Id },
+                        }
+                    }
+                }   
+            },
+        };
+
+
+        var PostMessage = await WSMetaClient.PostAsJsonAsync($"{IdDoMerchantMeta}/messages", enviaMsgDto.Pedido, CancellationToken.None);
+
+    }
+
+    #endregion
+
 }

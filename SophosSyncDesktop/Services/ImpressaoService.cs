@@ -25,7 +25,7 @@ public class ImpressaoService
 {
 
     #region Fontes utilizadas na impressão
-    public static  bool DestacaObservacoes { get; set; } = true;
+    public static bool DestacaObservacoes { get; set; } = true;
     public Font FonteSeparadoresSimples { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public static Font FonteCódigoDeBarras = new Font("3 of 9 Barcode", 35, FontStyle.Regular);
     public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
@@ -386,6 +386,11 @@ public class ImpressaoService
                 {
                     AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplementoNaComanda, eObs: true);
                 }
+            }
+
+            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+            {
+                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteLegendaDoTamanho);
             }
 
             if (!String.IsNullOrEmpty(item.Observacoes))
@@ -772,7 +777,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "VIA DE FECHAMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, DateTime.Now.ToString("dd/MM/yyyy - HH:mm"), FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // ── Separado por cliente ───────────────────────────────────────────────
@@ -793,7 +798,7 @@ public class ImpressaoService
                 {
                     AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
                     AdicionaConteudo(Conteudo,
-                        LR($"Tx. de Serviço: ({taxaPct}% - opcional)", comanda.Totais.TaxaDeServico.ToString("C")),
+                        LR($"Tx. de Serviço: ({taxaPct}%)", comanda.Totais.TaxaDeServico.ToString("C")),
                         FonteFechamentoDeCaixa, eObs: true);
                 }
 
@@ -824,10 +829,10 @@ public class ImpressaoService
 
             if (aviso.TaxaDeServicoDaMesa > 0)
             {
-           
+
                 AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo,
-                    LR($"Tx. de Serviço: ({taxaPct}% - opcional)", aviso.TaxaDeServicoDaMesa.ToString("C")),
+                    LR($"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C")),
                     FonteFechamentoDeCaixa, eObs: true);
 
             }
@@ -843,7 +848,7 @@ public class ImpressaoService
 
         if (aviso.TaxaDeServicoDaMesa > 0)
             AdicionaConteudo(Conteudo,
-                LR($"Tx. de Serviço: ({taxaPct}% - opcional)", aviso.TaxaDeServicoDaMesa.ToString("C")),
+                LR($"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C")),
                 FonteFechamentoDeCaixa);
 
         if (aviso.CouvertTotalMesa > 0 && aviso.Couvert is not null)
@@ -892,6 +897,9 @@ public class ImpressaoService
                 : null;
             var cabecalhoComp = leg is not null ? $"{item.Descricao} - {leg}:" : $"{item.Descricao} - complementos:";
             AdicionaConteudo(Conteudo, cabecalhoComp, FonteFechamentoDeCaixa, eObs: true);
+            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+
+                AdicionaConteudo(Conteudo, item.LegTamanhoEscolhido, FonteFechamentoDeCaixa, eObs: true);
             foreach (var c in item.Complementos)
                 AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteFechamentoDeCaixa, eObs: true);
         }

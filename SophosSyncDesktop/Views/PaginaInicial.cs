@@ -27,6 +27,7 @@ public partial class PaginaInicial : Form
     private readonly FilaDeImpressaoService _filaService;
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     private System.Timers.Timer _timer;
+    private System.Timers.Timer _timerMesa;
 
     // Label criado em código para não exigir alteração no .resx do designer
     private Label _labelWsStatus = new Label();
@@ -93,6 +94,7 @@ public partial class PaginaInicial : Form
 
         await _webSocketService.ConectarAsync();
         IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
+        IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
@@ -114,6 +116,19 @@ public partial class PaginaInicial : Form
         };
         _timer.AutoReset = true;
         _timer.Start();
+    }
+
+    public void IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos()
+    {
+        _timerMesa = new System.Timers.Timer(20000);
+        _timerMesa.Elapsed += async (s, e) =>
+        {
+            // Itens de mesa são sempre verificados — não há evento WebSocket por item,
+            // e precisamos imprimir itens perdidos quando a internet voltar.
+            await _filaService.BuscarItensDeMesaNaoImpressosAsync();
+        };
+        _timerMesa.AutoReset = true;
+        _timerMesa.Start();
     }
 
     private void OnWebSocketStatusChanged(bool conectado, string mensagem)

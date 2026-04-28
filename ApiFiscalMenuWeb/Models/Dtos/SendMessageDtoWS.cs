@@ -1,0 +1,79 @@
+﻿using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+
+namespace ApiFiscalMenuWeb.Models.Dtos;
+
+public class SendMessageDtoWS
+{
+    [JsonPropertyName("messaging_product")] public string MessageProduct { get; set; } = "whatsapp";
+    [JsonPropertyName("to")] public string To { get; set; } = string.Empty;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)][JsonPropertyName("recipient_type")] public string? RecipientType { get { if (Type == TipoMensagem.Text) return "individual"; else return null; } }
+    [JsonPropertyName("type")] public TipoMensagem Type { get; set; } = TipoMensagem.Template;
+    [JsonPropertyName("template")] public TemplateDto? Template { get; set; }
+    [JsonPropertyName("text")] public TextSimpleMessageDto? Text { get; set; }
+}
+
+
+#region Enum Para o tipo de mensagem (baseado na documentação oficial do WhatsApp Business API)
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum TipoMensagem
+{
+    [EnumMember(Value = "template")]
+    Template,
+
+    [EnumMember(Value = "text")]
+    Text
+}
+#endregion
+
+#region Região de DTOs para mensagens do tipo template 
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum TemplatesName
+{
+    [EnumMember(Value = "status_pedido")]
+    StatusPedido
+}
+
+public class TemplateDto
+{
+    [JsonPropertyName("name")] public TemplatesName Name { get; set; }
+    [JsonPropertyName("language")] public LanguageDto Language { get; set; } = new LanguageDto();
+    [JsonPropertyName("components")] public List<ComponentDto> Components { get; set; } = new List<ComponentDto>();
+}
+
+public class LanguageDto
+{
+    [JsonPropertyName("code")] public string Code { get; set; } = "pt_BR";
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ComponentType
+{
+    [EnumMember(Value = "body")]
+    Body,
+
+    [EnumMember(Value = "button")]
+    Button
+}
+public class ComponentDto
+{
+    [JsonPropertyName("type")] public ComponentType Type { get; set; } = ComponentType.Body;
+    [JsonPropertyName("parameters")] public List<ParameterDto> Parameters { get; set; } = new List<ParameterDto>();
+    [JsonPropertyName("sub_type")] public string SubType { get; set; } = "url"; // Apenas para componentes do tipo "button", indica o tipo de ação (ex: "url" para botões que abrem um link)
+    [JsonPropertyName("index")] public string Index { get; set; } = "0"; // Apenas para componentes do tipo "button", indica o tipo de ação (ex: "url" para botões que abrem um link)
+
+}
+
+public class ParameterDto
+{
+    [JsonPropertyName("type")] public string Type { get; set; } = "text";
+    [JsonPropertyName("text")] public string Text { get; set; } = string.Empty;
+}
+#endregion
+
+#region DTO para mensagens do tipo texto simples
+public class TextSimpleMessageDto
+{
+    [JsonPropertyName("body")] public string Body { get; set; } = string.Empty;
+}
+#endregion

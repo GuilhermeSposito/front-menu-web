@@ -102,6 +102,7 @@ public class ClsMerchant
     [JsonPropertyName("taxa_de_servico_percent")] public decimal? TaxaDeServicoPercent { get; set; }
     [JsonPropertyName("valor_couvert")] public decimal? ValorCouvert { get; set; }
     [JsonPropertyName("AvisaFechamentoDeMesa")] public bool AvisaFechamentoDeMesa { get; set; } = true;
+    [JsonPropertyName("IntegraApiOficialWS")] public bool IntegraApiOficialWS { get; set; } = false;
 }
 
 public class AdminMerchantsResponse

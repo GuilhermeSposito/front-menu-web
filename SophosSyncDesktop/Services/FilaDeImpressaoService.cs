@@ -1,3 +1,4 @@
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
 using SophosSyncDesktop.DataBase.Db;
@@ -20,6 +21,7 @@ public class FilaDeImpressaoService : IDisposable
 
     // Memória de pedidos já impressos recentemente — impede re-impressão por WS + timer na mesma janela
     private readonly Dictionary<int, DateTime> _jaImpressos = new();
+    private readonly Dictionary<int, DateTime> _itensJaImpressos = new();
     private static readonly TimeSpan _ttlImpresso = TimeSpan.FromMinutes(5);
 
     private readonly object _lock = new();
@@ -194,6 +196,90 @@ public class FilaDeImpressaoService : IDisposable
         }
     }
 
+    public async Task BuscarItensDeMesaNaoImpressosAsync()
+    {
+        try
+        {
+            using var http = CriarHttpClientComTimeout(10);
+            var response = await http.GetAsync($"{ApiUrl}/pedidos/itens/mesa/nao-impressos");
+            if (!response.IsSuccessStatusCode) return;
+
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var result = await response.Content.ReadFromJsonAsync<FrontMenuWeb.Models.ReturnApiRefatored<ItemMesaComMesaDto>>(options);
+            var itens = result?.Data?.Lista ?? new List<ItemMesaComMesaDto>();
+
+            var gruposPorMesa = itens
+                .Where(i => i.Mesa != null)
+                .GroupBy(i => i.Mesa!.Id)
+                .ToList();
+
+            foreach (var grupo in gruposPorMesa)
+            {
+                var mesaInfo = grupo.First().Mesa!;
+
+                var itensParaImprimir = grupo.Where(i =>
+                {
+                    lock (_lock)
+                    {
+                        return !_itensJaImpressos.TryGetValue(i.Id, out var dt) ||
+                               (DateTime.Now - dt) >= _ttlImpresso;
+                    }
+                }).ToList();
+
+                if (!itensParaImprimir.Any()) continue;
+
+                var pedidoMesa = new PedidoMesaDto
+                {
+                    IdentificacaoMesaOuComanda = mesaInfo.CodigoExterno,
+                    Itens = itensParaImprimir.Cast<ItensPedido>().ToList()
+                };
+
+                string json = JsonSerializer.Serialize(pedidoMesa, options);
+                await _impressaoService.ImprimirComanda(json, "TIMER").ConfigureAwait(false);
+
+                foreach (var item in itensParaImprimir)
+                {
+                    await MarcarItemMesaComoImpressoAsync(item.Id);
+                    lock (_lock) { _itensJaImpressos[item.Id] = DateTime.Now; }
+                    LogLocalService.LogImpressao(item.Id.ToString(), "TIMER-MESA");
+                }
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            Console.WriteLine("[Fila] Timeout ao buscar itens de mesa não impressos — sem internet.");
+        }
+        catch (HttpRequestException)
+        {
+            Console.WriteLine("[Fila] Sem conexão ao buscar itens de mesa não impressos.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Fila] Erro ao buscar itens de mesa: {ex.Message}");
+        }
+    }
+
+    private async Task MarcarItemMesaComoImpressoAsync(int itemId)
+    {
+        try
+        {
+            using var http = CriarHttpClientComTimeout(10);
+            await http.PutAsync($"{ApiUrl}/pedidos/itens/mesa/impresso/{itemId}", null);
+        }
+        catch (TaskCanceledException)
+        {
+            Console.WriteLine($"[Fila] Timeout ao marcar item {itemId} como impresso.");
+        }
+        catch (HttpRequestException)
+        {
+            Console.WriteLine($"[Fila] Sem conexão ao marcar item {itemId} como impresso.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Fila] Erro ao marcar item {itemId} como impresso: {ex.Message}");
+        }
+    }
+
     private HttpClient CriarHttpClient()
     {
         var client = new HttpClient();
@@ -201,6 +287,27 @@ public class FilaDeImpressaoService : IDisposable
             new AuthenticationHeaderValue("Bearer", SophosSyncDesktop.Models.AppState.Token ?? "");
         SophosSyncDesktop.Models.AppState.AddHmacHeaders(client);
         return client;
+    }
+
+    private HttpClient CriarHttpClientComTimeout(int segundos)
+    {
+        var client = CriarHttpClient();
+        client.Timeout = TimeSpan.FromSeconds(segundos);
+        return client;
+    }
+
+    // DTOs locais para desserialização dos itens de mesa
+    private class ItemMesaComMesaDto : ItensPedido
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("Mesa")]
+        public MesaInfoDto? Mesa { get; set; }
+    }
+
+    private class MesaInfoDto
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("id")] public int Id { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("CodigoExterno")] public int CodigoExterno { get; set; }
+        [System.Text.Json.Serialization.JsonPropertyName("Apelido")] public string? Apelido { get; set; }
     }
 
     public void Dispose()
