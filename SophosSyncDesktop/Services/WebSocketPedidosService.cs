@@ -104,14 +104,13 @@ public class WebSocketPedidosService : IDisposable
 
                         if (pedidoMesa == null) return;
 
-
                         SomService.TocarPedidoMesa();
 
                         using var db = new AppDbContext();
                         var config = db.Impressoras.FirstOrDefault();
                         if (config is null || !config.ImprimirComandaMesa) return;
 
-                        await _impressaoService.ImprimirComanda(json, "SOPHOS", EMesa: true).ConfigureAwait(false);
+                        await _filaService.ProcessarComandaMesaAsync(pedidoMesa, "WS").ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -143,6 +142,11 @@ public class WebSocketPedidosService : IDisposable
             EstaConectado = false;
             StatusChanged?.Invoke(false, "Falha ao conectar");
             Console.WriteLine($"[WS] Falha ao conectar: {ex.Message}");
+
+            // Limpa o cliente para que ConectarAsync() possa ser chamado novamente.
+            // Sem isso, o guard "if (_client != null) return" bloquearia futuras tentativas.
+            try { _client?.Dispose(); } catch { }
+            _client = null;
         }
     }
 

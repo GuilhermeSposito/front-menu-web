@@ -80,7 +80,7 @@ public class FilaDeImpressaoService : IDisposable
     {
         try
         {
-            using var http = CriarHttpClient();
+            using var http = CriarHttpClientComTimeout(10);
             var response = await http.GetAsync($"{ApiUrl}/pedidos?Imprimiu=false");
             if (!response.IsSuccessStatusCode) return;
 
@@ -101,6 +101,16 @@ public class FilaDeImpressaoService : IDisposable
                 if (deveImprimir)
                     Enfileirar(pedido, JsonSerializer.Serialize(pedido, options), "TIMER");
             }
+        }
+        catch (TaskCanceledException)
+        {
+            // Timeout de 10s — sem internet. O timer vai tentar novamente em 20s automaticamente.
+            Console.WriteLine("[Fila] Timeout ao buscar pedidos não impressos — sem internet.");
+        }
+        catch (HttpRequestException)
+        {
+            // Sem conexão de rede. O timer vai tentar novamente em 20s automaticamente.
+            Console.WriteLine("[Fila] Sem conexão ao buscar pedidos não impressos.");
         }
         catch (Exception ex)
         {
@@ -196,6 +206,41 @@ public class FilaDeImpressaoService : IDisposable
         }
     }
 
+    // Ponto único de impressão de comandas de mesa — usado pelo WS e pelo timer.
+    // Reserva os IDs dos itens dentro do lock antes de imprimir, eliminando a race condition
+    // entre o evento WebSocket e a varredura periódica de não-impressos.
+    public async Task ProcessarComandaMesaAsync(PedidoMesaDto pedido, string origem)
+    {
+        List<int> idsReservados;
+        lock (_lock)
+        {
+            idsReservados = pedido.Itens
+                .Where(i => !_itensJaImpressos.TryGetValue(i.Id, out var dt) || (DateTime.Now - dt) >= _ttlImpresso)
+                .Select(i => i.Id)
+                .ToList();
+
+            foreach (var id in idsReservados)
+                _itensJaImpressos[id] = DateTime.Now;
+        }
+
+        if (idsReservados.Count == 0) return;
+
+        var pedidoFiltrado = new PedidoMesaDto
+        {
+            IdentificacaoMesaOuComanda = pedido.IdentificacaoMesaOuComanda,
+            Itens = pedido.Itens.Where(i => idsReservados.Contains(i.Id)).ToList()
+        };
+
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        await _impressaoService.ImprimirComanda(JsonSerializer.Serialize(pedidoFiltrado, options), origem, EMesa: true).ConfigureAwait(false);
+
+        foreach (var id in idsReservados)
+        {
+            await MarcarItemMesaComoImpressoAsync(id);
+            LogLocalService.LogImpressao(id.ToString(), origem);
+        }
+    }
+
     public async Task BuscarItensDeMesaNaoImpressosAsync()
     {
         try
@@ -216,33 +261,12 @@ public class FilaDeImpressaoService : IDisposable
             foreach (var grupo in gruposPorMesa)
             {
                 var mesaInfo = grupo.First().Mesa!;
-
-                var itensParaImprimir = grupo.Where(i =>
-                {
-                    lock (_lock)
-                    {
-                        return !_itensJaImpressos.TryGetValue(i.Id, out var dt) ||
-                               (DateTime.Now - dt) >= _ttlImpresso;
-                    }
-                }).ToList();
-
-                if (!itensParaImprimir.Any()) continue;
-
                 var pedidoMesa = new PedidoMesaDto
                 {
                     IdentificacaoMesaOuComanda = mesaInfo.CodigoExterno,
-                    Itens = itensParaImprimir.Cast<ItensPedido>().ToList()
+                    Itens = grupo.Cast<ItensPedido>().ToList()
                 };
-
-                string json = JsonSerializer.Serialize(pedidoMesa, options);
-                await _impressaoService.ImprimirComanda(json, "TIMER").ConfigureAwait(false);
-
-                foreach (var item in itensParaImprimir)
-                {
-                    await MarcarItemMesaComoImpressoAsync(item.Id);
-                    lock (_lock) { _itensJaImpressos[item.Id] = DateTime.Now; }
-                    LogLocalService.LogImpressao(item.Id.ToString(), "TIMER-MESA");
-                }
+                await ProcessarComandaMesaAsync(pedidoMesa, "TIMER-MESA").ConfigureAwait(false);
             }
         }
         catch (TaskCanceledException)

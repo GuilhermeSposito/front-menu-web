@@ -92,7 +92,14 @@ public partial class PaginaInicial : Form
             }
         }
 
-        await _webSocketService.ConectarAsync();
+        if (!string.IsNullOrEmpty(AppState.Token))
+        {
+            await _webSocketService.ConectarAsync();
+        }
+        else
+        {
+            OnWebSocketStatusChanged(false, "Aguardando login");
+        }
         IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
         IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos();
 
@@ -120,7 +127,7 @@ public partial class PaginaInicial : Form
 
     public void IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos()
     {
-        _timerMesa = new System.Timers.Timer(20000);
+        _timerMesa = new System.Timers.Timer(25000);
         _timerMesa.Elapsed += async (s, e) =>
         {
             // Itens de mesa são sempre verificados — não há evento WebSocket por item,
@@ -717,15 +724,22 @@ public partial class PaginaInicial : Form
     }
     private void btnConfig_Click(object sender, EventArgs e)
     {
-        ConfigsGeral teste = new ConfigsGeral();
+        ConfigsGeral teste = new ConfigsGeral(_webSocketService);
         teste.ShowDialog();
-        IniciarMonitoramento(); // Reinicia o monitoramento para pegar poss�veis mudan�as no caminho de salvamento
+        IniciarMonitoramento(); // Reinicia o monitoramento para pegar possíveis mudanças no caminho de salvamento
         IniciarMonitoramentoMesa();
     }
-    private void labeLogin_Click(object sender, EventArgs e)
+    private async void labeLogin_Click(object sender, EventArgs e)
     {
         LoginForm loginForm = new LoginForm();
-        loginForm.ShowDialog();
+        if (loginForm.ShowDialog() == DialogResult.OK)
+        {
+            if (!string.IsNullOrEmpty(AppState.Token))
+            {
+                await _webSocketService.DesconectarAsync();
+                await _webSocketService.ConectarAsync();
+            }
+        }
     }
     private void comboBoxImpressoraDanfe_SelectedIndexChanged(object sender, EventArgs e)
     {

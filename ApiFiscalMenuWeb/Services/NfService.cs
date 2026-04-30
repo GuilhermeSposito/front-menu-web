@@ -1210,10 +1210,14 @@ public class NfService
         int ContadorItem = 1;
         foreach (var item in ItensDoPedido)
         {
-            if (item.Produto is null)
-                throw new BadHttpRequestException(
-                    $"O item \"{item.Descricao}\" (ProdutoId: {item.ProdutoId ?? "não informado"}) não possui dados fiscais do produto vinculados. " +
-                    $"Cadastre ou vincule o produto corretamente antes de emitir a NF.");
+            item.Produto ??= new ClsProduto //Aqui se o produto for nullo, ele vai adicionar um produto como padrão
+            {
+                CodigoInterno = "0001",
+                Descricao = item.Descricao,
+                NCM = "21069090",
+                CEST = "1709700",
+                csosn = "102"
+            };
 
             var valorTotalTrib = await _ibptServices.GetIBPTValor
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);

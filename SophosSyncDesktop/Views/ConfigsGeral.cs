@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SophosSyncDesktop.DataBase.Db;
+using SophosSyncDesktop.Models;
+using SophosSyncDesktop.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,10 +16,40 @@ namespace SophosSyncDesktop.Views;
 
 public partial class ConfigsGeral : Form
 {
-    public ConfigsGeral()
+    private readonly WebSocketPedidosService _webSocketService;
+
+    public ConfigsGeral(WebSocketPedidosService webSocketService)
     {
+        _webSocketService = webSocketService;
         InitializeComponent();
         LoadConfigs();
+    }
+
+    /// <summary>
+    /// Re-autentica com as credenciais salvas e reconecta o WebSocket.
+    /// Chamado após qualquer alteração nas checkboxes de integração.
+    /// </summary>
+    private async Task ReautenticarEReconectarAsync()
+    {
+        try
+        {
+            using var db = new AppDbContext();
+            var infos = db.InfosDeLogin.FirstOrDefault();
+            if (infos is null) return;
+
+            await AppState.Login(infos.Email, infos.Senha);
+            await AppState.GetMerchantAsync();
+
+            if (!string.IsNullOrEmpty(AppState.Token))
+            {
+                await _webSocketService.DesconectarAsync();
+                await _webSocketService.ConectarAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ConfigsGeral] Falha ao reautenticar/reconectar socket: {ex.Message}");
+        }
     }
 
     public async Task LoadConfigs()
@@ -75,6 +107,7 @@ public partial class ConfigsGeral : Form
             configs.ImprimirIfood = checkBoxImprimirIfood.Checked;
             await dbContext.SaveChangesAsync();
         }
+        await ReautenticarEReconectarAsync();
     }
 
     private async void checkBoxImprimirCardapio_CheckedChanged(object sender, EventArgs e)
@@ -86,6 +119,7 @@ public partial class ConfigsGeral : Form
             configs.ImprimirSophosCardapio = checkBoxImprimirCardapio.Checked;
             await dbContext.SaveChangesAsync();
         }
+        await ReautenticarEReconectarAsync();
     }
 
     private async void checkBoxImprimirComandaMesa_CheckedChanged(object sender, EventArgs e)
@@ -97,6 +131,7 @@ public partial class ConfigsGeral : Form
             configs.ImprimirComandaMesa = checkBoxImprimirComandaMesa.Checked;
             await dbContext.SaveChangesAsync();
         }
+        await ReautenticarEReconectarAsync();
     }
 
     private async void checkBoxUsaDesktop_CheckedChanged(object sender, EventArgs e)
