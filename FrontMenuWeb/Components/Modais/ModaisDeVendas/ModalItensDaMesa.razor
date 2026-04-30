@@ -2,6 +2,7 @@
 @using System.Text.RegularExpressions
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Components.Modais.ModaisGenericos
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
@@ -458,6 +459,17 @@
         if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
         if (ItensSelecionados.Count == 0) return;
 
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Deseja excluir {ItensSelecionados.Count} item(ns) selecionado(s)? Essa operação não pode ser desfeita." },
+            { x => x.ButtonText, "Sim" },
+            { x => x.Color, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+        if (result!.Canceled || result.Data is not bool confirmado || !confirmado) return;
+
         var erros = new List<string>();
         foreach (var item in ItensSelecionados)
         {
@@ -485,6 +497,18 @@
     private async Task LimparItens()
     {
         if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Deseja limpar todos os itens da {AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced} {MesaOuComanda.CodigoExterno}? Essa operação não pode ser desfeita." },
+            { x => x.ButtonText, "Sim" },
+            { x => x.Color, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Limpeza", parameters, options);
+        var result = await dialog.Result;
+        if (result!.Canceled || result.Data is not bool confirmado || !confirmado) return;
+
         var responseFromApi = await PedidosService.LimparMesa(MesaOuComanda);
         var sucesso = responseFromApi.Status != "error";
         List<string> mensagem = sucesso ? responseFromApi.Data.Messages : responseFromApi.Messages;
