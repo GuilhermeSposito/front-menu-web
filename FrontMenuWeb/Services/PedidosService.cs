@@ -368,6 +368,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> TransferirItensDeMesa(int mesaOrigemId, int mesaDestinoId, List<int> itemIds)
+    {
+        var body = new { mesaOrigemId, mesaDestinoId, itemIds };
+        var response = await _http.PatchAsJsonAsync("pedidos/itens/mesa/transferir", body);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos(QueryDeHistoricoDePedidos? QueryDeHistorico = null)
     {
         string url = "pedidos/estatisticas/itens";

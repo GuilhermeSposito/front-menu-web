@@ -3,6 +3,7 @@
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Components.Modais.ModaisGenericos
+@inject MesasServices MesasServices
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
@@ -128,6 +129,9 @@
 
                     @if (ItensSelecionados.Count > 0)
                     {
+                        <MudButton OnClick="TransferirItensSelecionados" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.SwapHoriz">
+                            Transferir Selecionados (@ItensSelecionados.Count)
+                        </MudButton>
                         <MudButton OnClick="ExcluirItensSelecionados" Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">
                             Excluir Selecionados (@ItensSelecionados.Count)
                         </MudButton>
@@ -449,6 +453,33 @@
             {
                 Snackbar.Add($"Erro ao fechar parcial: {string.Join(",", response.Messages)}", Severity.Error);
             }
+        }
+    }
+    #endregion
+
+    #region Função de transferir itens selecionados
+    private async Task TransferirItensSelecionados()
+    {
+        if (ItensSelecionados.Count == 0) return;
+
+        var parameters = new DialogParameters<ModalDeTransferirItensDeMesa>
+        {
+            { x => x.MesaOrigemId, MesaOuComanda.Id },
+            { x => x.CodigoExternoOrigem, MesaOuComanda.CodigoExterno },
+            { x => x.ItemIds, ItensSelecionados.Select(i => i.Id).ToList() }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeTransferirItensDeMesa>("Transferir Itens", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            ItensSelecionados.Clear();
+            if (dataGridRef is not null)
+                await dataGridRef.ReloadServerData();
+
+            if (PedidoMesa.Itens?.Count == 0)
+                MudDialog.Close(DialogResult.Ok(true));
         }
     }
     #endregion
