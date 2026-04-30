@@ -21,8 +21,9 @@ public class FilaDeImpressaoService : IDisposable
 
     // Memória de pedidos já impressos recentemente — impede re-impressão por WS + timer na mesma janela
     private readonly Dictionary<int, DateTime> _jaImpressos = new();
-    private readonly Dictionary<int, DateTime> _itensJaImpressos = new();
+    private readonly Dictionary<string, DateTime> _itensJaImpressos = new();
     private static readonly TimeSpan _ttlImpresso = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan _ttlItemMesa = TimeSpan.FromSeconds(30);
 
     private readonly object _lock = new();
     private readonly CancellationTokenSource _cts = new();
@@ -211,33 +212,15 @@ public class FilaDeImpressaoService : IDisposable
     // entre o evento WebSocket e a varredura periódica de não-impressos.
     public async Task ProcessarComandaMesaAsync(PedidoMesaDto pedido, string origem)
     {
-        List<int> idsReservados;
-        lock (_lock)
-        {
-            idsReservados = pedido.Itens
-                .Where(i => !_itensJaImpressos.TryGetValue(i.Id, out var dt) || (DateTime.Now - dt) >= _ttlImpresso)
-                .Select(i => i.Id)
-                .ToList();
-
-            foreach (var id in idsReservados)
-                _itensJaImpressos[id] = DateTime.Now;
-        }
-
-        if (idsReservados.Count == 0) return;
-
-        var pedidoFiltrado = new PedidoMesaDto
-        {
-            IdentificacaoMesaOuComanda = pedido.IdentificacaoMesaOuComanda,
-            Itens = pedido.Itens.Where(i => idsReservados.Contains(i.Id)).ToList()
-        };
+        if (pedido.Itens.Count == 0) return;
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        await _impressaoService.ImprimirComanda(JsonSerializer.Serialize(pedidoFiltrado, options), origem, EMesa: true).ConfigureAwait(false);
+        await _impressaoService.ImprimirComanda(JsonSerializer.Serialize(pedido, options), origem, EMesa: true).ConfigureAwait(false);
 
-        foreach (var id in idsReservados)
+        foreach (var item in pedido.Itens)
         {
-            await MarcarItemMesaComoImpressoAsync(id);
-            LogLocalService.LogImpressao(id.ToString(), origem);
+            await MarcarItemMesaComoImpressoAsync(item.Id);
+            LogLocalService.LogImpressao(item.Id.ToString(), origem);
         }
     }
 

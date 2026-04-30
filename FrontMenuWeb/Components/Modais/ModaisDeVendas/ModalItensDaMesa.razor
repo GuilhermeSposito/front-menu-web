@@ -125,6 +125,12 @@
                         }
                     }
 
+                    @if (ItensSelecionados.Count > 0)
+                    {
+                        <MudButton OnClick="ExcluirItensSelecionados" Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">
+                            Excluir Selecionados (@ItensSelecionados.Count)
+                        </MudButton>
+                    }
                     <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
                 </MudStack>
             </ToolBarContent>
@@ -443,6 +449,35 @@
                 Snackbar.Add($"Erro ao fechar parcial: {string.Join(",", response.Messages)}", Severity.Error);
             }
         }
+    }
+    #endregion
+
+    #region Função de excluir itens selecionados
+    private async Task ExcluirItensSelecionados()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+        if (ItensSelecionados.Count == 0) return;
+
+        var erros = new List<string>();
+        foreach (var item in ItensSelecionados)
+        {
+            var response = await PedidosService.ExcluirItemDaMesa(item.Id);
+            if (response.Status == "error")
+                erros.Add(item.Descricao);
+        }
+
+        if (erros.Count == 0)
+            Snackbar.Add("Itens excluídos com sucesso!", Severity.Success);
+        else
+            Snackbar.Add($"Erro ao excluir: {string.Join(", ", erros)}", Severity.Error);
+
+        ItensSelecionados.Clear();
+
+        if (dataGridRef is not null)
+            await dataGridRef.ReloadServerData();
+
+        if (PedidoMesa.Itens?.Count == 0)
+            MudDialog.Close(DialogResult.Ok(true));
     }
     #endregion
 

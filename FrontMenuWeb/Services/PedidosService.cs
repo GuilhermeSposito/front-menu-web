@@ -361,6 +361,13 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> ExcluirItemDaMesa(int itemId)
+    {
+        var response = await _http.DeleteAsync($"pedidos/itens/mesa/{itemId}");
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos(QueryDeHistoricoDePedidos? QueryDeHistorico = null)
     {
         string url = "pedidos/estatisticas/itens";

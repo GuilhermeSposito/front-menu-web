@@ -120,7 +120,12 @@ public class ImpressaoService
                             continue;
 
                         PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
-                        PedidoMesaDto PedidoAtualizadoComItensAgrupadosAuxiliar = Pedido;
+                        PedidoMesaDto PedidoAtualizadoComItensAgrupadosAuxiliar = new PedidoMesaDto
+                        {
+                            IdentificacaoMesaOuComanda = Pedido.IdentificacaoMesaOuComanda,
+                            NomeCliente = Pedido.NomeCliente,
+                            Itens = Pedido.Itens
+                        };
                         PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
 
                         string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
@@ -186,12 +191,12 @@ public class ImpressaoService
                         QtdDeItensDoPedido = Pedido.Itens.Sum(x => x.Quantidade);
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
-                       .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
+                       .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
                         {
-                                new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
-                                new { Origem = 2, Impressora = i.Produto.ImpressoraComanda2, Item = i }
+                                new {  Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                new {  Impressora = i.Produto.ImpressoraComanda2, Item = i }
                         })
-                       .GroupBy(x => new { x.Impressora, x.Origem })
+                       .GroupBy(x => new { x.Impressora })
                        .Select(grupo => new ItensPorImpressoraDto
                        {
                            Impressora = grupo.Key.Impressora,
@@ -752,10 +757,10 @@ public class ImpressaoService
     #endregion
 
     #region Definição do aviso de conta para impressão
-    private static string SepPontilhado() => "- - - - - - - - - - - - - - - - - - - - -";
+    private static string SepPontilhado() => "- - - - - - - - - - - - - - - - - - - -";
 
     // Alinha texto à esquerda e valor à direita em ~42 chars
-    private static string LR(string esq, string dir, int W = 42)
+    private static string LR(string esq, string dir, int W = 40)
     {
         var espaco = W - esq.Length - dir.Length;
         return espaco > 0 ? esq + new string(' ', espaco) + dir : $"{esq} {dir}";
@@ -1058,7 +1063,7 @@ public class ImpressaoService
             {
                 PrintDocument printDocument = new PrintDocument();
                 printDocument.PrinterSettings.PrinterName = impressora1;
-                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 300, 500000);
+                printDocument.DefaultPageSettings.PaperSize = new PaperSize("Custom", 280, 500000);
                 printDocument.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
                 printDocument.PrintPage += (sender, e) => PrintPageHandler(sender, e, conteudo, espacamento);
                 printDocument.Print();
