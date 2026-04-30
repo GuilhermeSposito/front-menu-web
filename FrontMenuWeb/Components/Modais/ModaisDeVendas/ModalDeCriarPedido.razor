@@ -654,6 +654,8 @@
 
     private async void AbreModalDeAdicionarPessoa()
     {
+        try
+        {
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
         string? NumeroDeTelefoneValido = null;
@@ -682,6 +684,11 @@
             await SelecionarPessoa(pessoa);
             await TextFieldProd.FocusAsync();
             StateHasChanged();
+        }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao abrir cadastro de pessoa: {ex.Message}", Severity.Error);
         }
     }
 
@@ -750,7 +757,8 @@
     private async void OnPesquisaChanged(string valor)
     {
         PesquisaDeProduto = valor;
-        await CarregarProdutos();
+        try { await CarregarProdutos(); }
+        catch (Exception ex) { Snackbar.Add($"Erro ao buscar produtos: {ex.Message}", Severity.Error); }
         ProdutoSelecionadoIndex = 0;
     }
 
@@ -1129,38 +1137,48 @@
             NovoPedido.MesaComandaId = Mesa.CodigoExterno;
         }
 
-        ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);
-
-        string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
-        Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
-
-        if (ResponseAPi.Status != "success")
+        try
         {
-            return;
-        }
+            ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);
 
-        MudDialog.Close(DialogResult.Ok(true));
+            string MensagemDeRetorno = string.Join(", ", ResponseAPi.Status == "success" ? ResponseAPi.Data.Messages : ResponseAPi.Messages);
+            Snackbar.Add(MensagemDeRetorno, ResponseAPi.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (ResponseAPi.Status != "success") return;
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar pedido para a mesa: {ex.Message}", Severity.Error);
+        }
     }
     #endregion
 
     #region Funções da Página
     private async void Cancelar()
     {
-        var parameters = new DialogParameters<ModalDeExcluir>
-          {
-              { x => x.ContentText, $"Ao sair da página, este pedido não será criado. Ele e as informações inseridas serão perdidas." },
-              { x => x.ButtonText, "Sim" },
-              { x => x.Color, Color.Error}
-          };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
-        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Sair da página", parameters, options);
-        var result = await dialog.Result;
-
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        try
         {
-            MudDialog.Close();
-        }
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                { x => x.ContentText, $"Ao sair da página, este pedido não será criado. Ele e as informações inseridas serão perdidas." },
+                { x => x.ButtonText, "Sim" },
+                { x => x.Color, Color.Error}
+            };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Sair da página", parameters, options);
+            var result = await dialog.Result;
 
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                MudDialog.Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao cancelar pedido: {ex.Message}", Severity.Error);
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -1301,7 +1319,8 @@
     private async void OnFocusAutoCompleteManual(FocusEventArgs args)
     {
         MostrarSugestoes = true;
-        await ValueDeAutoCompleteMudou(PesquisaPessoa);
+        try { await ValueDeAutoCompleteMudou(PesquisaPessoa); }
+        catch (Exception ex) { Console.WriteLine($"[OnFocusAutoCompleteManual] {ex.Message}"); }
     }
 
     private void OnFocusOutAutoCompleteManual(FocusEventArgs args)
@@ -1327,9 +1346,15 @@
     private async Task<IEnumerable<ClsPessoas>> BuscarPessoas(string valor, CancellationToken cancellationToken)
     {
         PesquisaPessoa = valor;
-
-        var ResponseAPi = await PessoaService.GetPessoasPaginado(valor, true);
-        PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+        try
+        {
+            var ResponseAPi = await PessoaService.GetPessoasPaginado(valor, true);
+            PessoasParaSelecionar = ResponseAPi.Data.Lista ?? new List<ClsPessoas>();
+        }
+        catch
+        {
+            PessoasParaSelecionar = new List<ClsPessoas>();
+        }
 
         _semResultados = !PessoasParaSelecionar.Any();
 

@@ -1,0 +1,251 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject CaixaEPagamentosService CaixaService
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Color="Color.Transparent" Class="sophos-appbar" Dense="true">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="cursor-pointer"
+                  @onclick="@(() => Navigation.NavigateTo("/"))">
+            <MudAvatar Size="Size.Small" Square="false" Class="sophos-brand-mark">
+                <MudImage Src="images/Sophos-Escuro-apps-branco.png" Alt="Sophos" />
+            </MudAvatar>
+            <MudStack Spacing="0">
+                <MudText Typo="Typo.subtitle2" Class="sophos-brand-title">Sophos PDV</MudText>
+                @if (AppState.MerchantLogado is not null)
+                {
+                    <MudText Typo="Typo.caption" Class="sophos-brand-sub">@AppState.MerchantLogado.NomeFantasia</MudText>
+                }
+            </MudStack>
+        </MudStack>
+
+        <MudSpacer />
+
+        <div class="sophos-nav">
+            @foreach (var item in _nav)
+            {
+                var isActive = Navigation.Uri.Contains(item.Href, StringComparison.OrdinalIgnoreCase);
+                <div class="@($"sophos-nav__item {(isActive ? "sophos-nav__item--active" : "")}")"
+                     @onclick="@(() => Navigation.NavigateTo(item.Href))">
+                    @if (isActive)
+                    {
+                        <MudIcon Icon="@item.Icon" Size="Size.Small" Class="mr-1" />
+                    }
+                    @item.Label
+                </div>
+            }
+        </div>
+
+        <MudSpacer />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+            <MudChip T="string" Variant="Variant.Filled" Size="Size.Small"
+                     Class="@($"sophos-status-chip{(AppState.CaixaAberto ? "" : " sophos-status-chip--closed")}")"
+                     Icon="@Icons.Material.Filled.Circle">
+                @(AppState.CaixaAberto ? "Caixa Aberto" : "Caixa Fechado")
+            </MudChip>
+
+            @if (AppState.MerchantLogado?.FuncionarioLogado is not null)
+            {
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                         ActivationEvent="MouseEvent.LeftClick">
+                    <ActivatorContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2"
+                                  Class="sophos-user pa-1 pr-3">
+                            <MudAvatar Color="Color.Primary" Size="Size.Small">
+                                @GetInitials(AppState.MerchantLogado.FuncionarioLogado.Nome)
+                            </MudAvatar>
+                            <MudText Typo="Typo.body2">@AppState.MerchantLogado.FuncionarioLogado.Nome</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" />
+                        </MudStack>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="Logout">Sair</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            }
+        </MudStack>
+    </MudAppBar>
+
+    <MudMainContent Class="sophos-main">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocorreu um erro inesperado.
+    <a href="." class="reload">Recarregar</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<style>
+    :root {
+        --sophos-orange: #FF7A1A;
+        --sophos-orange-soft: rgba(255, 122, 26, 0.12);
+        --sophos-orange-hover: #FF8A33;
+        --bg-canvas: #1A2538;
+        --bg-canvas-deep: #131C2C;
+        --bg-surface: #232F45;
+        --line-default: rgba(255, 255, 255, 0.08);
+        --fg-primary: #F5F7FA;
+        --fg-secondary: #B7C0CC;
+        --fg-tertiary: #7E8A9C;
+        --success: #4CAF50;
+    }
+
+    .sophos-appbar.mud-appbar {
+        background: var(--bg-surface) !important;
+        border-bottom: 1px solid var(--line-default);
+        height: 56px;
+        min-height: 56px;
+    }
+
+    .sophos-brand-mark { background: transparent; }
+    .sophos-brand-title { color: var(--fg-primary); font-weight: 600; line-height: 1.2; }
+    .sophos-brand-sub { color: var(--fg-tertiary); }
+
+    .sophos-nav {
+        display: flex;
+        gap: 2px;
+        background: var(--bg-canvas-deep);
+        padding: 4px;
+        border-radius: 999px;
+    }
+    .sophos-nav__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--fg-secondary);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 120ms ease-out;
+        user-select: none;
+    }
+    .sophos-nav__item:hover { color: var(--fg-primary); background: rgba(255,255,255,0.04); }
+    .sophos-nav__item--active { background: var(--sophos-orange); color: #fff; }
+    .sophos-nav__item--active:hover { background: var(--sophos-orange-hover); }
+
+    .sophos-status-chip.mud-chip {
+        background: rgba(76, 175, 80, 0.14) !important;
+        color: var(--success) !important;
+        font-weight: 600;
+    }
+    .sophos-status-chip .mud-chip-icon { color: var(--success) !important; font-size: 10px !important; }
+    .sophos-status-chip--closed.mud-chip { background: rgba(244, 67, 54, 0.14) !important; color: #F44336 !important; }
+    .sophos-status-chip--closed .mud-chip-icon { color: #F44336 !important; }
+
+    .sophos-user {
+        background: var(--bg-canvas-deep);
+        border-radius: 999px;
+        cursor: pointer;
+    }
+
+    .sophos-main {
+        background: var(--bg-canvas);
+        min-height: 100vh;
+        padding-top: 56px !important;
+    }
+</style>
+
+@code {
+    private MudTheme? _theme;
+
+    private record NavLink(string Label, string Href, string Icon);
+
+    private readonly List<NavLink> _nav = new()
+    {
+        new("Pedidos",  "/gestao-de-pedidos",  Icons.Material.Outlined.ReceiptLong),
+        new("Mesas",    "/gestao-de-mesas", Icons.Material.Outlined.TableRestaurant),
+        new("Checkout", "/checkout-refatored", Icons.Material.Outlined.PointOfSale),
+        new("Caixa",    "/caixa",    Icons.Material.Outlined.Savings),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppState.OnChange += StateHasChanged;
+        try
+        {
+            var result = await CaixaService.VerificaSeHaCaixaAberto();
+            AppState.CaixaAberto = result?.Status == "success";
+        }
+        catch
+        {
+            AppState.CaixaAberto = false;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _theme = new MudTheme
+        {
+            PaletteDark = new PaletteDark
+            {
+                Primary = "#FF7A1A",
+                Secondary = "#192436",
+                Surface = "#232F45",
+                Background = "#1A2538",
+                BackgroundGray = "#131C2C",
+                AppbarBackground = "#232F45",
+                AppbarText = "#F5F7FA",
+                DrawerBackground = "#131C2C",
+                DrawerText = "#B7C0CC",
+                DrawerIcon = "#B7C0CC",
+                TextPrimary = "#F5F7FA",
+                TextSecondary = "#B7C0CC",
+                TextDisabled = "#7E8A9C",
+                ActionDefault = "#B7C0CC",
+                ActionDisabled = "#7E8A9C",
+                Info = "#2196F3",
+                Success = "#4CAF50",
+                Warning = "#FFC107",
+                Error = "#F44336",
+                LinesDefault = "rgba(255,255,255,0.08)",
+                TableLines = "rgba(255,255,255,0.08)",
+                Divider = "rgba(255,255,255,0.08)",
+                OverlayLight = "rgba(19,28,44,0.5)",
+            },
+            PaletteLight = new PaletteLight
+            {
+                Primary = "#FF7A1A",
+                Secondary = "#192436",
+                Background = "#FAFBFC",
+                Surface = "#FFFFFF",
+                AppbarBackground = "#FFFFFF",
+                AppbarText = "#1A2538",
+                TextPrimary = "#1A2538",
+            },
+            LayoutProperties = new LayoutProperties()
+        };
+        Navigation.LocationChanged += (_, _) => InvokeAsync(StateHasChanged);
+    }
+
+    private string GetInitials(string? nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome)) return "??";
+        var parts = nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+
+    public async Task Logout()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+        if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
+            customAuthProvider.NotifyAuthenticationStateChanged();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}

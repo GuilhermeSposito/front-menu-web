@@ -308,8 +308,15 @@
         if (!_widgetInitialized && AppState.MerchantLogado is not null && AppState.MerchantLogado.IntegraIfood)
         {
             _widgetInitialized = true;
-            Console.WriteLine($"[Widget] Iniciando widget. EmpresasIfood count: {AppState.MerchantLogado.EmpresasIfood?.Count ?? 0}");
-            await IniciarWidget(AppState.MerchantLogado.EmpresasIfood ?? new());
+            try
+            {
+                Console.WriteLine($"[Widget] Iniciando widget. EmpresasIfood count: {AppState.MerchantLogado.EmpresasIfood?.Count ?? 0}");
+                await IniciarWidget(AppState.MerchantLogado.EmpresasIfood ?? new());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Widget] Erro ao iniciar widget: {ex.Message}");
+            }
         }
     }
 
@@ -400,6 +407,9 @@
 
         if (_pedidoMesaRecebidoGlobalHandler is not null)
             PedidosService.PedidoMesaRecebido -= _pedidoMesaRecebidoGlobalHandler;
+
+        if (_pedidoAguardandoAceiteGlobalHandler is not null)
+            PedidosService.PedidoEsperandoAceite -= _pedidoAguardandoAceiteGlobalHandler;
     }
 
     private async Task AlteraImpressaoDesabilita()
@@ -417,8 +427,8 @@
     private async void DarkModeToggle()
     {
         _isDarkMode = !_isDarkMode;
-
-        await SetThemeAsync(_isDarkMode);
+        try { await SetThemeAsync(_isDarkMode); }
+        catch (Exception ex) { Console.WriteLine($"[DarkModeToggle] {ex.Message}"); }
     }
 
     private async Task SetThemeAsync(bool isDarkMode)

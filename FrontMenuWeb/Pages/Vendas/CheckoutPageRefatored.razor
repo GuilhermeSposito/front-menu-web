@@ -1,0 +1,1288 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/checkout-refatored"
+@layout CheckoutLayout
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@inject ProdutoService ProdutoService
+@inject PedidosService PedidosService
+@inject IJSRuntime JS
+@inject BalancaService BalancaService
+@inject MesasServices MesasService
+@inject CaixaEPagamentosService CaixaService
+@implements IAsyncDisposable
+
+<PageTitle>Checkout – Sophos</PageTitle>
+
+<div class="checkout-grid" tabindex="0" @onkeydown="HandleGlobalKeyDown" @ref="_pageRef">
+
+    @* ── COLUNA ESQUERDA: busca + lista de itens ── *@
+    <div class="checkout-left">
+
+        @* Barra de busca *@
+        <div class="search-bar @(_enviando ? "search-bar--loading" : "")">
+            <div class="search-bar__icon">
+                <MudIcon Icon="@(_isFechamentoDeMesa ? Icons.Material.Outlined.TableRestaurant : Icons.Material.Outlined.Search)" />
+            </div>
+
+            @if (_isFechamentoDeMesa)
+            {
+                <div class="search-bar__mesa">
+                    @(_pedido.MesaApelido ?? AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa") @_pedido.MesaComandaId
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                   Class="search-bar__mesa-close" OnClick="ClearMesa" />
+                </div>
+            }
+
+            <MudAutocomplete T="ClsProduto"
+                             @ref="_autocompleteRef"
+                             SearchFunc="BuscarProdutosAutocomplete"
+                             ValueChanged="OnProdutoSelecionado"
+                             ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
+                             MinCharacters="1"
+                             Clearable="true"
+                             Variant="Variant.Text"
+                             Margin="Margin.Dense"
+                             DisableUnderLine="true"
+                             Class="search-bar__input"
+                             Placeholder="@(_isFechamentoDeMesa ? $"Adicionar item à mesa…" : "Pesquisa item · código · código de barras")"
+                             OnKeyDown="OnKeyDownAutocomplete"
+                             MaxItems="10"
+                             AutoFocus="true">
+                <ItemTemplate>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="min-width:52px; font-weight:bold;">@context.CodigoInterno</MudText>
+                        <MudText Typo="Typo.body2" Style="flex:1;">@context.Descricao</MudText>
+                        <MudText Typo="Typo.body2" Style="color:#4caf50; font-weight:600; white-space:nowrap;">
+                            @(context.Precos.Count > 0 ? context.Precos.Min(x => x.Valor).ToString("C") : "—")
+                        </MudText>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+
+            <div class="search-bar__hint">
+                <code>N*</code> qtd
+                @if (!_isFechamentoDeMesa)
+                {
+                    <span> · <code>c*NN</code> mesa</span>
+                }
+                @if (_quantidade > 1)
+                {
+                    <span class="search-bar__hint-emph"> · próx × @_quantidade</span>
+                }
+            </div>
+        </div>
+
+        @* Barra de seleção (aparece quando há itens selecionados) *@
+        @if (_itensSelecionados.Count > 0)
+        {
+            <div class="selection-bar">
+                <span class="selection-bar__count">
+                    <strong>@_itensSelecionados.Count</strong> selecionado@(_itensSelecionados.Count > 1 ? "s" : "")
+                </span>
+                <span class="selection-bar__sum">
+                    Soma: <strong>@SelectedSum.ToString("C")</strong>
+                </span>
+                <MudButton Variant="Variant.Text" Size="Size.Small"
+                           OnClick="@(() => { _itensSelecionados.Clear(); StateHasChanged(); })">
+                    Limpar
+                </MudButton>
+            </div>
+        }
+
+        @* Tabela de itens *@
+        <div class="items">
+            <div class="items__header">
+                <div>Nº</div>
+                <div>Descrição</div>
+                <div class="items__col-qty">Qtd</div>
+                <div class="items__col-val">Valor</div>
+                <div></div>
+            </div>
+
+            <div class="items__list @(_pedido.Itens.Any() ? "items__list--has-rows" : "")">
+                <div class="items__watermark">
+                    <img src="/CaixaAberto.png" alt="" />
+                </div>
+
+                @if (!_pedido.Itens.Any())
+                {
+                    <div class="empty">
+                        <MudIcon Icon="@Icons.Material.Outlined.ShoppingCart" Style="font-size:56px; opacity:0.5;" />
+                        <div class="empty__title">Pedido vazio</div>
+                        <div class="empty__hint">
+                            Pesquise por <code>código</code> ou <code>nome</code>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var (item, idx) in _pedido.Itens.Select((it, i) => (it, i)))
+                {
+                    var isSel = _itensSelecionados.Contains(item);
+                    var isExp = _itemExpandido.Contains(item);
+                    var temObs = !string.IsNullOrWhiteSpace(item.Observacoes);
+                    var temNome = !string.IsNullOrWhiteSpace(item.NomeCliente);
+
+                    <div class="@($"row {(isSel ? "row--selected" : "")}")"
+                         @onclick="() => ToggleSelecaoItem(item)">
+                        <div class="row__num">@($"{idx + 1:00}")</div>
+                        <div class="row__main">
+                            <div class="row__title">@item.Descricao</div>
+                            @if (temObs || temNome)
+                            {
+                                <div class="row__meta">
+                                    @if (temObs)
+                                    {
+                                        <span class="row__obs">@item.Observacoes</span>
+                                    }
+                                    @if (temNome)
+                                    {
+                                        <span class="row__client">
+                                            <MudIcon Icon="@Icons.Material.Outlined.Person" Style="font-size:12px;" />
+                                            @item.NomeCliente
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="row__qty">@item.Quantidade.ToString("0.###")×</div>
+                        <div class="row__price">@item.PrecoTotal.ToString("C")</div>
+                        <MudIconButton Icon="@(isExp ? Icons.Material.Outlined.ExpandLess : Icons.Material.Outlined.EditNote)"
+                                       Size="Size.Small" Class="row__more"
+                                       Style="@($"opacity:{(isExp || temObs || temNome ? "1" : "0.3")};")"
+                                       OnClick="@(() => ToggleExpandirItem(item))" />
+
+                        @if (isExp)
+                        {
+                            <div class="row__expanded" @onclick:stopPropagation="true">
+                                <MudTextField @bind-Value="item.Observacoes"
+                                              Placeholder="Observações (ex: sem cebola...)"
+                                              Variant="Variant.Outlined" Margin="Margin.Dense"
+                                              FullWidth="true"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline" />
+                                @if (_isFechamentoDeMesa)
+                                {
+                                    <MudTextField @bind-Value="item.NomeCliente"
+                                                  Placeholder="Nome do cliente"
+                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  FullWidth="true"
+                                                  Adornment="Adornment.Start"
+                                                  AdornmentIcon="@Icons.Material.Outlined.Person" />
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── COLUNA DIREITA: totais + opções + ações ── *@
+    <div class="checkout-right">
+
+        @* Card de totais hero *@
+        <div class="totals">
+            <div class="totals__label">@(TemExtras ? "Total Geral" : "Sub Total")</div>
+            <div class="totals__amount">
+                <span class="totals__currency">R$</span>@TotalIntPart<span class="totals__decimal">,@TotalDecPart</span>
+            </div>
+            <div class="totals__count">
+                <span class="totals__pill">@_pedido.Itens.Count</span>
+                @(_pedido.Itens.Count == 1 ? "item" : "itens") no pedido
+            </div>
+
+            @if (TemExtras)
+            {
+                <div class="totals__breakdown">
+                    <div class="totals__line">
+                        <span>Subtotal</span><span>@SubTotalItens.ToString("C")</span>
+                    </div>
+                    @if (TaxaValor > 0)
+                    {
+                        <div class="totals__line totals__line--add">
+                            <span>Taxa de serviço (@TaxaPercent%)</span><span>+ @TaxaValor.ToString("C")</span>
+                        </div>
+                    }
+                    @if (CouvertValor > 0)
+                    {
+                        <div class="totals__line totals__line--couvert">
+                            <span>Couvert · @_qtdPessoas pessoa@(_qtdPessoas > 1 ? "s" : "")</span>
+                            <span>+ @CouvertValor.ToString("C")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @* Opções de fechamento de mesa *@
+        @if (_isFechamentoDeMesa)
+        {
+            <div class="options">
+                <div class="options__title">
+                    <MudIcon Icon="@Icons.Material.Outlined.TableRestaurant" Size="Size.Small" Class="mr-1" />
+                    Opções de Fechamento
+                </div>
+
+                @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0)
+                {
+                    <div class="options__row">
+                        <span>Taxa de serviço (@(AppState.MerchantLogado!.TaxaDeServicoPercent)%)</span>
+                        <MudSwitch @bind-Value="_cobraTaxa" Color="Color.Primary" Size="Size.Small" />
+                    </div>
+                }
+
+                @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+                {
+                    <div class="options__row">
+                        <span>Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</span>
+                        <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
+                    </div>
+                }
+
+                @if (_cobraCouvert)
+                {
+                    <div class="options__row">
+                        <span>Qtd. pessoas</span>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Variant="Variant.Outlined"
+                                           OnClick="@(() => _qtdPessoas = Math.Max(1, _qtdPessoas - 1))" />
+                            <MudText Typo="Typo.body1" Style="min-width:24px; text-align:center;">@_qtdPessoas</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined"
+                                           OnClick="@(() => _qtdPessoas++)" />
+                        </MudStack>
+                    </div>
+                }
+
+                <div class="options__row">
+                    <span>Separar por cliente</span>
+                    <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Small" />
+                </div>
+            </div>
+        }
+
+        @* Botões de ação *@
+        <div class="actions">
+            @if (_isFechamentoDeMesa && AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
+            {
+                <MudButton Class="action-btn action-btn--warning" Variant="Variant.Filled" FullWidth="true"
+                           Disabled="@(!_pedido.Itens.Any() || _enviando)"
+                           OnClick="AvisarContaDaMesa">
+                    <MudIcon Icon="@Icons.Material.Filled.Print" Size="Size.Small" />
+                    <span class="action-btn__label">Imprimir Fechamento</span>
+                </MudButton>
+            }
+
+            <MudButton Class="action-btn action-btn--primary" Variant="Variant.Filled" FullWidth="true"
+                       Disabled="@(!_pedido.Itens.Any() || _enviando)"
+                       OnClick="Finalizar">
+                @if (_enviando)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Inherit" Class="me-2" />
+                    <span class="action-btn__label">Finalizando...</span>
+                }
+                else
+                {
+                    <span class="kbd">F1</span>
+                    <span class="action-btn__label">Finalizar</span>
+                }
+            </MudButton>
+
+            @if (_itensSelecionados.Count > 0)
+            {
+                <MudButton Class="action-btn action-btn--warning" Variant="Variant.Filled" FullWidth="true"
+                           Disabled="@_enviando"
+                           OnClick="FinalizarParcial">
+                    <span class="kbd kbd--dark">F6</span>
+                    <span class="action-btn__label">Finalizar Parcial</span>
+                </MudButton>
+            }
+
+            <MudButton Class="action-btn action-btn--info" Variant="Variant.Filled" FullWidth="true"
+                       Disabled="@(!_pedido.Itens.Any() || _enviando)"
+                       OnClick="TransferirVenda">
+                <span class="kbd">F2</span>
+                <span class="action-btn__label">Transferir Venda</span>
+            </MudButton>
+
+            <MudButton Class="action-btn action-btn--ghost" Variant="Variant.Filled" FullWidth="true"
+                       Disabled="@(!_pedido.Itens.Any())"
+                       OnClick="CancelarItem">
+                <span class="kbd">F4</span>
+                <MudIcon Icon="@Icons.Material.Outlined.Backspace" Size="Size.Small" />
+                <span class="action-btn__label">Cancelar Item</span>
+            </MudButton>
+
+            <MudButton Class="action-btn action-btn--danger" Variant="Variant.Filled" FullWidth="true"
+                       Disabled="@(!_pedido.Itens.Any() && !_isFechamentoDeMesa)"
+                       OnClick="CancelarVenda">
+                <span class="kbd">F5</span>
+                <span class="action-btn__label">Cancelar Venda</span>
+            </MudButton>
+        </div>
+    </div>
+</div>
+
+<style>
+    .checkout-grid {
+        --orange: #FF7A1A;
+        --orange-soft: rgba(255, 122, 26, 0.12);
+        --bg: #1A2538;
+        --bg-deep: #131C2C;
+        --surface: #232F45;
+        --surface-2: #2C3A53;
+        --line: rgba(255, 255, 255, 0.08);
+        --fg: #F5F7FA;
+        --fg-2: #B7C0CC;
+        --fg-3: #7E8A9C;
+        --success: #4CAF50;
+        --warning: #FFC107;
+        --info: #2196F3;
+        --danger: #F44336;
+        --couvert: #A78BFA;
+
+        height: calc(100vh - 56px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        gap: 16px;
+        padding: 16px;
+        background: var(--bg);
+        outline: none;
+        overflow: hidden;
+    }
+
+    /* ── Left column ── */
+    .checkout-left {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* ── Search bar ── */
+    .search-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px;
+        flex-shrink: 0;
+        transition: border-color 150ms, box-shadow 150ms;
+    }
+    .search-bar:focus-within {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px var(--orange-soft);
+    }
+    .search-bar--loading { opacity: 0.6; pointer-events: none; }
+    .search-bar__icon {
+        width: 44px; height: 44px;
+        display: grid; place-items: center;
+        background: var(--orange-soft);
+        color: var(--orange);
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+    .search-bar__mesa {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--orange);
+        color: #fff; font-weight: 700; font-size: 13px;
+        padding: 6px 6px 6px 12px;
+        border-radius: 999px;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .search-bar__mesa-close.mud-icon-button {
+        color: #fff !important;
+        background: rgba(255,255,255,0.22);
+        width: 22px; height: 22px;
+        padding: 2px;
+    }
+    .search-bar__input { flex: 1; }
+    .search-bar__input .mud-input-slot {
+        color: var(--fg) !important;
+        font-size: 16px !important;
+        background: transparent !important;
+    }
+    .search-bar__hint {
+        color: var(--fg-3); font-size: 12px;
+        padding-right: 12px; flex-shrink: 0;
+        white-space: nowrap;
+    }
+    .search-bar__hint code {
+        background: var(--bg-deep); color: var(--fg-2);
+        padding: 2px 6px; border-radius: 4px;
+        font-family: 'Roboto Mono', monospace; font-size: 11px;
+    }
+    .search-bar__hint-emph { color: var(--orange); font-weight: 600; }
+
+    /* ── Selection bar ── */
+    .selection-bar {
+        display: flex; align-items: center; gap: 12px;
+        background: var(--orange-soft);
+        border: 1px solid var(--orange);
+        border-radius: 8px;
+        padding: 8px 12px 8px 16px;
+        flex-shrink: 0;
+    }
+    .selection-bar__count { color: var(--orange); font-weight: 600; }
+    .selection-bar__sum { margin-left: auto; color: var(--fg-2); font-size: 13px; }
+    .selection-bar__sum strong { color: var(--fg); font-family: 'Roboto Mono', monospace; }
+
+    /* ── Items table ── */
+    .items {
+        flex: 1; min-height: 0; overflow: hidden;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        display: flex; flex-direction: column;
+        position: relative;
+    }
+    .items__header {
+        display: grid;
+        grid-template-columns: 48px 1fr 80px 100px 40px;
+        gap: 8px; padding: 10px 16px;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--line);
+        font-size: 11px; font-weight: 600;
+        color: var(--fg-3); letter-spacing: 0.08em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+    .items__col-qty { text-align: center; }
+    .items__col-val { text-align: right; }
+    .items__list { flex: 1; overflow-y: auto; position: relative; }
+    .items__watermark {
+        position: absolute; inset: 0;
+        display: grid; place-items: center;
+        pointer-events: none; z-index: 0;
+    }
+    .items__watermark img { max-width: 70%; max-height: 70%; opacity: 0.06; }
+    .items__list--has-rows .items__watermark { opacity: 0; }
+
+    .row {
+        position: relative; z-index: 1;
+        display: grid;
+        grid-template-columns: 48px 1fr 80px 100px 40px;
+        gap: 8px; align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+        color: var(--fg);
+        transition: background 80ms;
+    }
+    .row:hover { background: var(--surface-2); }
+    .row--selected {
+        background: var(--orange-soft) !important;
+        box-shadow: inset 3px 0 0 var(--orange);
+    }
+    .row__num { text-align: center; font-family: 'Roboto Mono', monospace; font-weight: 600; color: var(--fg-2); }
+    .row__main { min-width: 0; }
+    .row__title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row__meta { display: flex; gap: 8px; margin-top: 2px; align-items: center; }
+    .row__obs { font-size: 12px; color: var(--fg-3); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+    .row__client {
+        display: inline-flex; align-items: center; gap: 4px;
+        height: 18px; padding: 0 8px; border-radius: 999px;
+        background: var(--orange-soft); color: var(--orange);
+        font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .row__qty { text-align: center; font-family: 'Roboto Mono', monospace; font-weight: 600; }
+    .row__price { text-align: right; font-family: 'Roboto Mono', monospace; font-weight: 700; color: var(--success); }
+    .row__more { color: var(--fg-2) !important; }
+    .row__expanded {
+        grid-column: 1 / -1;
+        display: flex; gap: 8px; padding-top: 8px;
+        border-top: 1px solid var(--line);
+    }
+
+    /* ── Empty state ── */
+    .empty {
+        position: absolute; inset: 0; z-index: 1;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 8px; color: var(--fg-3);
+    }
+    .empty__title { font-size: 15px; }
+    .empty__hint { font-size: 12px; display: flex; gap: 8px; }
+    .empty__hint code {
+        background: var(--surface-2); color: var(--fg-2);
+        padding: 3px 8px; border-radius: 4px;
+        font-family: 'Roboto Mono', monospace; font-size: 11px;
+    }
+
+    /* ── Right column ── */
+    .checkout-right {
+        display: flex; flex-direction: column; gap: 12px;
+        min-height: 0; overflow-y: auto;
+    }
+
+    /* ── Totals hero ── */
+    .totals {
+        background: linear-gradient(155deg, var(--surface) 0%, var(--surface-2) 100%);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 24px;
+        position: relative; overflow: hidden;
+        flex-shrink: 0;
+    }
+    .totals::before {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(120% 80% at 100% 0%, rgba(255,122,26,0.08) 0%, transparent 60%);
+    }
+    .totals__label { font-size: 11px; letter-spacing: 0.16em; color: var(--fg-3); text-transform: uppercase; font-weight: 600; position: relative; }
+    .totals__amount {
+        font-size: 48px; font-weight: 700; line-height: 1.05;
+        margin-top: 4px; color: var(--fg);
+        font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+        position: relative;
+    }
+    .totals__currency { font-size: 22px; font-weight: 500; color: var(--fg-2); margin-right: 6px; vertical-align: 6px; }
+    .totals__decimal { font-size: 28px; }
+    .totals__count { font-size: 13px; color: var(--fg-2); margin-top: 6px; position: relative; }
+    .totals__pill {
+        display: inline-flex; padding: 2px 10px; border-radius: 999px;
+        background: var(--orange-soft); color: var(--orange);
+        font-weight: 600; font-size: 11px;
+    }
+    .totals__breakdown {
+        margin-top: 16px; padding-top: 12px;
+        border-top: 1px dashed var(--line);
+        display: flex; flex-direction: column; gap: 6px;
+        position: relative;
+    }
+    .totals__line { display: flex; justify-content: space-between; font-size: 12px; }
+    .totals__line span:first-child { color: var(--fg-3); }
+    .totals__line span:last-child { font-family: 'Roboto Mono', monospace; font-weight: 600; color: var(--fg); }
+    .totals__line--add span:last-child { color: var(--orange); }
+    .totals__line--couvert span:last-child { color: var(--couvert); }
+
+    /* ── Options ── */
+    .options {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+        flex-shrink: 0;
+    }
+    .options__title {
+        display: flex; align-items: center;
+        font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+        color: var(--fg-3); text-transform: uppercase;
+        margin-bottom: 12px;
+    }
+    .options__row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 6px 0; color: var(--fg); font-size: 13px;
+    }
+    .options__row + .options__row { border-top: 1px solid var(--line); }
+
+    /* ── Action buttons ── */
+    .actions { display: flex; flex-direction: column; gap: 8px; }
+    .action-btn.mud-button {
+        justify-content: flex-start !important;
+        padding: 14px 16px !important;
+        border-radius: 8px !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase !important;
+        gap: 10px !important;
+    }
+    .action-btn--primary { background: var(--success) !important; }
+    .action-btn--info    { background: var(--info)    !important; }
+    .action-btn--warning { background: var(--warning) !important; color: #1A1A1A !important; }
+    .action-btn--danger  { background: var(--danger)  !important; }
+    .action-btn--ghost   { background: var(--surface-2) !important; color: var(--fg) !important; }
+    .action-btn__label { flex: 1; text-align: left; }
+    .kbd {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.25); color: inherit;
+        border-radius: 4px; padding: 3px 8px; min-width: 32px;
+        font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: 700;
+    }
+    .kbd--dark { background: rgba(0,0,0,0.18); }
+</style>
+
+@code {
+    private ElementReference _pageRef;
+    private MudAutocomplete<ClsProduto> _autocompleteRef = new();
+
+    private string _pesquisaAtual = string.Empty;
+    private int _quantidade = 1;
+    private ClsProduto? _itemAtual;
+
+    private HashSet<ItensPedido> _itensSelecionados = new();
+    private HashSet<ItensPedido> _itemExpandido = new();
+
+    private ClsPedido _pedido = new() { TipoDePedido = "CHECKOUT", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+
+    private bool _enviando = false;
+    private bool _modalAberto = false;
+    private bool _isFechamentoDeMesa = false;
+    private bool _cobraTaxa = false;
+    private bool _cobraCouvert = false;
+    private int _qtdPessoas = 1;
+    private bool _separarPorCliente = true;
+    private List<ClsMesasEComandas> _mesasAtivas = new();
+
+    // ── Computed ──────────────────────────────────────────────
+    private decimal SubTotalItens => _pedido.Itens.Sum(i => (decimal)i.PrecoTotal);
+    private decimal TaxaPercent => (decimal)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
+    private decimal TaxaValor => _isFechamentoDeMesa && _cobraTaxa ? SubTotalItens * (TaxaPercent / 100) : 0m;
+    private decimal CouvertPorPessoa => (decimal)(AppState.MerchantLogado?.ValorCouvert ?? 0);
+    private decimal CouvertValor => _isFechamentoDeMesa && _cobraCouvert ? CouvertPorPessoa * _qtdPessoas : 0m;
+    private decimal TotalGeral => SubTotalItens + TaxaValor + CouvertValor;
+    private bool TemExtras => TaxaValor > 0 || CouvertValor > 0;
+    private decimal SelectedSum => _itensSelecionados.Sum(i => (decimal)i.PrecoTotal);
+
+    private string TotalIntPart => Math.Truncate(TotalGeral).ToString("N0", new System.Globalization.CultureInfo("pt-BR"));
+    private string TotalDecPart => ((int)((TotalGeral - Math.Truncate(TotalGeral)) * 100)).ToString("00");
+
+    // ── Lifecycle ──────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var caixaResult = await CaixaService.VerificaSeHaCaixaAberto();
+            AppState.CaixaAberto = caixaResult?.Status == "success";
+        }
+        catch
+        {
+            AppState.CaixaAberto = false;
+        }
+
+        try
+        {
+            var response = await MesasService.GetMesaPorPaginaAsync(1, 1000);
+            if (response?.Data != null)
+                _mesasAtivas = response.Data.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar mesas: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("interceptFunctionKeys", this);
+            await _pageRef.FocusAsync();
+        }
+    }
+
+    // ── Autocomplete / busca ────────────────────────────────────
+    private async Task<IEnumerable<ClsProduto>> BuscarProdutosAutocomplete(string texto, CancellationToken ct)
+    {
+        _pesquisaAtual = texto ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(texto)) return [];
+
+        // N* → define quantidade para o próximo item
+        if (texto.EndsWith("*"))
+        {
+            var numStr = texto[..^1].Trim();
+            if (int.TryParse(numStr, out int qtd) && qtd > 0)
+            {
+                await InvokeAsync(async () =>
+                {
+                    _quantidade = qtd;
+                    _pesquisaAtual = string.Empty;
+                    _itemAtual = null;
+                    await _autocompleteRef.ClearAsync();
+                    StateHasChanged();
+                });
+            }
+            return [];
+        }
+
+        // c*numero → carregar mesa pelo código externo
+        if (texto.StartsWith("c*", StringComparison.OrdinalIgnoreCase))
+        {
+            var numStr = texto.Substring(2).Trim();
+            if (int.TryParse(numStr, out int codExterno))
+            {
+                await InvokeAsync(async () => await CarregarMesaParaCheckout(codExterno: codExterno));
+                return [];
+            }
+        }
+
+        // ca*apelido → carregar mesa pelo apelido
+        if (texto.StartsWith("ca*", StringComparison.OrdinalIgnoreCase))
+        {
+            var apelido = texto.Substring(3).Trim();
+            await InvokeAsync(async () => await CarregarMesaParaCheckout(apelido: apelido));
+            return [];
+        }
+
+        var result = await ProdutoService.GetProdutosPorPaginaAsync(1, 10, texto, null, ocultaDoGestorSophos: true);
+        if (ct.IsCancellationRequested) return [];
+
+        var produtos = result.Data.Where(x => x.Ativo).ToList();
+
+        // Código de barras / código interno exato → seleciona diretamente
+        if (texto.All(char.IsDigit))
+        {
+            var exactMatch = produtos.FirstOrDefault(p => p.CodBarras == texto || p.CodigoInterno == texto);
+            if (exactMatch is not null)
+            {
+                await InvokeAsync(async () => await SelecionarProduto(exactMatch));
+                return [];
+            }
+        }
+
+        return produtos;
+    }
+
+    private async Task OnKeyDownAutocomplete(KeyboardEventArgs e)
+    {
+        if (e.Key.StartsWith("F") && e.Key.Length > 1)
+        {
+            await HandleGlobalKeyDown(e);
+            return;
+        }
+
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(_pesquisaAtual))
+        {
+            var texto = _pesquisaAtual.Trim();
+
+            if (texto.StartsWith("ca*", StringComparison.OrdinalIgnoreCase))
+            {
+                var apelido = texto.Substring(3).Trim();
+                if (!string.IsNullOrWhiteSpace(apelido))
+                {
+                    await CarregarMesaParaCheckout(apelido: apelido);
+                    return;
+                }
+            }
+
+            if (texto.StartsWith("c*", StringComparison.OrdinalIgnoreCase))
+            {
+                var numStr = texto.Substring(2).Trim();
+                if (int.TryParse(numStr, out int codExterno))
+                {
+                    await CarregarMesaParaCheckout(codExterno: codExterno);
+                    return;
+                }
+            }
+        }
+    }
+
+    private async Task OnProdutoSelecionado(ClsProduto? produto)
+    {
+        if (produto is null) return;
+        await SelecionarProduto(produto);
+    }
+
+    // ── Lógica de carrinho ──────────────────────────────────────
+    private async Task SelecionarProduto(ClsProduto produto)
+    {
+        if (!AppState.CaixaAberto)
+        {
+            Snackbar.Add("Caixa fechado. Abra o caixa para lançar itens.", Severity.Warning);
+            await _autocompleteRef.ClearAsync();
+            return;
+        }
+
+        _itemAtual = produto;
+        float preco = produto.Precos.Count > 0 ? produto.Precos.Min(p => p.Valor) : 0f;
+        float qtdAdicionado = (float)_quantidade;
+
+        // Lógica de Balança
+        if (produto.UltilizaProdutoNaBalanca)
+        {
+            var peso = new BalancaLeitura { Sucesso = false, Peso = 0 };
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                peso = await BalancaService.LerPesoAsync();
+
+            if (!peso.Sucesso || peso.Peso == 0)
+            {
+                var optionsDoInput = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+                var dialogInput = await DialogService.ShowAsync<InputFloatN3>("Peso do Item", optionsDoInput);
+                var resultInput = await dialogInput.Result;
+
+                if (!resultInput!.Canceled && resultInput.Data is float ValorQtd)
+                    qtdAdicionado = ValorQtd;
+                else
+                    return;
+            }
+            else
+            {
+                qtdAdicionado = (float)peso.Peso;
+            }
+        }
+
+        // Lógica de Venda por Valor
+        if (produto.TipoDeVenda == "V")
+        {
+            var parameters = new DialogParameters { { "Valor", preco } };
+            var optionsDoInputValor = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraLarge, FullWidth = false, CloseOnEscapeKey = true };
+            var dialogInputValor = await DialogService.ShowAsync<InputFloatN3>("Valor do Item", parameters, optionsDoInputValor);
+            var resultInputValor = await dialogInputValor.Result;
+
+            if (!resultInputValor!.Canceled && resultInputValor.Data is float Valor)
+            {
+                if (preco > 0)
+                    qtdAdicionado = (float)Math.Round(Valor / preco, 3);
+                preco = (float)Math.Round(Valor, 2);
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        if (_isFechamentoDeMesa)
+        {
+            float precoTotalCalculado = produto.TipoDeVenda != "V" ? preco * qtdAdicionado : preco;
+
+            var novoItemLocal = new ItensPedido
+            {
+                Descricao = produto.Descricao,
+                Produto = produto,
+                Quantidade = qtdAdicionado,
+                PrecoUnitario = preco,
+                PrecoTotal = precoTotalCalculado
+            };
+
+            var pedidoMesaTemp = new ClsPedido
+            {
+                TipoDePedido = "MESA",
+                MesaComandaId = _pedido.MesaComandaId,
+                Itens = new List<ItensPedido> { novoItemLocal }
+            };
+
+            _enviando = true;
+            StateHasChanged();
+
+            try
+            {
+                var response = await PedidosService.CreatePedidoMesa(pedidoMesaTemp);
+                if (response.Status == "success")
+                {
+                    Snackbar.Add($"{produto.Descricao} adicionado à mesa.", Severity.Success);
+                    var mesaAberta = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+                    if (mesaAberta != null)
+                        await CarregarMesaParaCheckout(mesaAberta.CodigoExterno);
+                }
+                else
+                {
+                    Snackbar.Add($"Erro ao adicionar: {string.Join(",", response.Messages)}", Severity.Error);
+                }
+            }
+            finally
+            {
+                _enviando = false;
+                _quantidade = 1;
+                await _autocompleteRef.ClearAsync();
+                StateHasChanged();
+            }
+            return;
+        }
+
+        var existente = _pedido.Itens.FirstOrDefault(x =>
+            x.Produto?.Id == produto.Id && x.PrecoUnitario == preco && produto.TipoDeVenda != "V");
+
+        if (existente is not null)
+        {
+            existente.Quantidade += qtdAdicionado;
+            existente.PrecoTotal = existente.PrecoUnitario * existente.Quantidade;
+        }
+        else
+        {
+            float precoTotal = produto.TipoDeVenda != "V" ? preco * qtdAdicionado : preco;
+            _pedido.Itens.Add(new ItensPedido
+            {
+                Descricao = produto.Descricao,
+                Produto = produto,
+                Quantidade = qtdAdicionado,
+                PrecoUnitario = preco,
+                PrecoTotal = precoTotal
+            });
+        }
+
+        _quantidade = 1;
+        await _autocompleteRef.ClearAsync();
+        StateHasChanged();
+        await _autocompleteRef.FocusAsync();
+    }
+
+    private async Task CarregarMesaParaCheckout(int? codExterno = null, string? apelido = null)
+    {
+        ClsMesasEComandas? mesa = null;
+        if (codExterno.HasValue)
+            mesa = _mesasAtivas.FirstOrDefault(x => x.CodigoExterno == codExterno.Value);
+        else if (!string.IsNullOrEmpty(apelido))
+            mesa = _mesasAtivas.FirstOrDefault(x => x.apelido?.Equals(apelido, StringComparison.OrdinalIgnoreCase) ?? false);
+
+        if (mesa == null)
+        {
+            Snackbar.Add($"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? apelido)} não encontrada.", Severity.Warning);
+            await _autocompleteRef.ClearAsync();
+            return;
+        }
+
+        var nomeMesa = $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced} {(codExterno?.ToString() ?? mesa.apelido ?? mesa.Id.ToString())}";
+        try
+        {
+            var result = await PedidosService.GetMesaOcupada(mesa.Id);
+            if (result?.Status == "success" && result.Data?.Objeto?.Itens?.Any() == true)
+            {
+                _pedido = new ClsPedido
+                {
+                    TipoDePedido = "MESA",
+                    MesaComandaId = mesa.Id,
+                    MesaApelido = mesa.apelido,
+                    Itens = result.Data.Objeto.Itens,
+                    CriadoPor = "SOPHOS"
+                };
+                _isFechamentoDeMesa = true;
+                _cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
+                _cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
+                _qtdPessoas = 1;
+                _separarPorCliente = true;
+                _itemAtual = null;
+                _itensSelecionados.Clear();
+                _itemExpandido.Clear();
+                Snackbar.Add($"{nomeMesa} pronta para fechamento.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"{nomeMesa} não possui itens.", Severity.Info);
+            }
+        }
+        catch
+        {
+            Snackbar.Add($"{nomeMesa} não possui itens.", Severity.Info);
+        }
+
+        await _autocompleteRef.ClearAsync();
+        StateHasChanged();
+        await _autocompleteRef.FocusAsync();
+    }
+
+    private void ClearMesa()
+    {
+        _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+        _isFechamentoDeMesa = false;
+        _cobraTaxa = false;
+        _cobraCouvert = false;
+        _qtdPessoas = 1;
+        _separarPorCliente = true;
+        _itensSelecionados.Clear();
+        _itemExpandido.Clear();
+        Snackbar.Add("Mesa liberada.", Severity.Info);
+        StateHasChanged();
+    }
+
+    // ── Row interactions ───────────────────────────────────────
+    private void ToggleSelecaoItem(ItensPedido item)
+    {
+        if (_itensSelecionados.Contains(item)) _itensSelecionados.Remove(item);
+        else _itensSelecionados.Add(item);
+        StateHasChanged();
+    }
+
+    private void ToggleExpandirItem(ItensPedido item)
+    {
+        if (_itemExpandido.Contains(item)) _itemExpandido.Remove(item);
+        else _itemExpandido.Add(item);
+        StateHasChanged();
+    }
+
+    // ── Global shortcuts ───────────────────────────────────────
+    private async Task HandleGlobalKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "F1": await Finalizar(); break;
+            case "F2": await TransferirVenda(); break;
+            case "F4": await CancelarItem(); break;
+            case "F5": await CancelarVenda(); break;
+            case "F6": await FinalizarParcial(); break;
+        }
+    }
+
+    // ── Actions ────────────────────────────────────────────────
+    private async Task AvisarContaDaMesa()
+    {
+        if (AppState.MerchantLogado?.AvisaFechamentoDeMesa != true || _pedido.MesaComandaId == 0) return;
+        var itensParaAviso = _itensSelecionados.Count > 0 ? _itensSelecionados.ToList() : _pedido.Itens;
+        await PedidosService.AvisarConta(itensParaAviso, _pedido.MesaComandaId, _cobraTaxa, _cobraCouvert, _cobraCouvert ? _qtdPessoas : null, _separarPorCliente);
+        Snackbar.Add("Aviso de fechamento enviado.", Severity.Success);
+    }
+
+    private async Task Finalizar()
+    {
+        if (_pedido.Itens.Count == 0) { Snackbar.Add("Adicione itens à venda.", Severity.Warning); return; }
+        if (_enviando || _modalAberto) return;
+
+        _modalAberto = true;
+        try
+        {
+            if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda"))
+            {
+                Snackbar.Add("Sem permissão: AcessoLancaVenda", Severity.Error);
+                return;
+            }
+
+            var parameters = new DialogParameters { { "Pedido", _pedido } };
+            var options = new DialogOptions { Position = DialogPosition.Center, CloseButton = true, MaxWidth = MaxWidth.False, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                await Submit();
+        }
+        finally { _modalAberto = false; }
+    }
+
+    private async Task Submit()
+    {
+        _enviando = true;
+        StateHasChanged();
+        try
+        {
+            ReturnApiRefatored<ClsPedido> response;
+            if (_isFechamentoDeMesa)
+                response = await PedidosService.FechaMesa(_pedido);
+            else
+                response = await PedidosService.CreatePedido(_pedido);
+
+            var msg = string.Join(", ", response.Status == "success" ? response.Data.Messages : response.Messages);
+            Snackbar.Add(msg, response.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (response.Status == "success")
+            {
+                if (response.Data.Objeto is not null)
+                {
+                    bool imprimir = true;
+                    if (AppState.MerchantLogado != null && AppState.MerchantLogado.PerguntaImpressaPdv)
+                        imprimir = await PerguntaSeImprime();
+
+                    if (imprimir)
+                    {
+                        await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"pedido{response.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
+                        await PedidosService.UpdatePedidoImpresso(response.Data.Objeto);
+                    }
+                }
+
+                _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+                _isFechamentoDeMesa = false;
+                _itemAtual = null;
+                _itensSelecionados.Clear();
+                _itemExpandido.Clear();
+            }
+        }
+        finally
+        {
+            _enviando = false;
+            StateHasChanged();
+            await _autocompleteRef.FocusAsync();
+        }
+    }
+
+    private async Task TransferirVenda()
+    {
+        if (_pedido.Itens.Count == 0) { Snackbar.Add("Adicione itens para transferir.", Severity.Warning); return; }
+        if (_enviando || _modalAberto) return;
+
+        _modalAberto = true;
+        try
+        {
+            var options = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.Large, FullWidth = false, CloseOnEscapeKey = true };
+            var label = $"Número da {(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa/Comanda")}";
+            var dialog = await DialogService.ShowAsync<InputMesaTransfer>(label, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is string valor && !string.IsNullOrEmpty(valor))
+            {
+                _enviando = true;
+                StateHasChanged();
+                try
+                {
+                    _pedido.TipoDePedido = "MESA";
+                    if (int.TryParse(valor, out int numero))
+                    {
+                        var mesa = _mesasAtivas.FirstOrDefault(m => m.CodigoExterno == numero);
+                        _pedido.MesaComandaId = mesa?.Id ?? numero;
+                        _pedido.MesaApelido = null;
+                    }
+                    else
+                    {
+                        _pedido.MesaComandaId = 0;
+                        _pedido.MesaApelido = valor;
+                    }
+
+                    var response = await PedidosService.CreatePedidoMesa(_pedido);
+                    if (response.Status == "success")
+                    {
+                        Snackbar.Add(string.Join(", ", response.Data.Messages), Severity.Success);
+                        _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+                        _itemAtual = null;
+                        _itensSelecionados.Clear();
+                        _itemExpandido.Clear();
+                    }
+                    else
+                    {
+                        Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+                    }
+                }
+                catch (Exception ex) { Snackbar.Add($"Erro na transferência: {ex.Message}", Severity.Error); }
+                finally
+                {
+                    _enviando = false;
+                    StateHasChanged();
+                    await _autocompleteRef.FocusAsync();
+                }
+            }
+        }
+        finally { _modalAberto = false; }
+    }
+
+    private async Task CancelarItem()
+    {
+        if (_pedido.Itens.Count == 0) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+
+        if (_itensSelecionados.Any())
+        {
+            foreach (var item in _itensSelecionados.ToList())
+                _pedido.Itens.Remove(item);
+            _itensSelecionados.Clear();
+            _itemExpandido.Clear();
+            Snackbar.Add("Itens selecionados removidos.", Severity.Info);
+        }
+        else
+        {
+            _pedido.Itens.Remove(_pedido.Itens.Last());
+            Snackbar.Add("Último item removido.", Severity.Info);
+        }
+
+        StateHasChanged();
+        await _autocompleteRef.FocusAsync();
+    }
+
+    private async Task CancelarVenda()
+    {
+        if (_pedido.Itens.Count == 0 && !_isFechamentoDeMesa) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+
+        _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+        _isFechamentoDeMesa = false;
+        _cobraTaxa = false;
+        _cobraCouvert = false;
+        _qtdPessoas = 1;
+        _separarPorCliente = true;
+        _itemAtual = null;
+        _itensSelecionados.Clear();
+        _itemExpandido.Clear();
+        Snackbar.Add("Venda cancelada.", Severity.Warning);
+        StateHasChanged();
+        await _autocompleteRef.FocusAsync();
+    }
+
+    private async Task FinalizarParcial()
+    {
+        if (_itensSelecionados.Count == 0) { Snackbar.Add("Selecione os itens para pagamento parcial.", Severity.Warning); return; }
+        if (_enviando || _modalAberto) return;
+
+        _modalAberto = true;
+        try
+        {
+            if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda"))
+            {
+                Snackbar.Add("Sem permissão: AcessoLancaVenda", Severity.Error);
+                return;
+            }
+
+            var subPedido = new ClsPedido
+            {
+                TipoDePedido = "BALCÃO",
+                CriadoPor = "SOPHOS",
+                EtapaPedido = "FINALIZADO",
+                Itens = _itensSelecionados.ToList()
+            };
+
+            var parameters = new DialogParameters { { "Pedido", subPedido } };
+            var options = new DialogOptions { Position = DialogPosition.Center, CloseButton = true, MaxWidth = MaxWidth.False, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDePagamento>("Pagamento Parcial", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+                await SubmitParcial(subPedido);
+        }
+        finally { _modalAberto = false; }
+    }
+
+    private async Task SubmitParcial(ClsPedido subPedido)
+    {
+        _enviando = true;
+        StateHasChanged();
+        try
+        {
+            ReturnApiRefatored<ClsPedido> response;
+            if (_isFechamentoDeMesa)
+            {
+                subPedido.TipoDePedido = "MESA";
+                subPedido.MesaComandaId = _pedido.MesaComandaId;
+                subPedido.ItensFechamentoIds = _itensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList();
+                response = await PedidosService.FechaMesa(subPedido);
+            }
+            else
+            {
+                response = await PedidosService.CreatePedido(subPedido);
+            }
+
+            var msg = string.Join(", ", response.Status == "success" ? response.Data.Messages : response.Messages);
+            Snackbar.Add("Parcial: " + msg, response.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (response.Status == "success")
+            {
+                if (response.Data.Objeto is not null)
+                {
+                    bool imprimir = true;
+                    if (AppState.MerchantLogado != null && AppState.MerchantLogado.PerguntaImpressaPdv)
+                        imprimir = await PerguntaSeImprime();
+
+                    if (imprimir)
+                    {
+                        await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"pedido{response.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
+                        await PedidosService.UpdatePedidoImpresso(response.Data.Objeto);
+                    }
+                }
+
+                foreach (var item in subPedido.Itens)
+                    _pedido.Itens.Remove(item);
+                _itensSelecionados.Clear();
+                _itemExpandido.Clear();
+
+                if (_pedido.Itens.Count == 0)
+                {
+                    _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+                    _isFechamentoDeMesa = false;
+                }
+            }
+        }
+        finally
+        {
+            _enviando = false;
+            StateHasChanged();
+            await _autocompleteRef.FocusAsync();
+        }
+    }
+
+    private async Task<bool> PerguntaSeImprime()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDePerguntaDeImpressao>("Confirmar Impressão", options);
+        var result = await dialog.Result;
+        return !result!.Canceled && result.Data is bool sucesso && sucesso;
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}

@@ -960,52 +960,59 @@
     private async void OnPesquisaTextoChenged(string value)
     {
         pesquisaTexto = value;
-        await BuscarPedidos();
+        try { await BuscarPedidos(); }
+        catch (Exception ex) { Snackbar.Add($"Erro ao buscar pedidos: {ex.Message}", Severity.Error); }
     }
 
-    private async void VerificaSeTemPedidosAbertos()
+    private async Task VerificaSeTemPedidosAbertos()
     {
-        PaginatedResponse<ClsPedido> retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Status = StatusPedidos.ABERTO });
-        if (retornoPedidosAbertos.Total > 0)
+        try
         {
-            bool TemPedidoAbertoIntegracao = false;
-            foreach (var pedido in retornoPedidosAbertos.Data)
+            PaginatedResponse<ClsPedido> retornoPedidosAbertos = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Status = StatusPedidos.ABERTO });
+            if (retornoPedidosAbertos.Total > 0)
             {
-                if (pedido.CriadoPor != "SOPHOS")
+                bool TemPedidoAbertoIntegracao = false;
+                foreach (var pedido in retornoPedidosAbertos.Data)
                 {
-                    TemPedidoAbertoIntegracao = true;
-                    break;
+                    if (pedido.CriadoPor != "SOPHOS")
+                    {
+                        TemPedidoAbertoIntegracao = true;
+                        break;
+                    }
+                }
+
+                if (TemPedidoAbertoIntegracao)
+                {
+                    await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                    Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
+                    return;
                 }
             }
 
-            if (TemPedidoAbertoIntegracao)
+            PaginatedResponse<ClsPedido> RetornoPedidosAgendados = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Agendado = true, Imprimiu = false });
+            if (RetornoPedidosAgendados.Data.Count() > 0)
             {
-                await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                Snackbar.Add("Você tem um pedido aguardando aceite!", Severity.Warning);
-                return;
-            }
-
-        }
-
-        PaginatedResponse<ClsPedido> RetornoPedidosAgendados = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 300, Agendado = true, Imprimiu = false });
-        if (RetornoPedidosAgendados.Data.Count() > 0)
-        {
-            DateTime HorarioAtual = DateTime.Now.AddHours(-3); //Pra ser o utc igual o nosso
-            foreach (var Pedido in RetornoPedidosAgendados.Data)
-            {
-                if (Pedido.PedidoAgendado && Pedido.HorarioDataAgendamento is not null)
-                    if (Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual)
-                    {
-                        Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
-                        await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
-                        bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
-                        if (!impressaoDesabilita)
+                DateTime HorarioAtual = DateTime.Now.AddHours(-3);
+                foreach (var Pedido in RetornoPedidosAgendados.Data)
+                {
+                    if (Pedido.PedidoAgendado && Pedido.HorarioDataAgendamento is not null)
+                        if (Pedido.HorarioDataAgendamento.Value.AddMinutes(-AppState.MerchantLogado.TempoDePreparacaoEmMin) <= HorarioAtual)
                         {
-                            bool baixou = await ImprimirPedido(Pedido, false);
-                            if (baixou) await PedidosService.UpdatePedidoImpresso(Pedido);
+                            Snackbar.Add($"O pedido {Pedido.DisplayId} foi impresso automaticamente por ser um pedido agendado próximo do horário de preparo!", Severity.Info);
+                            await JS.InvokeVoidAsync("playNotificationSoundPedidoIntegracao");
+                            bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
+                            if (!impressaoDesabilita)
+                            {
+                                bool baixou = await ImprimirPedido(Pedido, false);
+                                if (baixou) await PedidosService.UpdatePedidoImpresso(Pedido);
+                            }
                         }
-                    }
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[VerificaSeTemPedidosAbertos] {ex.Message}");
         }
     }
 
@@ -1161,11 +1168,14 @@
     private async Task IniciarTimer()
     {
         _timer = new PeriodicTimer(TimeSpan.FromSeconds(30));
-
-        while (await _timer.WaitForNextTickAsync(_cts.Token))
+        try
         {
-            VerificaSeTemPedidosAbertos();
+            while (await _timer.WaitForNextTickAsync(_cts.Token))
+            {
+                await InvokeAsync(VerificaSeTemPedidosAbertos);
+            }
         }
+        catch (OperationCanceledException) { }
     }
 
 
