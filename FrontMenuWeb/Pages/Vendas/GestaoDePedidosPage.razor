@@ -150,6 +150,12 @@
                                                                     @(" - Cancelado")
                                                                 }
                                                             </MudText>
+                                                            @if (pedido.Pedido.TipoDePedido == "MESA" && pedido.Pedido.MesaComandaId > 0)
+                                                            {
+                                                                <MudText Color="Color.Secondary" Typo="Typo.caption">
+                                                                    Mesa: @(!string.IsNullOrEmpty(pedido.Pedido.MesaApelido) ? pedido.Pedido.MesaApelido : pedido.Pedido.CodigoExternoMesa ?? pedido.Pedido.MesaComandaId.ToString())
+                                                                </MudText>
+                                                            }
                                                             @if (pedido.Pedido.Cliente is not null)
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
@@ -1292,7 +1298,7 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-
+            StateHasChanged();
         }
 
     }

@@ -415,7 +415,7 @@
         Pedido.TaxaEntregaValor = TaxaDeEntrega;
         Pedido.ServicoValor = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
         Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
-
+        Pedido.ValorTotal = ValorTotal;
 
         MudDialog.Close(DialogResult.Ok(true));
     }
