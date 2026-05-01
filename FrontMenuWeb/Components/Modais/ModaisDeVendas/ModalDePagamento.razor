@@ -386,6 +386,7 @@
                 taxaAdicional: TaxaAdicional,
                 taxaServico: Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f,
                 couvert: Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f,
+                qtdPessoas: Pedido.TipoDePedido == "MESA" ? QtdPessoasCouvert : 0,
                 troco: ValorTroco,
                 totalFinal: ValorTotal,
                 pagamentos: Pedido.Pagamentos);

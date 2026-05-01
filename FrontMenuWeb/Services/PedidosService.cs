@@ -214,6 +214,7 @@ public class PedidosService
         float taxaAdicional,
         float taxaServico,
         float couvert,
+        int qtdPessoas,
         float troco,
         float totalFinal,
         List<PagamentoDoPedido> pagamentos)
@@ -223,6 +224,7 @@ public class PedidosService
             MesaId = mesaId,
             CobraTaxaServico = taxaServico > 0,
             CobraCouvert = couvert > 0,
+            QtdPessoas = qtdPessoas > 0 ? qtdPessoas : null,
             SepararPorCliente = false,
             Desconto = desconto,
             TaxaAdicional = taxaAdicional,
