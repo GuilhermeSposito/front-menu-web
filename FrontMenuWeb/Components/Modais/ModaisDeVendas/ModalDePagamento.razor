@@ -8,6 +8,7 @@
 @inject FormasDeRecebimentoService FormasDeRecebimentoService
 @inject DistanciasService DistanciaService
 @inject CaixaEPagamentosService CaixaService
+@inject PedidosService PedidosService
 
 <MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
@@ -230,9 +231,14 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
-                  Style="position: sticky; bottom: 0; z-index: 10; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-            <MudButton Variant="Variant.Filled" OnClick="ConcluirPagamento" Color="Color.Primary" Class="w-100">
+        <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="2" Class="w-100 px-2 pb-2">
+            @if (Pedido.TipoDePedido == "MESA")
+            {
+                <MudButton Variant="Variant.Filled" OnClick="ImprimirFechamento" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">
+                    Imprimir Fechamento
+                </MudButton>
+            }
+            <MudButton Variant="Variant.Filled" OnClick="ConcluirPagamento" Color="Color.Primary">
                 @if (Editando)
                 {
                     @("Concluir Atualização")
@@ -242,7 +248,7 @@
                     @("Finalizar Pagamento (Ctrl + Alt)")
                 }
             </MudButton>
-        </MudPaper>
+        </MudStack>
     </DialogActions>
 </MudDialog>
 
@@ -367,6 +373,28 @@
             ((ValorDosItens + TaxaAdicional + servico + couvert) - ValorDoDesconto) + TaxaDeEntrega,
             2
         );
+    }
+
+    private async Task ImprimirFechamento()
+    {
+        try
+        {
+            await PedidosService.ImprimirFechamentoPagamento(
+                mesaId: Pedido.MesaComandaId,
+                itens: Pedido.Itens,
+                desconto: ValorDoDesconto,
+                taxaAdicional: TaxaAdicional,
+                taxaServico: Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f,
+                couvert: Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f,
+                troco: ValorTroco,
+                totalFinal: ValorTotal,
+                pagamentos: Pedido.Pagamentos);
+            Snackbar.Add("Fechamento enviado para impressão.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao imprimir fechamento: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task ConcluirPagamento()

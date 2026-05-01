@@ -38,7 +38,7 @@
         </MudStack>
         <MudStack Class="w-100 p-3 rounded-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-100" Row=true>
-                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="FiltrarMesas" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="FiltrarMesas" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por número ou nome do cliente" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
                 <MudButton StartIcon="@Icons.Material.Filled.CallMerge" Variant="Variant.Filled" Color="Color.Secondary" OnClick="AbreModalDeJuntarMesas">Juntar @(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa")</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
             </MudStack>
@@ -54,7 +54,7 @@
                     @foreach (var mesa in MesasOuComandaList)
                     {
                         <MudItem xs="6" sm="4" md="3" lg="2">
-                            <MudCard @onclick=@(async () => { await AbreModalDePedido(mesa); }) Class="rounded-3 text-center cursor-pointer mesa-card"
+                            <MudCard @onclick=@(async () => { if (mesa.Ocupada) await AbreModalDeVerItensDaMesa(mesa); else await AbreModalDePedido(mesa); }) Class="rounded-3 text-center cursor-pointer mesa-card"
                                      Style="@(mesa.AguardandoPagamento ? "background-color: #FFC107; color: #000000;" : mesa.Ocupada ? "background-color: #FF0024; color: #FFFFFF;" : "background-color: #DAE1E7; color: #000000;")">
 
                                 <MudCardContent>
@@ -71,7 +71,7 @@
                                     <MudMenu Icon="@Icons.Material.Filled.MoreVert" Class="menu-icone" Color="Color.Inherit">
                                         <MudMenuItem OnClick=@(async () => { await ChamaImpressaoDeItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.Print" Label="Reimprimir Itens" />
                                         <MudMenuItem OnClick=@(async () => { await FecharPedido(mesa); }) Icon="@Icons.Material.Filled.ClosedCaptionDisabled" Label="Fechar Conta" />
-                                        <MudMenuItem OnClick=@(async () => { await AbreModalDeVerItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.RemoveRedEye" Label="Ver Itens" />
+                                        <MudMenuItem OnClick=@(async () => { await AbreModalDePedido(mesa); }) Icon="@Icons.Material.Filled.AddBox" Label="Adicionar Itens" />
                                         <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                     </MudMenu>
                                 }
@@ -114,6 +114,7 @@
     //props de mesas
     private List<ClsMesasEComandas> _todasMesas { get; set; } = new();
     private List<ClsMesasEComandas> MesasOuComandaList { get; set; } = new();
+    private Dictionary<int, List<string>> _clientesPorMesa { get; set; } = new();
 
     private int TotalDeMesasCarregando = 12;
     #endregion
@@ -164,11 +165,40 @@
         {
             _todasMesas = AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced != "Comanda" ? response.Data : response.Data.Where(x => x.Ocupada).ToList();
             FiltrarMesas(pesquisaTexto);
+            _ = CarregarClientesPorMesaAsync();
         }
         else
         {
             Snackbar.Add("Erro ao carregar mesas/comandas.", Severity.Error);
         }
+    }
+
+    private async Task CarregarClientesPorMesaAsync()
+    {
+        var mesasOcupadas = _todasMesas.Where(m => m.Ocupada).ToList();
+
+        var tarefas = mesasOcupadas.Select(async mesa =>
+        {
+            try
+            {
+                var response = await PedidosService.GetMesaOcupada(mesa.Id);
+                if (response?.Data?.Objeto?.Itens is { } itens)
+                {
+                    var nomes = itens
+                        .Select(i => i.NomeCliente)
+                        .Where(n => !string.IsNullOrWhiteSpace(n))
+                        .Distinct()
+                        .ToList()!;
+                    return (Id: mesa.Id, Nomes: nomes);
+                }
+            }
+            catch { }
+            return (Id: mesa.Id, Nomes: new List<string>());
+        });
+
+        var resultados = await Task.WhenAll(tarefas);
+        _clientesPorMesa = resultados.ToDictionary(r => r.Id, r => r.Nomes);
+        await InvokeAsync(StateHasChanged);
     }
     #endregion
 
@@ -183,8 +213,12 @@
         }
         else
         {
+            var termo = texto.Trim().ToLower();
             MesasOuComandaList = _todasMesas
-                .Where(m => m.CodigoExterno.ToString().Contains(texto.Trim()))
+                .Where(m =>
+                    m.CodigoExterno.ToString().Contains(termo) ||
+                    (_clientesPorMesa.TryGetValue(m.Id, out var nomes) && nomes.Any(n => n.ToLower().Contains(termo)))
+                )
                 .ToList();
         }
 

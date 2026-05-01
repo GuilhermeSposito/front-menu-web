@@ -879,8 +879,32 @@ public class ImpressaoService
             }
         }
 
+        if (aviso.Desconto > 0)
+            AdicionaConteudo(Conteudo,
+                LR("Desconto", $"-{aviso.Desconto:C}"),
+                FonteFechamentoDeCaixa);
+
+        if (aviso.TaxaAdicional > 0)
+            AdicionaConteudo(Conteudo,
+                LR("Taxa Adicional", aviso.TaxaAdicional.ToString("C")),
+                FonteFechamentoDeCaixa);
+
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", aviso.TotalGeral.ToString("C")), FonteFechamentoDeCaixa);
+
+        var totalAExibir = aviso.TotalFinal > 0 ? aviso.TotalFinal : aviso.TotalGeral;
+        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", totalAExibir.ToString("C")), FonteFechamentoDeCaixa);
+
+        if (aviso.Pagamentos?.Count > 0)
+        {
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            AdicionaConteudo(Conteudo, "Formas de Pagamento", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+            foreach (var pag in aviso.Pagamentos)
+                AdicionaConteudo(Conteudo, LR(pag.Descricao, pag.Valor.ToString("C")), FonteFechamentoDeCaixa);
+        }
+
+        if (aviso.Troco > 0)
+            AdicionaConteudo(Conteudo, LR("Troco", aviso.Troco.ToString("C")), FonteFechamentoDeCaixa);
+
         AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);

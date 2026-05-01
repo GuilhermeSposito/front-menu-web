@@ -21,7 +21,8 @@
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
             <MudText Class="ms-3" Typo="Typo.h6">Itens da @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced @MesaOuComanda.CodigoExterno</MudText>
-            <MudStack Row="true" Spacing="2">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="AbrirModalDeAdicionarItens">Adicionar Item</MudButton>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Secondary" OnClick="Cancelar" />
             </MudStack>
         </MudStack>
@@ -240,6 +241,24 @@
         MudDialog.Cancel();
     }
 
+    private async Task AbrirModalDeAdicionarItens()
+    {
+        var parameters = new DialogParameters
+        {
+            { "TiposDePedido", TiposDePedido.MESA },
+            { "Mesa", MesaOuComanda }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
+        var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Adicionar Itens", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            if (dataGridRef is not null)
+                await dataGridRef.ReloadServerData();
+        }
+    }
+
     private async Task HandleKeyDownDialog(KeyboardEventArgs e)
     {
         if (e.CtrlKey && e.AltKey)
@@ -415,7 +434,6 @@
         }
 
         var itemIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList();
-        await PedidosService.AvisarFechamentoParcial(MesaOuComanda.Id, itemIds, _cobraTaxa, _cobraCouvert, _cobraCouvert ? _qtdPessoas : 0);
 
         ClsPedido NovoPedido = new ClsPedido
         {

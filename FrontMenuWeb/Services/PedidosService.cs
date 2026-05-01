@@ -1,5 +1,6 @@
 ﻿using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
+using FrontMenuWeb.Models.Financeiro;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Produtos;
@@ -204,6 +205,51 @@ public class PedidosService
         var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
 
         return retorno!;
+    }
+
+    public async Task ImprimirFechamentoPagamento(
+        int mesaId,
+        List<ItensPedido> itens,
+        float desconto,
+        float taxaAdicional,
+        float taxaServico,
+        float couvert,
+        float troco,
+        float totalFinal,
+        List<PagamentoDoPedido> pagamentos)
+    {
+        var payload = new AvisarContaRequestDto
+        {
+            MesaId = mesaId,
+            CobraTaxaServico = taxaServico > 0,
+            CobraCouvert = couvert > 0,
+            SepararPorCliente = false,
+            Desconto = desconto,
+            TaxaAdicional = taxaAdicional,
+            Troco = troco,
+            TotalFinal = totalFinal,
+            Itens = itens.Select(i => new AvisoContaItemDto
+            {
+                Descricao = i.Descricao,
+                Quantidade = (int)i.Quantidade,
+                PrecoUnitario = i.PrecoUnitario,
+                PrecoTotal = i.PrecoTotal,
+                LegTamanhoEscolhido = i.LegTamanhoEscolhido,
+                NomeCliente = i.NomeCliente,
+                Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
+                {
+                    Descricao = c.Descricao,
+                    Quantidade = (int)c.Quantidade,
+                    PrecoUnitario = c.PrecoUnitario
+                }).ToList()
+            }).ToList(),
+            Pagamentos = pagamentos.Select(p => new AvisoContaPagamentoDto
+            {
+                Descricao = p.FormaDePagamento?.Descricao ?? "",
+                Valor = p.ValorTotal
+            }).ToList()
+        };
+        await _http.PostAsJsonAsync("pedidos/avisar-conta", payload);
     }
 
     public async Task AvisarConta(List<ItensPedido> itens, int mesaId, bool cobraTaxa, bool cobraCouvert, int? qtdPessoas = null, bool? separarPorCliente = null)

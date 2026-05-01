@@ -50,6 +50,12 @@ public class AvisoContaComandaDto
     [JsonPropertyName("Totais")] public AvisoContaTotaisDto Totais { get; set; } = new();
 }
 
+public class AvisoContaPagamentoDto
+{
+    [JsonPropertyName("Descricao")] public string Descricao { get; set; } = "";
+    [JsonPropertyName("Valor")] public float Valor { get; set; }
+}
+
 public class AvisarContaRequestDto
 {
     [JsonPropertyName("MesaId")] public int MesaId { get; set; }
@@ -58,6 +64,11 @@ public class AvisarContaRequestDto
     [JsonPropertyName("CobraCouvert")] public bool CobraCouvert { get; set; }
     [JsonPropertyName("SepararPorCliente")] public bool SepararPorCliente { get; set; }
     [JsonPropertyName("QtdPessoas")] public int? QtdPessoas { get; set; }
+    [JsonPropertyName("Desconto")] public float? Desconto { get; set; }
+    [JsonPropertyName("TaxaAdicional")] public float? TaxaAdicional { get; set; }
+    [JsonPropertyName("Troco")] public float? Troco { get; set; }
+    [JsonPropertyName("TotalFinal")] public float? TotalFinal { get; set; }
+    [JsonPropertyName("Pagamentos")] public List<AvisoContaPagamentoDto>? Pagamentos { get; set; }
 }
 
 public class AvisoContaDto
@@ -73,4 +84,9 @@ public class AvisoContaDto
     [JsonPropertyName("CouvertAvulso")] public float CouvertAvulso { get; set; }
     [JsonPropertyName("Couvert")] public AvisoContaCouvertDto? Couvert { get; set; }
     [JsonPropertyName("TotalGeral")] public float TotalGeral { get; set; }
+    [JsonPropertyName("Desconto")] public float Desconto { get; set; }
+    [JsonPropertyName("TaxaAdicional")] public float TaxaAdicional { get; set; }
+    [JsonPropertyName("Troco")] public float Troco { get; set; }
+    [JsonPropertyName("TotalFinal")] public float TotalFinal { get; set; }
+    [JsonPropertyName("Pagamentos")] public List<AvisoContaPagamentoDto>? Pagamentos { get; set; }
 }

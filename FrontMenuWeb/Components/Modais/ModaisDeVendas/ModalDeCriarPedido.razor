@@ -281,8 +281,22 @@
                                                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.ChatBubbleOutline" AdornmentColor="Color.Default" />
                                         @if (TiposDePedido == TiposDePedido.MESA)
                                         {
-                                            <MudTextField Class="mt-1" @bind-Value=produtoNoPedido.NomeCliente Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Nome do cliente"
+                                            var itemCapturado = produtoNoPedido;
+                                            <MudTextField Class="mt-1"
+                                                          Value="@itemCapturado.NomeCliente"
+                                                          ValueChanged="@((string v) => { itemCapturado.NomeCliente = v; if (!string.IsNullOrWhiteSpace(v)) _ultimoNomeCliente = v; })"
+                                                          Immediate=true T="string" Variant="Variant.Outlined" Placeholder="Nome do cliente"
                                                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" AdornmentColor="Color.Primary" />
+                                            @if (_nomesClientesNaMesa.Count > 0)
+                                            {
+                                                <MudStack Row=true Spacing="1" Class="flex-wrap mt-1">
+                                                    @foreach (var nome in _nomesClientesNaMesa)
+                                                    {
+                                                        var nomeCapturado = nome;
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" OnClick="@(() => { itemCapturado.NomeCliente = nomeCapturado; _ultimoNomeCliente = nomeCapturado; StateHasChanged(); })">@nomeCapturado</MudChip>
+                                                    }
+                                                </MudStack>
+                                            }
                                         }
                                     </MudPaper>
                                 }
@@ -383,6 +397,10 @@
 
     //Criação de Pizza(Item Fracionado)
     private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado > 0 ? AppState.MerchantLogado!.QtdsItemFracionado : 2;
+
+    // Nomes de clientes já presentes na mesa (carregado em background)
+    private List<string> _nomesClientesNaMesa = new();
+    private string _ultimoNomeCliente = string.Empty;
     #endregion
 
     #region Funções de Carrinho
@@ -509,6 +527,7 @@
             {
                 itemPedidoProdutoFracionado.Complementos.RemoveAll(c => c.Complemento?.EProduto == true && c.Complemento?.Produto?.Fracionado == true);
 
+                AplicarUltimoNomeCliente(itemPedidoProdutoFracionado);
                 NovoPedido.Itens.Add(itemPedidoProdutoFracionado);
                 await TextFieldProd.FocusAsync();
                 return;
@@ -556,6 +575,7 @@
                         return;
                     }
 
+                    AplicarUltimoNomeCliente(itemPedido);
                     NovoPedido.Itens.Add(itemPedido);
                     await TextFieldProd.FocusAsync();
                     return;
@@ -645,6 +665,7 @@
                 PrecoTotal = PrecoTotal
             };
 
+            AplicarUltimoNomeCliente(ItemParaAdicionarNoPedido);
             NovoPedido.Itens.Add(ItemParaAdicionarNoPedido);
             await Task.Delay(50);
             await TextFieldProd.FocusAsync();
@@ -1196,11 +1217,38 @@
         {
             NovoPedido.TipoDePedido = "MESA";
             NovoPedido.MesaComandaId = Mesa.Id;
+
+            if (Mesa.Id > 0)
+                _ = CarregarNomesClientesDaMesaAsync(Mesa.Id);
         }
 
 
         await CarregarGrupos();
         await CarregarProdutos();
+    }
+
+    private void AplicarUltimoNomeCliente(ItensPedido item)
+    {
+        if (TiposDePedido == TiposDePedido.MESA && !string.IsNullOrWhiteSpace(_ultimoNomeCliente))
+            item.NomeCliente = _ultimoNomeCliente;
+    }
+
+    private async Task CarregarNomesClientesDaMesaAsync(int mesaId)
+    {
+        try
+        {
+            var response = await PedidosService.GetMesaOcupada(mesaId);
+            if (response?.Data?.Objeto?.Itens is { } itens)
+            {
+                _nomesClientesNaMesa = itens
+                    .Select(i => i.NomeCliente)
+                    .Where(n => !string.IsNullOrWhiteSpace(n))
+                    .Distinct()
+                    .ToList()!;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch { }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
