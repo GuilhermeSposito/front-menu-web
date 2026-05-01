@@ -39,6 +39,7 @@
         <MudStack Class="w-100 p-3 rounded-2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
             <MudStack Class="w-100" Row=true>
                 <MudTextField DebounceInterval="500" Value="pesquisaTexto" ValueChanged="FiltrarMesas" Class="w-100 mt-2 rounded-2" Label="Pesquisa" Adornment="Adornment.Start" PlaceHolder="Pesquise por número da mesa" Variant="Variant.Filled" T="string" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor=Color.Primary Immediate=true></MudTextField>
+                <MudButton StartIcon="@Icons.Material.Filled.CallMerge" Variant="Variant.Filled" Color="Color.Secondary" OnClick="AbreModalDeJuntarMesas">Juntar @(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa")</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Primary" Disabled="false" OnClick="@(async () => { await AbreModalDePedido(); })">Novo Pedido (F2)</MudButton>
             </MudStack>
             <MudStack Class="w-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -228,6 +229,33 @@
 
     }
 
+    private async Task AbreModalDeJuntarMesas()
+    {
+        var mesasOcupadas = _todasMesas.Where(m => m.Ocupada).ToList();
+
+        if (mesasOcupadas.Count < 2)
+        {
+            Snackbar.Add("É necessário ter pelo menos 2 mesas ocupadas para juntar.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "MesasOcupadas", mesasOcupadas }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true, BackdropClick = false };
+
+        var dialog = await DialogService.ShowAsync<ModalDeJuntarMesas>($"Juntar {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesas"}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await CarregarMesasEComandas();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task AbreModalDeVerItensDaMesa(ClsMesasEComandas Mesa)
     {
         if (!AppState.CaixaAberto)
@@ -315,9 +343,13 @@
     private async Task OnPedidoMesaFechada(ClsMesasEComandas mesa)
     {
         var m = _todasMesas.FirstOrDefault(x => x.Id == mesa.Id);
-        if (m is not null) { m.Ocupada = false; m.AguardandoPagamento = false; }
+        if (m is not null)
+        {
+            m.Ocupada = mesa.Ocupada;
+            m.AguardandoPagamento = mesa.AguardandoPagamento;
+        }
         FiltrarMesas(pesquisaTexto);
-        Snackbar.Add($"Mesa/Comanda {mesa.CodigoExterno} Fechada!", Severity.Info);
+        Snackbar.Add(mesa.Ocupada ? $"Fechamento parcial da {mesa.CodigoExterno} realizado!" : $"Mesa/Comanda {mesa.CodigoExterno} Fechada!", Severity.Info);
     }
 
     private Task OnAvisarContaRecebida(int mesaId, bool isFechamentoTotal)

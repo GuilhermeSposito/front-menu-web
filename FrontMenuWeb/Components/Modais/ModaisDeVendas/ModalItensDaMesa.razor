@@ -414,12 +414,15 @@
             return;
         }
 
+        var itemIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList();
+        await PedidosService.AvisarFechamentoParcial(MesaOuComanda.Id, itemIds, (float)TaxaValor, (float)CouvertValor);
+
         ClsPedido NovoPedido = new ClsPedido
         {
             TipoDePedido = "MESA",
             MesaComandaId = MesaOuComanda.Id,
             Itens = ItensSelecionados.ToList(),
-            ItensFechamentoIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList(),
+            ItensFechamentoIds = itemIds,
             ServicoValor = (float)TaxaValor,
             CouvertValor = (float)CouvertValor,
         };

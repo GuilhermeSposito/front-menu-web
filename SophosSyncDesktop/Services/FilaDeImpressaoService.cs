@@ -21,9 +21,9 @@ public class FilaDeImpressaoService : IDisposable
 
     // Memória de pedidos já impressos recentemente — impede re-impressão por WS + timer na mesma janela
     private readonly Dictionary<int, DateTime> _jaImpressos = new();
-    private readonly Dictionary<string, DateTime> _itensJaImpressos = new();
+    //private readonly Dictionary<string, DateTime> _itensJaImpressos = new();
     private static readonly TimeSpan _ttlImpresso = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan _ttlItemMesa = TimeSpan.FromSeconds(30);
+    //private static readonly TimeSpan _ttlItemMesa = TimeSpan.FromSeconds(30);
 
     private readonly object _lock = new();
     private readonly CancellationTokenSource _cts = new();

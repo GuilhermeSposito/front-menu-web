@@ -101,7 +101,7 @@ public partial class PaginaInicial : Form
             OnWebSocketStatusChanged(false, "Aguardando login");
         }
         IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
-        IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos();
+        //IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";

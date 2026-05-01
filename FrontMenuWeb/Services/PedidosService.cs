@@ -376,6 +376,22 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> AvisarFechamentoParcial(int mesaId, List<int> itemIds, float servicoValor = 0, float couvertValor = 0)
+    {
+        var body = new { mesaId, itemIds, ServicoValor = servicoValor, CouvertValor = couvertValor };
+        var response = await _http.PostAsJsonAsync("pedidos/aviso-parcial", body);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ClsPedido>> JuntarMesas(List<int> mesasIds, int mesaFinalId)
+    {
+        var body = new { mesasIds, mesaFinalId };
+        var response = await _http.PatchAsJsonAsync("pedidos/mesas/juntar", body);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<DtoEstastisticaPorProduto>> EstastisticaDeItensMaisVendidos(QueryDeHistoricoDePedidos? QueryDeHistorico = null)
     {
         string url = "pedidos/estatisticas/itens";
