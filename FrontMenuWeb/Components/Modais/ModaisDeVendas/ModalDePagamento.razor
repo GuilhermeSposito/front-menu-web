@@ -417,6 +417,23 @@
         Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
         Pedido.ValorTotal = ValorTotal;
 
+        if (Editando)
+        {
+            var ok = await PedidosService.AtualizarFinanceiroPedidoAsync(
+                pedidoId: Pedido.Id,
+                couvertValor: Pedido.CouvertValor,
+                descontoValor: Pedido.DescontoValor,
+                acrescimoValor: Pedido.AcrescimoValor,
+                servicoValor: Pedido.ServicoValor,
+                valorTotal: Pedido.ValorTotal);
+
+            if (!ok)
+            {
+                Snackbar.Add("Erro ao salvar valores financeiros do pedido.", Severity.Error);
+                return;
+            }
+        }
+
         MudDialog.Close(DialogResult.Ok(true));
     }
 

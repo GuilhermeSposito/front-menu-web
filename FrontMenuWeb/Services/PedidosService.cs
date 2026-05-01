@@ -175,6 +175,20 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<bool> AtualizarFinanceiroPedidoAsync(int pedidoId, float couvertValor, float descontoValor, float acrescimoValor, float servicoValor, float valorTotal)
+    {
+        var dto = new
+        {
+            CouvertValor = couvertValor,
+            DescontoValor = descontoValor,
+            AcrescimoValor = acrescimoValor,
+            ServicoValor = servicoValor,
+            ValorTotal = valorTotal
+        };
+        var response = await _http.PatchAsJsonAsync($"pedidos/atualizar-financeiro/{pedidoId}", dto);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<ReturnApiRefatored<ClsPedido>> CreatePedidoPublicAsync(ClsPedido Pedido, ClsMerchant Merchant, CancellationToken cancellationToken = default)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/public/{Merchant.Id}", Pedido, cancellationToken);
