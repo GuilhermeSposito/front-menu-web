@@ -415,7 +415,7 @@
         }
 
         var itemIds = ItensSelecionados.Where(x => x.Id > 0).Select(x => x.Id).ToList();
-        await PedidosService.AvisarFechamentoParcial(MesaOuComanda.Id, itemIds, (float)TaxaValor, (float)CouvertValor);
+        await PedidosService.AvisarFechamentoParcial(MesaOuComanda.Id, itemIds, _cobraTaxa, _cobraCouvert, _cobraCouvert ? _qtdPessoas : 0);
 
         ClsPedido NovoPedido = new ClsPedido
         {
