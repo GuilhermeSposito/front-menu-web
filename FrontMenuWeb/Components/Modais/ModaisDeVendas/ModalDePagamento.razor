@@ -322,6 +322,12 @@
                 ValorDosItens += item.PrecoTotal;
             }
 
+            if (Pedido.DescontoValor > 0)
+                ValorDoDesconto = Pedido.DescontoValor;
+
+            if (Pedido.AcrescimoValor > 0)
+                TaxaAdicional = Pedido.AcrescimoValor;
+
             if (Pedido.TipoDePedido == "MESA")
             {
                 // usa valor já calculado pelo modal de itens quando disponível
