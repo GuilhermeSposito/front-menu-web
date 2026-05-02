@@ -785,7 +785,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // ── Separado por cliente ───────────────────────────────────────────────
-        if (aviso.SepararPorCliente && aviso.Comandas is not null)
+        if (aviso.SepararPorCliente && aviso.Comandas is not null && aviso.Comandas.Count > 1)
         {
             foreach (var comanda in aviso.Comandas)
             {
@@ -822,24 +822,31 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
             }
         }
-        else if (aviso.Itens is not null)
+        else
         {
-            var nomesDistintos = aviso.Itens
-                .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
-                .Select(i => i.NomeCliente!)
-                .Distinct()
-                .ToList();
+            // Usa aviso.Itens se disponível; quando vem apenas uma comanda os itens estão nela
+            var itensParaImprimir = aviso.Itens
+                ?? aviso.Comandas?.FirstOrDefault()?.Itens;
 
-            if (nomesDistintos.Count == 1)
+            if (itensParaImprimir is not null)
             {
-                AdicionaConteudo(Conteudo, $"Cliente: {nomesDistintos[0]}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+                var nomesDistintos = itensParaImprimir
+                    .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
+                    .Select(i => i.NomeCliente!)
+                    .Distinct()
+                    .ToList();
+
+                if (nomesDistintos.Count == 1)
+                {
+                    AdicionaConteudo(Conteudo, $"Cliente: {nomesDistintos[0]}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+                    AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+                }
+
+                foreach (var item in itensParaImprimir)
+                    AdicionarLinhasDeItem(Conteudo, item);
+
+                AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
             }
-
-            foreach (var item in aviso.Itens)
-                AdicionarLinhasDeItem(Conteudo, item);
-
-            AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
         }
 
         // ── Consumo total ─────────────────────────────────────────────────────
@@ -889,7 +896,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         var totalAExibir = aviso.TotalFinal > 0 ? aviso.TotalFinal : aviso.TotalGeral;
-        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", totalAExibir.ToString("C")), FonteTotaisNovo);
+        AdicionaConteudo(Conteudo, $"TOTAL A PAGAR:   {totalAExibir.ToString("C")}", FonteTotaisNovo);
 
         if (aviso.Pagamentos?.Count > 0)
         {
@@ -1284,11 +1291,11 @@ public class ImpressaoService
 
     public static string AdicionarSeparadorSimples()
     {
-        return "-----------------------------------------";
+        return "----------------------------------------";
     }
     public static string AdicionarSeparadorDuplo()
     {
-        return "=========================================";
+        return "========================================";
     }
 
     private string RetornaImpressoraSelecionadaNoCadastroDeProduto(ImpressorasConfigs Imps, string? ImpressoraCadastrada)
