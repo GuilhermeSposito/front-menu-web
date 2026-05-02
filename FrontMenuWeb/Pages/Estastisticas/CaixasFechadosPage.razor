@@ -162,6 +162,22 @@
                                     <MudText Typo="Typo.subtitle2">@caixa.ValorAcrescimos.ToString("C")</MudText>
                                 </MudStack>
                                 <MudDivider Light=true Class="w-100" />
+                                @if (caixa.ValorTotalDeServico > 0)
+                                {
+                                    <MudStack Class="p-2 w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Taxa de Serviço (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@caixa.ValorTotalDeServico.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                }
+                                @if (caixa.ValorTotalDeCouvert > 0)
+                                {
+                                    <MudStack Class="p-2 w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.subtitle2">Couvert (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@caixa.ValorTotalDeCouvert.ToString("C")</MudText>
+                                    </MudStack>
+                                    <MudDivider Light=true Class="w-100" />
+                                }
                                 <MudStack Class="p-2 w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                     <MudText Color="Color.Error" Typo="Typo.subtitle2">Descontos (-): </MudText>
                                     <MudText Color="Color.Error" Typo="Typo.subtitle2">@caixa.ValorDescontos.ToString("C")</MudText>

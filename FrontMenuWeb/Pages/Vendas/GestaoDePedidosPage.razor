@@ -146,11 +146,11 @@
                                                             </CardHeaderAvatar>
                                                             <CardHeaderContent>
                                                                 <MudText Color="Color.Primary" Typo="Typo.body1">
-                                                                    @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId - @pedido.Pedido.Id @if(pedido.Pedido.StatusPedido == "CANCELADO"){
+                                                                    @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId  @if(pedido.Pedido.StatusPedido == "CANCELADO"){
                                                                     @(" - Cancelado")
                                                                 }
                                                             </MudText>
-                                                            @if (pedido.Pedido.TipoDePedido == "MESA" && pedido.Pedido.MesaComandaId > 0)
+                                                            @if (pedido.Pedido.TipoDePedido == "MESA")
                                                             {
                                                                 <MudText Color="Color.Secondary" Typo="Typo.caption">
                                                                     Mesa: @(!string.IsNullOrEmpty(pedido.Pedido.MesaApelido) ? pedido.Pedido.MesaApelido : pedido.Pedido.CodigoExternoMesa ?? pedido.Pedido.MesaComandaId.ToString())

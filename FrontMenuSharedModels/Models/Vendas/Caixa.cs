@@ -20,6 +20,8 @@ public class Caixa
     [JsonPropertyName("ValorAcrescimos")] public decimal ValorAcrescimos { get; set; }
     [JsonPropertyName("ValorIncentivos")] public decimal ValorIncentivos { get; set; }
     [JsonPropertyName("ValorTrocos")] public decimal ValorTrocos { get; set; }
+    [JsonPropertyName("ValorTotalDeServico")] public decimal ValorTotalDeServico { get; set; }
+    [JsonPropertyName("ValorTotalDeCouvert")] public decimal ValorTotalDeCouvert { get; set; }
     [JsonPropertyName("ValorCaixaEmDinFinal")] public decimal ValorCaixaEmDinFinal { get; set; }
     [JsonPropertyName("ContagemFisicaDebito")] public decimal ContagemFisicaDebito { get; set; }
     [JsonPropertyName("ContagemFisicaCredito")] public decimal ContagemFisicaCredito { get; set; }

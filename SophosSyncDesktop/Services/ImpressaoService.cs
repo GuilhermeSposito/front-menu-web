@@ -824,9 +824,6 @@ public class ImpressaoService
         }
         else if (aviso.Itens is not null)
         {
-            // ── Lista flat ────────────────────────────────────────────────────
-
-            // Se todos os itens enviados pertencem a um único cliente, exibe o nome antes dos itens
             var nomesDistintos = aviso.Itens
                 .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
                 .Select(i => i.NomeCliente!)
@@ -838,9 +835,6 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"Cliente: {nomesDistintos[0]}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
             }
-
-            AdicionaConteudo(Conteudo, LR("QTD  ITENS", "TOTAL"), FonteFechamentoDeCaixa);
-            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
             foreach (var item in aviso.Itens)
                 AdicionarLinhasDeItem(Conteudo, item);
@@ -1290,11 +1284,11 @@ public class ImpressaoService
 
     public static string AdicionarSeparadorSimples()
     {
-        return "------------------------------------------";
+        return "-----------------------------------------";
     }
     public static string AdicionarSeparadorDuplo()
     {
-        return "==========================================";
+        return "=========================================";
     }
 
     private string RetornaImpressoraSelecionadaNoCadastroDeProduto(ImpressorasConfigs Imps, string? ImpressoraCadastrada)
