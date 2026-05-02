@@ -780,7 +780,6 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteFechamentoDeCaixa, Alinhamentos.Centro);
 
         AdicionaConteudo(Conteudo, "VIA DE FECHAMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, DateTime.Now.ToString("dd/MM/yyyy - HH:mm"), FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -826,21 +825,25 @@ public class ImpressaoService
         else if (aviso.Itens is not null)
         {
             // ── Lista flat ────────────────────────────────────────────────────
+
+            // Se todos os itens enviados pertencem a um único cliente, exibe o nome antes dos itens
+            var nomesDistintos = aviso.Itens
+                .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
+                .Select(i => i.NomeCliente!)
+                .Distinct()
+                .ToList();
+
+            if (nomesDistintos.Count == 1)
+            {
+                AdicionaConteudo(Conteudo, $"Cliente: {nomesDistintos[0]}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            }
+
             AdicionaConteudo(Conteudo, LR("QTD  ITENS", "TOTAL"), FonteFechamentoDeCaixa);
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
             foreach (var item in aviso.Itens)
                 AdicionarLinhasDeItem(Conteudo, item);
-
-            if (aviso.TaxaDeServicoDaMesa > 0)
-            {
-
-                AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
-                AdicionaConteudo(Conteudo,
-                    LR($"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C")),
-                    FonteFechamentoDeCaixa, eObs: true);
-
-            }
 
             AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
         }
@@ -892,7 +895,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         var totalAExibir = aviso.TotalFinal > 0 ? aviso.TotalFinal : aviso.TotalGeral;
-        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", totalAExibir.ToString("C")), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, LR("TOTAL A PAGAR", totalAExibir.ToString("C")), FonteTotaisNovo);
 
         if (aviso.Pagamentos?.Count > 0)
         {

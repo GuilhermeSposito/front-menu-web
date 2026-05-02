@@ -175,6 +175,13 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<bool> AtualizarQuantidadeItemAsync(int itemId, float quantidade, string? descricao = null)
+    {
+        var dto = new { Quantidade = quantidade, Descricao = descricao };
+        var response = await _http.PatchAsJsonAsync($"pedidos/itens/mesa/{itemId}/quantidade", dto);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<bool> AtualizarFinanceiroPedidoAsync(int pedidoId, float couvertValor, float descontoValor, float acrescimoValor, float servicoValor, float valorTotal)
     {
         var dto = new
