@@ -336,15 +336,15 @@
         var dialog = await DialogService.ShowAsync<ModalItensDaMesa>(titulo, parameters, options);
         var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
-        {
-            if (sucesso)
-            {
-                await CarregarMesasEComandas();
-                await InvokeAsync(StateHasChanged);
-            }
-            CarregandoPagina = false;
-        }
+        _ = AtualizarClientesDaMesaAsync(Mesa.Id);
+
+
+        await CarregarMesasEComandas();
+        await InvokeAsync(StateHasChanged);
+
+
+        CarregandoPagina = false;
+
 
     }
 

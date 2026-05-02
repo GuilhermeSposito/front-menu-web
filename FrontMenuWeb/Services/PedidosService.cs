@@ -175,10 +175,20 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<bool> AtualizarQuantidadeItemAsync(int itemId, float quantidade, string? descricao = null)
+    private static readonly System.Text.Json.JsonSerializerOptions _jsonPascalCase =
+        new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.General);
+
+    public async Task<bool> UpdateItemMesaAsync(int itemId, string descricao, float quantidade, string? observacoes, string? nomeCliente, List<object>? complementos)
     {
-        var dto = new { Quantidade = quantidade, Descricao = descricao };
-        var response = await _http.PatchAsJsonAsync($"pedidos/itens/mesa/{itemId}/quantidade", dto);
+        var dto = new
+        {
+            Descricao = descricao,
+            Quantidade = quantidade,
+            Observacoes = observacoes,
+            NomeCliente = nomeCliente,
+            Complementos = complementos
+        };
+        var response = await _http.PatchAsJsonAsync($"pedidos/itens/mesa/{itemId}", dto, _jsonPascalCase);
         return response.IsSuccessStatusCode;
     }
 

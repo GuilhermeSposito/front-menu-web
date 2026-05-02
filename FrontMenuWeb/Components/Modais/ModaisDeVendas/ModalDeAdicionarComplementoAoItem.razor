@@ -1,0 +1,128 @@
+@using FrontMenuWeb.Models.Pedidos
+
+<MudDialog>
+    <TitleContent>
+        <MudText Class="ms-3" Typo="Typo.h6">Adicionar Complemento</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Class="pa-1" Style="background-color: var(--mud-palette-background);">
+            @if (Produto.GruposDeComplementosDoProduto is null || !Produto.GruposDeComplementosDoProduto.Any())
+            {
+                <MudText Typo="Typo.body2" Color="Color.Warning">Nenhum grupo de complemento cadastrado para este produto.</MudText>
+            }
+            else
+            {
+                @foreach (var relacao in Produto.GruposDeComplementosDoProduto)
+                {
+                    <MudCard Class="mt-2 rounded-2">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary">@relacao.Grupo.Descricao.Substring(0, 1)</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudText Typo="Typo.body1">@relacao.Grupo.Descricao</MudText>
+                                    @if (relacao.QtdMin == 0)
+                                    {
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small">Opcional</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Warning" Size="Size.Small">Obrigatório</MudChip>
+                                    }
+                                </MudStack>
+                                @if (!string.IsNullOrEmpty(relacao.Grupo.GrupoInfo))
+                                {
+                                    <MudText Typo="Typo.body2">@relacao.Grupo.GrupoInfo</MudText>
+                                }
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudDivider Class="mb-1" Light=true />
+                            @foreach (var complemento in relacao.Grupo.Complementos)
+                            {
+                                @if (complemento.Complemento.Ativo)
+                                {
+                                    var qtd = GetQtd(complemento.Complemento);
+                                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                                        <MudStack Row=true AlignItems="AlignItems.Center">
+                                            <MudText Typo="Typo.subtitle1">@complemento.Complemento.Descricao</MudText>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary"> R$ @complemento.Complemento.Valor.ToString("F2")</MudText>
+                                        </MudStack>
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexEnd" Spacing="1">
+                                            @if (qtd > 0)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error" Size="Size.Small"
+                                                               OnClick="@(() => Remover(complemento.Complemento))" />
+                                                <MudText Typo="Typo.subtitle2" Class="mx-1">@qtd</MudText>
+                                            }
+                                            <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" Size="Size.Small"
+                                                           OnClick="@(() => Adicionar(relacao, complemento.Complemento))" />
+                                        </MudStack>
+                                    </MudStack>
+                                    <MudDivider Class="mb-1" Light=true />
+                                }
+                            }
+                            @if (!relacao.Grupo.Complementos.Any(c => c.Complemento.Ativo))
+                            {
+                                <MudText Color="Color.Error" Typo="Typo.body2" Class="mt-2 mb-2">Nenhum complemento ativo neste grupo.</MudText>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                }
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Confirmar" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(_selecionados.Count == 0)">
+            Adicionar (@_selecionados.Sum(c => (int)c.Quantidade) selecionado(s))
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ClsProduto Produto { get; set; } = new ClsProduto();
+
+    private List<ComplementoNoItem> _selecionados = new();
+
+    private float GetQtd(ClsComplemento complemento) =>
+        _selecionados.FirstOrDefault(c => c.ComplementoId == complemento.Id)?.Quantidade ?? 0f;
+
+    private void Adicionar(ClsGruposDeComplementosDoProduto relacao, ClsComplemento complemento)
+    {
+        var existente = _selecionados.FirstOrDefault(c => c.ComplementoId == complemento.Id);
+        if (existente is not null)
+        {
+            existente.Quantidade++;
+            existente.PrecoTotal = existente.PrecoUnitario * existente.Quantidade;
+        }
+        else
+        {
+            _selecionados.Add(new ComplementoNoItem
+            {
+                ComplementoId = complemento.Id,
+                Complemento = complemento,
+                Descricao = complemento.Descricao,
+                Quantidade = 1,
+                PrecoUnitario = complemento.Valor,
+                PrecoTotal = complemento.Valor,
+                RelacaoGrupoComlpemento = relacao
+            });
+        }
+    }
+
+    private void Remover(ClsComplemento complemento)
+    {
+        var existente = _selecionados.FirstOrDefault(c => c.ComplementoId == complemento.Id);
+        if (existente is null) return;
+        existente.Quantidade--;
+        if (existente.Quantidade <= 0)
+            _selecionados.Remove(existente);
+    }
+
+    private void Confirmar() => MudDialog.Close(DialogResult.Ok(_selecionados));
+    private void Cancel() => MudDialog.Cancel();
+}

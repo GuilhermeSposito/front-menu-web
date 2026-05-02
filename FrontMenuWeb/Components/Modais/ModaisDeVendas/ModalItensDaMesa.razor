@@ -89,6 +89,58 @@
             </MudPaper>
         }
 
+        @if (_itemEditando is not null)
+        {
+            <MudPaper Elevation="2" Class="px-4 py-3 mx-2 my-1" Style="border-left: 4px solid var(--mud-palette-primary);">
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+                        <MudTextField @bind-Value="_novaDescricao" Label="Nome do item" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:220px" />
+                        <MudNumericField T="float" @bind-Value="_novaQuantidade" Label="Quantidade" Min="0.001f" Step="1f" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:120px" />
+                        <MudTextField @bind-Value="_novaObservacao" Label="Observação" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:180px" />
+                        <MudTextField @bind-Value="_novoNomeCliente" Label="Cliente" Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:140px" />
+                        <MudButton OnClick="SalvarEdicaoItem" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Disabled="_salvandoItem">
+                            @if (_salvandoItem)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+
+                                <span>Salvar</span>
+                            }
+                        </MudButton>
+                        <MudButton OnClick="@(() => _itemEditando = null)" Variant="Variant.Text" Size="Size.Small">Cancelar</MudButton>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">Complementos:</MudText>
+                        <MudTooltip Text="@(string.IsNullOrEmpty(_itemEditando?.ProdutoId) ? "Item sem produto vinculado" : "Adicionar complemento")">
+                            <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                           Size="Size.Small" Color="Color.Primary"
+                                           Disabled="@(string.IsNullOrEmpty(_itemEditando?.ProdutoId) || _buscandoProduto)"
+                                           OnClick="AbrirModalComplementos" />
+                        </MudTooltip>
+                        @if (_buscandoProduto)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                        }
+                    </MudStack>
+                    @if (_complementosEditando.Count > 0)
+                    {
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                            @foreach (var comp in _complementosEditando.ToList())
+                            {
+                                var compCapturado = comp;
+                                <MudChip T="string" OnClose="@(() => _complementosEditando.Remove(compCapturado))"
+                                         Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                                    @comp.Descricao (x@(comp.Quantidade))
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
         <MudPaper Elevation="0" Class="px-4 py-2 mb-1"
                   Style="background-color:var(--mud-palette-background); border-bottom:1px solid var(--mud-palette-lines-default);">
             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
@@ -106,10 +158,10 @@
                 @if (PedidoMesa.Itens != null)
                 {
                     var clientes = PedidoMesa.Itens
-                        .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
-                        .Select(x => x.NomeCliente)
-                        .Distinct()
-                        .ToList();
+                    .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
+                    .Select(x => x.NomeCliente)
+                    .Distinct()
+                    .ToList();
 
                     if (clientes.Count > 1)
                     {
@@ -139,7 +191,6 @@
 
         <MudDataGrid T="ItensPedido"
                      @ref="dataGridRef"
-                     EditTrigger="DataGridEditTrigger.Manual"
                      MultiSelection=true
                      Class="rounded-3 custom-striped"
                      Loading="Carregando"
@@ -155,7 +206,7 @@
                 <SelectColumn T="ItensPedido" />
                 <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
                 <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
-                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade do Item"></PropertyColumn>
+                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
                 <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
@@ -169,52 +220,14 @@
                         @(context.Item.Funcionario?.Nome ?? "Admin")
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="" StickyRight="true">
+                <TemplateColumn Title="" HeaderStyle="width:48px">
                     <CellTemplate>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Size="Size.Small"
-                                       Color="Color.Primary"
-                                       Title="Editar quantidade"
-                                       OnClick="@(() => AbrirEdicaoQuantidade(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="@(() => AbrirEdicaoItem(context.Item))" />
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
-
-        @if (_itemEditando is not null)
-        {
-            <MudOverlay Visible="true" DarkBackground="true" ZIndex="9998" />
-            <MudPaper Elevation="8" Style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; min-width:360px; padding:24px;">
-                <MudStack Spacing="3">
-                    <MudText Typo="Typo.h6">Editar Item</MudText>
-                    <MudTextField @bind-Value="_novaDescricao"
-                                  Label="Nome do item"
-                                  Variant="Variant.Outlined"
-                                  Immediate="true" />
-                    <MudNumericField T="float"
-                                     @bind-Value="_novaQuantidade"
-                                     Label="Quantidade"
-                                     Min="0.001f"
-                                     Step="1f"
-                                     Format="G"
-                                     Variant="Variant.Outlined"
-                                     Immediate="true" />
-                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
-                        <MudButton OnClick="CancelarEdicaoQuantidade" Variant="Variant.Text">Cancelar</MudButton>
-                        <MudButton OnClick="SalvarQuantidade" Variant="Variant.Filled" Color="Color.Primary" Disabled="_salvandoQuantidade">
-                            @if (_salvandoQuantidade)
-                            {
-                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                            }
-                            else
-                            {
-                                <span>Salvar</span>
-                            }
-                        </MudButton>
-                    </MudStack>
-                </MudStack>
-            </MudPaper>
-        }
 
     </DialogContent>
 </MudDialog>
@@ -380,6 +393,14 @@
             };
 
         }
+        catch (HttpRequestException ex)
+        {
+            return new GridData<ItensPedido>
+            {
+
+            };
+
+        }
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao carregar lançamentos: {ex.Message}", Severity.Error);
@@ -404,23 +425,89 @@
     private ItensPedido? _itemEditando = null;
     private float _novaQuantidade = 1f;
     private string _novaDescricao = string.Empty;
-    private bool _salvandoQuantidade = false;
+    private string? _novaObservacao = null;
+    private string? _novoNomeCliente = null;
+    private List<ComplementoNoItem> _complementosEditando = new();
+    private bool _salvandoItem = false;
+    private bool _buscandoProduto = false;
+    private ClsProduto? _produtoParaComplementos = null;
 
-    private void AbrirEdicaoQuantidade(ItensPedido item)
+    private void AbrirEdicaoItem(ItensPedido item)
     {
         _itemEditando = item;
-        _novaQuantidade = item.Quantidade;
         _novaDescricao = item.Descricao ?? string.Empty;
-        StateHasChanged();
+        _novaQuantidade = item.Quantidade;
+        _novaObservacao = item.Observacoes;
+        _novoNomeCliente = item.NomeCliente;
+        _complementosEditando = item.Complementos?.Select(c => new ComplementoNoItem
+        {
+            Id = c.Id,
+            ComplementoId = c.ComplementoId,
+            Descricao = c.Descricao,
+            Quantidade = c.Quantidade,
+            PrecoUnitario = c.PrecoUnitario,
+            PrecoTotal = c.PrecoTotal
+        }).ToList() ?? new();
+
+        if (_produtoParaComplementos?.Id != item.ProdutoId)
+            _produtoParaComplementos = null;
     }
 
-    private void CancelarEdicaoQuantidade()
+    private async Task AbrirModalComplementos()
     {
-        _itemEditando = null;
-        StateHasChanged();
+        if (string.IsNullOrEmpty(_itemEditando?.ProdutoId)) return;
+
+        if (_produtoParaComplementos?.Id != _itemEditando.ProdutoId)
+        {
+            _buscandoProduto = true;
+            StateHasChanged();
+            _produtoParaComplementos = await ProdutoService.GetProdutoAsync(_itemEditando.ProdutoId);
+            _buscandoProduto = false;
+            StateHasChanged();
+        }
+
+        if (_produtoParaComplementos is null ||
+            _produtoParaComplementos.GruposDeComplementosDoProduto is null ||
+            !_produtoParaComplementos.GruposDeComplementosDoProduto.Any())
+        {
+            Snackbar.Add("Este produto não possui grupos de complementos cadastrados.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<ModalDeAdicionarComplementoAoItem>
+        {
+            { x => x.Produto, _produtoParaComplementos }
+        };
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey = true
+        };
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarComplementoAoItem>("Adicionar Complemento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is List<ComplementoNoItem> novos && novos.Count > 0)
+        {
+            foreach (var novo in novos)
+            {
+                var existente = _complementosEditando.FirstOrDefault(c => c.ComplementoId == novo.ComplementoId);
+                if (existente is not null)
+                {
+                    existente.Quantidade += novo.Quantidade;
+                    existente.PrecoTotal = existente.PrecoUnitario * existente.Quantidade;
+                }
+                else
+                {
+                    _complementosEditando.Add(novo);
+                }
+            }
+            StateHasChanged();
+        }
     }
 
-    private async Task SalvarQuantidade()
+    private async Task SalvarEdicaoItem()
     {
         if (_itemEditando is null) return;
         if (_novaQuantidade <= 0)
@@ -429,28 +516,35 @@
             return;
         }
 
-        _salvandoQuantidade = true;
-        StateHasChanged();
+        var complementosDto = _complementosEditando.Select(c => (object)new
+        {
+            Id = c.Id,
+            ComplementoId = c.ComplementoId,
+            Descricao = c.Descricao,
+            Quantidade = c.Quantidade,
+            PrecoUnitario = c.PrecoUnitario
+        }).ToList();
 
-        try
+        _salvandoItem = true;
+        var ok = await PedidosService.UpdateItemMesaAsync(
+            _itemEditando.Id,
+            _novaDescricao,
+            _novaQuantidade,
+            _novaObservacao,
+            _novoNomeCliente,
+            complementosDto);
+        _salvandoItem = false;
+
+        if (ok)
         {
-            var ok = await PedidosService.AtualizarQuantidadeItemAsync(_itemEditando.Id, _novaQuantidade, _novaDescricao);
-            if (ok)
-            {
-                Snackbar.Add("Quantidade atualizada com sucesso!", Severity.Success);
-                _itemEditando = null;
-                if (dataGridRef is not null)
-                    await dataGridRef.ReloadServerData();
-            }
-            else
-            {
-                Snackbar.Add("Erro ao atualizar a quantidade.", Severity.Error);
-            }
+            Snackbar.Add("Item atualizado com sucesso!", Severity.Success);
+            _itemEditando = null;
+            if (dataGridRef is not null)
+                await dataGridRef.ReloadServerData();
         }
-        finally
+        else
         {
-            _salvandoQuantidade = false;
-            StateHasChanged();
+            Snackbar.Add("Erro ao atualizar o item.", Severity.Error);
         }
     }
 
@@ -577,7 +671,7 @@
             if (response.Status == "success")
             {
                 Snackbar.Add("Parcial efetuado com sucesso!", Severity.Success);
-                
+
                 if (ItensSelecionados.Count >= PedidoMesa.Itens.Count)
                 {
                     MudDialog.Close(DialogResult.Ok(true));
