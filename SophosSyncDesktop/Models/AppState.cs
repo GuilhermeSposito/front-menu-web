@@ -114,8 +114,7 @@ public static class AppState
                         db.SaveChanges();
                     }
 
-
-                        SophosSyncDesktop.Models.AppState.Token = result?.Token;
+                    SophosSyncDesktop.Models.AppState.Token = result?.Token;
                     await SophosSyncDesktop.Models.AppState.GetMerchantAsync();
                 }
                 else
@@ -126,12 +125,51 @@ public static class AppState
             else
             {
                 MessageBox.Show("Resposta nula do servidor.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
             }
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Erro ao efetuar login: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        return Token;
+    }
+
+    // Versão silenciosa usada pelo timer de relogin automático — sem MessageBox
+    public static async Task<string?> RelogarAsync(string email, string senha)
+    {
+        try
+        {
+            HttpClient client = new HttpClient();
+            AddHmacHeaders(client);
+            var response = await client.PostAsJsonAsync(
+                "https://sophos-erp.com.br/api/v1/auth/login",
+                new LoginModel { Email = email, Senha = senha });
+
+            if (response is null || !response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[Relogin] Falha HTTP {(int?)response?.StatusCode}");
+                return null;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+            if (result?.Token is null) return null;
+
+            using AppDbContext db = new AppDbContext();
+            var infoLogin = db.InfosDeLogin.FirstOrDefault();
+            if (infoLogin != null)
+            {
+                infoLogin.Token = result.Token;
+                db.SaveChanges();
+            }
+
+            Token = result.Token;
+            await GetMerchantAsync();
+            Console.WriteLine($"[Relogin] Token renovado com sucesso às {DateTime.Now:HH:mm:ss}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Relogin] Erro: {ex.Message}");
         }
 
         return Token;

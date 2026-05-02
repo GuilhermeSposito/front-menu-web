@@ -72,6 +72,18 @@
                                         <MudMenuItem OnClick=@(async () => { await ChamaImpressaoDeItensDaMesa(mesa); }) Icon="@Icons.Material.Filled.Print" Label="Reimprimir Itens" />
                                         <MudMenuItem OnClick=@(async () => { await FecharPedido(mesa); }) Icon="@Icons.Material.Filled.ClosedCaptionDisabled" Label="Fechar Conta" />
                                         <MudMenuItem OnClick=@(async () => { await AbreModalDePedido(mesa); }) Icon="@Icons.Material.Filled.AddBox" Label="Adicionar Itens" />
+                                        @if (_clientesPorMesa.TryGetValue(mesa.Id, out var clientesDaMesa) && clientesDaMesa.Count > 0)
+                                        {
+                                            <MudDivider />
+                                            @foreach (var cliente in clientesDaMesa)
+                                            {
+                                                var clienteCapturado = cliente;
+                                                <MudMenuItem OnClick="@(async () => await AbreModalDeVerItensDaMesa(mesa, clienteCapturado))"
+                                                             Icon="@Icons.Material.Filled.Person"
+                                                             IconColor="Color.Info"
+                                                             Label="@($"Conta de {clienteCapturado}")" />
+                                            }
+                                        }
                                         <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                     </MudMenu>
                                 }
@@ -296,7 +308,7 @@
         }
     }
 
-    private async Task AbreModalDeVerItensDaMesa(ClsMesasEComandas Mesa)
+    private async Task AbreModalDeVerItensDaMesa(ClsMesasEComandas Mesa, string? filtroCliente = null)
     {
         if (!AppState.CaixaAberto)
         {
@@ -315,9 +327,13 @@
             { "MesaOuComanda", Mesa }
         };
 
+        if (!string.IsNullOrEmpty(filtroCliente))
+            parameters.Add("FiltroCliente", filtroCliente);
+
+        var titulo = string.IsNullOrEmpty(filtroCliente) ? "Itens" : $"Conta de {filtroCliente}";
         var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = true, BackdropClick = false };
 
-        var dialog = await DialogService.ShowAsync<ModalItensDaMesa>("Itens", parameters, options);
+        var dialog = await DialogService.ShowAsync<ModalItensDaMesa>(titulo, parameters, options);
         var result = await dialog.Result;
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)

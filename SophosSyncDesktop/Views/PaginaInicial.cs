@@ -8,6 +8,7 @@ using SophosSyncDesktop.Utils;
 using SophosSyncDesktop.Views;
 using System.Diagnostics;
 using System.IO;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -28,6 +29,8 @@ public partial class PaginaInicial : Form
     private readonly ClsEstiloComponentes _clsEstiloComponentes = new ClsEstiloComponentes();
     private System.Timers.Timer _timer;
     private System.Timers.Timer _timerMesa;
+    private System.Timers.Timer _timerRelogin;
+    private volatile bool _relogandoAgora = false;
 
     // Label criado em código para não exigir alteração no .resx do designer
     private Label _labelWsStatus = new Label();
@@ -81,15 +84,22 @@ public partial class PaginaInicial : Form
     {
         base.OnLoad(e);
 
+        InfosDeLogin? credenciais = null;
         using (AppDbContext db = new AppDbContext())
         {
-            var infos = db.InfosDeLogin.FirstOrDefault();
+            credenciais = db.InfosDeLogin.FirstOrDefault();
+        }
 
-            if (infos is not null)
-            {
-                string? token = await AppState.Login(infos.Email, infos.Senha);
-                await AppState.GetMerchantAsync();
-            }
+        if (credenciais is not null)
+        {
+            // Login silencioso no startup — sem MessageBox se não tiver internet.
+            // Login com diálogo fica só para o botão manual.
+            await AppState.RelogarAsync(credenciais.Email, credenciais.Senha);
+
+            // Timer e listener de rede ficam sempre ativos quando há credenciais,
+            // mesmo que o login inicial tenha falhado por falta de internet.
+            IniciarTimerDeRelogin();
+            NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
         }
 
         if (!string.IsNullOrEmpty(AppState.Token))
@@ -100,13 +110,14 @@ public partial class PaginaInicial : Form
         {
             OnWebSocketStatusChanged(false, "Aguardando login");
         }
+
         IniciarMonitoramentoImpressaoDePedidosNaoImpressos();
         //IniciarMonitoramentoImpressaoDeItensDeMesaNaoImpressos();
 
         SophosSync.BalloonTipTitle = "Sophos Sync";
         SophosSync.BalloonTipText = "O aplicativo foi iniciado com sucesso! E você já está pronto para imprimir pedidos!";
         SophosSync.BalloonTipIcon = ToolTipIcon.Info;
-        SophosSync.ShowBalloonTip(1000); // 1 segundos
+        SophosSync.ShowBalloonTip(1000);
 
         this.Hide();
     }
@@ -138,6 +149,62 @@ public partial class PaginaInicial : Form
         _timerMesa.Start();
     }
 
+    public void IniciarTimerDeRelogin()
+    {
+        if (_timerRelogin is not null && _timerRelogin.Enabled) return;
+        _timerRelogin = new System.Timers.Timer(TimeSpan.FromHours(2).TotalMilliseconds);
+        _timerRelogin.Elapsed += async (s, e) => await RelogarEReconectarAsync();
+        _timerRelogin.AutoReset = true;
+        _timerRelogin.Start();
+    }
+
+    private async void OnNetworkAvailabilityChanged(object? sender, NetworkAvailabilityEventArgs e)
+    {
+        if (!e.IsAvailable || _webSocketService.EstaConectado) return;
+
+        Console.WriteLine("[Network] Conexão restaurada — refazendo login e reconectando socket...");
+        await RelogarEReconectarAsync();
+    }
+
+    private async Task RelogarEReconectarAsync()
+    {
+        // Evita disparos simultâneos (timer + evento de rede ao mesmo tempo)
+        if (_relogandoAgora) return;
+        _relogandoAgora = true;
+
+        try
+        {
+            InfosDeLogin? credenciais = null;
+            using (AppDbContext db = new AppDbContext())
+            {
+                credenciais = db.InfosDeLogin.FirstOrDefault();
+            }
+
+            if (credenciais is null)
+            {
+                Console.WriteLine("[Relogin] Sem credenciais salvas, cancelando renovação.");
+                return;
+            }
+
+            // Login sempre antes de reconectar o socket
+            var novoToken = await AppState.RelogarAsync(credenciais.Email, credenciais.Senha);
+
+            if (string.IsNullOrEmpty(novoToken))
+            {
+                Console.WriteLine("[Relogin] Não foi possível renovar o token.");
+                return;
+            }
+
+            // Recria a conexão WebSocket com o token atualizado
+            await _webSocketService.DesconectarAsync();
+            await _webSocketService.ConectarAsync();
+        }
+        finally
+        {
+            _relogandoAgora = false;
+        }
+    }
+
     private void OnWebSocketStatusChanged(bool conectado, string mensagem)
     {
         // Atualiza UI na thread correta (evento vem de thread do socket)
@@ -166,7 +233,10 @@ public partial class PaginaInicial : Form
             return;
         }
 
-        // Fechamento real (ex: Application.Exit) — desconecta o WebSocket
+        // Fechamento real (ex: Application.Exit) — para os timers e desconecta o WebSocket
+        _timerRelogin?.Stop();
+        _timerRelogin?.Dispose();
+        NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
         _webSocketService.StatusChanged -= OnWebSocketStatusChanged;
         _ = _webSocketService.DesconectarAsync().ContinueWith(_ => _webSocketService.Dispose());
     }
@@ -738,6 +808,11 @@ public partial class PaginaInicial : Form
             {
                 await _webSocketService.DesconectarAsync();
                 await _webSocketService.ConectarAsync();
+
+                // Garante que o timer e o listener de rede estão ativos após login manual
+                IniciarTimerDeRelogin();
+                NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
+                NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
             }
         }
     }

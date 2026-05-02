@@ -95,8 +95,8 @@
                                                     <MudPaper @onclick="async () => await AdicionarProdutoNoPedido(item.produto)"
                                                               Elevation="6"
                                                               Class=@($"d-flex align-center pa-2 transition-all product-card {(item.index == ProdutoSelecionadoIndex ? "produto-selecionado" : "")}")
-                                                              Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:80px; border-radius:12px; overflow:hidden;">
-                                                        <MudGrid Class="h-100" Style="flex-wrap:nowrap;">
+                                                              Style="background-color: var(--mud-palette-surface); cursor:pointer; min-height:80px; border-radius:12px;">
+                                                        <MudGrid Class="h-100">
                                                             <!-- Avatar -->
                                                             <MudItem xs="3" Class="d-flex justify-center align-center" Style="flex-shrink:0;">
                                                                 <MudAvatar Size="Size.Medium"
@@ -115,11 +115,11 @@
                                                             </MudItem>
 
                                                             <!-- Informações -->
-                                                            <MudItem xs="9" Class="d-flex flex-column justify-center" Style="min-width:0; overflow:hidden;">
-                                                                <MudText Typo="Typo.body2" Class="fw-semibold" Style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                                            <MudItem xs="9" Class="d-flex flex-column justify-center" Style="min-width:0;">
+                                                                <MudText Typo="Typo.body2" Class="fw-semibold" Style="word-break:break-word; white-space:normal;">
                                                                     @item.produto.CodigoInterno - @item.produto.Descricao
                                                                 </MudText>
-                                                                <MudText Style="opacity: 0.7; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" Typo="Typo.caption">
+                                                                <MudText Style="opacity: 0.7;" Typo="Typo.caption">
                                                                     @($"A Partir de: {item.produto.Precos.Select(p => p.Valor).DefaultIfEmpty(0).Min():C}")
                                                                 </MudText>
                                                             </MudItem>

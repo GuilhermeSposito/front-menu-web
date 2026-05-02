@@ -78,6 +78,65 @@
             </MudPaper>
         }
 
+        @if (!string.IsNullOrEmpty(FiltroCliente))
+        {
+            <MudPaper Elevation="0" Class="px-4 py-2"
+                      Style="background-color:var(--mud-palette-info-darken); color:white;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">Exibindo apenas itens de <strong>@FiltroCliente</strong></MudText>
+                </MudStack>
+            </MudPaper>
+        }
+
+        <MudPaper Elevation="0" Class="px-4 py-2 mb-1"
+                  Style="background-color:var(--mud-palette-background); border-bottom:1px solid var(--mud-palette-lines-default);">
+            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled" OnClick="ReimprimirPedido" Color="Color.Primary">Reimprimir Itens</MudButton>
+                <MudButton OnClick="ImprimirItensSelecionados" Disabled="@(ItensSelecionados.Count == 0)" Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
+                @if (AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
+                {
+                    <MudButton OnClick="AvisarContaDaMesa" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">Imprimir Fechamento</MudButton>
+                }
+                <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
+                @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
+                {
+                    <MudButton OnClick="PagarPedidoParcial" Variant="Variant.Filled" Color="Color.Warning">Pagamento Parcial (F6)</MudButton>
+                }
+                @if (PedidoMesa.Itens != null)
+                {
+                    var clientes = PedidoMesa.Itens
+                        .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
+                        .Select(x => x.NomeCliente)
+                        .Distinct()
+                        .ToList();
+
+                    if (clientes.Count > 1)
+                    {
+                        @foreach (var cliente in clientes)
+                        {
+                            <MudButton OnClick="@(() => PagarPedidoPorCliente(cliente!))"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Info"
+                                       StartIcon="@Icons.Material.Filled.Person">
+                                Pagar Conta @cliente
+                            </MudButton>
+                        }
+                    }
+                }
+                @if (ItensSelecionados.Count > 0)
+                {
+                    <MudButton OnClick="TransferirItensSelecionados" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.SwapHoriz">
+                        Transferir Selecionados (@ItensSelecionados.Count)
+                    </MudButton>
+                    <MudButton OnClick="ExcluirItensSelecionados" Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">
+                        Excluir Selecionados (@ItensSelecionados.Count)
+                    </MudButton>
+                }
+                <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
+            </MudStack>
+        </MudPaper>
+
         <MudDataGrid T="ItensPedido"
                      @ref="dataGridRef"
                      EditTrigger="DataGridEditTrigger.Manual"
@@ -92,54 +151,6 @@
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Itens da mesa" />
             </NoRecordsContent>
-            <ToolBarContent>
-                <MudStack Row=true Spacing="2" Class="flex-wrap">
-                    <MudButton Variant="Variant.Filled" OnClick=ReimprimirPedido Color="Color.Primary">Reimprimir Itens</MudButton>
-                    <MudButton OnClick=ImprimirItensSelecionados Disabled=@(ItensSelecionados.Count > 0 ? false : true) Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
-                    @if (AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
-                    {
-                        <MudButton OnClick="AvisarContaDaMesa" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">Imprimir Fechamento</MudButton>
-                    }
-                    <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
-                    @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
-                    {
-                        <MudButton OnClick="PagarPedidoParcial" Variant="Variant.Filled" Color="Color.Warning">Pagamento Parcial (F6)</MudButton>
-                    }
-                    
-                    @if (PedidoMesa.Itens != null)
-                    {
-                        var clientes = PedidoMesa.Itens
-                            .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
-                            .Select(x => x.NomeCliente)
-                            .Distinct()
-                            .ToList();
-
-                        if (clientes.Count > 1)
-                        {
-                            @foreach (var cliente in clientes)
-                            {
-                                <MudButton OnClick="@(() => PagarPedidoPorCliente(cliente!))" 
-                                           Variant="Variant.Filled" 
-                                           Color="Color.Info" 
-                                           StartIcon="@Icons.Material.Filled.Person">
-                                    Pagar Conta @cliente
-                                </MudButton>
-                            }
-                        }
-                    }
-
-                    @if (ItensSelecionados.Count > 0)
-                    {
-                        <MudButton OnClick="TransferirItensSelecionados" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.SwapHoriz">
-                            Transferir Selecionados (@ItensSelecionados.Count)
-                        </MudButton>
-                        <MudButton OnClick="ExcluirItensSelecionados" Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">
-                            Excluir Selecionados (@ItensSelecionados.Count)
-                        </MudButton>
-                    }
-                    <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
-                </MudStack>
-            </ToolBarContent>
             <Columns>
                 <SelectColumn T="ItensPedido" />
                 <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
@@ -172,6 +183,7 @@
     private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter] public ClsMesasEComandas MesaOuComanda { get; set; } = new ClsMesasEComandas() { CodigoExterno = 0 };
+    [Parameter] public string? FiltroCliente { get; set; }
 
     private PedidoMesaDto PedidoMesa { get; set; } = new PedidoMesaDto();
     private MudDataGrid<ItensPedido>? dataGridRef = new();
@@ -305,12 +317,22 @@
                 PedidoMesa = result.Data.Objeto ?? new();
             }
 
+            // PedidoMesa.Itens mantém TODOS os itens (necessário para o cálculo de parcial)
+            var todosItens = PedidoMesa.Itens ?? new List<ItensPedido>();
+
+            var itensMostrados = string.IsNullOrEmpty(FiltroCliente)
+                ? todosItens
+                : todosItens.Where(i => i.NomeCliente == FiltroCliente).ToList();
+
+            if (!string.IsNullOrEmpty(FiltroCliente))
+                ItensSelecionados = itensMostrados.ToHashSet();
+
             StateHasChanged();
 
             return new GridData<ItensPedido>
             {
-                Items = result.Data.Objeto?.Itens!,
-                TotalItems = result.Data.Objeto?.Itens.Count() ?? 0
+                Items = itensMostrados,
+                TotalItems = itensMostrados.Count
             };
 
         }

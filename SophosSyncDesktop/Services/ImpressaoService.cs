@@ -972,6 +972,10 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, Ln("CORTESIA/DESCONTOS", "-", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, Ln("TAXAS DE ENTREGA", "+", Fechamento.TotalTaxaEntrega), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, Ln("COUVERTS", "+", Fechamento.TotalDeCouvert), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, Ln("TAXA DE SERVIÇO", "+", Fechamento.TotalDeServico), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, Ln("FATURAMENTO BRUTO", "=", faturamentoBruto), FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
