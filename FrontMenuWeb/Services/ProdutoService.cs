@@ -1,4 +1,4 @@
-﻿using FrontMenuWeb.DTOS;
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Fiscal;
 using FrontMenuWeb.Models.Merchant;
@@ -166,6 +166,14 @@ public class ProdutoService
             };
     }
 
+    public async Task<ReturnApiRefatored<ClsProduto>> EntradaEstoqueAsync(string idProduto, EntradaEstoqueDto entradaEstoqueDto)
+    {
+        var response = await _http.PostAsJsonAsync($"produtos/entrada-estoque/{idProduto}", entradaEstoqueDto);
+
+        var content = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsProduto>>();
+
+        return content!;
+    }
 }
 
 

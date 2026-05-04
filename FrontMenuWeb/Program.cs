@@ -133,6 +133,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MesasServices>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<MotoboyService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<PedidosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CaixaEPagamentosService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<ConveniosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<SangriasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<SuprimentosService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<RoteirizacaoService>());

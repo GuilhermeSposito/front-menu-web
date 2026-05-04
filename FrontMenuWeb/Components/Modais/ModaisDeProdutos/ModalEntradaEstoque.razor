@@ -1,0 +1,141 @@
+@using System.Globalization
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models.Produtos
+@inject ProdutoService ProdutoService
+@inject ISnackbar Snackbar
+
+<MudDialog Class="rounded-3" Style="width: 550px; background-color: var(--mud-palette-surface);">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Entrada / Saída de Estoque</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudAutocomplete T="ClsProduto"
+                         Label="Pesquisar Produto (Código ou Nome)"
+                         Value="ProdutoSelecionado"
+                         ValueChanged="OnProdutoSelected"
+                         SearchFunc="SearchProdutos"
+                         ToStringFunc="@(p => p == null ? null : $"{p.CodigoInterno} - {p.Descricao}")"
+                         Variant="Variant.Outlined"
+                         Dense="true"
+                         ResetValueOnEmptyText="true"
+                         CoerceText="true"
+                         CoerceValue="true"
+                         AdornmentIcon="@Icons.Material.Filled.Search"
+                         Class="mb-4"
+                         AutoFocus="true" />
+
+        @if (ProdutoSelecionado != null)
+        {
+            <MudPaper Elevation="0" Class="p-4 rounded-3 border mb-4">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.subtitle1"><b>Produto:</b> @ProdutoSelecionado.Descricao</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2"><b>Código:</b> @ProdutoSelecionado.CodigoInterno</MudText>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudText Typo="Typo.subtitle2"><b>Estoque Atual:</b> @ProdutoSelecionado.QtdEmEstoque.ToString("N3")</MudText>
+                    </MudItem>
+                    @if (!string.IsNullOrEmpty(ProdutoSelecionado.CodBarras))
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2"><b>Cód. Barras:</b> @ProdutoSelecionado.CodBarras</MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudNumericField T="float"
+                                     Label="Quantidade"
+                                     @bind-Value="EntradaDto.Quantidade"
+                                     Format="N3"
+                                     Culture="_pt"
+                                     Variant="Variant.Outlined"
+                                     HelperText="Positivo para Entrada, Negativo para Saída"
+                                     AutoFocus="true" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudNumericField T="float?"
+                                     Label="Preço de Custo (Opcional)"
+                                     @bind-Value="EntradaDto.PrecoCusto"
+                                     Format="N2"
+                                     Culture="_pt"
+                                     Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="@(ProdutoSelecionado == null || EntradaDto.Quantidade == 0)">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; }
+
+    private ClsProduto? ProdutoSelecionado { get; set; }
+    private EntradaEstoqueDto EntradaDto { get; set; } = new();
+    public CultureInfo _pt = CultureInfo.GetCultureInfo("pt-BR");
+
+    private List<ClsProduto> _allProdutos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Carrega alguns produtos inicialmente para o autocomplete não ficar vazio
+        _allProdutos = await ProdutoService.GetProdutosAsync();
+    }
+
+    private async Task<IEnumerable<ClsProduto>> SearchProdutos(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return _allProdutos.Take(10);
+
+        // A pesquisa no backend já faz o filtro por nome/codigo
+        // Mas como temos a lista local, podemos filtrar nela para ser mais rápido
+        return _allProdutos.Where(x =>
+            (x.CodigoInterno?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (x.CodBarras?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)
+        ).Take(20);
+    }
+
+    private void OnProdutoSelected(ClsProduto produto)
+    {
+        ProdutoSelecionado = produto;
+        if (produto != null)
+        {
+            EntradaDto.PrecoCusto = produto.PrecoCusto;
+            EntradaDto.Quantidade = 0; // Reset ao trocar de produto
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (ProdutoSelecionado == null || string.IsNullOrEmpty(ProdutoSelecionado.Id)) return;
+
+        try
+        {
+            var result = await ProdutoService.EntradaEstoqueAsync(ProdutoSelecionado.Id, EntradaDto);
+            if (result.Status == "success")
+            {
+                Snackbar.Add("Movimentação de estoque realizada com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", result.Messages), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao processar entrada: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

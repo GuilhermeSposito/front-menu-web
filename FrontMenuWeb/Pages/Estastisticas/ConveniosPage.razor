@@ -1,0 +1,830 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/convenios"
+@using FrontMenuWeb.Models
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Models.Vendas
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+@using MudBlazor
+@using FrontMenuWeb.Services.Fiscal
+@using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModaisDePessoas
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Components.Uteis
+
+@inject ConveniosService ConveniosService
+@inject PessoasService PessoasService
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NfService NFService
+@inject IJSRuntime JS
+@inject ILocalStorageService LocalStorage
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:10px">
+    <MudLayout>
+
+        <MudStack Class="w-100 p-2 rounded-3" Style="background-color: var(--mud-palette-surface);">
+            <MudStack Class="p-2">
+                <MudText Typo="Typo.h4">Convênios</MudText>
+                <MudText Class="mb-1" Typo="Typo.body1">Gerencie os convênios (fiado) dos clientes</MudText>
+            </MudStack>
+        </MudStack>
+
+        <MudTabs Elevation="2" Color=Color.Primary Rounded="true" ApplyEffectsToContainer="true" Class="mt-3 mx-1" PanelClass="pa-4">
+
+            @* ===== TAB 1: HABILITAR CONVÊNIO ===== *@
+            <MudTabPanel Text="Habilitar Convênio" Icon="@Icons.Material.Filled.PersonAdd">
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface);">
+                            <MudText Typo="Typo.h6" Class="mb-3">Configurar Convênio do Cliente</MudText>
+
+                            <MudAutocomplete T="ClsPessoas"
+                                             Label="Buscar Cliente"
+                                             Value="_pessoaSelecionada"
+                                             ValueChanged="OnPessoaSelecionadaChanged"
+                                             SearchFunc="BuscarPessoas"
+                                             ToStringFunc="@(p => p?.Nome ?? "")"
+                                             Variant="Variant.Outlined"
+                                             Clearable="true"
+                                             OnClearButtonClick="LimparPessoa"
+                                             Class="mb-3"
+                                             Adornment="Adornment.Start"
+                                             AdornmentIcon="@Icons.Material.Filled.Search" />
+
+                            @if (_pessoaSelecionada is not null)
+                            {
+                                <MudStack Spacing="3">
+                                    <MudSwitch T="bool"
+                                               @bind-Value="_pessoaSelecionada.ConvenioHabilitado"
+                                               Label="Convênio habilitado"
+                                               Color="Color.Primary" />
+
+                                    <MudNumericField T="float"
+                                                     @bind-Value="_pessoaSelecionada.LimiteCredito"
+                                                     Label="Limite de Crédito"
+                                                     Variant="Variant.Outlined"
+                                                     Format="F2"
+                                                     Adornment="Adornment.Start"
+                                                     AdornmentText="R$"
+                                                     Min="0" />
+
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               OnClick="SalvarConvenioCliente"
+                                               Disabled="_salvando"
+                                               StartIcon="@Icons.Material.Filled.Save">
+                                        @(_salvando ? "Salvando..." : "Salvar")
+                                    </MudButton>
+                                </MudStack>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2">
+                                    Busque um cliente acima para configurar o convênio.
+                                </MudText>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            @* ===== TAB 2: VER CONVÊNIOS ===== *@
+            <MudTabPanel Text="Ver Convênios" Icon="@Icons.Material.Filled.ListAlt">
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3" Wrap="Wrap.Wrap">
+                    <MudChipSet T="string" SelectedValue="_filtroStatus" SelectedValueChanged="OnFiltroStatusChanged" SelectionMode="SelectionMode.SingleSelection">
+                        <MudChip T="string" Value="@("")" Color="Color.Default" Variant="Variant.Outlined">Todos</MudChip>
+                        <MudChip T="string" Value="@("ATIVO")" Color="Color.Success" Variant="Variant.Outlined">Ativos</MudChip>
+                        <MudChip T="string" Value="@("SUSPENSO")" Color="Color.Warning" Variant="Variant.Outlined">Suspensos</MudChip>
+                        <MudChip T="string" Value="@("QUITADO")" Color="Color.Info" Variant="Variant.Outlined">Quitados</MudChip>
+                    </MudChipSet>
+                </MudStack>
+
+                <MudDataGrid T="ClsConvenio"
+                             ServerData="CarregarConvenios"
+                             @ref="_dataGrid"
+                             Hover="true"
+                             Class="rounded-3 custom-striped"
+                             RowClick="@(async (row) => await AbrirDetalhes(row.Item))"
+                             SelectOnRowClick="true"
+                             MultiSelection="false">
+                    <Columns>
+                        <PropertyColumn Property="x => x.Pessoa!.Nome" Title="Cliente" Sortable="false" />
+                        <TemplateColumn Title="Saldo Devedor" Sortable="false">
+                            <CellTemplate>
+                                <MudText Color="@(context.Item.SaldoDevedor > 0 ? Color.Error : Color.Success)">
+                                    <strong>@context.Item.SaldoDevedor.ToString("C")</strong>
+                                </MudText>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Limite" Sortable="false">
+                            <CellTemplate>
+                                <MudText>@context.Item.LimiteCreditoSnapshot.ToString("C")</MudText>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Status" Sortable="false">
+                            <CellTemplate>
+                                <MudChip T="string"
+                                         Color="@StatusColor(context.Item.Status)"
+                                         Size="Size.Small"
+                                         Variant="Variant.Filled">
+                                    @context.Item.Status
+                                </MudChip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Criado Em" Sortable="false">
+                            <CellTemplate>
+                                <MudText Typo="Typo.body2">@context.Item.CriadoEm.ToString("dd/MM/yyyy")</MudText>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="" Sortable="false">
+                            <CellTemplate>
+                                <MudStack Row=true>
+                                    @if (context.Item.SaldoDevedor > 0 && context.Item.Status == "ATIVO")
+                                    {
+                                        <div @onclick:stopPropagation="true">
+                                            <MudIconButton Icon="@Icons.Material.Filled.AttachMoney"
+                                                           Color="Color.Success"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => AbrirRegistrarPagamento(context.Item))" />
+                                        </div>
+                                    }
+                                    <div @onclick:stopPropagation="true">
+                                        <MudIconButton Icon="@Icons.Material.Filled.RemoveRedEye"
+                                                       Color="Color.Success"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => AbrirDetalhes(context.Item))" />
+                                    </div>
+                                    <div @onclick:stopPropagation="true">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="@(() => ExcluirConvenio(context.Item))" />
+                                    </div>
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                    <PagerContent>
+                        <MudDataGridPager T="ClsConvenio" RowsPerPageString="por página" />
+                    </PagerContent>
+                </MudDataGrid>
+
+            </MudTabPanel>
+        </MudTabs>
+
+    </MudLayout>
+</MudPaper>
+
+@* ===== DIALOG DE DETALHES ===== *@
+<MudDialog @bind-Visible="_detalhesAberto" Options="_detalhesDialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Convênio — @(_convenioDetalhes?.Pessoa?.Nome ?? "")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_carregandoDetalhes)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else if (_convenioDetalhes is not null)
+        {
+            <MudGrid Class="mb-3">
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption">Saldo Devedor</MudText>
+                    <MudText Typo="Typo.h6" Color="@(_convenioDetalhes.SaldoDevedor > 0 ? Color.Error : Color.Success)">
+                        @_convenioDetalhes.SaldoDevedor.ToString("C")
+                    </MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption">Limite</MudText>
+                    <MudText Typo="Typo.h6">@_convenioDetalhes.LimiteCreditoSnapshot.ToString("C")</MudText>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudText Typo="Typo.caption">Status</MudText>
+                    <MudChip T="string" Color="@StatusColor(_convenioDetalhes.Status)" Size="Size.Small" Variant="Variant.Filled">
+                        @_convenioDetalhes.Status
+                    </MudChip>
+                </MudItem>
+            </MudGrid>
+
+            <MudTabs Elevation="1" Rounded="true" Class="mt-2" PanelClass="pa-2">
+                <MudTabPanel Text=@($"Pedidos ({PedidosFiltrados.Count()})")>
+                    <FiltroPeriodoRapido @bind-DataInicio="_filtroPedidosInicio"
+                                         @bind-DataFim="_filtroPedidosFim"
+                                         OnFiltroAplicado="StateHasChanged"
+                                         Class="mb-2" />
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2">Seleção de Pedidos</MudText>
+                            <MudSwitch T="bool" Value="_multiselecaoConvenio" Color="Color.Success"
+                                       ValueChanged="@(valor => { _multiselecaoConvenio = valor; _pedidosConvenioSelecionados.Clear(); })" />
+                        </MudStack>
+                        @if (_multiselecaoConvenio && _pedidosConvenioSelecionados.Count > 0)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Color="Color.Success" Typo="Typo.body1">
+                                    <strong>@_pedidosConvenioSelecionados.Sum(x => x.ValorPedido).ToString("C")</strong>
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="GerarNFeDoConvenio"
+                                           Disabled="_carregandoNFeConvenio"
+                                           StartIcon="@Icons.Material.Filled.Receipt">
+                                    @(_carregandoNFeConvenio ? "Emitindo..." : "Gerar NF-e")
+                                </MudButton>
+                            </MudStack>
+                        }
+                    </MudStack>
+                    @if (_carregandoNFeConvenio)
+                    {
+                        <MudProgressLinear Value="_progressoNFeConvenio" Color="Color.Primary" Class="mb-2" />
+                    }
+                    @if (!PedidosFiltrados.Any())
+                    {
+                        <MudText>Nenhum pedido encontrado no período selecionado.</MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                                <tr>
+                                    @if (_multiselecaoConvenio)
+                                    {
+                                        <th></th>
+                                    }
+                                    <th>Data</th>
+                                    <th>Valor do Pedido</th>
+                                    <th>Falta Pagar</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cp in PedidosFiltrados)
+                                {
+                                    <tr>
+                                        @if (_multiselecaoConvenio)
+                                        {
+                                            <td>
+                                                <MudCheckBox T="bool"
+                                                             Value="_pedidosConvenioSelecionados.Contains(cp)"
+                                                             ValueChanged="@(v => TogglePedidoConvenio(cp, v))"
+                                                             Color="Color.Primary" />
+                                            </td>
+                                        }
+                                        <td>@cp.CriadoEm.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@cp.ValorPedido.ToString("C")</td>
+                                        <td>@(cp.Pedido?.ValorFaltaPagar.ToString("C") ?? "-")</td>
+                                        <td>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                           Color="Color.Error"
+                                                           Size="Size.Small"
+                                                           OnClick="@(() => ExcluirPedidoDoConvenio(cp))" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudTabPanel>
+                <MudTabPanel Text=@($"Pagamentos ({_pagamentosDoConvenio.Count})")>
+                    @if (_pagamentosDoConvenio.Count == 0)
+                    {
+                        <MudText>Nenhum pagamento registrado.</MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Forma</th>
+                                    <th>Valor Pago</th>
+                                    <th>Troco</th>
+                                    <th>Obs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pag in _pagamentosDoConvenio)
+                                {
+                                    <tr>
+                                        <td>@pag.PagoEm.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>@(pag.FormaDeRecebimento?.Descricao ?? "-")</td>
+                                        <td>@pag.ValorPago.ToString("C")</td>
+                                        <td>@pag.Troco.ToString("C")</td>
+                                        <td>@(pag.Obs ?? "")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudTabPanel>
+            </MudTabs>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _detalhesAberto = false)">Fechar</MudButton>
+        @if (_convenioDetalhes?.SaldoDevedor > 0 && _convenioDetalhes?.Status == "ATIVO")
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       OnClick="@(() => { _detalhesAberto = false; AbrirRegistrarPagamento(_convenioDetalhes!); })">
+                Registrar Pagamento
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@* ===== DIALOG DE PAGAMENTO ===== *@
+<MudDialog @bind-Visible="_pagamentoAberto" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Registrar Pagamento — @(_convenioPagando?.Pessoa?.Nome ?? "")
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_convenioPagando is not null)
+        {
+            <MudStack Spacing="3">
+                <MudText>
+                    Saldo devedor atual: <strong>@_convenioPagando.SaldoDevedor.ToString("C")</strong>
+                </MudText>
+
+                <MudSelect T="ClsFormaDeRecebimento"
+                           Value="_formaRecebimentoSelecionada"
+                           ValueChanged="OnFormaRecebimentoChanged"
+                           Label="Forma de Recebimento"
+                           Variant="Variant.Outlined"
+                           ToStringFunc="@(f => f?.Descricao ?? "")">
+                    @foreach (var forma in _formasDeRecebimento)
+                    {
+                        <MudSelectItem T="ClsFormaDeRecebimento" Value="@forma">@forma.Descricao</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudNumericField T="float"
+                                 @bind-Value="_valorPago"
+                                 Label="Valor Pago"
+                                 Variant="Variant.Outlined"
+                                 Format="F2"
+                                 Adornment="Adornment.Start"
+                                 AdornmentText="R$"
+                                 Min="0.01f" />
+
+                @if (_formaRecebimentoSelecionada?.Descricao?.Contains("dinheiro", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    <MudNumericField T="float"
+                                     @bind-Value="_troco"
+                                     Label="Troco"
+                                     Variant="Variant.Outlined"
+                                     Format="F2"
+                                     Adornment="Adornment.Start"
+                                     AdornmentText="R$"
+                                     Min="0" />
+                }
+
+                <MudTextField T="string"
+                              @bind-Value="_obsPagamento"
+                              Label="Observação (opcional)"
+                              Variant="Variant.Outlined"
+                              Lines="2" />
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _pagamentoAberto = false)" Disabled="_registrandoPagamento">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="ConfirmarPagamento"
+                   Disabled="_registrandoPagamento">
+            @(_registrandoPagamento ? "Registrando..." : "Confirmar")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private MudDataGrid<ClsConvenio>? _dataGrid;
+    private string _filtroStatus = "";
+    private bool _salvando = false;
+    private ClsPessoas? _pessoaSelecionada;
+
+    // Detalhes
+    private bool _detalhesAberto = false;
+    private bool _carregandoDetalhes = false;
+    private ClsConvenio? _convenioDetalhes;
+    private List<ClsConvenioPedido> _pedidosDoConvenio = new();
+    private List<ClsConvenioPagamento> _pagamentosDoConvenio = new();
+
+    // Pagamento
+    private bool _pagamentoAberto = false;
+    private bool _registrandoPagamento = false;
+    private ClsConvenio? _convenioPagando;
+    private List<ClsFormaDeRecebimento> _formasDeRecebimento = new();
+    private ClsFormaDeRecebimento? _formaRecebimentoSelecionada;
+    private float _valorPago = 0f;
+    private float _troco = 0f;
+    private string? _obsPagamento;
+
+    private DialogOptions _dialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Medium,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    private DialogOptions _detalhesDialogOptions = new()
+    {
+        MaxWidth = MaxWidth.Large,
+        FullWidth = true,
+        CloseOnEscapeKey = true
+    };
+
+    // Filtro de data dos pedidos do convênio
+    private DateTime? _filtroPedidosInicio;
+    private DateTime? _filtroPedidosFim;
+
+    private IEnumerable<ClsConvenioPedido> PedidosFiltrados =>
+        _pedidosDoConvenio.Where(cp =>
+            (_filtroPedidosInicio is null || cp.CriadoEm.Date >= _filtroPedidosInicio.Value.Date) &&
+            (_filtroPedidosFim is null || cp.CriadoEm.Date <= _filtroPedidosFim.Value.Date));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _formasDeRecebimento = (await FormasDeRecebimentoService.GetFormasDeRecebimentoAsync())
+            .Where(f => f.Ativo)
+            .ToList();
+    }
+
+    private async Task<GridData<ClsConvenio>> CarregarConvenios(GridState<ClsConvenio> state)
+    {
+        var page = state.Page + 1;
+        var limit = state.PageSize;
+
+        var response = await ConveniosService.GetConveniosAsync(page, limit, string.IsNullOrEmpty(_filtroStatus) ? null : _filtroStatus);
+
+        return new GridData<ClsConvenio>
+        {
+            Items = response.Data.Data,
+            TotalItems = response.Data.Total
+        };
+    }
+
+    private async Task<IEnumerable<ClsPessoas>> BuscarPessoas(string? texto, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return new List<ClsPessoas>();
+        var response = await PessoasService.GetPessoasPaginado(texto, ApenasClientes: true);
+        return response.Data.Lista ?? new List<ClsPessoas>();
+    }
+
+    private async Task OnPessoaSelecionadaChanged(ClsPessoas? pessoa)
+    {
+        if (pessoa is null) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa", "Autorização — Convênio de Cliente")) return;
+        _pessoaSelecionada = pessoa;
+    }
+
+    private void LimparPessoa()
+    {
+        _pessoaSelecionada = null;
+    }
+
+    private async Task SalvarConvenioCliente()
+    {
+        if (_pessoaSelecionada is null) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa", "Autorização — Cadastro de Pessoas")) return;
+        _salvando = true;
+
+        var resultado = await PessoasService.AtualizarConvenioClienteAsync(
+            _pessoaSelecionada.Id,
+            _pessoaSelecionada.ConvenioHabilitado,
+            _pessoaSelecionada.LimiteCredito);
+
+        if (resultado == "success")
+            Snackbar.Add("Configurações de convênio salvas!", Severity.Success);
+        else
+            Snackbar.Add(resultado, Severity.Error);
+
+        _salvando = false;
+    }
+
+    private async Task OnFiltroStatusChanged(string novoStatus)
+    {
+        _filtroStatus = novoStatus;
+        if (_dataGrid is not null)
+            await _dataGrid.ReloadServerData();
+    }
+
+    private async Task AbrirDetalhes(ClsConvenio convenio)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda", "Autorização — Ver Convênio")) return;
+
+        _multiselecaoConvenio = false;
+        _pedidosConvenioSelecionados = new();
+        _carregandoNFeConvenio = false;
+        _convenioDetalhes = convenio;
+        _pedidosDoConvenio = new();
+        _pagamentosDoConvenio = new();
+        _detalhesAberto = true;
+        _carregandoDetalhes = true;
+
+        var pedidosTask = ConveniosService.GetPedidosDoConvenioAsync(convenio.Id);
+        var pagamentosTask = ConveniosService.GetPagamentosDoConvenioAsync(convenio.Id);
+        await Task.WhenAll(pedidosTask, pagamentosTask);
+        _pedidosDoConvenio = pedidosTask.Result;
+        _pagamentosDoConvenio = pagamentosTask.Result;
+        _carregandoDetalhes = false;
+    }
+
+    private void OnFormaRecebimentoChanged(ClsFormaDeRecebimento forma)
+    {
+        _formaRecebimentoSelecionada = forma;
+        if (forma?.Descricao?.Contains("dinheiro", StringComparison.OrdinalIgnoreCase) != true)
+            _troco = 0f;
+    }
+
+    private void AbrirRegistrarPagamento(ClsConvenio convenio)
+    {
+        _convenioPagando = convenio;
+        _valorPago = convenio.SaldoDevedor;
+        _troco = 0f;
+        _obsPagamento = null;
+        _formaRecebimentoSelecionada = _formasDeRecebimento.FirstOrDefault();
+        _pagamentoAberto = true;
+    }
+
+    private async Task ConfirmarPagamento()
+    {
+        if (_convenioPagando is null || _formaRecebimentoSelecionada is null) return;
+        if (_valorPago <= 0)
+        {
+            Snackbar.Add("Informe um valor maior que zero.", Severity.Error);
+            return;
+        }
+
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda", "Autorização — Pagamento de Convênio")) return;
+        _registrandoPagamento = true;
+
+        var dto = new CriarPagamentoConvenioDto
+        {
+            PessoaId = _convenioPagando.Pessoa?.Id ?? 0,
+            FormaDeRecebimentoId = _formaRecebimentoSelecionada.Id,
+            ValorPago = _valorPago,
+            Troco = _troco,
+            Obs = _obsPagamento
+        };
+
+        var response = await ConveniosService.RegistrarPagamentoAsync(dto);
+
+        if (response.Status == "success")
+        {
+            Snackbar.Add("Pagamento registrado com sucesso!", Severity.Success);
+            _pagamentoAberto = false;
+            if (_dataGrid is not null)
+                await _dataGrid.ReloadServerData();
+        }
+        else
+        {
+            var msg = response.Messages.FirstOrDefault() ?? "Erro ao registrar pagamento.";
+            Snackbar.Add(msg, Severity.Error);
+        }
+
+        _registrandoPagamento = false;
+    }
+
+    private Color StatusColor(string status) => status switch
+    {
+        "ATIVO" => Color.Success,
+        "SUSPENSO" => Color.Warning,
+        "QUITADO" => Color.Info,
+        _ => Color.Default
+    };
+
+    // NF-e no convênio
+    private bool _multiselecaoConvenio = false;
+    private HashSet<ClsConvenioPedido> _pedidosConvenioSelecionados = new();
+    private bool _carregandoNFeConvenio = false;
+    private int _progressoNFeConvenio = 0;
+
+    private void TogglePedidoConvenio(ClsConvenioPedido cp, bool selecionado)
+    {
+        if (selecionado) _pedidosConvenioSelecionados.Add(cp);
+        else _pedidosConvenioSelecionados.Remove(cp);
+    }
+
+    private async Task SimulaProgressoNFeConvenioAsync()
+    {
+        _progressoNFeConvenio = 0;
+        while (_progressoNFeConvenio < 90 && _carregandoNFeConvenio)
+        {
+            await Task.Delay(100);
+            _progressoNFeConvenio += Random.Shared.Next(2, 6);
+            _progressoNFeConvenio = Math.Min(_progressoNFeConvenio, 98);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ExcluirPedidoDoConvenio(ClsConvenioPedido cp)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa", "Autorização — Remover Pedido do Convênio")) return;
+
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Remover o pedido de {cp.ValorPedido.ToString("C")} do convênio? O saldo faltante do pedido será zerado." },
+            { x => x.ButtonText, "Remover" },
+            { x => x.Color, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Remover Pedido do Convênio", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            if (_convenioDetalhes is null) return;
+
+            var response = await ConveniosService.DeleteConvenioPedidoAsync(_convenioDetalhes.Id, cp.Id);
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Pedido removido do convênio com sucesso!", Severity.Success);
+                _pedidosDoConvenio.Remove(cp);
+                _pedidosConvenioSelecionados.Remove(cp);
+                _convenioDetalhes.SaldoDevedor = Math.Max(0, _convenioDetalhes.SaldoDevedor - cp.ValorPedido);
+                if (_dataGrid is not null)
+                    await _dataGrid.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(response.Messages.FirstOrDefault() ?? "Erro ao remover pedido.", Severity.Error);
+            }
+        }
+    }
+
+    private async Task ExcluirConvenio(ClsConvenio convenio)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa", "Autorização — Excluir Convênio")) return;
+
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Deseja excluir o convênio de {convenio.Pessoa?.Nome}? Todos os pedidos e pagamentos vinculados serão removidos." },
+            { x => x.ButtonText, "Excluir" },
+            { x => x.Color, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await ConveniosService.DeleteConvenioAsync(convenio.Id);
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Convênio excluído com sucesso!", Severity.Success);
+                if (_dataGrid is not null)
+                    await _dataGrid.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(response.Messages.FirstOrDefault() ?? "Erro ao excluir convênio.", Severity.Error);
+            }
+        }
+    }
+
+    // Mesmo padrão do GerarNFeParaPedidosSelecionados do HistoricoDeVendas
+    private async Task GerarNFeDoConvenio()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
+        try
+        {
+            _progressoNFeConvenio = 0;
+            _carregandoNFeConvenio = true;
+
+            var pedidosReais = _pedidosConvenioSelecionados
+                .Where(cp => cp.Pedido is not null)
+                .Select(cp => cp.Pedido!)
+                .ToHashSet();
+
+            if (pedidosReais.Count == 0)
+            {
+                Snackbar.Add("Selecione ao menos um pedido para emitir NF-e.", Severity.Warning);
+                return;
+            }
+
+            // Verifica cupom fiscal já emitido
+            bool algumTemCupom = pedidosReais.Any(p =>
+                p.Pagamentos?.Any(pg => !string.IsNullOrWhiteSpace(pg.CupomFiscalChave)) == true);
+
+            if (algumTemCupom)
+            {
+                var confirmParams = new DialogParameters<ModalDeExcluir>
+                {
+                    { x => x.ContentText, "Você já tem NF emitida para um dos pedidos da lista, deseja prosseguir?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error }
+                };
+                var confirmOptions = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var confirmDialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Emissão", confirmParams, confirmOptions);
+                var confirmResult = await confirmDialog.Result;
+                if (confirmResult!.Canceled && confirmResult.Data is bool ok && !ok)
+                    throw new Exception("Operação de emissão cancelada pelo usuário.");
+            }
+
+            ClsPessoas? Pessoa = pedidosReais.First().Cliente ?? _convenioDetalhes?.Pessoa;
+            if (Pessoa is null)
+                throw new Exception("O cliente do pedido selecionado não foi encontrado.");
+
+            List<EnderecoPessoa> enderecos = Pessoa.Enderecos ?? new List<EnderecoPessoa>();
+            if (enderecos.Count == 0)
+                enderecos = await PessoasService.GetEnderecosPorPessoa(Pessoa.Id);
+
+            EnderecoPessoa? enderecoSelecionado = null;
+            if (enderecos.Count == 0)
+            {
+                Snackbar.Add("O cliente não possui endereços cadastrados.", Severity.Warning);
+                return;
+            }
+            else if (enderecos.Count == 1)
+            {
+                enderecoSelecionado = enderecos.First();
+            }
+            else
+            {
+                var endParams = new DialogParameters { { "Enderecos", enderecos } };
+                var endDialog = await DialogService.ShowAsync<ModalDeVariosEnderecosDoCliente>("Selecionar Endereço", endParams, new DialogOptions { CloseOnEscapeKey = true });
+                var endResult = await endDialog.Result;
+                if (!endResult!.Canceled && endResult.Data is EnderecoPessoa endSelecionado)
+                {
+                    enderecoSelecionado = endSelecionado;
+                    Snackbar.Add("Endereço adicionado com sucesso", Severity.Success);
+                }
+                else if (endResult!.Canceled)
+                    throw new Exception("Operação de seleção de endereço cancelada pelo usuário.");
+            }
+
+            Pessoa.Endereco = enderecoSelecionado;
+
+            if (string.IsNullOrEmpty(Pessoa.Cnpj) || string.IsNullOrEmpty(Pessoa.InscricaoEstadual))
+                throw new Exception("O cliente não possui dados fiscais completos (CNPJ e IE). Verifique o cadastro.");
+
+            _ = SimulaProgressoNFeConvenioAsync();
+
+            var pedidoConsolidado = MontarPedidoParaNFeConvenio(pedidosReais, Pessoa);
+            var response = await NFService.GeraNFe(pedidoConsolidado);
+
+            var message = response.Status == "error"
+                ? string.Join(", ", response.Messages)
+                : string.Join(", ", response.Data.Messages);
+            Snackbar.Add(message, response.Status == "error" ? Severity.Error : Severity.Success);
+
+            if (response.Status != "error")
+            {
+                bool impressaoDesabilitada = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+                if (!impressaoDesabilitada && response.Data.ObjetoWhenWriting?.XmlStringField is not null)
+                    await JS.InvokeVoidAsync("baixarXMLNF", response.Data.ObjetoWhenWriting.XmlStringField,
+                        $"{response.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+
+                _pedidosConvenioSelecionados.Clear();
+                _multiselecaoConvenio = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao gerar NF-e: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _carregandoNFeConvenio = false;
+            _progressoNFeConvenio = 0;
+        }
+    }
+
+    private ClsPedido MontarPedidoParaNFeConvenio(HashSet<ClsPedido> pedidos, ClsPessoas cliente)
+    {
+        var novoPedido = new ClsPedido
+        {
+            Id = 0,
+            CriadoEm = DateTime.Now,
+            ModificadoEm = DateTime.Now,
+            CriadoPor = "Sistema",
+            Cliente = cliente,
+        };
+
+        foreach (var pedido in pedidos)
+        {
+            novoPedido.Itens.AddRange(pedido.Itens);
+            novoPedido.Pagamentos.AddRange(pedido.Pagamentos);
+        }
+
+        novoPedido.ValorTotal = pedidos.Sum(p => p.ValorTotal);
+        novoPedido.ValorDosItens = pedidos.Sum(p => p.ValorDosItens);
+        novoPedido.DescontoValor = pedidos.Sum(p => p.DescontoValor);
+        novoPedido.AcrescimoValor = pedidos.Sum(p => p.AcrescimoValor);
+        novoPedido.TaxaEntregaValor = pedidos.Sum(p => p.TaxaEntregaValor);
+        return novoPedido;
+    }
+}

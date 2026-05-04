@@ -30,6 +30,7 @@ public partial class PaginaInicial : Form
     private System.Timers.Timer _timer;
     private System.Timers.Timer _timerMesa;
     private System.Timers.Timer _timerRelogin;
+    private System.Timers.Timer _timerConectividade;
     private volatile bool _relogandoAgora = false;
 
     // Label criado em código para não exigir alteração no .resx do designer
@@ -99,6 +100,7 @@ public partial class PaginaInicial : Form
             // Timer e listener de rede ficam sempre ativos quando há credenciais,
             // mesmo que o login inicial tenha falhado por falta de internet.
             IniciarTimerDeRelogin();
+            IniciarTimerDeConectividade();
             NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
         }
 
@@ -156,6 +158,30 @@ public partial class PaginaInicial : Form
         _timerRelogin.Elapsed += async (s, e) => await RelogarEReconectarAsync();
         _timerRelogin.AutoReset = true;
         _timerRelogin.Start();
+    }
+
+    public void IniciarTimerDeConectividade()
+    {
+        _timerConectividade = new System.Timers.Timer(30000);
+        _timerConectividade.Elapsed += async (s, e) =>
+        {
+            if (_webSocketService.EstaConectado || _relogandoAgora) return;
+
+            try
+            {
+                using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                // Qualquer resposta (mesmo 401/404) confirma que a internet voltou
+                await http.GetAsync("https://sophos-erp.com.br");
+                Console.WriteLine("[Conectividade] Internet detectada — refazendo login e reconectando socket...");
+                await RelogarEReconectarAsync();
+            }
+            catch
+            {
+                // Sem internet ainda — aguarda o próximo ciclo
+            }
+        };
+        _timerConectividade.AutoReset = true;
+        _timerConectividade.Start();
     }
 
     private async void OnNetworkAvailabilityChanged(object? sender, NetworkAvailabilityEventArgs e)
@@ -236,6 +262,8 @@ public partial class PaginaInicial : Form
         // Fechamento real (ex: Application.Exit) — para os timers e desconecta o WebSocket
         _timerRelogin?.Stop();
         _timerRelogin?.Dispose();
+        _timerConectividade?.Stop();
+        _timerConectividade?.Dispose();
         NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
         _webSocketService.StatusChanged -= OnWebSocketStatusChanged;
         _ = _webSocketService.DesconectarAsync().ContinueWith(_ => _webSocketService.Dispose());

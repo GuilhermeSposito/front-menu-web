@@ -12,7 +12,22 @@
 
 <MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
-        <MudText Class="ms-3" Typo="Typo.h6">Pagamento Do Pedido</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 pe-2">
+            <MudText Class="ms-3" Typo="Typo.h6">Pagamento Do Pedido</MudText>
+            <MudStack Style="margin-right:55px;" Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                @if (!Editando && Pedido.ClienteId > 0)
+                {
+                    <MudButton Variant="Variant.Outlined"
+                               OnClick="EnviarComoConvenio"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Handshake"
+                               Size="Size.Small"
+                               Class="ms-3">
+                        Convênio
+                    </MudButton>
+                }
+            </MudStack>
+        </MudStack>
         <MudDivider Class="w-100" Light=true />
     </TitleContent>
 
@@ -76,7 +91,7 @@
                 {
                     <MudItem xs="12" sm="12" lg="6" xxl="6">
                         <MudPaper Class="pa-4 ma-1 rounded-2 h-100" Style="border: 1px solid var(--mud-palette-divider);">
-                             <MudStack Row=true Justify="Justify.SpaceBetween">
+                            <MudStack Row=true Justify="Justify.SpaceBetween">
                                 <MudText Typo="Typo.h6">Taxa de Serviço (@AppState.MerchantLogado.TaxaDeServicoPercent%):</MudText>
                                 <MudText Typo="Typo.caption">(CTRL + S)</MudText>
                             </MudStack>
@@ -401,6 +416,40 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Erro ao imprimir fechamento: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async void EnviarComoConvenio()
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: Você esta adicionando um convenio para este cliente. Deseja Proseguir?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            if (Pedido.ClienteId <= 0)
+            {
+                Snackbar.Add("Selecione um cliente para usar o convênio.", Severity.Error);
+                return;
+            }
+
+            Pedido.ValorDosItens = ValorDosItens;
+            Pedido.DescontoValor = ValorDoDesconto;
+            Pedido.AcrescimoValor = TaxaAdicional;
+            Pedido.TaxaEntregaValor = TaxaDeEntrega;
+            Pedido.ServicoValor = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
+            Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
+            Pedido.ValorTotal = ValorTotal;
+            Pedido.IsConvenio = true;
+            Pedido.Pagamentos.Clear();
+
+            MudDialog.Close(DialogResult.Ok(true));
         }
     }
 

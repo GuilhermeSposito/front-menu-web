@@ -60,6 +60,26 @@ public class PessoasService
 
     }
 
+    public async Task<string> AtualizarConvenioClienteAsync(int pessoaId, bool convenioHabilitado, float limiteCredito)
+    {
+        var payload = new { LimiteCredito = limiteCredito, ConvenioHabilitado = convenioHabilitado };
+        var options = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null };
+        using var content = System.Net.Http.Json.JsonContent.Create(payload, options: options);
+        HttpResponseMessage EnvioDeReq = await _HttpClient.PatchAsync($"pessoas/update/{pessoaId}", content);
+
+        try
+        {
+            RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
+            if (response is null) return "Erro ao atualizar convênio.";
+            if (response.Status != "success") return response.message ?? "Erro ao atualizar convênio.";
+            return "success";
+        }
+        catch
+        {
+            return EnvioDeReq.IsSuccessStatusCode ? "success" : "Erro ao atualizar convênio.";
+        }
+    }
+
     public async Task<string> UpdatePessoa(ClsPessoas pessoaASerCadastrada)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PatchAsJsonAsync($"pessoas/update/{pessoaASerCadastrada.Id}", pessoaASerCadastrada);

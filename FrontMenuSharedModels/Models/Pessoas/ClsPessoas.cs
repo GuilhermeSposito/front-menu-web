@@ -27,6 +27,8 @@ public class ClsPessoas
     [JsonPropertyName("obs")] public string? Observacao { get; set; }
     [JsonPropertyName("setor")] public string? Setor { get; set; }
     [JsonPropertyName("desconto")] public int? Desconto { get; set; }
+    [JsonPropertyName("LimiteCredito")] public float LimiteCredito { get; set; } = 300f;
+    [JsonPropertyName("ConvenioHabilitado")] public bool ConvenioHabilitado { get; set; } = false;
     [JsonPropertyName("enderecos")] public List<EnderecoPessoa> Enderecos { get; set; } = new List<EnderecoPessoa>();
     [JsonPropertyName("endereco")]public EnderecoPessoa? Endereco { get; set; } = new EnderecoPessoa(); //prop que só vai ser ultilizada quando serializarmos para mandar o end junto
     [JsonPropertyName("Pedidos")]public List<ClsPedido>? Pedidos{ get; set; } = new List<ClsPedido>(); //prop que só vai ser ultilizada quando serializarmos para mandar o end junto

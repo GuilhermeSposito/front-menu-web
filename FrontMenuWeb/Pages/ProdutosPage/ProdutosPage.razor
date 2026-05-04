@@ -30,6 +30,7 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
             <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Info" Class="mr-2" OnClick="AbrirModalEntradaEstoque">Entrada de Estoque</MudButton>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(async () => { await AddProduto(produtoParaReultilizar: null); })">Novo Produto</MudButton>
             </div>
         </div>
@@ -271,6 +272,18 @@
         finally
         {
             carregandoProduto = false;
+        }
+    }
+
+    private async Task AbrirModalEntradaEstoque()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ModalEntradaEstoque>("Entrada de Estoque", options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            await dataGridRef!.ReloadServerData();
         }
     }
 

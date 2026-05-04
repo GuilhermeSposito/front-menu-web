@@ -141,6 +141,8 @@ public class ClsPedido
     [JsonPropertyName("HorarioDataAgendamento")] public DateTime? HorarioDataAgendamento { get; set; }
     [JsonPropertyName("InfosPedidoIntegradoStatusAdicionais")] public string? InfosPedidoIntegradoStatusAdicionais { get; set; }
     [JsonPropertyName("ItensFechamentoIds")] public List<int>? ItensFechamentoIds { get; set; }
+    [JsonPropertyName("IsConvenio")] public bool IsConvenio { get; set; } = false;
+    [JsonPropertyName("ValorFaltaPagar")] public float ValorFaltaPagar { get; set; } = 0f;
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 
