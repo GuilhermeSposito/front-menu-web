@@ -35,12 +35,12 @@ public class PessoasService
         if (response is null)
             return new ClsPessoas();
 
-        if(response.Status != "success")
+        if (response.Status != "success")
             return new ClsPessoas();
 
         Console.WriteLine(response.Data.Pessoa.Pedidos);
 
-        return response.Data.Pessoa; 
+        return response.Data.Pessoa;
     }
 
     public async Task<ReturnApiRefatored<ClsPessoas>> GetPessoasPaginado(string? queryName, bool ApenasClientes = false)
@@ -84,15 +84,42 @@ public class PessoasService
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PatchAsJsonAsync($"pessoas/update/{pessoaASerCadastrada.Id}", pessoaASerCadastrada);
 
-        RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
+        var rawJson = await EnvioDeReq.Content.ReadAsStringAsync();
+
+        if (!EnvioDeReq.IsSuccessStatusCode)
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(rawJson);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    if (msgEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        return string.Join("; ", msgEl.EnumerateArray().Select(e => e.GetString()).Where(s => !string.IsNullOrWhiteSpace(s)));
+                    if (msgEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                        return msgEl.GetString() ?? "Erro ao atualizar pessoa;";
+                }
+            }
+            catch { /* fallthrough */ }
+            return "Erro ao atualizar pessoa;";
+        }
+
+        RetornoApiPessoas? response;
+        try
+        {
+            response = System.Text.Json.JsonSerializer.Deserialize<RetornoApiPessoas>(rawJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch
+        {
+            return "success";
+        }
 
         if (response is null)
             return "Erro ao atualizar pessoa;";
 
         if (response.Status != "success")
-             return response.message ?? "Erro ao atualizar pessoa;";
+            return response.message ?? "Erro ao atualizar pessoa;";
 
-        return response.Data.Message ?? "Pessoa atualizar com sucesso!";
+        return response.Data?.Message ?? "Pessoa atualizada com sucesso!";
 
     }
 
@@ -103,7 +130,7 @@ public class PessoasService
         RetornoApiPessoas? response = await EnvioDeReq.Content.ReadFromJsonAsync<RetornoApiPessoas>();
 
         return response!;
-  
+
     }
 
 
@@ -145,7 +172,7 @@ public class PessoasService
 
     }
 
-    public async Task<string> UpdateEndereco(EnderecoPessoa EnderecoASerModificado,int idDaPessoaQueTemOEnderecoCadastrado)
+    public async Task<string> UpdateEndereco(EnderecoPessoa EnderecoASerModificado, int idDaPessoaQueTemOEnderecoCadastrado)
     {
         HttpResponseMessage EnvioDeReq = await _HttpClient.PatchAsJsonAsync($"pessoas/{idDaPessoaQueTemOEnderecoCadastrado}/endereco/update/{EnderecoASerModificado.Id}", EnderecoASerModificado);
 

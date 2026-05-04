@@ -212,6 +212,14 @@
                                             </MudStack>
                                         </MudStack>
                                     }
+                                    @if (NovoPedido.Cliente is not null)
+                                    {
+                                        <MudStack Row=true AlignItems="AlignItems.Center" Spacing="3">
+                                            <MudStack Class="w-100">
+                                                <MudButton Class="w-100" OnClick=@(async () => { await AbreModalDeEditarCliente(NovoPedido.Cliente); }) StartIcon="@Icons.Material.Filled.Edit" Variant="Variant.Outlined" Color="Color.Primary">Editar Cliente</MudButton>
+                                            </MudStack>
+                                        </MudStack>
+                                    }
                                 </MudFocusTrap>
 
                                 <MudStack>
@@ -670,6 +678,32 @@
             await Task.Delay(50);
             await TextFieldProd.FocusAsync();
             StateHasChanged();
+        }
+    }
+
+    private async Task AbreModalDeEditarCliente(ClsPessoas Cliente)
+    {
+        try
+        {
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var parameters = new DialogParameters
+            {
+                { "Editando", true },
+                { "PessoaParaEditar", Cliente }
+            };
+
+            var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Editar Cliente", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is ClsPessoas pessoaAtualizada && pessoaAtualizada is not null)
+            {
+                NovoPedido.Cliente = pessoaAtualizada;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao abrir edição de cliente: {ex.Message}", Severity.Error);
         }
     }
 

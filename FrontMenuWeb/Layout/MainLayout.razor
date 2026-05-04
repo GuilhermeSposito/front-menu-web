@@ -163,7 +163,10 @@
                             <MudNavLink Icon="@Icons.Material.Filled.MonetizationOn" OnClick="@(async () => await HandleNavClick("/caixas-fechados", "AcessoEstatisticas"))">Caixas Fechados</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.MoneyOff" OnClick="@(async () => await HandleNavClick("/historico-sangrias", "AcessoGerenciaSangrias"))">Histórico de Sangrias</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.Savings" OnClick="@(async () => await HandleNavClick("/historico-suprimentos", "AcessoGerenciaSuprimentos"))">Histórico de Suprimentos</MudNavLink>
-                            <MudNavLink Icon="@Icons.Material.Filled.Handshake" OnClick="@(async () => await HandleNavClick("/convenios", "AcessoEstatisticas"))">Convênios</MudNavLink>
+                            @if (AppState.MerchantLogado?.UltilizaConvenio == true)
+                            {
+                                <MudNavLink Icon="@Icons.Material.Filled.Handshake" OnClick="@(async () => await HandleNavClick("/convenios", "AcessoEstatisticas"))">Convênios</MudNavLink>
+                            }
                         </MudNavGroup>
 
                         <MudNavGroup Title="Configurações" Icon="@Icons.Material.Filled.Settings" Expanded="false">
