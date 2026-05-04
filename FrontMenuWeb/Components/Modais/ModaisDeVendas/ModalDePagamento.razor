@@ -15,7 +15,7 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 pe-2">
             <MudText Class="ms-3" Typo="Typo.h6">Pagamento Do Pedido</MudText>
             <MudStack Style="margin-right:55px;" Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center">
-                @if (!Editando && Pedido.ClienteId > 0)
+                @if (!Editando && Pedido.ClienteId > 0 && AppState.MerchantLogado.UltilizaConvenio)
                 {
                     <MudButton Variant="Variant.Outlined"
                                OnClick="EnviarComoConvenio"
