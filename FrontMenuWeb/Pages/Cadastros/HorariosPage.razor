@@ -1,0 +1,162 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/horarios"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.Horarios
+@using FrontMenuWeb.Components.Modais.ModaisGenericos
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+
+@inject HorariosMerchantService HorariosMerchantService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Square="false" Elevation="0"
+          Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <MudText Typo="Typo.h4">Horários de Funcionamento</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Gerencie os horários de funcionamento do estabelecimento.
+                </MudText>
+            </div>
+        </div>
+
+        @if (Carregando)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+        else
+        {
+            <MudGrid Spacing="3">
+                @foreach (var horario in HorariosOrdenados)
+                {
+                    <MudItem xs="12" sm="6" md="4" lg="3">
+                        <MudCard Elevation="2" Style="border-radius: 12px; height: 100%;">
+                            <MudCardContent>
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.h6">@horario.Dia</MudText>
+                                    <MudText Typo="Typo.body1">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="mr-1" />
+                                        @horario.HoraInicio.ToString("HH:mm") - @horario.HoraFim.ToString("HH:mm")
+                                    </MudText>
+                                </MudStack>
+                            </MudCardContent>
+                            <MudCardActions Class="d-flex justify-content-end">
+                                <MudTooltip Text="Editar horário">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default"
+                                                   OnClick="@(async () => await AbreModal(false, horario))" />
+                                </MudTooltip>
+                                <MudTooltip Text="Excluir horário">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                                   OnClick="@(async () => await DeletarHorario(horario))" />
+                                </MudTooltip>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+
+                @* Card de Novo Horário — sempre à direita *@
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Elevation="2" Style="border-radius: 12px; height: 100%; cursor: pointer; min-height: 120px;"
+                             @onclick="@(async () => await AbreModal(true))" Class="mud-theme-primary">
+                        <MudCardContent Class="d-flex flex-column align-items-center justify-content-center h-100">
+                            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Large" />
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="mt-2">Novo Horário</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private List<ClsHorarioMerchant> Horarios = new();
+    private bool Carregando = true;
+
+    private static readonly List<string> OrdemDias = new()
+    {
+        "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"
+    };
+
+    private IEnumerable<ClsHorarioMerchant> HorariosOrdenados =>
+        Horarios.OrderBy(h => OrdemDias.IndexOf(h.Dia)).ThenBy(h => h.HoraInicio);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoCadastroDeHorarios")) return;
+        await CarregarHorarios();
+    }
+
+    private async Task CarregarHorarios()
+    {
+        Carregando = true;
+        try
+        {
+            Horarios = await HorariosMerchantService.GetHorariosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar horários: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Carregando = false;
+        }
+    }
+
+    private async Task AbreModal(bool eCriacao, ClsHorarioMerchant? horario = null)
+    {
+        var parameters = new DialogParameters
+        {
+            [nameof(ModalDeAdicionarOuEditarHorario.ECriacao)] = eCriacao,
+            [nameof(ModalDeAdicionarOuEditarHorario.HorarioParaEditar)] = horario
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ModalDeAdicionarOuEditarHorario>(
+            eCriacao ? "Novo Horário" : "Editar Horário",
+            parameters,
+            options);
+
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            await CarregarHorarios();
+        }
+    }
+
+    private async Task DeletarHorario(ClsHorarioMerchant horario)
+    {
+        var parameters = new DialogParameters<ModalDeExcluir>
+        {
+            { x => x.ContentText, $"Deseja remover o horário {horario.Dia} {horario.HoraInicio:HH:mm} - {horario.HoraFim:HH:mm}? Essa ação não pode ser desfeita." },
+            { x => x.ButtonText, "Excluir" },
+            { x => x.Color, Color.Error }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+        var result = await dialog.Result;
+
+        if (result.Canceled || result.Data is not bool sucesso || !sucesso) return;
+
+        try
+        {
+            var deletado = await HorariosMerchantService.DeletarHorarioAsync(horario.Id);
+            if (deletado)
+            {
+                Snackbar.Add("Horário removido com sucesso!", Severity.Success);
+                await CarregarHorarios();
+            }
+            else
+            {
+                Snackbar.Add("Erro ao remover horário.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+    }
+}

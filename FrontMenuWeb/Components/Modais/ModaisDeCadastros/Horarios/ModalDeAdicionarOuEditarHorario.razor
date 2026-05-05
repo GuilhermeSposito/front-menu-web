@@ -1,0 +1,135 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Services
+@inject HorariosMerchantService HorariosMerchantService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudSelect T="string" @bind-Value="Dia" Label="Dia da Semana" Variant="Variant.Filled" Required="true"
+                       RequiredError="Selecione um dia da semana">
+                @foreach (var dia in DiasDaSemana)
+                {
+                    <MudSelectItem T="string" Value="@dia">@dia</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField T="string" @bind-Value="HoraInicioStr" Label="Hora Início" Variant="Variant.Filled"
+                          Placeholder="00:00" Mask="@(new PatternMask("00:00"))" Required="true"
+                          RequiredError="Informe a hora de início" />
+
+            <MudTextField T="string" @bind-Value="HoraFimStr" Label="Hora Fim" Variant="Variant.Filled"
+                          Placeholder="00:00" Mask="@(new PatternMask("00:00"))" Required="true"
+                          RequiredError="Informe a hora de fim" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Disabled="Salvando" OnClick="Submit">
+            @if (Salvando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+            else
+            {
+                @(ECriacao ? "Adicionar" : "Atualizar")
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public bool ECriacao { get; set; } = true;
+    [Parameter] public ClsHorarioMerchant? HorarioParaEditar { get; set; }
+
+    private static readonly List<string> DiasDaSemana = new()
+    {
+        "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"
+    };
+
+    private string Dia = string.Empty;
+    private string HoraInicioStr = string.Empty;
+    private string HoraFimStr = string.Empty;
+    private bool Salvando = false;
+
+    protected override void OnParametersSet()
+    {
+        if (!ECriacao && HorarioParaEditar is not null)
+        {
+            Dia = HorarioParaEditar.Dia;
+            HoraInicioStr = HorarioParaEditar.HoraInicio.ToString("HH:mm");
+            HoraFimStr = HorarioParaEditar.HoraFim.ToString("HH:mm");
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrEmpty(Dia) || string.IsNullOrEmpty(HoraInicioStr) || string.IsNullOrEmpty(HoraFimStr))
+        {
+            Snackbar.Add("Preencha todos os campos.", Severity.Warning);
+            return;
+        }
+
+        if (!TimeSpan.TryParse(HoraInicioStr, out var tsInicio) || !TimeSpan.TryParse(HoraFimStr, out var tsFim))
+        {
+            Snackbar.Add("Formato de horário inválido. Use HH:mm (ex: 13:00).", Severity.Warning);
+            return;
+        }
+
+        Salvando = true;
+        try
+        {
+            var baseDate = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
+            var inicio = baseDate.Add(tsInicio).ToString("o");
+            var fim = baseDate.Add(tsFim).ToString("o");
+
+            ReturnApiRefatored<ClsHorarioMerchant> response;
+
+            if (ECriacao)
+            {
+                var dto = new CriarHorarioMerchantDto
+                {
+                    Dia = Dia,
+                    HoraInicio = inicio,
+                    HoraFim = fim
+                };
+                response = await HorariosMerchantService.CriarHorarioAsync(dto);
+            }
+            else
+            {
+                var dto = new AtualizarHorarioMerchantDto
+                {
+                    Dia = Dia,
+                    HoraInicio = inicio,
+                    HoraFim = fim
+                };
+                response = await HorariosMerchantService.AtualizarHorarioAsync(HorarioParaEditar!.Id, dto);
+            }
+
+            if (response.Status == "success")
+            {
+                Snackbar.Add(ECriacao ? "Horário adicionado com sucesso!" : "Horário atualizado com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var msg = response.Messages?.FirstOrDefault() ?? response.Data.Messages?.FirstOrDefault() ?? "Erro ao salvar horário.";
+                Snackbar.Add(msg, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            Salvando = false;
+        }
+    }
+}

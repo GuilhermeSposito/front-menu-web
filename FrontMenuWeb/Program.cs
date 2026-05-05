@@ -46,6 +46,7 @@ builder.Services.AddScoped<RoteirizacaoService>();
 builder.Services.AddScoped<IntegracoesSophosService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.AddScoped<AuthorizationService>();
+builder.Services.AddScoped<HorariosMerchantService>();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("Api"));
 
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";
@@ -72,7 +73,7 @@ builder.Services.AddHttpClient("ApiRefresh", (sp, client) =>
     client.BaseAddress = new Uri(settings.BaseUrl);
 });
 
-builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
+builder.Services.AddHttpClient("ApiAutorizada", (sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
@@ -81,7 +82,7 @@ builder.Services.AddHttpClient("ApiAutorizada",(sp, client) =>
 
 void ConfigureApiFiscalSophosClient(IHttpClientBuilder builder)
 {
-    builder.ConfigureHttpClient((sp,client) =>
+    builder.ConfigureHttpClient((sp, client) =>
     {
         var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
 
