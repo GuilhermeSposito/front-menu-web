@@ -362,7 +362,13 @@
 
     void SelectedItemsChanged(HashSet<ClsPedido> items)
     {
-        PedidosSelecionados = items;
+        foreach (var item in items)
+            PedidosSelecionados.Add(item);
+
+        var currentPageIds = dataGridRef?.Items?.Select(x => x.Id).ToHashSet() ?? new HashSet<int>();
+        PedidosSelecionados.RemoveWhere(p => currentPageIds.Contains(p.Id) && !items.Any(i => i.Id == p.Id));
+
+        StateHasChanged();
     }
 
     private async Task OnPesquisaChanged(string value)

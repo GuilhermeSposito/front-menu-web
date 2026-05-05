@@ -40,8 +40,8 @@ window.generatePdfFromHtml = (elementId, filename) => {
         pagebreak: { mode: ['css', 'legacy'] }
     };
 
-    html2pdf().set(opt).from(clone).output('dataurlnewwindow').then(() => {
-        tempContainer.remove(); // 🔹 Remove o container após gerar o PDF
+    html2pdf().set(opt).from(clone).save().then(() => {
+        tempContainer.remove();
     });
 
 
