@@ -1,13 +1,9 @@
-﻿using ApiFiscalMenuWeb.Models.Dtos;
+using ApiFiscalMenuWeb.Models.Dtos;
 using ApiFiscalMenuWeb.Services;
 using ApiFiscalMenuWeb.Services.Integracoes;
-using FrontMenuWeb.DTOS;
-using FrontMenuWeb.Models;
-using FrontMenuWeb.Models.Pedidos;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
-using Unimake.Business.DFe.Xml.CTe;
 
 namespace ApiFiscalMenuWeb.Controllers;
 
@@ -15,18 +11,19 @@ namespace ApiFiscalMenuWeb.Controllers;
 [Route("whats_app")]
 public class WhatsAppIntegrationController : Controller
 {
-    private readonly EmailService emailService;
-    private WebhookSignature _webhookSignature;
+    private readonly WebhookSignature _webhookSignature;
     private readonly IConfiguration _configuration;
+    private readonly MessageService _messageService;
 
-    public WhatsAppIntegrationController(EmailService email, WebhookSignature webhookSignature, IConfiguration configuration)
+    public WhatsAppIntegrationController(WebhookSignature webhookSignature, IConfiguration configuration, MessageService messageService)
     {
-        emailService = email;
         _webhookSignature = webhookSignature;
         _configuration = configuration;
+        _messageService = messageService;
     }
 
     #region Região de Webhooks (Pontos de extremidade)
+
     [HttpGet("endpoint-webhook")]
     public IActionResult EndpointDeConexaoComWebHook(
         [FromQuery(Name = "hub.mode")] string mode,
@@ -34,43 +31,47 @@ public class WhatsAppIntegrationController : Controller
         [FromQuery(Name = "hub.verify_token")] string verifyToken)
     {
         if (mode == "subscribe" && verifyToken == "token")
-        {
             return Content(challenge, "text/plain");
-        }
 
         return Unauthorized();
     }
 
     [HttpPost("endpoint-webhook")]
-    public async Task<IActionResult> EndpointDeConexaoComWebHookPost([FromBody] WhatsAppWebhookDto dto)
+    public async Task<IActionResult> EndpointDeConexaoComWebHookPost()
     {
-        var change = dto?.Entry?.FirstOrDefault()?.Changes?.FirstOrDefault();
-        var value = change?.Value;
+        using var ms = new MemoryStream();
+        await Request.Body.CopyToAsync(ms);
+        var bodyBytes = ms.ToArray();
 
-        var mensagem = value?.Messages?.FirstOrDefault();
-        var status = value?.Statuses?.FirstOrDefault();
+        var signatureHeader = Request.Headers["X-Hub-Signature-256"].ToString();
+        if (string.IsNullOrEmpty(signatureHeader) || !signatureHeader.StartsWith("sha256="))
+            return Unauthorized();
 
-        if (mensagem != null)
-        {
-            Console.WriteLine("=== MENSAGEM RECEBIDA ===");
-            Console.WriteLine($"Tipo: {mensagem.Type}");
-            Console.WriteLine($"De: {mensagem.From}");
-            Console.WriteLine($"Texto: {mensagem.Text?.Body}");
-            Console.WriteLine($"Id: {mensagem.Id}");
-        }
+        var signature = signatureHeader["sha256=".Length..];
+        var appSecret = _configuration["MetaWebhookSecret"] ?? "";
 
-        if (status != null)
-        {
-            Console.WriteLine("=== STATUS RECEBIDO ===");
-            Console.WriteLine($"Id: {status.Id}");
-            Console.WriteLine($"Status: {status.Status}");
-            Console.WriteLine($"RecipientId: {status.RecipientId}");
-        }
+        if (!_webhookSignature.ValidateSignature(appSecret, bodyBytes, signature))
+            return Unauthorized();
+
+        var rawBody = Encoding.UTF8.GetString(bodyBytes);
+        var dto = JsonSerializer.Deserialize<WhatsAppWebhookDto>(rawBody);
+        if (dto != null)
+            _ = _messageService.ProcessarMensagemRecebidaAsync(dto);
 
         return Ok();
     }
 
+    [HttpPost("data-deletion")]
+    public IActionResult DataDeletion([FromForm(Name = "signed_request")] string signedRequest)
+    {
+        if (string.IsNullOrEmpty(signedRequest))
+            return BadRequest();
+
+        var appSecret = _configuration["MetaWebhookSecret"] ?? "";
+        var result = _messageService.ProcessarSolicitacaoDeDelecaoDados(signedRequest, appSecret);
+
+        return Ok(result);
+    }
+
     #endregion
-
-
 }

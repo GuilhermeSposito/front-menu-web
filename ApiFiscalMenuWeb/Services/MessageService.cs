@@ -3,23 +3,23 @@ using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Roteirizacao;
-using System.Drawing;
 using System.Net.Http.Headers;
-using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json;
 using Unimake.MessageBroker.Primitives.Model.Messages;
-using Unimake.MessageBroker.Primitives.Model.Notifications;
-using Unimake.MessageBroker.Services;
-using Unimake.Primitives.UDebug;
 namespace ApiFiscalMenuWeb.Services;
 
 public class MessageService
 {
     private readonly IHttpClientFactory _factory;
-    private readonly Unimake.MessageBroker.Services.MessageService _messageService;
-    public MessageService(IHttpClientFactory factory)
+    private readonly NestApiServices _nestApiServices;
+
+    private const string MensagemAutomatica = "Olá! Recebemos sua mensagem. Em breve nossa equipe entrará em contato. 😊";
+
+    public MessageService(IHttpClientFactory factory, NestApiServices nestApiServices)
     {
         _factory = factory;
+        _nestApiServices = nestApiServices;
     }
 
     #region Funções de conexão com a API Nest
@@ -357,6 +357,163 @@ public class MessageService
         {
             return "";
         }
+    }
+
+    #endregion
+
+    #region Processamento de mensagens recebidas via Webhook
+
+    public async Task ProcessarMensagemRecebidaAsync(WhatsAppWebhookDto dto)
+    {
+        try
+        {
+            var change = dto?.Entry?.FirstOrDefault()?.Changes?.FirstOrDefault();
+            var value = change?.Value;
+
+            var mensagem = value?.Messages?.FirstOrDefault();
+            var status = value?.Statuses?.FirstOrDefault();
+
+            if (mensagem != null)
+            {
+                string? phoneNumberId = value?.Metadata?.PhoneNumberId;
+
+                if (string.IsNullOrEmpty(phoneNumberId) || string.IsNullOrEmpty(mensagem.From) || string.IsNullOrEmpty(mensagem.Id))
+                {
+                    Console.WriteLine("[MessageService] Mensagem recebida com campos obrigatórios ausentes, ignorando.");
+                    return;
+                }
+
+                var merchant = await _nestApiServices.GetMerchantByInstanceNameAsync(phoneNumberId);
+                if (merchant is null)
+                {
+                    Console.WriteLine($"[MessageService] Nenhum merchant encontrado para phoneNumberId '{phoneNumberId}', mensagem não será salva.");
+                    return;
+                }
+
+                await MarcarMensagemComoLidaAsync(phoneNumberId, mensagem.Id);
+
+                var autoReplySent = await EnviarRespostaAutomaticaAsync(phoneNumberId, mensagem.From);
+
+                var receivedAt = long.TryParse(mensagem.Timestamp, out var ts)
+                    ? DateTimeOffset.FromUnixTimeSeconds(ts).UtcDateTime
+                    : DateTime.UtcNow;
+
+                await _nestApiServices.SalvarWhatsAppMensagemAsync(new CriarWhatsAppMensagemDto
+                {
+                    MerchantId    = merchant.Id,
+                    PhoneNumberId = phoneNumberId,
+                    FromNumber    = mensagem.From,
+                    MessageId     = mensagem.Id,
+                    Type          = mensagem.Type ?? "unknown",
+                    Body          = mensagem.Text?.Body,
+                    ReceivedAt    = receivedAt.ToString("o"),
+                    AutoReplySent = autoReplySent,
+                });
+            }
+
+            if (status != null)
+            {
+                Console.WriteLine($"[MessageService] Status recebido — Id: {status.Id} | Status: {status.Status} | RecipientId: {status.RecipientId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MessageService] Erro ao processar mensagem recebida: {ex.Message}");
+        }
+    }
+
+    private async Task MarcarMensagemComoLidaAsync(string phoneNumberId, string messageId)
+    {
+        var client = _factory.CreateClient("ApiOficialMetaWS");
+        var payload = new { messaging_product = "whatsapp", status = "read", message_id = messageId };
+        var response = await client.PostAsJsonAsync($"{phoneNumberId}/messages", payload);
+        if (!response.IsSuccessStatusCode)
+            Console.WriteLine($"[MessageService] Falha ao marcar mensagem como lida: {await response.Content.ReadAsStringAsync()}");
+    }
+
+    private async Task<bool> EnviarRespostaAutomaticaAsync(string phoneNumberId, string para)
+    {
+        var client = _factory.CreateClient("ApiOficialMetaWS");
+        var payload = new SendMessageDtoWS
+        {
+            To   = para,
+            Type = TipoMensagem.text,
+            Text = new TextSimpleMessageDto { Body = MensagemAutomatica }
+        };
+        var response = await client.PostAsJsonAsync($"{phoneNumberId}/messages", payload);
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"[MessageService] Resposta automática enviada para {para}");
+            return true;
+        }
+
+        Console.WriteLine($"[MessageService] Falha ao enviar resposta automática: {await response.Content.ReadAsStringAsync()}");
+        return false;
+    }
+
+    #endregion
+
+    #region Solicitação de deleção de dados (Facebook Data Deletion Callback)
+
+    public DataDeletionResponseDto ProcessarSolicitacaoDeDelecaoDados(string signedRequest, string appSecret)
+    {
+        var confirmationCode = Guid.NewGuid().ToString("N")[..12].ToUpper();
+        var statusUrl = "https://sophos-erp.com.br/policys";
+
+        var partes = signedRequest.Split('.');
+        if (partes.Length != 2)
+        {
+            Console.WriteLine("[MessageService] Data Deletion: signed_request em formato inválido.");
+            return new DataDeletionResponseDto { Url = statusUrl, ConfirmationCode = confirmationCode };
+        }
+
+        var encodedSig = partes[0];
+        var encodedPayload = partes[1];
+
+        if (!ValidarAssinaturaSignedRequest(encodedSig, encodedPayload, appSecret))
+        {
+            Console.WriteLine("[MessageService] Data Deletion: assinatura inválida.");
+            return new DataDeletionResponseDto { Url = statusUrl, ConfirmationCode = confirmationCode };
+        }
+
+        try
+        {
+            var payloadJson = Encoding.UTF8.GetString(Base64UrlDecode(encodedPayload));
+            var payload = JsonSerializer.Deserialize<FacebookSignedPayloadDto>(payloadJson);
+            Console.WriteLine($"[MessageService] Data Deletion solicitada para user_id: {payload?.UserId} em {DateTimeOffset.FromUnixTimeSeconds(payload?.IssuedAt ?? 0)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MessageService] Data Deletion: erro ao decodificar payload: {ex.Message}");
+        }
+
+        return new DataDeletionResponseDto { Url = statusUrl, ConfirmationCode = confirmationCode };
+    }
+
+    private bool ValidarAssinaturaSignedRequest(string encodedSig, string encodedPayload, string appSecret)
+    {
+        try
+        {
+            var sigBytes = Base64UrlDecode(encodedSig);
+            var payloadBytes = Encoding.UTF8.GetBytes(encodedPayload);
+            var secretBytes = Encoding.UTF8.GetBytes(appSecret);
+
+            using var hmac = new System.Security.Cryptography.HMACSHA256(secretBytes);
+            var expectedBytes = hmac.ComputeHash(payloadBytes);
+
+            return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(sigBytes, expectedBytes);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static byte[] Base64UrlDecode(string input)
+    {
+        var base64 = input.Replace('-', '+').Replace('_', '/');
+        base64 = base64.PadRight(base64.Length + (4 - base64.Length % 4) % 4, '=');
+        return Convert.FromBase64String(base64);
     }
 
     #endregion

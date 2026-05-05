@@ -1,4 +1,5 @@
-﻿using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood;
+﻿using ApiFiscalMenuWeb.Models.Dtos;
+using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaIfood;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Integracoes;
@@ -69,7 +70,7 @@ public class NestApiServices
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
- 
+
     public async Task<ClsEmpresaIfood?> RetornaEmpresaIfood(string? TokenNestApi, int IdEmpresa)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
@@ -190,7 +191,7 @@ public class NestApiServices
         return true;
     }
 
-    public async Task<bool> UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(string MerchantSophosId ,ClsPedido Pedido, UpdatePedidoInfosAdicionaisDto UpdateDto)
+    public async Task<bool> UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(string MerchantSophosId, ClsPedido Pedido, UpdatePedidoInfosAdicionaisDto UpdateDto)
     {
         HttpClient client = _factory.CreateClient("ApiAutorizada");
 
@@ -198,5 +199,56 @@ public class NestApiServices
         var response = await PedidoServiceNest.UpdatePedidoInfosAdicionaisOuStatus(UpdateDto, Pedido, MerchantSophosId);
 
         return true;
+    }
+
+    public async Task<MerchantByInstanceDto?> GetMerchantByInstanceNameAsync(string instanceName)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.GetAsync($"merchants/by-instance/{Uri.EscapeDataString(instanceName)}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[NestApiServices] Merchant não encontrado para instanceName '{instanceName}'. Status: {response.StatusCode}");
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<MerchantByInstanceDto>(content);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao buscar merchant por instanceName: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<bool> SalvarWhatsAppMensagemAsync(CriarWhatsAppMensagemDto dto)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.PostAsJsonAsync("whatsapp-mensagens", dto);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                Console.WriteLine($"[NestApiServices] Mensagem '{dto.MessageId}' já registrada, ignorando duplicata.");
+                return true;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[NestApiServices] Falha ao salvar mensagem WhatsApp. Status: {response.StatusCode} | Body: {await response.Content.ReadAsStringAsync()}");
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao salvar mensagem WhatsApp: {ex.Message}");
+            return false;
+        }
     }
 }

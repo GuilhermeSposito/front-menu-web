@@ -13,7 +13,7 @@ using Unimake.Business.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-#region Injeções de dependências
+#region Injeï¿½ï¿½es de dependï¿½ncias
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -79,6 +79,14 @@ builder.Services.AddHttpClient("ApiMessageBrokerUnimakeAuth", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+string ApiKeyNest = builder.Configuration.GetValue<string>("ApiKeyNest") ?? "";
+builder.Services.AddHttpClient("ApiNestPublica", client =>
+{
+    client.BaseAddress = new Uri(UrlSophos);
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.Add("x-api-key", ApiKeyNest);
+});
+
 
 builder.Services.AddControllers(option =>
 {
@@ -89,7 +97,7 @@ builder.Services.AddControllers(option =>
 });
 #endregion
 
-#region Configurações de CORS
+#region Configuraï¿½ï¿½es de CORS
 
 builder.Services.AddCors(options =>
 {
