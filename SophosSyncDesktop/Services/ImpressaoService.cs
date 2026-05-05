@@ -706,20 +706,26 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-
-        foreach (var pagamento in pedido.Pagamentos)
+        if (pedido.Pagamentos is not null && pedido.Pagamentos.Count > 0)
         {
-            if (pagamento.FormaDePagamento is not null)
+            foreach (var pagamento in pedido.Pagamentos)
             {
-                bool ePedidoPagoOnline = pagamento.FormaDePagamento.PagamentoOnline;
-                var InfoSeSeraPago = ePedidoPagoOnline ? "PAGO ONLINE COM" : "PEDIDO SERÁ PAGO COM";
-
-                AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
-                if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
+                if (pagamento.FormaDePagamento is not null)
                 {
-                    AdicionaConteudo(Conteudo, $"LEVAR TROCO: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
+                    bool ePedidoPagoOnline = pagamento.FormaDePagamento.PagamentoOnline;
+                    var InfoSeSeraPago = ePedidoPagoOnline ? "PAGO ONLINE COM" : "PEDIDO SERÁ PAGO COM";
+
+                    AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
+                    if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
+                    {
+                        AdicionaConteudo(Conteudo, $"LEVAR TROCO: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
+                    }
                 }
             }
+        }
+        else if (pedido.IsConvenio)
+        {
+            AdicionaConteudo(Conteudo, $"PEDIDO DE CONVÊNIO - NÃO RECEBER NA ENTREGA", FonteInfosPagamento);
         }
 
         if (pedido.CriadoPor == "IFOOD")

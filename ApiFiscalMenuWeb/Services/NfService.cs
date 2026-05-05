@@ -863,7 +863,9 @@ public class NfService
         };
 
 
-        double ValorDescontos = enNfCeDto.Pedido.DescontoValor + enNfCeDto.Pedido.IncentivosExternosValor;
+        // Os totais são derivados da SOMA dos itens (em vez do valor original em double do pedido)
+        // para garantir que Σitens == total na NF, evitando rejeições por diferença (vDesc, vFrete, vOutro).
+        double ValorDescontos = detDosProd.Sum(x => x.Prod.VDesc);
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
         double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros) - (ValorDescontos);
@@ -1013,7 +1015,9 @@ public class NfService
             }
         };
 
-        double ValorDescontos = Pedido.DescontoValor + Pedido.IncentivosExternosValor;
+        // Os totais são derivados da SOMA dos itens (em vez do valor original em double do pedido)
+        // para garantir que Σitens == total na NF, evitando rejeições por diferença (vDesc, vFrete, vOutro).
+        double ValorDescontos = detDosProd.Sum(x => x.Prod.VDesc);
         double VOutros = detDosProd.Sum(x => x.Prod.VOutro);
         double vFrete = detDosProd.Sum(x => x.Prod.VFrete);
         double ValorNf = (detDosProd.Sum(x => (x.Prod.VProd)) + VOutros + vFrete) - (ValorDescontos);
@@ -1199,13 +1203,20 @@ public class NfService
     {
 
         var Dets = new List<Det>();
-        double ValorFreteDiluidoPorItem = Pedido.TaxaEntregaValor / ItensDoPedido.Count;
-        double ValorOutrosDiluidoPorItem = (Pedido.AcrescimoValor + Pedido.ServicoValor) / ItensDoPedido.Count;
-        double ValorDeDescontoDiluidoPorItem = Pedido.DescontoValor / ItensDoPedido.Count;
+        int QtdItens = ItensDoPedido.Count;
 
-        if (tipoNFE == TipoDFe.NFCe)
-            ValorFreteDiluidoPorItem = 0.00; //NFC-e não aceita frete
+        // Rateio em decimal com 2 casas e distribuição do resíduo no último item.
+        // Isso evita rejeição da SEFAZ por diferença entre o total da NF e o somatório dos itens
+        // (ex.: "Total do Desconto difere do somatório dos itens") causada por dízima/aproximação de double.
+        decimal TotalFrete = tipoNFE == TipoDFe.NFCe ? 0m : (decimal)Pedido.TaxaEntregaValor; //NFC-e não aceita frete
+        decimal TotalOutros = (decimal)(Pedido.AcrescimoValor + Pedido.ServicoValor);
+        // O total de vDesc na NF inclui DescontoValor + IncentivosExternosValor,
+        // então o rateio por item TAMBÉM precisa incluir os dois para que Σitens == total.
+        decimal TotalDesconto = (decimal)(Pedido.DescontoValor + Pedido.IncentivosExternosValor);
 
+        decimal[] FreteRateadoPorItem = RatearComResiduoNoUltimo(TotalFrete, QtdItens);
+        decimal[] OutrosRateadoPorItem = RatearComResiduoNoUltimo(TotalOutros, QtdItens);
+        decimal[] DescontoRateadoPorItem = RatearComResiduoNoUltimo(TotalDesconto, QtdItens);
 
         int ContadorItem = 1;
         foreach (var item in ItensDoPedido)
@@ -1249,12 +1260,12 @@ public class NfService
                     CEST = LimparNcmECest(item.Produto.CEST),
                     CFOP = item.Produto.csosn == "500" ? "5405" : "5101",
                     UCom = "UN",
-                    VDesc = ValorDeDescontoDiluidoPorItem,
+                    VDesc = (double)DescontoRateadoPorItem[ContadorItem - 1],
                     QCom = QuantidadeComercial,
                     VUnCom = ValorUnitarioDaComercializacao,
                     VProd = ValorProduto,
-                    VFrete = ValorFreteDiluidoPorItem,
-                    VOutro = ValorOutrosDiluidoPorItem,
+                    VFrete = (double)FreteRateadoPorItem[ContadorItem - 1],
+                    VOutro = (double)OutrosRateadoPorItem[ContadorItem - 1],
                     CEANTrib = String.IsNullOrEmpty(item.Produto.CodBarras) ? "SEM GTIN" : item.Produto.CodBarras,
                     UTrib = "UN",
                     QTrib = QuantidadeComercial,
@@ -1294,6 +1305,30 @@ public class NfService
         }
 
         return Dets;
+    }
+
+    /// <summary>
+    /// Distribui um total monetário entre N itens com 2 casas decimais.
+    /// O resíduo de arredondamento (positivo ou negativo) é acumulado no último item,
+    /// garantindo que a soma dos itens seja EXATAMENTE igual ao total informado.
+    /// Usa decimal para evitar problemas de dízima periódica de double (IEEE-754).
+    /// </summary>
+    private static decimal[] RatearComResiduoNoUltimo(decimal total, int qtdItens)
+    {
+        if (qtdItens <= 0)
+            return Array.Empty<decimal>();
+
+        var resultado = new decimal[qtdItens];
+        decimal porItem = Math.Round(total / qtdItens, 2, MidpointRounding.AwayFromZero);
+
+        for (int i = 0; i < qtdItens; i++)
+            resultado[i] = porItem;
+
+        decimal somado = porItem * qtdItens;
+        decimal residuo = Math.Round(total - somado, 2, MidpointRounding.AwayFromZero);
+        resultado[qtdItens - 1] = Math.Round(resultado[qtdItens - 1] + residuo, 2, MidpointRounding.AwayFromZero);
+
+        return resultado;
     }
 
 
