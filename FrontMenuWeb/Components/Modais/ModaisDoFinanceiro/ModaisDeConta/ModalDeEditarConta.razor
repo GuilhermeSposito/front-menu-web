@@ -6,6 +6,7 @@
 @using FrontMenuWeb.Services.FinanceroServices
 @using System.Globalization
 @inject ContasService ContaService
+@inject AuthorizationService AuthorizationService
 
 
 <MudPaper Square="false" Elevation="0">
@@ -20,9 +21,11 @@
                             <MudStack Class="w-100" Row=true Justify="Justify.SpaceAround">
 
                                 <MudTextField Immediate="true" T="string" TextChanged="DefineCodigoDoBancoDinamicamente"
-                                              Class="w-75" Label="Nome Do Banco" Variant="Variant.Filled" @bind-Value=@ContaParaEdicao.NomeConta />
+                                              Class="w-75" Label="Nome Do Banco" Variant="Variant.Filled"
+                                              @bind-Value=@ContaParaEdicao.NomeConta />
 
-                                <MudSelect T="int" Class="w-25" @bind-Value=@ContaParaEdicao.CodIconeDoBanco Label="Banco" Variant="Variant.Filled">
+                                <MudSelect T="int" Class="w-25" @bind-Value=@ContaParaEdicao.CodIconeDoBanco Label="Banco"
+                                           Variant="Variant.Filled">
                                     @*Bradesco*@
                                     <MudSelectItem Value="1">
                                         <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
@@ -101,18 +104,19 @@
                             </MudStack>
 
                             <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceAround">
-                                <MudNumericField Class="w-75"
-                                                 Immediate="false"
-                                                 Label="Saldo Inicial"
-                                                 Variant="Variant.Outlined"
-                                                 Format="N2"
-                                                 Culture="_pt"
-                                                 T="float"
-                                                 HideSpinButtons="true"
+                                <MudNumericField Class="w-75" Immediate="false" Label="Saldo Inicial" Variant="Variant.Outlined"
+                                                 Format="N2" Culture="_pt" T="float" HideSpinButtons="true"
                                                  @bind-Value=@ContaParaEdicao.SaldoInicial />
                                 <MudTooltip Text="Clique para ativar/desativar a conta" Color="Color.Primary">
-                                    <MudSwitch Class="w-25" T="bool" Value=@ContaParaEdicao.Ativo Color="Color.Success" ValueChanged="@(async valor => { ContaParaEdicao.Ativo = valor; })" />
+                                    <MudSwitch Class="w-25" T="bool" Value=@ContaParaEdicao.Ativo Color="Color.Success"
+                                               ValueChanged="@(async valor => { ContaParaEdicao.Ativo = valor; })" />
                                 </MudTooltip>
+                            </MudStack>
+
+                            <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceAround">
+                                <MudNumericField Class="w-100" Immediate="false" Label="Saldo Atual"
+                                                 HelperText="Ajuste manual do saldo atual da conta" Variant="Variant.Outlined" Format="N2"
+                                                 Culture="_pt" T="float" HideSpinButtons="true" @bind-Value=@ContaParaEdicao.SaldoAtual />
                             </MudStack>
 
 
@@ -132,11 +136,9 @@
             {
                 <MudStack Class="w-100" Row=true Justify="Justify.SpaceAround">
 
-                    <MudSkeleton Class="w-75"
-                                 Height="120px" />
+                    <MudSkeleton Class="w-75" Height="120px" />
 
-                    <MudSkeleton Class="w-25"
-                                 Height="120px" />
+                    <MudSkeleton Class="w-25" Height="120px" />
 
                 </MudStack>
 
@@ -208,6 +210,8 @@
     {
         try
         {
+            if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
+
             if (ContaParaEdicao is null)
             {
                 Snackbar.Add("Conta não encontrada.", Severity.Error);

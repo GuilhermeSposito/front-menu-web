@@ -18,6 +18,7 @@
 @using MudBlazor.Services
 @using MudBlazor.Extensions.Components
 @inject LancamentoFinanceiroService LancamentoFinanceiroService
+@inject ContasService ContasService
 @inject PessoasService PessoasService
 @inject MetodosDePagMerchantService MetodosDePagMerchantService
 @inject AuthorizationService AuthorizationService
@@ -196,6 +197,16 @@
                                                     <MudRadioGroup @bind-Value=FiltroTipoDeLancamento T="int?">
                                                         <MudRadio T="int?" Value="2" Color="Color.Primary">Despesa</MudRadio>
                                                         <MudRadio T="int?" Value="1" Color="Color.Primary">Receita</MudRadio>
+                                                    </MudRadioGroup>
+                                                </MudStack>
+                                                break;
+                                            case "Conta":
+                                                <MudStack Class="w-100" Wrap="Wrap.Wrap" Row=true AlignItems="AlignItems.Center" Justify="Justify.FlexStart">
+                                                    <MudRadioGroup T="ClsConta?" Value="ContaSelecionadaParaOFiltro" ValueChanged="@(async (conta) => { ContaSelecionadaParaOFiltro = conta; await dataGridRef!.ReloadServerData(); })">
+                                                        @foreach (var conta in ContasParaOFiltro)
+                                                        {
+                                                            <MudRadio T="ClsConta?" Value="@conta" Color="Color.Primary">@conta.NomeConta</MudRadio>
+                                                        }
                                                     </MudRadioGroup>
                                                 </MudStack>
                                                 break;
@@ -475,6 +486,8 @@
     private List<ClsPessoas> PessoasParaOFiltro = new List<ClsPessoas>();
     private List<ClsMetodosDePagMerchant> MetodosDePagamentosParaOFiltro = new List<ClsMetodosDePagMerchant>();
     private ClsMetodosDePagMerchant? MetodoSelecionadoraOFiltro = null;
+    private List<ClsConta> ContasParaOFiltro = new List<ClsConta>();
+    private ClsConta? ContaSelecionadaParaOFiltro = null;
 
     //Valores de retorno
     private float TotalPagos = 0;
@@ -508,7 +521,8 @@
                                                 FiltroDePessoa: PessoaSelecionadaParaOFiltro,
                                                 FiltroDeMetodoDePagamento: MetodoSelecionadoraOFiltro,
                                                 FiltroDeTipoDeLancamento: FiltroTipoDeLancamento,
-                                                TiposDeFiltrosDePeriodo: FiltroPorPeriodoSelecionados
+                                                TiposDeFiltrosDePeriodo: FiltroPorPeriodoSelecionados,
+                                                FiltroDeContaId: ContaSelecionadaParaOFiltro?.Id
                                             );
 
 
@@ -551,6 +565,9 @@
         {
             var result = await MetodosDePagMerchantService.GetMetodosAsync();
             MetodosDePagamentosParaOFiltro = result ?? new List<ClsMetodosDePagMerchant>();
+
+            var contas = await ContasService.GetContasAsync();
+            ContasParaOFiltro = contas ?? new List<ClsConta>();
         }
         catch (Exception ex)
         {
@@ -611,6 +628,7 @@
             PessoaSelecionadaParaOFiltro = null;
             MetodoSelecionadoraOFiltro = null;
             FiltroTipoDeLancamento = null;
+            ContaSelecionadaParaOFiltro = null;
 
             await dataGridRef!.ReloadServerData();
         }
@@ -792,6 +810,15 @@
 
 
         var ResponsaApi = await LancamentoFinanceiroService.UpdateLancamentoAsync(lancamento);
+
+        // Recarrega contas para refletir o novo saldo após pagamento/despagamento
+        var contas = await ContasService.GetContasAsync();
+        ContasParaOFiltro = contas ?? ContasParaOFiltro;
+        if (ContaSelecionadaParaOFiltro is not null)
+        {
+            var contaAtualizada = ContasParaOFiltro.FirstOrDefault(c => c.Id == ContaSelecionadaParaOFiltro.Id);
+            if (contaAtualizada is not null) ContaSelecionadaParaOFiltro = contaAtualizada;
+        }
 
         string MensagemDeRetorno = string.Join(", ", ResponsaApi.Status == "success" ? ResponsaApi.Data.Messages : ResponsaApi.Messages);
         Snackbar.Add(MensagemDeRetorno, ResponsaApi.Status == "success" ? Severity.Success : Severity.Error);
@@ -976,6 +1003,16 @@
                     @(ContaMaisUsada?.NomeConta ?? "Nenhuma")
                 </td>
             </tr>
+            @if (ContaSelecionadaParaOFiltro is not null)
+            {
+                <tr style="background-color:#dfe6e9; font-weight:bold;">
+                    <td colspan="3" style="text-align:right;">Saldo Atual da Conta (@ContaSelecionadaParaOFiltro.NomeConta):</td>
+                    <td style="text-align:right; color:@(ContaSelecionadaParaOFiltro.SaldoAtual >= 0 ? "#27ae60" : "#c0392b"); font-size:14px;">
+                        @ContaSelecionadaParaOFiltro.SaldoAtual.ToString("C")
+                    </td>
+                    <td colspan="4"></td>
+                </tr>
+            }
 
         </tfoot>
     </table>

@@ -16,7 +16,7 @@ public class LancamentoFinanceiroService
         _HttpClient = http;
     }
 
-    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null, ClsPessoas? FiltroDePessoa = null, ClsMetodosDePagMerchant? FiltroDeMetodoDePagamento = null, int? FiltroDeTipoDeLancamento = null, IEnumerable<ClsFiltros>? TiposDeFiltrosDePeriodo = null)
+    public async Task<PaginatedResponse<ClsLancamentoFinanceiro>> GetLancamentosPorPagina(int page, int pageSize, DateTime? DataInicial = null, DateTime? DataFinal = null, DateTime? DataEmissao = null, bool? Pagos = null, string? FiltroDescricao = null, DateTime? FiltroDataPagamento = null, DateTime? FiltroDataDeVencimento = null, ClsPessoas? FiltroDePessoa = null, ClsMetodosDePagMerchant? FiltroDeMetodoDePagamento = null, int? FiltroDeTipoDeLancamento = null, IEnumerable<ClsFiltros>? TiposDeFiltrosDePeriodo = null, int? FiltroDeContaId = null)
     {
         string QuerysStrings = "";
 
@@ -71,6 +71,11 @@ public class LancamentoFinanceiroService
         if (FiltroDeTipoDeLancamento is not null)
         {
             QuerysStrings += $"&TipoLancamento={FiltroDeTipoDeLancamento}";
+        }
+
+        if (FiltroDeContaId is not null)
+        {
+            QuerysStrings += $"&IdConta={FiltroDeContaId}";
         }
 
         var response = await _HttpClient.GetFromJsonAsync<PaginatedResponse<ClsLancamentoFinanceiro>>(

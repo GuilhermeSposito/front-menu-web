@@ -14,6 +14,7 @@
 @inject MetodosDePagMerchantService MetodosService
 @inject CategoriasService CategoriasService
 @inject PessoasService PessoasService
+@inject AuthorizationService AuthorizationService
 
 <MudPaper Square="false" Elevation="0">
     <MudDialog class="rounded-3 w-100" style="background-color: var(--mud-palette-surface);">
@@ -476,6 +477,8 @@
     {
         try
         {
+            if (!await AuthorizationService.ValidateAsync("AcessoLancamentosFinanceiro")) return;
+
             Console.WriteLine(Lancamento.EDespesaFixa && TipoDeDespesaFixa is null);
 
             if (Lancamento.EDespesaFixa && TipoDeDespesaFixa is null && Lancamento.QtdMesesDeDespesaFixa <= 0)
