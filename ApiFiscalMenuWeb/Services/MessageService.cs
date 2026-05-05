@@ -458,7 +458,7 @@ public class MessageService
     public DataDeletionResponseDto ProcessarSolicitacaoDeDelecaoDados(string signedRequest, string appSecret)
     {
         var confirmationCode = Guid.NewGuid().ToString("N")[..12].ToUpper();
-        var statusUrl = "https://sophos-erp.com.br/policys";
+        var statusUrl = "https://sophos-erp.com.br/privacy-policy";
 
         var partes = signedRequest.Split('.');
         if (partes.Length != 2)

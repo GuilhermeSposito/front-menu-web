@@ -63,6 +63,7 @@ public class ClsMerchant
     [JsonPropertyName("ValorPorKm")] public float ValorPorKm { get; set; }
     [JsonPropertyName("KmMinimo")] public float KmMinimo { get; set; }
     [JsonPropertyName("ValorKmMinimo")] public float ValorKmMinimo { get; set; }
+    [JsonPropertyName("ValorDePedidoMinimo")] public decimal ValorDePedidoMinimo { get; set; }
     [JsonPropertyName("EspacamentoNaImpressao")] public int EspacamentoNaImpressao { get; set; }
     [JsonPropertyName("TamFonteDetalhesPedido")] public int TamFonteDetalhesPedido { get; set; }
     [JsonPropertyName("TamFonteDescricaoItem")] public int TamFonteDescricaoItem { get; set; }
