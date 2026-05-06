@@ -214,6 +214,54 @@
                         </MudButton>
                     }
 
+                    @if (_isFechamentoDeMesa && _itensSelecionados.Count > 0)
+                    {
+                        <MudButton FullWidth Variant="Variant.Filled" Color="Color.Warning"
+                                   Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
+                                   OnClick="TransferirItensSelecionadosMesa"
+                                   Disabled="@_enviando">
+                            <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Class="me-2" Size="Size.Small" />
+                            <span>TRANSFERIR SELECIONADOS (@_itensSelecionados.Count)</span>
+                        </MudButton>
+                        <MudButton FullWidth Variant="Variant.Filled" Color="Color.Error"
+                                   Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
+                                   OnClick="ExcluirItensSelecionadosMesa"
+                                   Disabled="@_enviando">
+                            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="me-2" Size="Size.Small" />
+                            <span>EXCLUIR SELECIONADOS (@_itensSelecionados.Count)</span>
+                        </MudButton>
+                    }
+
+                    @if (_isFechamentoDeMesa)
+                    {
+                        var _clientesMesa = _pedido.Itens
+                            .Where(x => !string.IsNullOrEmpty(x.NomeCliente))
+                            .Select(x => x.NomeCliente)
+                            .Distinct()
+                            .ToList();
+
+                        if (_clientesMesa.Count > 1)
+                        {
+                            foreach (var _clienteMesa in _clientesMesa)
+                            {
+                                var _cap = _clienteMesa;
+                                <MudButton FullWidth Variant="Variant.Filled" Color="Color.Info"
+                                           Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
+                                           OnClick="@(() => PagarPorCliente(_cap!))"
+                                           Disabled="@_enviando">
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="me-2" Size="Size.Small" />
+                                    <span>PAGAR @_cap</span>
+                                </MudButton>
+                            }
+                        }
+                        <MudButton FullWidth Variant="Variant.Filled" Color="Color.Error"
+                                   Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
+                                   OnClick="LimparMesaAction"
+                                   Disabled="@_enviando">
+                            <span>LIMPAR MESA</span>
+                        </MudButton>
+                    }
+
                     <MudButton FullWidth Variant="Variant.Filled" Color="Color.Info"
                                Style="color:white; font-weight:700; letter-spacing:1px; justify-content:flex-start; padding:13px 16px;"
                                OnClick="TransferirVenda" Disabled=@(_pedido.Itens.Count == 0 || _enviando)>
@@ -1134,6 +1182,233 @@
         }
 
         return false;
+    }
+
+    private async Task TransferirItensSelecionadosMesa()
+    {
+        if (!_isFechamentoDeMesa || _itensSelecionados.Count == 0) return;
+        if (_enviando || _modalAberto) return;
+
+        var mesa = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+        if (mesa == null) return;
+
+        _modalAberto = true;
+        try
+        {
+            var parameters = new DialogParameters<ModalDeTransferirItensDeMesa>
+            {
+                { x => x.MesaOrigemId, _pedido.MesaComandaId },
+                { x => x.CodigoExternoOrigem, mesa.CodigoExterno },
+                { x => x.ItemIds, _itensSelecionados.Where(i => i.Id > 0).Select(i => i.Id).ToList() }
+            };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeTransferirItensDeMesa>("Transferir Itens", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                _itensSelecionados.Clear();
+                await CarregarMesaParaCheckout(mesa.CodigoExterno);
+            }
+        }
+        finally
+        {
+            _modalAberto = false;
+        }
+    }
+
+    private async Task ExcluirItensSelecionadosMesa()
+    {
+        if (!_isFechamentoDeMesa || _itensSelecionados.Count == 0) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+        if (_enviando || _modalAberto) return;
+
+        _modalAberto = true;
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                { x => x.ContentText, $"Deseja excluir {_itensSelecionados.Count} item(ns) selecionado(s)? Essa operação não pode ser desfeita." },
+                { x => x.ButtonText, "Sim" },
+                { x => x.Color, Color.Error }
+            };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão", parameters, options);
+            var result = await dialog.Result;
+            if (result!.Canceled || result.Data is not bool confirmado || !confirmado) return;
+
+            _enviando = true;
+            StateHasChanged();
+            try
+            {
+                var erros = new List<string>();
+                foreach (var item in _itensSelecionados)
+                {
+                    var response = await PedidosService.ExcluirItemDaMesa(item.Id);
+                    if (response.Status == "error")
+                        erros.Add(item.Descricao);
+                }
+
+                if (erros.Count == 0)
+                    Snackbar.Add("Itens excluídos com sucesso!", Severity.Success);
+                else
+                    Snackbar.Add($"Erro ao excluir: {string.Join(", ", erros)}", Severity.Error);
+
+                _itensSelecionados.Clear();
+                var mesa = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+                if (mesa != null)
+                    await CarregarMesaParaCheckout(mesa.CodigoExterno);
+            }
+            finally
+            {
+                _enviando = false;
+                StateHasChanged();
+            }
+        }
+        finally
+        {
+            _modalAberto = false;
+        }
+    }
+
+    private async Task LimparMesaAction()
+    {
+        if (!_isFechamentoDeMesa) return;
+        if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+        if (_enviando || _modalAberto) return;
+
+        var mesa = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+        if (mesa == null) return;
+
+        _modalAberto = true;
+        try
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+            {
+                { x => x.ContentText, $"Deseja limpar todos os itens da {AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced} {mesa.CodigoExterno}? Essa operação não pode ser desfeita." },
+                { x => x.ButtonText, "Sim" },
+                { x => x.Color, Color.Error }
+            };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Limpeza", parameters, options);
+            var result = await dialog.Result;
+            if (result!.Canceled || result.Data is not bool confirmado || !confirmado) return;
+
+            _enviando = true;
+            StateHasChanged();
+            try
+            {
+                var response = await PedidosService.LimparMesa(mesa);
+                var sucesso = response.Status != "error";
+                var mensagem = sucesso ? response.Data.Messages : response.Messages;
+                Snackbar.Add(string.Join(", ", mensagem), sucesso ? Severity.Success : Severity.Error);
+
+                if (sucesso)
+                {
+                    _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+                    _isFechamentoDeMesa = false;
+                    _itensSelecionados.Clear();
+                    _itemExpandido.Clear();
+                    StateHasChanged();
+                    await _autocompleteRef.FocusAsync();
+                }
+            }
+            finally
+            {
+                _enviando = false;
+                StateHasChanged();
+            }
+        }
+        finally
+        {
+            _modalAberto = false;
+        }
+    }
+
+    private async Task PagarPorCliente(string nomeCliente)
+    {
+        if (!_isFechamentoDeMesa || _enviando || _modalAberto) return;
+
+        var itensDoCliente = _pedido.Itens.Where(x => x.NomeCliente == nomeCliente).ToList();
+        if (itensDoCliente.Count == 0) return;
+
+        var subtotalCliente = itensDoCliente.Sum(i => (decimal)i.PrecoTotal);
+        var taxaCliente = _cobraTaxa ? subtotalCliente * (TaxaPercent / 100) : 0m;
+
+        var subPedido = new ClsPedido
+        {
+            TipoDePedido = "MESA",
+            MesaComandaId = _pedido.MesaComandaId,
+            Itens = itensDoCliente,
+            ItensFechamentoIds = itensDoCliente.Where(x => x.Id > 0).Select(x => x.Id).ToList(),
+            ServicoValor = (float)taxaCliente,
+            CouvertValor = (float)CouvertValor,
+        };
+
+        _modalAberto = true;
+        try
+        {
+            if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda"))
+            {
+                Snackbar.Add("Sem permissão: AcessoLancaVenda", Severity.Error);
+                return;
+            }
+
+            var parameters = new DialogParameters { { "Pedido", subPedido } };
+            var options = new DialogOptions { Position = DialogPosition.Center, CloseButton = true, MaxWidth = MaxWidth.False, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDePagamento>($"Pagamento - Cliente {nomeCliente}", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                _enviando = true;
+                StateHasChanged();
+                try
+                {
+                    var response = await PedidosService.FechaMesa(subPedido);
+                    if (response.Status == "success")
+                    {
+                        Snackbar.Add($"Conta de {nomeCliente} efetuada com sucesso!", Severity.Success);
+
+                        if (response.Data.Objeto is not null)
+                        {
+                            bool imprimir = true;
+                            if (AppState.MerchantLogado != null && AppState.MerchantLogado.PerguntaImpressaPdv)
+                                imprimir = await PerguntaSeImprime();
+                            if (imprimir)
+                                await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"pedido{response.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
+                        }
+
+                        if (itensDoCliente.Count >= _pedido.Itens.Count)
+                        {
+                            _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
+                            _isFechamentoDeMesa = false;
+                        }
+                        else
+                        {
+                            foreach (var item in itensDoCliente)
+                                _pedido.Itens.Remove(item);
+                            _itensSelecionados.Clear();
+                            _itemExpandido.Clear();
+                        }
+                    }
+                    else
+                    {
+                        Snackbar.Add($"Erro ao fechar conta de {nomeCliente}: {string.Join(", ", response.Messages)}", Severity.Error);
+                    }
+                }
+                finally
+                {
+                    _enviando = false;
+                    StateHasChanged();
+                    await _autocompleteRef.FocusAsync();
+                }
+            }
+        }
+        finally
+        {
+            _modalAberto = false;
+        }
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

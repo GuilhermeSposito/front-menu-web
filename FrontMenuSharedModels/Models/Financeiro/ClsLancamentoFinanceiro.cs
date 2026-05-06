@@ -79,7 +79,8 @@ public static class Filtros
         new ClsFiltros { Id = 6, NomeDoFiltro = "Data de Pagamento" },
         new ClsFiltros { Id = 7, NomeDoFiltro = "Data de Vencimento" },
         new ClsFiltros { Id = 8, NomeDoFiltro = "Método de Pagamento" },
-        new ClsFiltros { Id = 9, NomeDoFiltro = "Tipo de Lançamento" }
+        new ClsFiltros { Id = 9, NomeDoFiltro = "Tipo de Lançamento" },
+        new ClsFiltros { Id = 10, NomeDoFiltro = "Conta" }
     };
 
     public static List<ClsFiltros> FiltrosDePeriodo = new List<ClsFiltros>

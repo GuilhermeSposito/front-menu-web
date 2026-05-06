@@ -284,7 +284,7 @@
                 }
                 else
                 {
-                    <span class="kbd">F1</span>
+                    <span class="kbd" style="margin-right: 18px;">F1</span>
                     <span class="action-btn__label">Finalizar</span>
                 }
             </MudButton>
@@ -294,7 +294,7 @@
                 <MudButton Class="action-btn action-btn--warning" Variant="Variant.Filled" FullWidth="true"
                            Disabled="@_enviando"
                            OnClick="FinalizarParcial">
-                    <span class="kbd kbd--dark">F6</span>
+                    <span class="kbd kbd--dark" style="margin-right: 18px;">F6</span>
                     <span class="action-btn__label">Finalizar Parcial</span>
                 </MudButton>
             }
@@ -302,22 +302,22 @@
             <MudButton Class="action-btn action-btn--info" Variant="Variant.Filled" FullWidth="true"
                        Disabled="@(!_pedido.Itens.Any() || _enviando)"
                        OnClick="TransferirVenda">
-                <span class="kbd">F2</span>
+                <span class="kbd" style="margin-right: 18px;">F2</span>
                 <span class="action-btn__label">Transferir Venda</span>
             </MudButton>
 
             <MudButton Class="action-btn action-btn--ghost" Variant="Variant.Filled" FullWidth="true"
                        Disabled="@(!_pedido.Itens.Any())"
                        OnClick="CancelarItem">
-                <span class="kbd">F4</span>
-                <MudIcon Icon="@Icons.Material.Outlined.Backspace" Size="Size.Small" />
+                <span class="kbd" style="margin-right: 18px;">F4</span>
+                <MudIcon Icon="@Icons.Material.Outlined.Backspace" Size="Size.Small" Style="margin-right: 18px;" />
                 <span class="action-btn__label">Cancelar Item</span>
             </MudButton>
 
             <MudButton Class="action-btn action-btn--danger" Variant="Variant.Filled" FullWidth="true"
                        Disabled="@(!_pedido.Itens.Any() && !_isFechamentoDeMesa)"
                        OnClick="CancelarVenda">
-                <span class="kbd">F5</span>
+                <span class="kbd" style="margin-right: 18px;">F5</span>
                 <span class="action-btn__label">Cancelar Venda</span>
             </MudButton>
         </div>
@@ -344,7 +344,7 @@
 
         height: calc(100vh - 56px);
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 380px;
+        grid-template-columns: 75% 25%;
         gap: 16px;
         padding: 16px;
         background: var(--bg);
@@ -352,14 +352,6 @@
         overflow: hidden;
     }
 
-    /* ── Left column ── */
-    .checkout-left {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-height: 0;
-        overflow: hidden;
-    }
 
     /* ── Search bar ── */
     .search-bar {
@@ -459,8 +451,9 @@
         position: absolute; inset: 0;
         display: grid; place-items: center;
         pointer-events: none; z-index: 0;
+        overflow: hidden;
     }
-    .items__watermark img { max-width: 70%; max-height: 70%; opacity: 0.06; }
+    .items__watermark img { width: 100%; height: 100%; object-fit: contain; opacity: 0.06; overflow: hidden; }
     .items__list--has-rows .items__watermark { opacity: 0; }
 
     .row {
@@ -515,8 +508,19 @@
 
     /* ── Right column ── */
     .checkout-right {
-        display: flex; flex-direction: column; gap: 12px;
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px;
         min-height: 0; overflow-y: auto;
+    }
+
+    /* ── Left column ── */
+    .checkout-left {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+        overflow: hidden;
     }
 
     /* ── Totals hero ── */
@@ -638,6 +642,7 @@
     private decimal TotalGeral => SubTotalItens + TaxaValor + CouvertValor;
     private bool TemExtras => TaxaValor > 0 || CouvertValor > 0;
     private decimal SelectedSum => _itensSelecionados.Sum(i => (decimal)i.PrecoTotal);
+    private int QtdDeSaboresAceitos => AppState.MerchantLogado?.QtdsItemFracionado > 0 ? AppState.MerchantLogado!.QtdsItemFracionado : 2;
 
     private string TotalIntPart => Math.Truncate(TotalGeral).ToString("N0", new System.Globalization.CultureInfo("pt-BR"));
     private string TotalDecPart => ((int)((TotalGeral - Math.Truncate(TotalGeral)) * 100)).ToString("00");
@@ -699,7 +704,7 @@
             }
             return [];
         }
-
+        
         // c*numero → carregar mesa pelo código externo
         if (texto.StartsWith("c*", StringComparison.OrdinalIgnoreCase))
         {
@@ -725,14 +730,11 @@
         var produtos = result.Data.Where(x => x.Ativo).ToList();
 
         // Código de barras / código interno exato → seleciona diretamente
-        if (texto.All(char.IsDigit))
+        var exactMatch = produtos.FirstOrDefault(p => p.CodBarras == texto || p.CodigoInterno == texto);
+        if (exactMatch is not null)
         {
-            var exactMatch = produtos.FirstOrDefault(p => p.CodBarras == texto || p.CodigoInterno == texto);
-            if (exactMatch is not null)
-            {
-                await InvokeAsync(async () => await SelecionarProduto(exactMatch));
-                return [];
-            }
+            await InvokeAsync(async () => await SelecionarProduto(exactMatch));
+            return [];
         }
 
         return produtos;
@@ -834,6 +836,103 @@
             {
                 return;
             }
+        }
+
+        // Lógica de Produto Fracionado (Pizza)
+        if (produto.Fracionado)
+        {
+            List<ClsProduto> produtosFracionados = await ProdutoService.GetProdutosFracionadosAsync();
+            produtosFracionados = produtosFracionados.Where(p => p.Id != produto.Id).ToList();
+            produto.GruposDeComplementosDoProduto?.RemoveAll(g => g.Grupo.Descricao.StartsWith("Sabor "));
+            produto.GruposDeComplementosDoProduto ??= new List<ClsGruposDeComplementosDoProduto>();
+
+            for (var i = (QtdDeSaboresAceitos - 1); i >= 1; i--)
+            {
+                var novoGrupo = new ClsGruposDeComplementosDoProduto
+                {
+                    QtdMin = 0,
+                    QtdMax = 1,
+                    Grupo = new ClsGrupoDeComplemento
+                    {
+                        Id = i,
+                        Descricao = $"Sabor {i + 1}",
+                        Ativo = true,
+                        Complementos = produtosFracionados.Select((p, idx) => new ClsComplementoDoGrupo
+                        {
+                            Complemento = new ClsComplemento
+                            {
+                                Id = idx,
+                                Descricao = p.Descricao,
+                                ProdutoId = p.Id,
+                                Produto = p,
+                                EProduto = true,
+                                Ativo = true
+                            }
+                        }).ToList()
+                    }
+                };
+                produto.GruposDeComplementosDoProduto.Insert(0, novoGrupo);
+            }
+
+            var paramsFrac = new DialogParameters { { "AtualizandoItem", false }, { "Produto", produto } };
+            var optsFrac = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+            var dialogFrac = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", paramsFrac, optsFrac);
+            var resultFrac = await dialogFrac.Result;
+
+            if (!resultFrac!.Canceled && resultFrac.Data is ItensPedido itemFracionado)
+            {
+                itemFracionado.Complementos.RemoveAll(c => c.Complemento?.EProduto == true && c.Complemento?.Produto?.Fracionado == true);
+
+                if (_isFechamentoDeMesa)
+                {
+                    var pedidoMesaFrac = new ClsPedido
+                    {
+                        TipoDePedido = "MESA",
+                        MesaComandaId = _pedido.MesaComandaId,
+                        Itens = new List<ItensPedido> { itemFracionado }
+                    };
+                    _enviando = true;
+                    StateHasChanged();
+                    try
+                    {
+                        var response = await PedidosService.CreatePedidoMesa(pedidoMesaFrac);
+                        if (response.Status == "success")
+                        {
+                            Snackbar.Add($"{produto.Descricao} adicionado à mesa.", Severity.Success);
+                            var mesaAberta = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+                            if (mesaAberta != null)
+                                await CarregarMesaParaCheckout(mesaAberta.CodigoExterno);
+                        }
+                        else
+                        {
+                            Snackbar.Add($"Erro ao adicionar: {string.Join(",", response.Messages)}", Severity.Error);
+                        }
+                    }
+                    finally
+                    {
+                        _enviando = false;
+                        _quantidade = 1;
+                        await _autocompleteRef.ClearAsync();
+                        StateHasChanged();
+                    }
+                    return;
+                }
+
+                _pedido.Itens.Add(itemFracionado);
+                _quantidade = 1;
+                await _autocompleteRef.ClearAsync();
+                StateHasChanged();
+                await _autocompleteRef.FocusAsync();
+            }
+            else
+            {
+                Snackbar.Add("Produto com informações obrigatórias não informadas", Severity.Error);
+                _itemAtual = null;
+                _quantidade = 1;
+                await _autocompleteRef.ClearAsync();
+                StateHasChanged();
+            }
+            return;
         }
 
         if (_isFechamentoDeMesa)
@@ -1149,6 +1248,12 @@
         if (_pedido.Itens.Count == 0) return;
         if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
 
+        var confirmacao = await DialogService.ShowMessageBox(
+            "Cancelar Item",
+            _itensSelecionados.Any() ? "Deseja remover os itens selecionados?" : "Deseja remover o último item?",
+            yesText: "Sim, remover", noText: "Cancelar");
+        if (confirmacao != true) return;
+
         if (_itensSelecionados.Any())
         {
             foreach (var item in _itensSelecionados.ToList())
@@ -1171,6 +1276,12 @@
     {
         if (_pedido.Itens.Count == 0 && !_isFechamentoDeMesa) return;
         if (!await AuthorizationService.ValidateAsync("AcessoCancelaItensDaVenda")) return;
+
+        var confirmacao = await DialogService.ShowMessageBox(
+            "Cancelar Venda",
+            "Deseja realmente cancelar toda a venda?",
+            yesText: "Sim, cancelar", noText: "Voltar");
+        if (confirmacao != true) return;
 
         _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
         _isFechamentoDeMesa = false;
