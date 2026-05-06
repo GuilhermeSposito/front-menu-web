@@ -162,10 +162,10 @@
 
     private readonly List<NavLink> _nav = new()
     {
-        new("Pedidos",  "/gestao-de-pedidos",  Icons.Material.Outlined.ReceiptLong),
+        new("Pedidos",  "/checkout/gestao-de-pedidos",  Icons.Material.Outlined.ReceiptLong),
         new("Mesas",    "/checkout/gestao-de-mesas", Icons.Material.Outlined.TableRestaurant),
         new("Checkout", "/checkout-refatored", Icons.Material.Outlined.PointOfSale),
-        new("Caixa",    "/caixa",    Icons.Material.Outlined.Savings),
+        new("Caixa",    "/checkout/caixa",    Icons.Material.Outlined.Savings),
     };
 
     protected override async Task OnInitializedAsync()
