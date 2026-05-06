@@ -274,9 +274,8 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            CarregandoPagina = true;
+            await CarregarMesasEComandas();
             await InvokeAsync(StateHasChanged);
-            CarregandoPagina = false;
         }
 
     }
