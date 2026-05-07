@@ -481,9 +481,10 @@
 
             Console.WriteLine(Lancamento.EDespesaFixa && TipoDeDespesaFixa is null);
 
-            if (Lancamento.EDespesaFixa && TipoDeDespesaFixa is null && Lancamento.QtdMesesDeDespesaFixa <= 0)
+            if (ECriacao && Lancamento.EDespesaFixa && (TipoDeDespesaFixa is null || Lancamento.QtdMesesDeDespesaFixa <= 0))
                 throw new Exception("Para despesas fixas, selecione o tipo e a quantidade de meses.");
-            else
+
+            if (ECriacao)
                 Lancamento.TipoDeDespesaFixa = TipoDeDespesaFixa;
 
             ReturnApiRefatored<ClsLancamentoFinanceiro> ResponseAPi = new ReturnApiRefatored<ClsLancamentoFinanceiro>(); // mudar quando colocar a logica
