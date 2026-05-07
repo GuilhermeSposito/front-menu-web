@@ -104,9 +104,17 @@
     </MudLayout>
 </MudPaper>
 
+<MudOverlay Visible="_gerandoPdf" DarkBackground="true" ZIndex="9999" AutoClose="false">
+    <MudStack AlignItems="AlignItems.Center" Spacing="3">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.h6" Style="color:#fff">Gerando QR Codes...</MudText>
+    </MudStack>
+</MudOverlay>
+
 
 @code {
     private bool CarregandoMesas = false;
+    private bool _gerandoPdf = false;
     private MudDataGrid<ClsMesasEComandas>? dataGridRef;
 
     private List<SuporteDeImpressaoDeQrCode> SuporteDeImpressaoDeQrCodes = new List<SuporteDeImpressaoDeQrCode>();
@@ -217,31 +225,38 @@
     }
 
 
-    private async void GerarQr() // Pode ser void se não houver await
+    private async Task GerarQr()
     {
         if (!await AuthorizationService.ValidateAsync("AcessoCadastraMesaOuComandas")) return;
 
-        MarkupString qrCodeMarkup;
+        SuporteDeImpressaoDeQrCodes.Clear();
+        _gerandoPdf = true;
+        StateHasChanged();
+        await Task.Delay(50);
+
         foreach (var mesa in MesasSelecionadas)
         {
             using var generator = new QRCodeGenerator();
             using QRCodeData qrCodeData = generator.CreateQrCode($"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado.Id}/{mesa.Id}", QRCodeGenerator.ECCLevel.Q);
             SvgQRCode qrCode = new SvgQRCode(qrCodeData);
             string svgText = qrCode.GetGraphic(5);
-            qrCodeMarkup = new MarkupString(svgText);
 
-            var suporteQr = new SuporteDeImpressaoDeQrCode
+            SuporteDeImpressaoDeQrCodes.Add(new SuporteDeImpressaoDeQrCode
             {
                 IdMesa = mesa.CodigoExterno,
-                CodigoExternoMesa = mesa.CodigoExterno.ToString().PadLeft(2,'0'),
-                QrCodeSvg = qrCodeMarkup
-            };
-            SuporteDeImpressaoDeQrCodes.Add(suporteQr);
+                CodigoExternoMesa = mesa.CodigoExterno.ToString().PadLeft(2, '0'),
+                QrCodeSvg = new MarkupString(svgText)
+            });
         }
+
         StateHasChanged();
-        await Task.Delay(100);
+        // Aguarda o Blazor concluir o ciclo de renderização antes de capturar o DOM
+        await Task.Delay(600);
 
         await GerarPdf();
+
+        _gerandoPdf = false;
+        StateHasChanged();
     }
     private async Task GerarPdf()
     {
