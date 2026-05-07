@@ -108,6 +108,12 @@ public class ClsMerchant
     [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
     [JsonPropertyName("EmiteNfAutomatica")] public bool EmiteNfAutomatica { get; set; } = false;
+    [JsonPropertyName("CorBarrasCardapio")] public string CorBarrasCardapio { get; set; } = "#F88113";
+    [JsonPropertyName("CorFundoCardapio")] public string CorFundoCardapio { get; set; } = "#192436";
+    [JsonPropertyName("CorCardCardapio")] public string CorCardCardapio { get; set; } = "#0f172A";
+    [JsonPropertyName("ImagemDeFundoCardapio")] public string ImagemDeFundoCardapio { get; set; } = "LOCAL";
+    [JsonPropertyName("CorEscritoCard")] public string CorEscritoCard { get; set; } = "#fff";
+    [JsonPropertyName("CorEscritoHero")] public string CorEscritoHero { get; set; } = "#fff";
 }
 
 public class AdminMerchantsResponse

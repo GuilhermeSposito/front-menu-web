@@ -14,6 +14,7 @@
 @using MudBlazor.Extensions.Components
 @using MudBlazor.Extensions.Services
 @using System.Text.Json
+@using MudBlazor.Utilities
 @inject MerchantServices MerchantServices
 @inject IJSRuntime JS
 
@@ -45,7 +46,6 @@
                                 }
                             </MudAvatar>
                             <MudFileUpload T="IBrowserFile" FilesChanged="UploadImagem">
-                                @*Teste*@
                                 <ActivatorContent>
                                     <MudButton Variant="Variant.Filled"
                                                Color="Color.Primary"
@@ -170,13 +170,13 @@
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.UltilizaRequisicaoDeMesaNoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaRequisicaoDeMesaNoItem = x)) T=bool Color="Color.Primary">Ultiliza Requisição de Mesa no Item</MudCheckBox>
                             </MudItem>
-                            <MudItem xs="12" sm="6" md="3">                        
-                                    <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
-                                               Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
-                                               T="string">
-                                        <MudSelectItem Value=@("Mesa")>Mesa</MudSelectItem>
-                                        <MudSelectItem Value=@("Comanda")>Comanda</MudSelectItem>
-                                    </MudSelect>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
+                                           Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
+                                           T="string">
+                                    <MudSelectItem Value=@("Mesa")>Mesa</MudSelectItem>
+                                    <MudSelectItem Value=@("Comanda")>Comanda</MudSelectItem>
+                                </MudSelect>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
                                 <MudNumericField Variant="Variant.Outlined" Label="Nmr de Vias da Comanda" @bind-Value=@Merchant.QtdViasDaComanda HideSpinButtons="true" Immediate=true @onfocusout=SalvarInfosLojaAsync Min=0 T="int" />
@@ -423,10 +423,10 @@
 
                     <MudGrid Class="p-2 mb-1">
                         <MudItem xs="12" md="6" lg="6">
-                            <MudNumericField Variant="Variant.Outlined" Label="Taxa de Serviço (%)" @bind-Value=@Merchant.TaxaDeServicoPercent Adornment="Adornment.End" AdornmentText="%" HideSpinButtons="true"  @onfocusout=SalvarInfosLojaAsync Min=0 Max=100 T="decimal?" Format="N2" />
+                            <MudNumericField Variant="Variant.Outlined" Label="Taxa de Serviço (%)" @bind-Value=@Merchant.TaxaDeServicoPercent Adornment="Adornment.End" AdornmentText="%" HideSpinButtons="true" @onfocusout=SalvarInfosLojaAsync Min=0 Max=100 T="decimal?" Format="N2" />
                         </MudItem>
                         <MudItem xs="12" md="6" lg="6">
-                            <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true"  @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
+                            <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true" @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
                         </MudItem>
                     </MudGrid>
 
@@ -452,6 +452,97 @@
                         </MudItem>
                     </MudGrid>
                 </MudStack>
+            </MudPaper>
+
+            @*Cardápio*@
+            <MudPaper Class="rounded-5 p-2 mt-4" Style="background-color: var(--mud-palette-surface); border: 3px solid var(--mud-palette-primary)" Elevation="2">
+                <MudStack AlignItems="AlignItems.Center" Spacing=5 Justify="Justify.Center" Row=true>
+                    <MudPaper Class="rounded-5 p-3 w-75" Style="background-color: var(--mud-palette-background);" Elevation="2">
+                        <MudText Align="Align.Center" Typo="Typo.h4">Cardápio</MudText>
+                    </MudPaper>
+                </MudStack>
+
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="mt-3">
+                    <MudFileUpload T="IBrowserFile" FilesChanged="UploadFundoCardapio">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.Wallpaper">
+                                Imagem de Fundo do Cardápio
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                </MudStack>
+                @*
+                <MudStack Class="m-5">
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudText Typo="Typo.h5">Cores do Cardápio</MudText>
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+
+                    <MudGrid Class="p-2 mb-1" Justify="Justify.Center">
+                        <MudItem xs="12" md="4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle1">Cor das Barras</MudText>
+                                <MudColorPicker @bind-Value="_corBarrasCardapio"
+                                                PickerVariant="PickerVariant.Static"
+                                                DisableAlpha="true"
+                                                DisableToolbar="false" />
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle1">Cor de Fundo</MudText>
+                                <MudColorPicker @bind-Value="_corFundoCardapio"
+                                                PickerVariant="PickerVariant.Static"
+                                                DisableAlpha="true"
+                                                DisableToolbar="false" />
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle1">Cor dos Cards</MudText>
+                                <MudColorPicker @bind-Value="_corCardCardapio"
+                                                PickerVariant="PickerVariant.Static"
+                                                DisableAlpha="true"
+                                                DisableToolbar="false" />
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle1">Cor do Escrito do Card</MudText>
+                                <MudColorPicker @bind-Value="_corEscritoCard"
+                                                PickerVariant="PickerVariant.Static"
+                                                DisableAlpha="true"
+                                                DisableToolbar="false" />
+                            </MudStack>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.subtitle1">Cor do Escrito do Hero</MudText>
+                                <MudColorPicker @bind-Value="_corEscritoHero"
+                                                PickerVariant="PickerVariant.Static"
+                                                DisableAlpha="true"
+                                                DisableToolbar="false" />
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Warning"
+                                   StartIcon="@Icons.Material.Filled.RestartAlt"
+                                   OnClick="RestaurarCoresPadrao">
+                            Restaurar Padrão
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="SalvarCoresCardapio">
+                            Salvar Cores
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+                *@
             </MudPaper>
 
             @*Enderecos das Empresa*@
@@ -651,6 +742,13 @@
     private DocumentosMerchant? NovoDocumentoMerchant = null;
     private bool AdicionandoNovoDocumento = false;
 
+    //cores do cardápio
+    private MudColor _corBarrasCardapio = new MudColor("#F88113");
+    private MudColor _corFundoCardapio = new MudColor("#192436");
+    private MudColor _corCardCardapio = new MudColor("#0f172A");
+    private MudColor _corEscritoCard = new MudColor("#fff");
+    private MudColor _corEscritoHero = new MudColor("#fff");
+
     #region Ufs
     private readonly string[] Ufs =
     {
@@ -670,9 +768,16 @@
             Merchant = await MerchantServices.GetMerchantAsync();
             MerchantParaComparacao = Merchant;
 
-            if (Merchant is not null && !string.IsNullOrEmpty(Merchant.CertificadoBase64))
+            if (Merchant is not null)
             {
-                CertificadoCarregado = Merchant.CertificadoBase64;
+                if (!string.IsNullOrEmpty(Merchant.CertificadoBase64))
+                    CertificadoCarregado = Merchant.CertificadoBase64;
+
+                _corBarrasCardapio = new MudColor(Merchant.CorBarrasCardapio);
+                _corFundoCardapio = new MudColor(Merchant.CorFundoCardapio);
+                _corCardCardapio = new MudColor(Merchant.CorCardCardapio);
+                _corEscritoCard = new MudColor(Merchant.CorEscritoCard);
+                _corEscritoHero = new MudColor(Merchant.CorEscritoHero);
             }
         }
         catch (Exception ex)
@@ -919,6 +1024,66 @@
             }
 
             Snackbar.Add("Não foi possivel carregar imagem!", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar imagem: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RestaurarCoresPadrao()
+    {
+        _corBarrasCardapio = new MudColor("#F88113");
+        _corFundoCardapio = new MudColor("#192436");
+        _corCardCardapio = new MudColor("#0f172A");
+        _corEscritoCard = new MudColor("#ffffff");
+        _corEscritoHero = new MudColor("#ffffff");
+        await SalvarCoresCardapio();
+    }
+
+    private async Task SalvarCoresCardapio()
+    {
+        if (Merchant is null) return;
+
+        Merchant.CorBarrasCardapio = _corBarrasCardapio.ToString(MudColorOutputFormats.Hex);
+        Merchant.CorFundoCardapio = _corFundoCardapio.ToString(MudColorOutputFormats.Hex);
+        Merchant.CorCardCardapio = _corCardCardapio.ToString(MudColorOutputFormats.Hex);
+        Merchant.CorEscritoCard = _corEscritoCard.ToString(MudColorOutputFormats.Hex);
+        Merchant.CorEscritoHero = _corEscritoHero.ToString(MudColorOutputFormats.Hex);
+
+        await SalvarInfosLojaAsync();
+    }
+
+    private async Task UploadFundoCardapio(IBrowserFile file)
+    {
+        try
+        {
+            using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            if (AppState.MerchantLogado is not null)
+            {
+                var response = await MerchantServices.AdicionarFundoCardapio(ms, file.Name, AppState.MerchantLogado.Id);
+                if (response.Status == "success")
+                {
+                    ClsMerchant merchant = await MerchantServices.GetMerchantAsync();
+                    if (merchant is not null)
+                    {
+                        AppState.MerchantLogado = merchant;
+                        Merchant = merchant;
+                    }
+                    Snackbar.Add("Fundo do cardápio atualizado com sucesso!", Severity.Success);
+                    StateHasChanged();
+                }
+                else
+                {
+                    Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+                }
+                return;
+            }
+
+            Snackbar.Add("Não foi possível carregar imagem!", Severity.Error);
         }
         catch (Exception ex)
         {
