@@ -30,13 +30,14 @@
             @foreach (var item in _nav)
             {
                 var isActive = Navigation.Uri.Contains(item.Href, StringComparison.OrdinalIgnoreCase);
+                var label = item.Href == "/checkout/gestao-de-mesas" ? MesasLabel : item.Label;
                 <div class="@($"sophos-nav__item {(isActive ? "sophos-nav__item--active" : "")}")"
                      @onclick="@(() => Navigation.NavigateTo(item.Href))">
                     @if (isActive)
                     {
                         <MudIcon Icon="@item.Icon" Size="Size.Small" Class="mr-1" />
                     }
-                    @item.Label
+                    @label
                 </div>
             }
         </div>
@@ -167,6 +168,10 @@
         new("Checkout", "/checkout-refatored", Icons.Material.Outlined.PointOfSale),
         new("Caixa",    "/checkout/caixa",    Icons.Material.Outlined.Savings),
     };
+
+    private string MesasLabel => !string.IsNullOrWhiteSpace(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced)
+        ? AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced
+        : "Mesas";
 
     protected override async Task OnInitializedAsync()
     {

@@ -105,6 +105,7 @@ public class ClsMerchant
     [JsonPropertyName("AvisaFechamentoDeMesa")] public bool AvisaFechamentoDeMesa { get; set; } = true;
     [JsonPropertyName("IntegraApiOficialWS")] public bool IntegraApiOficialWS { get; set; } = false;
     [JsonPropertyName("UltilizaConvenio")] public bool UltilizaConvenio { get; set; } = false;
+    [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
 }
 
 public class AdminMerchantsResponse

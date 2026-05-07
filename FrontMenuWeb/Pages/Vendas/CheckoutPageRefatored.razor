@@ -1,6 +1,6 @@
 @rendermode RenderMode.InteractiveWebAssembly
 @attribute [Authorize]
-@page "/checkout-refatored"
+@page "/checkout"
 @layout CheckoutLayout
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Merchant
@@ -676,6 +676,9 @@
     {
         if (firstRender)
         {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                await BalancaService.ConectarAsync();
+
             await JS.InvokeVoidAsync("interceptFunctionKeys", this);
             await _pageRef.FocusAsync();
         }
