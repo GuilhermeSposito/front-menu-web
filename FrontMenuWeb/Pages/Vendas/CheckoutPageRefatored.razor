@@ -5,7 +5,11 @@
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Components.Modais.ModaisDeVendas
+@using FrontMenuWeb.Components.Modais.ModalFiscais
+@using FrontMenuWeb.Services.Fiscal
+@using FrontMenuWeb.Dtos
 @inject ProdutoService ProdutoService
+@inject NfService NFService
 @inject PedidosService PedidosService
 @inject IJSRuntime JS
 @inject BalancaService BalancaService
@@ -150,8 +154,8 @@
                         <div class="row__price">@item.PrecoTotal.ToString("C")</div>
                         <MudIconButton Icon="@(isExp ? Icons.Material.Outlined.ExpandLess : Icons.Material.Outlined.EditNote)"
                                        Size="Size.Small" Class="row__more"
-                                       Style="@($"opacity:{(isExp || temObs || temNome ? "1" : "0.3")};")"
-                                       OnClick="@(() => ToggleExpandirItem(item))" />
+                                       Style="@($"opacity:{(isExp || temObs || temNome || item.Complementos.Count > 0 ? "1" : "0.3")};")"
+                                       OnClick="@(async () => await EditarItem(item))" />
 
                         @if (isExp)
                         {
@@ -274,6 +278,16 @@
                 </MudButton>
             }
 
+            @if (_isFechamentoDeMesa)
+            {
+                <MudButton Class="action-btn action-btn--info" Variant="Variant.Filled" FullWidth="true"
+                           Disabled="@(_enviando)"
+                           OnClick="TransferirItensDeMesa">
+                    <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small" />
+                    <span class="action-btn__label">Transferir @(_itensSelecionados.Count > 0 ? $"{_itensSelecionados.Count} item(s)" : "Itens") de @(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa")</span>
+                </MudButton>
+            }
+
             <MudButton Class="action-btn action-btn--primary" Variant="Variant.Filled" FullWidth="true"
                        Disabled="@(!_pedido.Itens.Any() || _enviando)"
                        OnClick="Finalizar">
@@ -322,6 +336,18 @@
             </MudButton>
         </div>
     </div>
+
+    @if (_emitindoNF)
+    {
+        <MudOverlay Visible="true" Absolute="true" DarkBackground="true" ZIndex="9999" Class="w-100 h-100">
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="w-100 h-100" Spacing="3">
+                <MudProgressCircular Value="@_progressoNF" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.h6" Style="color:#fff;">Emitindo NFC-e...</MudText>
+                <MudProgressLinear Value="@_progressoNF" Color="Color.Primary" Style="width:280px;" />
+                <MudText Typo="Typo.caption" Style="color:#fff;">@_progressoNF%</MudText>
+            </MudStack>
+        </MudOverlay>
+    }
 </div>
 
 <style>
@@ -342,6 +368,7 @@
         --danger: #F44336;
         --couvert: #A78BFA;
 
+        position: relative;
         height: calc(100vh - 56px);
         display: grid;
         grid-template-columns: 75% 25%;
@@ -626,6 +653,9 @@
 
     private bool _enviando = false;
     private bool _modalAberto = false;
+    private bool _emitindoNF = false;
+    private int _progressoNF = 0;
+    private CancellationTokenSource? _nfProgressCts;
     private bool _isFechamentoDeMesa = false;
     private bool _cobraTaxa = false;
     private bool _cobraCouvert = false;
@@ -938,6 +968,64 @@
             return;
         }
 
+        // Lógica de Complementos / Tamanhos
+        if ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) ||
+            (!produto.TamanhoUnico && produto.Precos.Count > 0))
+        {
+            var paramsComp = new DialogParameters { { "AtualizandoItem", false }, { "Produto", produto } };
+            var optsComp = new DialogOptions { BackdropClick = true, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+            var dialogComp = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", paramsComp, optsComp);
+            var resultComp = await dialogComp.Result;
+
+            if (!resultComp!.Canceled && resultComp.Data is ItensPedido itemComplemento)
+            {
+                if (_isFechamentoDeMesa)
+                {
+                    var pedidoMesaComp = new ClsPedido { TipoDePedido = "MESA", MesaComandaId = _pedido.MesaComandaId, Itens = new List<ItensPedido> { itemComplemento } };
+                    _enviando = true;
+                    StateHasChanged();
+                    try
+                    {
+                        var response = await PedidosService.CreatePedidoMesa(pedidoMesaComp);
+                        if (response.Status == "success")
+                        {
+                            Snackbar.Add($"{produto.Descricao} adicionado à mesa.", Severity.Success);
+                            var mesaAberta = _mesasAtivas.FirstOrDefault(x => x.Id == _pedido.MesaComandaId);
+                            if (mesaAberta != null)
+                                await CarregarMesaParaCheckout(mesaAberta.CodigoExterno);
+                        }
+                        else
+                        {
+                            Snackbar.Add($"Erro ao adicionar: {string.Join(",", response.Messages)}", Severity.Error);
+                        }
+                    }
+                    finally
+                    {
+                        _enviando = false;
+                        _quantidade = 1;
+                        await _autocompleteRef.ClearAsync();
+                        StateHasChanged();
+                    }
+                    return;
+                }
+
+                _pedido.Itens.Add(itemComplemento);
+                _quantidade = 1;
+                await _autocompleteRef.ClearAsync();
+                StateHasChanged();
+                await _autocompleteRef.FocusAsync();
+            }
+            else
+            {
+                Snackbar.Add("Produto com informações obrigatórias não informadas", Severity.Error);
+                _itemAtual = null;
+                _quantidade = 1;
+                await _autocompleteRef.ClearAsync();
+                StateHasChanged();
+            }
+            return;
+        }
+
         if (_isFechamentoDeMesa)
         {
             float precoTotalCalculado = produto.TipoDeVenda != "V" ? preco * qtdAdicionado : preco;
@@ -1171,6 +1259,9 @@
                         await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"pedido{response.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
                         await PedidosService.UpdatePedidoImpresso(response.Data.Objeto);
                     }
+
+                    if (AppState.MerchantLogado?.EmiteNfAutomatica == true)
+                        await EmiteNFCeAutomatico(response.Data.Objeto);
                 }
 
                 _pedido = new ClsPedido { TipoDePedido = "BALCÃO", CriadoPor = "SOPHOS", EtapaPedido = "FINALIZADO" };
@@ -1186,6 +1277,76 @@
             StateHasChanged();
             await _autocompleteRef.FocusAsync();
         }
+    }
+
+    private async Task TransferirItensDeMesa()
+    {
+        if (_enviando || _modalAberto) return;
+
+        var itensParaTransferir = _itensSelecionados.Count > 0
+            ? _itensSelecionados.ToList()
+            : _pedido.Itens.ToList();
+
+        if (itensParaTransferir.Count == 0) { Snackbar.Add("Nenhum item para transferir.", Severity.Warning); return; }
+
+        var itemIds = itensParaTransferir.Where(i => i.Id > 0).Select(i => i.Id).ToList();
+        if (itemIds.Count == 0) { Snackbar.Add("Os itens precisam ter sido salvos para serem transferidos.", Severity.Warning); return; }
+
+        _modalAberto = true;
+        try
+        {
+            var legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa";
+            var options = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<InputMesaTransfer>($"Transferir para qual {legenda}?", options);
+            var result = await dialog.Result;
+
+            if (result!.Canceled || result.Data is not string valor || string.IsNullOrWhiteSpace(valor)) return;
+
+            ClsMesasEComandas? mesaDestino = null;
+            if (int.TryParse(valor, out int codExterno))
+                mesaDestino = _mesasAtivas.FirstOrDefault(m => m.CodigoExterno == codExterno);
+            else
+                mesaDestino = _mesasAtivas.FirstOrDefault(m => m.apelido?.Equals(valor, StringComparison.OrdinalIgnoreCase) ?? false);
+
+            if (mesaDestino == null)
+            {
+                Snackbar.Add($"{legenda} \"" + valor + "\" não encontrada.", Severity.Warning);
+                return;
+            }
+
+            if (mesaDestino.Id == _pedido.MesaComandaId)
+            {
+                Snackbar.Add($"A {legenda} de destino é a mesma que a de origem.", Severity.Warning);
+                return;
+            }
+
+            _enviando = true;
+            StateHasChanged();
+            try
+            {
+                var response = await PedidosService.TransferirItensDeMesa(_pedido.MesaComandaId, mesaDestino.Id, itemIds);
+                var msg = string.Join(", ", response.Status == "success" ? response.Data.Messages : response.Messages);
+                Snackbar.Add(msg, response.Status == "success" ? Severity.Success : Severity.Error);
+
+                if (response.Status == "success")
+                {
+                    _itensSelecionados.Clear();
+                    var mesaOrigem = _mesasAtivas.FirstOrDefault(m => m.Id == _pedido.MesaComandaId);
+                    if (mesaOrigem != null)
+                        await CarregarMesaParaCheckout(mesaOrigem.CodigoExterno);
+                    else
+                        ClearMesa();
+                }
+            }
+            catch (Exception ex) { Snackbar.Add($"Erro na transferência: {ex.Message}", Severity.Error); }
+            finally
+            {
+                _enviando = false;
+                StateHasChanged();
+                await _autocompleteRef.FocusAsync();
+            }
+        }
+        finally { _modalAberto = false; }
     }
 
     private async Task TransferirVenda()
@@ -1368,6 +1529,9 @@
                         await JS.InvokeVoidAsync("baixarJSON", response.Data.Objeto, $"pedido{response.Data.Objeto.DisplayId}-SOPHOS-WEB.json");
                         await PedidosService.UpdatePedidoImpresso(response.Data.Objeto);
                     }
+
+                    if (AppState.MerchantLogado?.EmiteNfAutomatica == true)
+                        await EmiteNFCeAutomatico(response.Data.Objeto);
                 }
 
                 foreach (var item in subPedido.Itens)
@@ -1396,6 +1560,91 @@
         var dialog = await DialogService.ShowAsync<ModalDePerguntaDeImpressao>("Confirmar Impressão", options);
         var result = await dialog.Result;
         return !result!.Canceled && result.Data is bool sucesso && sucesso;
+    }
+
+    private async Task EmiteNFCeAutomatico(ClsPedido pedido)
+    {
+        var envNFCeDto = new EnNfCeDto { Pedido = pedido };
+        var parameters = new DialogParameters<ModalDeCpfNaNota> { { x => x.enNfCeDto, envNFCeDto } };
+        var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled) { Snackbar.Add("Emissão de NFC-e cancelada.", Severity.Info); return; }
+
+        _emitindoNF = true;
+        _progressoNF = 0;
+        _nfProgressCts = new CancellationTokenSource();
+        StateHasChanged();
+
+        _ = SimulaProgressoNFAsync(_nfProgressCts.Token);
+
+        try
+        {
+            var nfResponse = await NFService.GeraNFCe(envNFCeDto);
+            var msg = nfResponse.Status == "error"
+                ? string.Join(", ", nfResponse.Messages)
+                : string.Join(", ", nfResponse.Data?.Messages ?? new List<string>());
+            Snackbar.Add(msg, nfResponse.Status == "error" ? Severity.Error : Severity.Success);
+
+            if (nfResponse.Status != "error" && nfResponse.Data?.ObjetoWhenWriting?.XmlStringField is not null)
+                await JS.InvokeVoidAsync("baixarXMLNF", nfResponse.Data.ObjetoWhenWriting.XmlStringField, $"{nfResponse.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao emitir NFC-e: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _nfProgressCts?.Cancel();
+            _progressoNF = 100;
+            StateHasChanged();
+            await Task.Delay(300);
+            _emitindoNF = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SimulaProgressoNFAsync(CancellationToken token)
+    {
+        while (_progressoNF < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(120, token).ContinueWith(_ => { });
+            _progressoNF = Math.Min(_progressoNF + Random.Shared.Next(2, 6), 90);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task EditarItem(ItensPedido item)
+    {
+        bool temComplementos = item.Produto?.GruposDeComplementosDoProduto is { Count: > 0 };
+        bool temTamanhos = item.Produto is not null && !item.Produto.TamanhoUnico && item.Produto.Precos.Count > 0;
+
+        if (!temComplementos && !temTamanhos)
+        {
+            ToggleExpandirItem(item);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "AtualizandoItem", true },
+            { "Produto", item.Produto },
+            { "Item", item },
+            { "Complementos", item.Complementos }
+        };
+        var options = new DialogOptions { BackdropClick = false, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is ItensPedido itemAtualizado)
+        {
+            var idx = _pedido.Itens.IndexOf(item);
+            if (idx >= 0)
+                _pedido.Itens[idx] = itemAtualizado;
+            Snackbar.Add("Item atualizado.", Severity.Success);
+            StateHasChanged();
+        }
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;

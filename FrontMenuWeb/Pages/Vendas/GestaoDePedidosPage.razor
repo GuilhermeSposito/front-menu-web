@@ -786,6 +786,8 @@
 
     private async Task AtualizaPedidosEtapaComProgresso(List<ClsDeSuporteParaMostrarPedidos> ListaDePedidos, ClsDeSuporteParaMostrarPedidos? Supor = null)
     {
+        var pedidosAceitos = new List<ClsPedido>();
+
         try
         {
             LabelDeCarregamento = "Enviando Pedidos para proxima etapa...";
@@ -819,6 +821,9 @@
                     item.Selector = "PREPARANDO";
                     var Response = await PedidosService.UpdatePedidoPreparando(item.Pedido, AppState.MerchantLogado.Id);
                     MostraMensagemDeUpdateDoPedido(Response);
+
+                    if (Response.Status == "success" && Response.Data?.Objeto is not null)
+                        pedidosAceitos.Add(Response.Data.Objeto);
                 }
                 else if (item.Selector == "PREPARANDO")
                 {
@@ -856,6 +861,9 @@
             CarregandoParteFiscal = false;
         }
 
+        if (AppState.MerchantLogado?.EmiteNfAutomatica == true)
+            foreach (var pedido in pedidosAceitos)
+                await EmiteNFCeAutomatico(pedido);
     }
 
     private async Task AvisarNovamenteMesmoPedido(ClsPedido pedido)
@@ -1058,6 +1066,46 @@
             ProgressoFiscal += Random.Shared.Next(2, 6);
             ProgressoFiscal = Math.Min(ProgressoFiscal, 98);
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task EmiteNFCeAutomatico(ClsPedido pedido)
+    {
+        var envNFCeDto = new EnNfCeDto { Pedido = pedido };
+        var parameters = new DialogParameters<ModalDeCpfNaNota> { { x => x.enNfCeDto, envNFCeDto } };
+        var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled) { Snackbar.Add("Emissão de NFC-e cancelada.", Severity.Info); return; }
+
+        LabelDeCarregamento = "Emitindo NFC-e...";
+        CarregandoParteFiscal = true;
+        ProgressoFiscal = 0;
+        _progressCts = new CancellationTokenSource();
+        StateHasChanged();
+
+        _ = SimulaProgressoAsync(_progressCts.Token);
+
+        try
+        {
+            var nfResponse = await NFService.GeraNFCe(envNFCeDto);
+            MostraMensagemDeUpdateDoPedido(nfResponse);
+
+            if (nfResponse.Status != "error" && nfResponse.Data?.ObjetoWhenWriting?.XmlStringField is not null)
+                await JS.InvokeVoidAsync("baixarXMLNF", nfResponse.Data.ObjetoWhenWriting.XmlStringField, $"{nfResponse.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao emitir NFC-e: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _progressCts?.Cancel();
+            ProgressoFiscal = 100;
+            await Task.Delay(300);
+            CarregandoParteFiscal = false;
+            StateHasChanged();
         }
     }
 

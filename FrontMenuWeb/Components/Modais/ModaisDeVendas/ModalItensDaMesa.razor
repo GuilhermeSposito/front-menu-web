@@ -5,11 +5,15 @@
 @using FrontMenuWeb.Components.Modais.ModaisGenericos
 @inject MesasServices MesasServices
 @using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Dtos
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
 @using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.Fiscal
+@using FrontMenuWeb.Components.Modais.ModalFiscais
 @inject PedidosService AliquotaService
+@inject NfService NFService
 @inject ProdutoService ProdutoService
 @inject GrupoServices GrupoService
 @inject PessoasService PessoaService
@@ -185,9 +189,21 @@
                         Excluir Selecionados (@ItensSelecionados.Count)
                     </MudButton>
                 }
-                <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar Mesa</MudButton>
+                <MudButton OnClick="LimparItens" Variant="Variant.Filled" Color="Color.Error">Limpar @AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced</MudButton>
             </MudStack>
         </MudPaper>
+
+        @if (_emitindoNF)
+        {
+            <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="3">
+                    <MudProgressCircular Value="@_progressoNF" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Style="color:#fff;">Emitindo NFC-e...</MudText>
+                    <MudProgressLinear Value="@_progressoNF" Color="Color.Primary" Style="width:280px;" />
+                    <MudText Typo="Typo.caption" Style="color:#fff;">@_progressoNF%</MudText>
+                </MudStack>
+            </MudOverlay>
+        }
 
         <MudDataGrid T="ItensPedido"
                      @ref="dataGridRef"
@@ -246,6 +262,11 @@
     private MudDataGrid<ItensPedido>? dataGridRef = new();
 
     private bool Carregando { get; set; } = true;
+
+    // ── NF automática ──
+    private bool _emitindoNF = false;
+    private int _progressoNF = 0;
+    private CancellationTokenSource? _nfProgressCts;
 
     // ── Opções de fechamento ──
     private bool _cobraTaxa = false;
@@ -626,6 +647,10 @@
             if (response.Status == "success")
             {
                 Snackbar.Add("Pedido fechado com sucesso!", Severity.Success);
+
+                if (AppState.MerchantLogado?.EmiteNfAutomatica == true && response.Data?.Objeto is not null)
+                    await EmiteNFCeAutomatico(response.Data.Objeto);
+
                 MudDialog.Close(DialogResult.Ok(true));
             }
             else
@@ -671,6 +696,9 @@
             if (response.Status == "success")
             {
                 Snackbar.Add("Parcial efetuado com sucesso!", Severity.Success);
+
+                if (AppState.MerchantLogado?.EmiteNfAutomatica == true && response.Data?.Objeto is not null)
+                    await EmiteNFCeAutomatico(response.Data.Objeto);
 
                 if (ItensSelecionados.Count >= PedidoMesa.Itens.Count)
                 {
@@ -787,6 +815,59 @@
         }
     }
 
+    private async Task EmiteNFCeAutomatico(ClsPedido pedido)
+    {
+        var envNFCeDto = new EnNfCeDto { Pedido = pedido };
+        var parameters = new DialogParameters<ModalDeCpfNaNota> { { x => x.enNfCeDto, envNFCeDto } };
+        var options = new DialogOptions { CloseButton = false, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.Center, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeCpfNaNota>("Informações Adicionais", parameters, options);
+        var result = await dialog.Result;
+
+        if (result!.Canceled) { Snackbar.Add("Emissão de NFC-e cancelada.", Severity.Info); return; }
+
+        _emitindoNF = true;
+        _progressoNF = 0;
+        _nfProgressCts = new CancellationTokenSource();
+        StateHasChanged();
+
+        _ = SimulaProgressoNFAsync(_nfProgressCts.Token);
+
+        try
+        {
+            var nfResponse = await NFService.GeraNFCe(envNFCeDto);
+            var msg = nfResponse.Status == "error"
+                ? string.Join(", ", nfResponse.Messages)
+                : string.Join(", ", nfResponse.Data?.Messages ?? new List<string>());
+            Snackbar.Add(msg, nfResponse.Status == "error" ? Severity.Error : Severity.Success);
+
+            if (nfResponse.Status != "error" && nfResponse.Data?.ObjetoWhenWriting?.XmlStringField is not null)
+                await JS.InvokeVoidAsync("baixarXMLNF", nfResponse.Data.ObjetoWhenWriting.XmlStringField, $"{nfResponse.Data.ObjetoWhenWriting.ChaveNf}-procnfe.xml");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao emitir NFC-e: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _nfProgressCts?.Cancel();
+            _progressoNF = 100;
+            StateHasChanged();
+            await Task.Delay(300);
+            _emitindoNF = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SimulaProgressoNFAsync(CancellationToken token)
+    {
+        while (_progressoNF < 90 && !token.IsCancellationRequested)
+        {
+            await Task.Delay(120, token).ContinueWith(_ => { });
+            _progressoNF = Math.Min(_progressoNF + Random.Shared.Next(2, 6), 90);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task PagarPedidoPorCliente(string nomeCliente)
     {
         var itensDoCliente = PedidoMesa.Itens.Where(x => x.NomeCliente == nomeCliente).ToList();
@@ -818,6 +899,9 @@
             if (response.Status == "success")
             {
                 Snackbar.Add($"Conta de {nomeCliente} efetuada com sucesso!", Severity.Success);
+
+                if (AppState.MerchantLogado?.EmiteNfAutomatica == true && response.Data?.Objeto is not null)
+                    await EmiteNFCeAutomatico(response.Data.Objeto);
 
                 if (itensDoCliente.Count >= PedidoMesa.Itens.Count)
                 {

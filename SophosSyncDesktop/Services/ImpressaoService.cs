@@ -362,20 +362,28 @@ public class ImpressaoService
         //========================================================================================       
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
-        if(AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaRequisicaoDeMesaNoItem)
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaRequisicaoDeMesaNoItem)
         {
             var Mesa = pedido.Itens.GroupBy(x => x.NumeroMesaItem).ToList();
-            if(Mesa.Count == 1)
+            if (Mesa.Count == 1 && Mesa[0].Key != 0)
             {
-                var Item = pedido.Itens.FirstOrDefault();
-                int NumeroDaMesa = Item?.NumeroMesaItem ?? 0;
-
-                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-                //========================================================================================       
+                int NumeroDaMesa = Mesa[0].Key;
                 AdicionaConteudo(Conteudo, $"MESA: {NumeroDaMesa}", FonteDetalhesDoPedido, Alinhamentos.Centro);
-                JaImprimiuMesa = true;
                 //========================================================================================       
-                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+                JaImprimiuMesa = true;
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            }
+        }
+
+        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.ImprimeHorarioNaComanda)
+        {
+            var PrimeiroItem = pedido.Itens.FirstOrDefault();
+            if (PrimeiroItem is not null)
+            {
+                AdicionaConteudo(Conteudo, $"Enviado as {PrimeiroItem.CriadoEm:t}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+                //========================================================================================       
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
             }
         }
 
@@ -426,10 +434,10 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"Cliente: {item.NomeCliente}", FonteComplementoNaComanda, eObs: true);
             }
 
-            if(item.NumeroMesaItem > 0 && !JaImprimiuMesa)
-            {
-                AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", FonteComplementoNaComanda, eObs: true);
-            }
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaRequisicaoDeMesaNoItem)
+                if (item.NumeroMesaItem > 0 && !JaImprimiuMesa)
+                    AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", FonteComplementoNaComanda, eObs: true);
+
 
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 

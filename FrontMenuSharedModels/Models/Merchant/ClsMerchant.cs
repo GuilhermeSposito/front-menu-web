@@ -107,6 +107,7 @@ public class ClsMerchant
     [JsonPropertyName("UltilizaConvenio")] public bool UltilizaConvenio { get; set; } = false;
     [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
+    [JsonPropertyName("EmiteNfAutomatica")] public bool EmiteNfAutomatica { get; set; } = false;
 }
 
 public class AdminMerchantsResponse

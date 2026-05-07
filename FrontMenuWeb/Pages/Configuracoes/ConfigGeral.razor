@@ -305,6 +305,9 @@
                         <MudItem xs="12" sm="12" md="12">
                             <MudCheckBox ValueChanged="OnEmitindoNfeProdChanged" Value=Merchant.EmitindoNfeProd Disabled=EditandoInfosFiscaisBloq T=bool Color="Color.Primary">Emitindo em Produção</MudCheckBox>
                         </MudItem>
+                        <MudItem xs="12" sm="12" md="12">
+                            <MudCheckBox Value=@Merchant.EmiteNfAutomatica ValueChanged=@((bool v) => OnMudCheckBoxChangedGenerico(v, x => Merchant.EmiteNfAutomatica = x)) Disabled=EditandoInfosFiscaisBloq T=bool Color="Color.Primary">Emite NF Automática ao Finalizar Venda</MudCheckBox>
+                        </MudItem>
                     </MudGrid>
 
 

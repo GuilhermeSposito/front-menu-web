@@ -336,6 +336,37 @@
             </MudGrid>
         </MudStack>
 
+        <!-- OVERLAY NUMERO MESA ITEM -->
+        <MudOverlay Visible="@_mostrarModalNumeroDeMesa"
+                    Absolute="true"
+                    DarkBackground="true"
+                    ZIndex="9998"
+                    Class="w-100 h-100">
+            <MudPaper Class="pa-6 rounded-3" Style="min-width:280px; max-width:340px;">
+                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                    <MudText Typo="Typo.h6" Align="Align.Center">Informe o número da Mesa</MudText>
+                    <MudText Typo="Typo.caption" Align="Align.Center" Style="opacity:0.6">Digite o número para associar aos itens. Deixe 0 para enviar sem número.</MudText>
+                    <MudNumericField T="int"
+                                     @bind-Value="_numeroMesaItemTemp"
+                                     Label="Número"
+                                     Variant="Variant.Outlined"
+                                     Min="0"
+                                     inputmode="InputMode.numeric"
+                                     Class="w-100" />
+                    <MudStack Row="true" Spacing="2" Class="w-100">
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Class="flex-grow-1"
+                                   OnClick="() => _mostrarModalNumeroDeMesa = false">Cancelar</MudButton>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Class="flex-grow-1"
+                                   OnClick="ConfirmarNumeroMesaEEnviar">Confirmar</MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudOverlay>
+
         <!-- OVERLAY -->
         <MudOverlay Visible="@CarregandoEnvioDoPedido"
                     Absolute="true"
@@ -1022,6 +1053,9 @@
     #endregion
 
     #region Funções de Terminar o pedido
+    private bool _mostrarModalNumeroDeMesa = false;
+    private int _numeroMesaItemTemp = 0;
+
     private async Task PagarPedido()
     {
         @if (NovoPedido.Itens.Count == 0)
@@ -1192,6 +1226,26 @@
             NovoPedido.MesaComandaId = Mesa.CodigoExterno;
         }
 
+        if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem == true)
+        {
+            _numeroMesaItemTemp = 0;
+            _mostrarModalNumeroDeMesa = true;
+            return;
+        }
+
+        await ExecutarEnvioParaMesa();
+    }
+
+    private async Task ConfirmarNumeroMesaEEnviar()
+    {
+        _mostrarModalNumeroDeMesa = false;
+        foreach (var item in NovoPedido.Itens)
+            item.NumeroMesaItem = _numeroMesaItemTemp;
+        await ExecutarEnvioParaMesa();
+    }
+
+    private async Task ExecutarEnvioParaMesa()
+    {
         try
         {
             ReturnApiRefatored<PedidoMesaDto> ResponseAPi = await PedidosService.CreatePedidoMesa(NovoPedido);

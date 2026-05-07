@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject CaixaEPagamentosService CaixaService
+@inject IJSRuntime JS
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="true" />
 <MudPopoverProvider />
@@ -29,10 +30,13 @@
         <div class="sophos-nav">
             @foreach (var item in _nav)
             {
-                var isActive = Navigation.Uri.Contains(item.Href, StringComparison.OrdinalIgnoreCase);
+                var path = new Uri(Navigation.Uri).AbsolutePath.TrimEnd('/');
+                var isActive = item.Href == "/checkout"
+                    ? path.Equals("/checkout", StringComparison.OrdinalIgnoreCase)
+                    : path.StartsWith(item.Href, StringComparison.OrdinalIgnoreCase);
                 var label = item.Href == "/checkout/gestao-de-mesas" ? MesasLabel : item.Label;
                 <div class="@($"sophos-nav__item {(isActive ? "sophos-nav__item--active" : "")}")"
-                     @onclick="@(() => Navigation.NavigateTo(item.Href))">
+                     @onclick="@(() => NavigateSafe(item.Href))">
                     @if (isActive)
                     {
                         <MudIcon Icon="@item.Icon" Size="Size.Small" Class="mr-1" />
@@ -239,6 +243,12 @@
         var parts = nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpper();
         return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+    }
+
+    private async void NavigateSafe(string href)
+    {
+        try { await JS.InvokeVoidAsync("eval", "document.activeElement?.blur()"); } catch { }
+        Navigation.NavigateTo(href);
     }
 
     public void Dispose()
