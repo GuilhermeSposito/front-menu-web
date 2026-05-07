@@ -167,6 +167,9 @@
                             <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.JuntaItensNoLancamento ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.JuntaItensNoLancamento = x)) T=bool Color="Color.Primary">Junta Itens no Lançamento</MudCheckBox>
                             </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.UltilizaRequisicaoDeMesaNoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaRequisicaoDeMesaNoItem = x)) T=bool Color="Color.Primary">Ultiliza Requisição de Mesa no Item</MudCheckBox>
+                            </MudItem>
                             <MudItem xs="12" sm="6" md="3">                        
                                     <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
                                                Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"

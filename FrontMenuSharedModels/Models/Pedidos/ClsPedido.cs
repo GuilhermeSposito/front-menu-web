@@ -179,6 +179,8 @@ public class ItensPedido
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
     [JsonPropertyName("Garcon")] public ClsGarcon? Garcon { get; set; }
     [JsonPropertyName("EItemFracionadoCriadoNoGestorSophos")] public bool EItemFracionadoCriadoNoGestorSophos { get; set; } = true;
+    [JsonPropertyName("NumeroMesaItem")] public int NumeroMesaItem { get; set; } = 0;
+    [JsonPropertyName("CriadoEm")] public DateTime? CriadoEm { get; set; }
 
 }
 
@@ -206,7 +208,7 @@ public class ComplementoNoItem : IEquatable<ComplementoNoItem>
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
 
-    [JsonIgnore]public ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento { get; set; } = new ClsGruposDeComplementosDoProduto();
+    [JsonIgnore] public ClsGruposDeComplementosDoProduto RelacaoGrupoComlpemento { get; set; } = new ClsGruposDeComplementosDoProduto();
 
     public bool Equals(ComplementoNoItem? other)
     {

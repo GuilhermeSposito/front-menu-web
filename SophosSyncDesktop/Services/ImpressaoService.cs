@@ -349,6 +349,7 @@ public class ImpressaoService
     #region Define Características das comandas para impressão
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaComandaParaImpressaoMesa(PedidoMesaDto pedido, string AppQueEnviou)
     {
+        bool JaImprimiuMesa = false;
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
         string? NomeGarcomQueEnviou = string.Empty;
 
@@ -360,6 +361,23 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
         //========================================================================================       
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        if(AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaRequisicaoDeMesaNoItem)
+        {
+            var Mesa = pedido.Itens.GroupBy(x => x.NumeroMesaItem).ToList();
+            if(Mesa.Count == 1)
+            {
+                var Item = pedido.Itens.FirstOrDefault();
+                int NumeroDaMesa = Item?.NumeroMesaItem ?? 0;
+
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+                //========================================================================================       
+                AdicionaConteudo(Conteudo, $"MESA: {NumeroDaMesa}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+                JaImprimiuMesa = true;
+                //========================================================================================       
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            }
+        }
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
@@ -407,6 +425,12 @@ public class ImpressaoService
             {
                 AdicionaConteudo(Conteudo, $"Cliente: {item.NomeCliente}", FonteComplementoNaComanda, eObs: true);
             }
+
+            if(item.NumeroMesaItem > 0 && !JaImprimiuMesa)
+            {
+                AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", FonteComplementoNaComanda, eObs: true);
+            }
+
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
             NomeGarcomQueEnviou = item.Garcon?.Nome ?? NomeGarcomQueEnviou;
