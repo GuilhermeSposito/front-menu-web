@@ -1105,6 +1105,13 @@ public class NfService
         {
             if (!string.IsNullOrEmpty(Destinatario.Cnpj) && !string.IsNullOrEmpty(Destinatario.InscricaoEstadual))
             {
+                int codMun = (Destinatario.Cidade?.NumCidade > 0 ? Destinatario.Cidade.NumCidade : null)
+                             ?? enderecoMerchant?.Cidade?.NumCidade
+                             ?? 0;
+                string nomeMun = !string.IsNullOrEmpty(Destinatario.Cidade?.Descricao)
+                                 ? Destinatario.Cidade.Descricao
+                                 : (enderecoMerchant?.Cidade?.Descricao ?? string.Empty);
+
                 return new Dest
                 {
                     CNPJ = LimparCnpj(Destinatario.Cnpj!),
@@ -1114,8 +1121,8 @@ public class NfService
                         XLgr = Destinatario.Endereco?.Rua,
                         Nro = Destinatario.Endereco?.Numero,
                         XBairro = Destinatario.Endereco?.Bairro,
-                        CMun = Destinatario.Cidade?.NumCidade ??  0,
-                        XMun = Destinatario.Cidade?.Descricao ?? string.Empty,
+                        CMun = codMun,
+                        XMun = nomeMun,
                         UF = UFBrasil.SP,
                         CEP = LimparCnpj(Destinatario.Endereco?.Cep),
                     },
