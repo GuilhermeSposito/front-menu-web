@@ -1105,12 +1105,8 @@ public class NfService
         {
             if (!string.IsNullOrEmpty(Destinatario.Cnpj) && !string.IsNullOrEmpty(Destinatario.InscricaoEstadual))
             {
-                int codMun = (Destinatario.Cidade?.NumCidade > 0 ? Destinatario.Cidade.NumCidade : null)
-                             ?? enderecoMerchant?.Cidade?.NumCidade
-                             ?? 0;
-                string nomeMun = !string.IsNullOrEmpty(Destinatario.Cidade?.Descricao)
-                                 ? Destinatario.Cidade.Descricao
-                                 : (enderecoMerchant?.Cidade?.Descricao ?? string.Empty);
+                int codMun = Destinatario.Cidade?.NumCidade ?? enderecoMerchant?.Cidade?.NumCidade ?? 0;    
+                string nomeMun = Destinatario.Cidade?.Descricao ?? enderecoMerchant?.Cidade?.Descricao ?? "Cidade não informada";
 
                 return new Dest
                 {
