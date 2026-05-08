@@ -30,7 +30,7 @@
 @inject BalancaService BalancaService
 @inject SangriasService AutorizacaoService
 
-<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidosMesa Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+<MudPaper tabindex="0" @onkeydown=HandleKeyDownGestaoPedidosMesa Square="false" Elevation="0" class="@((CarregandoParteFiscal ? "wait-cursor" : ""))" Style="background-color: var(--mud-palette-background); min-height: 100vh; outline: none">
     <MudLayout>
         <MudStack Class="w-100 mb-2 p-3 rounded-2" AlignItems="AlignItems.Start" Justify="Justify.Center" Style="background-color: var(--mud-palette-surface)">
             <MudText Typo="Typo.h4" Style="font-weight: 300">Gestão de @AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced</MudText>

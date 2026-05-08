@@ -247,27 +247,27 @@
                                             <MudGrid>
                                                 @*NOME DO CLIENTE*@
                                                 <MudItem xs="6">
-                                                    <MudTextField @bind-Value=@PessoaSelecionadaParaEdicao.Nome @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) Label="Nome" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Nome @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) Label="Nome" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*NOME FANTASIA*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.NomeFantasia Label="Nome Fantasia" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.NomeFantasia Label="Nome Fantasia" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
                                                 @*CPF*@
                                                 <MudItem xs="6">
-                                                    <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cpf Label="CPF" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cpf Label="CPF" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*CNPJ*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cnpj Label="CNPJ" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cnpj Label="CNPJ" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
@@ -275,10 +275,10 @@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoMunicipal Label="Inscrição Municipal" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoMunicipal Label="Inscrição Municipal" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                     <MudItem xs="6">
-                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoEstadual Label="Inscrição Estadual" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoEstadual Label="Inscrição Estadual" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
@@ -305,14 +305,14 @@
 
                                                 @*EMAIL*@
                                                 <MudItem xs="6">
-                                                    <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Email Label="EMAIL" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Email Label="EMAIL" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*SITE*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Site Label="Site" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Site Label="Site" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
                                             </MudGrid>

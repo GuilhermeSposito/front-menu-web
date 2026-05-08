@@ -103,9 +103,10 @@ public class ImpressaoService
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
                                .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
                                 {
-                                                            new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
-                                                            new { Origem = 2, Impressora = i.Produto.ImpressoraComanda2, Item = i }
+                                         new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                         new { Origem = 2, Impressora = i.Produto.ImpressoraComanda2, Item = i }
                                 })
+                               .Where(x => x.Impressora != "Nao")
                                .GroupBy(x => new { x.Impressora, x.Origem })
                                .Select(grupo => new ItensPorImpressoraDto
                                {
@@ -120,13 +121,13 @@ public class ImpressaoService
                             continue;
 
                         PedidoMesaDto PedidoAtualizadoComItensAgrupados = Pedido;
+                        PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
                         PedidoMesaDto PedidoAtualizadoComItensAgrupadosAuxiliar = new PedidoMesaDto
                         {
                             IdentificacaoMesaOuComanda = Pedido.IdentificacaoMesaOuComanda,
                             NomeCliente = Pedido.NomeCliente,
-                            Itens = Pedido.Itens
+                            Itens = Prods.Itens
                         };
-                        PedidoAtualizadoComItensAgrupados.Itens = Prods.Itens;
 
                         string Impressora = RetornaImpressoraSelecionadaNoCadastroDeProduto(Imps, Prods.Impressora);
                         if (Impressora == "Sem Impressora" || Impressora == "Não Imprime")
@@ -191,12 +192,13 @@ public class ImpressaoService
                         QtdDeItensDoPedido = Pedido.Itens.Sum(x => x.Quantidade);
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
-                       .SelectMany(i => i.Produto == null ? new[] { new { Impressora = (string?)null, Item = i } } : new[]
+                       .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
                         {
-                                new {  Impressora = i.Produto.ImpressoraComanda1, Item = i },
-                                new {  Impressora = i.Produto.ImpressoraComanda2, Item = i }
+                                new {  Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
+                                new {  Origem = 2, Impressora = i.Produto.ImpressoraComanda2, Item = i }
                         })
-                       .GroupBy(x => new { x.Impressora })
+                       .Where(x => x.Impressora != "Nao")
+                       .GroupBy(x => new { x.Impressora, x.Origem })
                        .Select(grupo => new ItensPorImpressoraDto
                        {
                            Impressora = grupo.Key.Impressora,
@@ -400,14 +402,14 @@ public class ImpressaoService
                 {
                     var nome = partesFracionado[i].Trim();
                     if (!string.IsNullOrEmpty(nome))
-                        AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}  {nome}" : $"   {nome}", FonteItens2);
+                        AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}  {nome}" : $"   {nome}", FonteItensComanda);
                 }
 
             }
             else
             {
 
-                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
+                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
             }
 
             if (item.Complementos.Count > 0)
@@ -1196,41 +1198,40 @@ public class ImpressaoService
 
                 foreach (var palavra in listPalavras)
                 {
-
+                    var fraseAnterior = frase;
                     frase += palavra + " ";
 
                     tamanhoFrase = e.Graphics.MeasureString(frase, item.Fonte).Width;
 
-                    if (tamanhoFrase > e.MarginBounds.Width - 70 && frase != "")
+                    if (tamanhoFrase > e.MarginBounds.Width - 70 && fraseAnterior != "")
                     {
                         if (item.Alinhamento == Alinhamentos.Centro)
                         {
-
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
+                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
                             Y += separacao;
-                            frase = "";
+                            frase = palavra + " ";
                             continue;
 
                         }
                         else if (!item.eObs || !DestacaObservacoes)
                         {
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
+                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, 0, Y);
                             Y += separacao;
-                            frase = "";
+                            frase = palavra + " ";
                             continue;
                         }
                         else if (item.eObs)
                         {
                             PointF ponto = new PointF(0, Y);
 
-                            SizeF tamanhoTexto = e.Graphics.MeasureString(frase, item.Fonte);
+                            SizeF tamanhoTexto = e.Graphics.MeasureString(fraseAnterior, item.Fonte);
                             RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.MarginBounds.Width, tamanhoTexto.Height));
 
                             e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
+                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, 0, Y);
 
                             Y += separacao;
-                            frase = "";
+                            frase = palavra + " ";
 
                             continue;
                         }
@@ -1268,6 +1269,21 @@ public class ImpressaoService
 
                 }
 
+                if (!string.IsNullOrEmpty(frase.Trim()))
+                {
+                    if (item.Alinhamento == Alinhamentos.Centro)
+                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
+                    else if (!item.eObs || !DestacaObservacoes)
+                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
+                    else if (item.eObs)
+                    {
+                        PointF pontoFinal = new PointF(0, Y);
+                        SizeF tamanhoFinal = e.Graphics.MeasureString(frase, item.Fonte);
+                        RectangleF retanguloFinal = new RectangleF(pontoFinal, new SizeF(e.MarginBounds.Width, tamanhoFinal.Height));
+                        e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloFinal);
+                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
+                    }
+                }
                 frase = "";
                 Y += separacao;
 
