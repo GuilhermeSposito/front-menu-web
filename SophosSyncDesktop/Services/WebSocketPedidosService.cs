@@ -135,6 +135,30 @@ public class WebSocketPedidosService : IDisposable
                 });
             });
 
+            _client.On("merchant-modificado", response =>
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var db = new AppDbContext();
+                        var infoLogin = db.InfosDeLogin.FirstOrDefault();
+                        if (infoLogin is null || string.IsNullOrEmpty(infoLogin.Email) || string.IsNullOrEmpty(infoLogin.Senha))
+                        {
+                            Console.WriteLine("[WS] merchant-modificado: credenciais não encontradas no banco local.");
+                            return;
+                        }
+
+                        Console.WriteLine($"[WS] merchant-modificado recebido — relogando às {DateTime.Now:HH:mm:ss}");
+                        await AppState.RelogarAsync(infoLogin.Email, infoLogin.Senha).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[WS] Erro ao processar merchant-modificado: {ex.Message}");
+                    }
+                });
+            });
+
             await _client.ConnectAsync();
         }
         catch (Exception ex)

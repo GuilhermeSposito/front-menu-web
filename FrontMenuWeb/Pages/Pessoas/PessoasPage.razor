@@ -14,6 +14,7 @@
 @using MudBlazor.Extensions.Components
 @inject IHttpClientFactory HttpClientFactory
 @inject PessoasService PessoasService
+@inject CidadesService CidadesService
 @inject NfService NfService
 @inject AuthorizationService AuthorizationService
 @inject ISnackbar Snackbar
@@ -193,14 +194,22 @@
 
 
                                     <MudPaper Class="pa-4 mt-2" Style="border: 1px solid #e0e0e0; border-radius: 10px;">
-                                        <MudStack Row=true Justify="Justify.SpaceBetween">
+                                        <MudStack Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                             <MudText Typo="Typo.h6" Class="mb-2">Informações pessoais</MudText>
-                                            <MudTooltip Color="Color.Primary" Text="Editar Cliente">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                               Color="Color.Primary"
-                                                               OnClick="@(() => _PessoaNaoEditavel = !_PessoaNaoEditavel)" />
-                                            </MudTooltip>
-
+                                            <MudStack Row=true AlignItems="AlignItems.Center" Spacing="1">
+                                                @if (!_PessoaNaoEditavel)
+                                                {
+                                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                                                               OnClick="@(async () => await EditaPessoa(PessoaSelecionadaParaEdicao))">
+                                                        Salvar
+                                                    </MudButton>
+                                                }
+                                                <MudTooltip Color="Color.Primary" Text="@(_PessoaNaoEditavel ? "Editar" : "Cancelar")">
+                                                    <MudIconButton Icon="@(_PessoaNaoEditavel ? Icons.Material.Filled.Edit : Icons.Material.Filled.Close)"
+                                                                   Color="Color.Primary"
+                                                                   OnClick="@(() => _PessoaNaoEditavel = !_PessoaNaoEditavel)" />
+                                                </MudTooltip>
+                                            </MudStack>
                                         </MudStack>
                                         @if (CarregandoPessoaParaEdicao)
                                         {
@@ -247,27 +256,27 @@
                                             <MudGrid>
                                                 @*NOME DO CLIENTE*@
                                                 <MudItem xs="6">
-                                                    <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Nome @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) Label="Nome" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Nome Label="Nome" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*NOME FANTASIA*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.NomeFantasia Label="Nome Fantasia" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.NomeFantasia Label="Nome Fantasia" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
                                                 @*CPF*@
                                                 <MudItem xs="6">
-                                                    <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cpf Label="CPF" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Cpf Label="CPF" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*CNPJ*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Cnpj Label="CNPJ" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Cnpj Label="CNPJ" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
@@ -275,10 +284,10 @@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoMunicipal Label="Inscrição Municipal" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoMunicipal Label="Inscrição Municipal" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                     <MudItem xs="6">
-                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoEstadual Label="Inscrição Estadual" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.InscricaoEstadual Label="Inscrição Estadual" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
 
@@ -289,8 +298,7 @@
                                                                       Value="@maskedPhone" ValueChanged="EventCallback.Factory.Create<string>(this, OnPhoneChanged)"
                                                                       Variant="@Variant.Text" Clearable
                                                                       RequiredError="O Telefone é obrigatório"
-                                                                      Disabled=_PessoaNaoEditavel
-                                                                      @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) />
+                                                                      Disabled=_PessoaNaoEditavel />
                                                         <MudTooltip Text="Clique para conversar com o cliente" Color="Color.Primary">
                                                             <MudIconButton Icon="fab fa-whatsapp"
                                                                            Color="Color.Success"
@@ -305,16 +313,30 @@
 
                                                 @*EMAIL*@
                                                 <MudItem xs="6">
-                                                    <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Email Label="EMAIL" Disabled=_PessoaNaoEditavel />
+                                                    <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Email Label="EMAIL" Disabled=_PessoaNaoEditavel />
                                                 </MudItem>
 
                                                 @*SITE*@
                                                 @if (PessoaSelecionadaParaEdicao.TipoPessoaId == 2 || PessoaSelecionadaParaEdicao.TipoPessoaId == 3)
                                                 {
                                                     <MudItem xs="6">
-                                                        <MudTextField Immediate="true" @onfocusout=@(async prop => await EditaPessoa(PessoaSelecionadaParaEdicao)) @bind-Value=@PessoaSelecionadaParaEdicao.Site Label="Site" Disabled=_PessoaNaoEditavel />
+                                                        <MudTextField Immediate="true" @bind-Value=@PessoaSelecionadaParaEdicao.Site Label="Site" Disabled=_PessoaNaoEditavel />
                                                     </MudItem>
                                                 }
+
+                                                @*CIDADE*@
+                                                <MudItem xs="12">
+                                                    <MudAutocomplete T="ClsCidade"
+                                                                     Label="Cidade"
+                                                                     Value="_cidadeDrawer"
+                                                                     ValueChanged="OnCidadeDrawerChanged"
+                                                                     SearchFunc="SearchCidades"
+                                                                     ToStringFunc="@(c => c?.Descricao ?? string.Empty)"
+                                                                     Variant="Variant.Filled"
+                                                                     Clearable
+                                                                     ResetValueOnEmptyText="true"
+                                                                     Disabled=_PessoaNaoEditavel />
+                                                </MudItem>
                                             </MudGrid>
                                         }
                                     </MudPaper>
@@ -524,6 +546,8 @@
 
 @code {
     private IEnumerable<ClsPessoas> Pessoas = new List<ClsPessoas>();
+    private List<ClsCidade> Cidades = new List<ClsCidade>();
+    private ClsCidade? _cidadeDrawer;
     private bool IsLoading = true;
     private bool _enableHeaderToggle = true;
     private string ValorDePesquisaTelefone = string.Empty;
@@ -542,6 +566,7 @@
     {
         try
         {
+            Cidades = await CidadesService.GetCidades();
             await AtualizaPessoas();
         }
         catch (Exception ex)
@@ -890,12 +915,12 @@
             PessoaSelecionadaParaEdicao = await PessoasService.GetPessoaAsync(args.Item.Id);
             if (PessoaSelecionadaParaEdicao is not null)//aqui só vai o formatar o telefone se a pessoa selecionada não for nula
             {
-
-
                 if (PessoaSelecionadaParaEdicao.Telefone is not null) //Aqui só tem a posibilidade de ser nulo se a pessoa não tiver telefone cadastrado
                 {
                     maskedPhone = FormatarTelefone(PessoaSelecionadaParaEdicao.Telefone);
                 }
+                _cidadeDrawer = PessoaSelecionadaParaEdicao.Cidade
+                    ?? Cidades.FirstOrDefault(c => c.Id == PessoaSelecionadaParaEdicao.CidadeId);
             }
 
             CarregandoPessoaParaEdicao = false;
@@ -922,6 +947,8 @@
                 {
                     maskedPhone = FormatarTelefone(PessoaSelecionadaParaEdicao.Telefone);
                 }
+                _cidadeDrawer = PessoaSelecionadaParaEdicao.Cidade
+                    ?? Cidades.FirstOrDefault(c => c.Id == PessoaSelecionadaParaEdicao.CidadeId);
             }
 
             CarregandoPessoaParaEdicao = false;
@@ -933,20 +960,35 @@
 
     }
 
+    private void OnCidadeDrawerChanged(ClsCidade? cidade)
+    {
+        _cidadeDrawer = cidade;
+        PessoaSelecionadaParaEdicao.CidadeId = cidade?.Id;
+    }
+
+    private Task<IEnumerable<ClsCidade>> SearchCidades(string valor, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return Task.FromResult<IEnumerable<ClsCidade>>(Cidades);
+        return Task.FromResult(Cidades.Where(c => c.Descricao.Contains(valor, StringComparison.OrdinalIgnoreCase)));
+    }
+
     private async Task EditaPessoa(ClsPessoas pessoa)
     {
         if (!await AuthorizationService.ValidateAsync("AcessoCadastroDePessoa")) return;
         try
         {
-            _PessoaNaoEditavel = !_PessoaNaoEditavel; // Alterna o estado de edição
-
             var response = await PessoasService.UpdatePessoa(pessoa);
-
-            Snackbar.Add(response, Severity.Success);
 
             if (response == "Pessoa modificada com sucesso")
             {
+                _PessoaNaoEditavel = true;
+                Snackbar.Add("Pessoa salva com sucesso!", Severity.Success);
                 await AtualizaPessoas();
+            }
+            else
+            {
+                Snackbar.Add(response, Severity.Error);
             }
         }
         catch (Exception ex)

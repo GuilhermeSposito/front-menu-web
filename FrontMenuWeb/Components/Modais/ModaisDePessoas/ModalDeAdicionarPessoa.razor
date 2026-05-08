@@ -3,12 +3,14 @@
 @using System.ComponentModel.DataAnnotations
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pessoas
+@using FrontMenuWeb.Models
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Services.ServicosDeTerceiros
 @inject CEPService CEPService
 @inject PessoasService PessoasService
 @inject CnpjPesquisaService CnpjPesquisaService
 @inject EntregasService EntregasService
+@inject CidadesService CidadesService
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
 
@@ -163,6 +165,18 @@
 
                     }
 
+                    <MudPaper Class="pa-4 mt-2" style="background-color: var(--mud-palette-background); border-radius:8px">
+                        <MudAutocomplete T="ClsCidade"
+                                         Label="Cidade"
+                                         Value="_cidadeSelecionadaModal"
+                                         ValueChanged="OnCidadeModalChanged"
+                                         SearchFunc="SearchCidades"
+                                         ToStringFunc="@(c => c?.Descricao ?? string.Empty)"
+                                         Variant="Variant.Filled"
+                                         Clearable
+                                         ResetValueOnEmptyText="true" />
+                    </MudPaper>
+
                     @if (!Editando)
                     {
                         <MudPaper Class="pa-4" style="background-color: var(--mud-palette-background); border-radius:8px">
@@ -312,6 +326,22 @@
     };
 
 
+    private List<ClsCidade> Cidades { get; set; } = new List<ClsCidade>();
+    private ClsCidade? _cidadeSelecionadaModal;
+
+    private void OnCidadeModalChanged(ClsCidade? cidade)
+    {
+        _cidadeSelecionadaModal = cidade;
+        NovaPessoa.CidadeId = cidade?.Id;
+    }
+
+    private Task<IEnumerable<ClsCidade>> SearchCidades(string valor, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+            return Task.FromResult<IEnumerable<ClsCidade>>(Cidades);
+        return Task.FromResult(Cidades.Where(c => c.Descricao.Contains(valor, StringComparison.OrdinalIgnoreCase)));
+    }
+
     private async Task OnPhoneChanged(string value) //remove a mascara e deixa só os números
     {
         maskedPhone = value;
@@ -342,9 +372,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Cidades = await CidadesService.GetCidades();
+
         if (Editando && PessoaParaEditar is not null)
         {
             NovaPessoa = PessoaParaEditar;
+            _cidadeSelecionadaModal = NovaPessoa.Cidade
+                ?? Cidades.FirstOrDefault(c => c.Id == NovaPessoa.CidadeId);
             if (!string.IsNullOrEmpty(NovaPessoa.Telefone))
                 maskedPhone = NovaPessoa.Telefone;
             if (!string.IsNullOrEmpty(NovaPessoa.Telefone1))
