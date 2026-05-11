@@ -16,6 +16,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject FuncionariosService FuncionariosService
 @using MudBlazor.Extensions.Services
+@using QRCoder
 @inject MesasServices MesasServices
 @inject IJSRuntime JS
 @inject AuthorizationService AuthorizationService
@@ -229,11 +230,18 @@
         _gerandoPdf = true;
         StateHasChanged();
 
-        var dados = MesasSelecionadas.Select(m => new
+        using var generator = new QRCodeGenerator();
+        var dados = MesasSelecionadas.Select(m =>
         {
-            url = $"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado!.Id}/{m.Id}",
-            legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa",
-            codigo = m.CodigoExterno.ToString().PadLeft(2, '0')
+            string url = $"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado!.Id}/{m.Id}";
+            using var qrData = generator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+            string base64 = new Base64QRCode(qrData).GetGraphic(20);
+            return new
+            {
+                imgSrc = $"data:image/png;base64,{base64}",
+                legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa",
+                codigo = m.CodigoExterno.ToString().PadLeft(2, '0')
+            };
         }).ToArray();
 
         await JS.InvokeVoidAsync("gerarQrCodePdf", dados, "QRCodes.pdf");
