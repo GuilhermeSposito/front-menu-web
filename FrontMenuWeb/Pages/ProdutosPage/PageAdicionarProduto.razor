@@ -490,43 +490,49 @@
                                 </MudItem>
 
 
-                                <MudItem xs="12">
-                                    @if (AppState.MerchantLogado.CrtMerchant == 1)
-                                    {
-                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                            <MudSelect @bind-Value="Produto.CSOSNSelected"
-                                                       T="CSOSN"
-                                                       Class="m-3"
-                                                       ToStringFunc="g=> g.Descricao"
-                                                       Label="CSOSN"
-                                                       Placeholder="Defina o CSOSN"
-                                                       Variant="Variant.Filled">
-
-                                                @foreach (var CSOCN in ListaDeCSOSN)
-                                                {
-                                                    <MudSelectItem Value="@CSOCN">@CSOCN.Id - @CSOCN.Descricao</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        </MudPaper>
-                                    }
-                                    else
-                                    {
-                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
-                                            <MudSelect @bind-Value="Produto.CSTSelected"
-                                                       T="CST"
-                                                       Class="m-3"
-                                                       ToStringFunc="g=> g.Descricao"
-                                                       Label="CST"
-                                                       Placeholder="Defina o CST" Variant="Variant.Filled">
-
-                                                @foreach (var CST in ListaDeCSTS)
-                                                {
-                                                    <MudSelectItem Value="@CST">@CST.Id - @CST.Descricao</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        </MudPaper>
-                                    }
-
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.CSTSelected"
+                                                   T="CST"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="CST"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE O CST CORRESPONDENTE"
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   Class="m-2"
+                                                   FitContent="false"
+                                                   Variant="Variant.Filled">
+                                            @foreach (var CST in ListaDeCSTS)
+                                            {
+                                                <MudSelectItem Value="@CST">@CST.Id -- @CST.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
+                                </MudItem>
+                                <MudItem xs="12" sm="12">
+                                    <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">
+                                        <MudSelect @bind-Value="Produto.CSOSNSelected"
+                                                   T="CSOSN"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="CSOSN"
+                                                   HelperText="SELECIONE"
+                                                   Placeholder="SELECIONE O CSOSN CORRESPONDENTE"
+                                                   AdornmentColor="Color.Success"
+                                                   FullWidth="true"
+                                                   Class="m-2"
+                                                   ClearIcon="@Icons.Material.Filled.Close"
+                                                   Clearable="true"
+                                                   FitContent="false"
+                                                   Variant="Variant.Filled">
+                                            @foreach (var CSOSN in ListaDeCSOSN)
+                                            {
+                                                <MudSelectItem Value="@CSOSN">@CSOSN.Id -- @CSOSN.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudPaper>
                                 </MudItem>
 
                                 <MudItem xs="12" sm="12">

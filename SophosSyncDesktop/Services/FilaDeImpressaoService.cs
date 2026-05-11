@@ -21,9 +21,10 @@ public class FilaDeImpressaoService : IDisposable
 
     // Memória de pedidos já impressos recentemente — impede re-impressão por WS + timer na mesma janela
     private readonly Dictionary<int, DateTime> _jaImpressos = new();
-    //private readonly Dictionary<string, DateTime> _itensJaImpressos = new();
     private static readonly TimeSpan _ttlImpresso = TimeSpan.FromMinutes(5);
-    //private static readonly TimeSpan _ttlItemMesa = TimeSpan.FromSeconds(30);
+
+    // Memória de itens de mesa já impressos — impede re-impressão quando internet volta
+    private readonly HashSet<int> _itensMesaImpressos = new();
 
     private readonly object _lock = new();
     private readonly CancellationTokenSource _cts = new();
@@ -214,10 +215,18 @@ public class FilaDeImpressaoService : IDisposable
     {
         if (pedido.Itens.Count == 0) return;
 
+        // Verifica pelo conjunto distinto de IDs — sem remover duplicatas do lote (ex: Quantidade > 1)
+        //var idsDistintos = pedido.Itens.Select(i => i.Id).Distinct().ToList();
+        //lock (_lock)
+        //{
+        //    if (idsDistintos.All(id => _itensMesaImpressos.Contains(id))) return;
+        //    foreach (var id in idsDistintos) _itensMesaImpressos.Add(id);
+        //}
+
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         await _impressaoService.ImprimirComanda(JsonSerializer.Serialize(pedido, options), origem, EMesa: true).ConfigureAwait(false);
 
-        foreach (var item in pedido.Itens)
+        foreach (var item in itensParaImprimir)
         {
             await MarcarItemMesaComoImpressoAsync(item.Id);
             LogLocalService.LogImpressao(item.Id.ToString(), origem);

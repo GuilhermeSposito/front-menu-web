@@ -99,3 +99,44 @@ window.gerarQrCode = (elementId, text) => {
     el.innerHTML = "";
     QRCode.toCanvas(el, text, { width: 200 });
 };
+
+window.gerarQrCodePdf = async (mesas, filename) => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    let isFirst = true;
+
+    for (const mesa of mesas) {
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, mesa.url, {
+            width: 600,
+            margin: 2,
+            errorCorrectionLevel: 'Q',
+            color: { dark: '#000000', light: '#ffffff' }
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const qrSize = pdfWidth * 0.75;
+        const x = (pdfWidth - qrSize) / 2;
+        const y = (pdfHeight - qrSize) / 2 - 15;
+
+        if (!isFirst) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', x, y, qrSize, qrSize);
+
+        // Legenda (ex: "Mesa") — fonte menor, normal
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(mesa.legenda, pdfWidth / 2, y + qrSize + 12, { align: 'center' });
+
+        // Código (ex: "01") — fonte grande, negrito
+        pdf.setFontSize(32);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(mesa.codigo, pdfWidth / 2, y + qrSize + 24, { align: 'center' });
+
+        isFirst = false;
+    }
+
+    pdf.save(filename || 'QRCodes.pdf');
+};

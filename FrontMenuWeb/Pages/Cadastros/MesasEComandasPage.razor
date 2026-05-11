@@ -16,7 +16,6 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject FuncionariosService FuncionariosService
 @using MudBlazor.Extensions.Services
-@using QRCoder
 @inject MesasServices MesasServices
 @inject IJSRuntime JS
 @inject AuthorizationService AuthorizationService
@@ -116,8 +115,6 @@
     private bool CarregandoMesas = false;
     private bool _gerandoPdf = false;
     private MudDataGrid<ClsMesasEComandas>? dataGridRef;
-
-    private List<SuporteDeImpressaoDeQrCode> SuporteDeImpressaoDeQrCodes = new List<SuporteDeImpressaoDeQrCode>();
 
     private HashSet<ClsMesasEComandas> MesasSelecionadas = new HashSet<ClsMesasEComandas>();
     void SelectedItemsChanged(HashSet<ClsMesasEComandas> items)
@@ -229,64 +226,23 @@
     {
         if (!await AuthorizationService.ValidateAsync("AcessoCadastraMesaOuComandas")) return;
 
-        SuporteDeImpressaoDeQrCodes.Clear();
         _gerandoPdf = true;
         StateHasChanged();
-        await Task.Delay(50);
 
-        foreach (var mesa in MesasSelecionadas)
+        var dados = MesasSelecionadas.Select(m => new
         {
-            using var generator = new QRCodeGenerator();
-            using QRCodeData qrCodeData = generator.CreateQrCode($"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado.Id}/{mesa.Id}", QRCodeGenerator.ECCLevel.Q);
-            SvgQRCode qrCode = new SvgQRCode(qrCodeData);
-            string svgText = qrCode.GetGraphic(5);
+            url = $"https://sophos-erp.com.br/cardapio-sophos/{AppState.MerchantLogado!.Id}/{m.Id}",
+            legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa",
+            codigo = m.CodigoExterno.ToString().PadLeft(2, '0')
+        }).ToArray();
 
-            SuporteDeImpressaoDeQrCodes.Add(new SuporteDeImpressaoDeQrCode
-            {
-                IdMesa = mesa.CodigoExterno,
-                CodigoExternoMesa = mesa.CodigoExterno.ToString().PadLeft(2, '0'),
-                QrCodeSvg = new MarkupString(svgText)
-            });
-        }
-
-        StateHasChanged();
-        // Aguarda o Blazor concluir o ciclo de renderização antes de capturar o DOM
-        await Task.Delay(600);
-
-        await GerarPdf();
+        await JS.InvokeVoidAsync("gerarQrCodePdf", dados, "QRCodes.pdf");
 
         _gerandoPdf = false;
         StateHasChanged();
-    }
-    private async Task GerarPdf()
-    {
-        await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioPedidos", "RelatorioPedidos.pdf");
     }
 
 
 
 }
 
-
-<style>
-    #qrcode svg {
-        width: 100%;
-        height: 100%;
-    }
-</style>
-
-<div id="conteudoPdfRelatorioPedidos" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
-    <div class="d-flex flex-column align-items-center justify-content-center">
-        @foreach (var qr in SuporteDeImpressaoDeQrCodes)
-        {
-            <div id="qrcode" class="w-100 d-flex flex-column align-items-center justify-content-center" style="width:600px; page-break-after: always;">
-                <div style="width:600px;height:600px; margin-top: 100px">
-                    @qr.QrCodeSvg
-                </div>
-                <div style="text-align:center; margin-top:10px; font-size:28px;">
-                    <strong>@(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced): @qr.CodigoExternoMesa</strong>
-                </div>
-            </div>
-        }
-    </div>
-</div>
