@@ -1212,7 +1212,7 @@ public class NfService
         // Isso evita rejeição da SEFAZ por diferença entre o total da NF e o somatório dos itens
         // (ex.: "Total do Desconto difere do somatório dos itens") causada por dízima/aproximação de double.
         decimal TotalFrete = tipoNFE == TipoDFe.NFCe ? 0m : (decimal)Pedido.TaxaEntregaValor; //NFC-e não aceita frete
-        decimal TotalOutros = (decimal)(Pedido.AcrescimoValor + Pedido.ServicoValor);
+        decimal TotalOutros = (decimal)(Pedido.AcrescimoValor + Pedido.ServicoValor + Pedido.CouvertValor);
         // O total de vDesc na NF inclui DescontoValor + IncentivosExternosValor,
         // então o rateio por item TAMBÉM precisa incluir os dois para que Σitens == total.
         decimal TotalDesconto = (decimal)(Pedido.DescontoValor + Pedido.IncentivosExternosValor);
