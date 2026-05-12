@@ -126,8 +126,6 @@ public class NfService
             if (update)
             {
                 response = await client.PatchAsJsonAsync($"nfs/{returnDto.ChaveNf}", returnDto, cts.Token);
-
-                Console.WriteLine(await response.Content.ReadAsStringAsync());
             }
             else
                 response = await client.PostAsJsonAsync($"nfs", returnDto, cts.Token);
@@ -549,6 +547,11 @@ public class NfService
                     {
                         RegistroNF.Cstat = RecepçaoEvento.Result.RetEvento[0].InfEvento.CStat;
                         RegistroNF.Xmotivo = "NF CANCELADA";
+
+                        var ProcNfe = RecepçaoEvento.ProcEventoNFeResult[0].GerarXML();
+                        RegistroNF.ProtocoloCancelamento = RecepçaoEvento.Result.RetEvento[0].InfEvento.NProt;
+                        RegistroNF.XmlCancelamento = ProcNfe.OuterXml;
+
                         await CreateRegistroDaNFInNestApi(token, RegistroNF, update: true);
                     }
 

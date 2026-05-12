@@ -15,4 +15,7 @@ public class NfeReturnDto
     [JsonPropertyName("ValorTotalDaNf")] public double ValorTotalDaNf { get; set; }
     [JsonPropertyName("ValorTotalDosProdutos")] public double ValorTotalDosProdutos { get; set; }
     [JsonPropertyName("ValorTotalDosTributos")] public double ValorTotalDosTributos { get; set; }
+    [JsonPropertyName("ProtocoloCancelamento")] public string? ProtocoloCancelamento { get; set; }
+    [JsonPropertyName("XmlCancelamento")] public string? XmlCancelamento { get; set; }
+
 }

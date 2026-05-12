@@ -30,15 +30,6 @@
                 <MudText Class="mb-3" Typo="Typo.body1">NF-e NFC-e Emitidas (Posição Físcal)</MudText>
             </MudStack>
             <MudStack Class="p-2" AlignItems="AlignItems.Center" Justify="Justify.Center" Row=true Wrap="Wrap.Wrap" Spacing="2">
-               @* <MudFileUpload T="IBrowserFile" FilesChanged="UploadArquivo">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.CloudUpload">
-                            Enviar Arquivos por Email Para Contabilidade
-                        </MudButton>
-                    </ActivatorContent>
-                </MudFileUpload>*@
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Secondary"
                            StartIcon="@Icons.Material.Filled.FolderZip"
@@ -499,18 +490,6 @@
                 if (result?.Data is string email && !string.IsNullOrEmpty(email))
                 {
                     EmailCadastrado = email;
-
-                    if (AppState.MerchantLogado is not null)
-                    {
-                        AppState.MerchantLogado.EmailParaEnvioFiscais = email;
-                        var retorno = await MerchantServices.UpdateMerchantAsync(AppState.MerchantLogado);
-                        if (retorno.Status == "success")
-                        {
-                            ClsMerchant merchant = await MerchantServices.GetMerchantAsync();
-                            if (merchant is not null)
-                                AppState.MerchantLogado = merchant;
-                        }
-                    }
                 }
                 else
                 {
@@ -518,10 +497,18 @@
                 }
             }
 
-            var resultado = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, 1, 99999);
+            var resultado = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, 1, 999999);
 
             var nfsComXml = resultado.Data
-                .Where(x => (x.CStat == 100 || x.CStat == 110 || x.CStat == 150 || x.CStat == 250 || x.CStat == 301 || x.CStat == 302 || x.CStat == 303) && !string.IsNullOrEmpty(x.XmlDistribuicao))
+                .Where(x => (x.CStat == 100 ||
+                    x.CStat == 110 ||
+                    x.CStat == 150 ||
+                    x.CStat == 250 ||
+                    x.CStat == 301 ||
+                    x.CStat == 302 ||
+                    x.CStat == 303 ||
+                    x.CStat == 135 ||
+                    x.CStat == 155) && !string.IsNullOrEmpty(x.XmlDistribuicao))
                 .ToList();
 
             if (nfsComXml.Count == 0)
@@ -540,13 +527,25 @@
             var zipStream = new MemoryStream();
             using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
             {
-                foreach (var nf in nfsComXml)
+                foreach (NFEmitidasDto nf in nfsComXml)
                 {
-                    var fileName = $"{nf.ChaveNf ?? nf.Id.ToString()}.xml";
-                    var entry = archive.CreateEntry(fileName);
-                    using var entryStream = entry.Open();
-                    var xmlBytes = System.Text.Encoding.UTF8.GetBytes(nf.XmlDistribuicao!);
-                    await entryStream.WriteAsync(xmlBytes);
+                    if (nf.XMotivo == "NF CANCELADA" && nf.XmlCancelamento is not null)
+                    {
+                        var fileNameDeCancelamento = $"{nf.ChaveNf ?? nf.Id.ToString()}-ret-env-canc.xml";
+                        var entryDeCancelamento = archive.CreateEntry(fileNameDeCancelamento);
+                        using var entryStreamDeCancelamento = entryDeCancelamento.Open();
+                        var xmlBytesDeCancelamento = System.Text.Encoding.UTF8.GetBytes(nf.XmlCancelamento);
+                        await entryStreamDeCancelamento.WriteAsync(xmlBytesDeCancelamento);
+                    }
+
+                    if (nf.XmlDistribuicao is not null)
+                    {
+                        var fileName = $"{nf.ChaveNf ?? nf.Id.ToString()}.xml";
+                        var entry = archive.CreateEntry(fileName);
+                        using var entryStream = entry.Open();
+                        var xmlBytes = System.Text.Encoding.UTF8.GetBytes(nf.XmlDistribuicao);
+                        await entryStream.WriteAsync(xmlBytes);
+                    }
                 }
             }
             zipStream.Position = 0;
