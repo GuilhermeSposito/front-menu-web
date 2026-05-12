@@ -44,4 +44,19 @@ public class MessageWhatsAppService
         else
             Console.WriteLine($"Erro ao enviar mensagem ao motoboy: {response.StatusCode}");
     }
+
+    public async Task RegistrarOptInAsync(string merchantId, string telefone)
+    {
+        try
+        {
+            var payload = new { merchantId, telefone, optedInVia = "CARDAPIO" };
+            var response = await _httpClient.PostAsJsonAsync("whats_app/optin", payload);
+            if (!response.IsSuccessStatusCode)
+                Console.WriteLine($"[OptIn] Falha ao registrar opt-in: {response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[OptIn] Erro ao registrar opt-in: {ex.Message}");
+        }
+    }
 }

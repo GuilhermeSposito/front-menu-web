@@ -333,7 +333,8 @@
             { "CadastroRapido", true},
             { "Pedido", NovoPedido},
             {"Pessoa", NovoPedido.Cliente},
-            {"Endereco", NovoPedido.Endereco}
+            {"Endereco", NovoPedido.Endereco},
+            {"MerchantUsaWhatsApp", Merchant.IntegraApiOficialWS || Merchant.UsaIntegracaoDoWhatsApp}
         };
 
         var dialog = await DialogService.ShowAsync<CadastroDeClienteCardapio>("Informações Pessoais", parameters, options);

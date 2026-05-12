@@ -41,6 +41,27 @@ public class CriarWhatsAppMensagemDto
     public bool AutoReplySent { get; set; }
 }
 
+public class WhatsAppOptInRequestDto
+{
+    [JsonPropertyName("merchantId")]
+    public string MerchantId { get; set; } = string.Empty;
+
+    [JsonPropertyName("telefone")]
+    public string Telefone { get; set; } = string.Empty;
+
+    [JsonPropertyName("optedInVia")]
+    public string? OptedInVia { get; set; }
+}
+
+public class WhatsAppOptOutRequestDto
+{
+    [JsonPropertyName("merchantId")]
+    public string MerchantId { get; set; } = string.Empty;
+
+    [JsonPropertyName("telefone")]
+    public string Telefone { get; set; } = string.Empty;
+}
+
 public class DataDeletionResponseDto
 {
     [JsonPropertyName("url")]

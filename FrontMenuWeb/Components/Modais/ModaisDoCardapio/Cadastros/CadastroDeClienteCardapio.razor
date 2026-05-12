@@ -50,6 +50,12 @@
                         </MudGrid>
                         <MudTextField Label="Email" @bind-Value="NovaPessoa.Email" Variant="Variant.Filled" Clearable Immediate=true />
                         <MudTextField Label="CPF" @bind-Value="NovaPessoa.Cpf" Variant="Variant.Filled" Clearable Immediate=true />
+                        @if (MerchantUsaWhatsApp)
+                        {
+                            <MudCheckBox @bind-Value="Pedido.AceitaMensagensWhatsApp" Color="Color.Success">
+                                <MudText Typo="Typo.caption">Aceito receber atualizações do meu pedido via WhatsApp</MudText>
+                            </MudCheckBox>
+                        }
                         <MudTextField Mask="@cnpjMask"
                                       Immediate=true
                                       Value="NovaPessoa.Cnpj"
@@ -191,6 +197,7 @@
     [Parameter] public ClsPedido Pedido { get; set; } = new();
     [Parameter] public ClsPessoas? Pessoa { get; set; }
     [Parameter] public EnderecoPessoa? Endereco { get; set; }
+    [Parameter] public bool MerchantUsaWhatsApp { get; set; } = false;
 
     public PatternMask? phoneMask = new PatternMask("(##) #####-####")
     {

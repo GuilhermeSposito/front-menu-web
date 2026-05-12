@@ -14,13 +14,54 @@ public class WhatsAppIntegrationController : Controller
     private readonly WebhookSignature _webhookSignature;
     private readonly IConfiguration _configuration;
     private readonly MessageService _messageService;
+    private readonly WhatsAppOptInService _optInService;
 
-    public WhatsAppIntegrationController(WebhookSignature webhookSignature, IConfiguration configuration, MessageService messageService)
+    public WhatsAppIntegrationController(
+        WebhookSignature webhookSignature,
+        IConfiguration configuration,
+        MessageService messageService,
+        WhatsAppOptInService optInService)
     {
         _webhookSignature = webhookSignature;
         _configuration = configuration;
         _messageService = messageService;
+        _optInService = optInService;
     }
+
+    #region Opt-in / Opt-out
+
+    // Público (sem Bearer) — usado pelo cardápio online para registrar consentimento do cliente.
+    [HttpPost("optin")]
+    public async Task<IActionResult> RegistrarOptIn([FromBody] WhatsAppOptInRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.MerchantId) || string.IsNullOrWhiteSpace(dto.Telefone))
+            return BadRequest("merchantId e telefone são obrigatórios.");
+
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        await _optInService.RegistrarOptInAsync(dto.MerchantId, dto.Telefone, dto.OptedInVia ?? "CARDAPIO", ip);
+        return Ok(new { status = "success" });
+    }
+
+    // Requer x-api-key — chamado pela NestAPI ou internamente para registrar opt-out.
+    [HttpPut("optout")]
+    public async Task<IActionResult> RegistrarOptOut([FromBody] WhatsAppOptOutRequestDto dto)
+    {
+        if (!ValidarApiKey()) return Unauthorized("x-api-key inválida ou ausente.");
+        if (string.IsNullOrWhiteSpace(dto.MerchantId) || string.IsNullOrWhiteSpace(dto.Telefone))
+            return BadRequest("merchantId e telefone são obrigatórios.");
+
+        await _optInService.RegistrarOptOutAsync(dto.MerchantId, dto.Telefone);
+        return Ok(new { status = "success" });
+    }
+
+    private bool ValidarApiKey()
+    {
+        var apiKey = Request.Headers["x-api-key"].ToString();
+        var expected = _configuration["ApiKeyNest"] ?? "";
+        return !string.IsNullOrEmpty(apiKey) && apiKey == expected;
+    }
+
+    #endregion
 
     #region Região de Webhooks (Pontos de extremidade)
 

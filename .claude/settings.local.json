@@ -19,7 +19,11 @@
       "Bash(dotnet add:*)",
       "Bash(dotnet ef:*)",
       "Bash(grep -v \"^$\")",
-      "Bash(grep -E \"\\\\.\\(cs|razor\\)$\")"
+      "Bash(grep -E \"\\\\.\\(cs|razor\\)$\")",
+      "Bash(ls -la \"C:\\\\Prog\\\\projeto_menu_web\\\\api-proj-menu-web\\\\src\" | head -50)",
+      "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/src/**)",
+      "Bash(find \"C:\\\\Prog\\\\projeto_menu_web\\\\api-proj-menu-web\" -name \".env*\" -type f 2>/dev/null | head -5)",
+      "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/**)"
     ]
   }
 }

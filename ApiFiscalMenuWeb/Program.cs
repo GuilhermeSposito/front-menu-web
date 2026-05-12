@@ -29,6 +29,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
 builder.Services.AddHostedService<IfoodPollingWorker>();
 builder.Services.AddScoped<CustomMetaWSHttpHendler>();
+builder.Services.AddSingleton<WhatsAppOptInService>();
 
 string UrlCors = builder.Configuration.GetValue<string>("UrlCors") ?? "";
 string UrlSophos = builder.Configuration.GetValue<string>("UrlApiSophos") ?? "";

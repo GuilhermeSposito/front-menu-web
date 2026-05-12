@@ -13,13 +13,18 @@ public class MessageService
 {
     private readonly IHttpClientFactory _factory;
     private readonly NestApiServices _nestApiServices;
+    private readonly WhatsAppOptInService _optInService;
 
     private const string MensagemAutomatica = "Olá! Recebemos sua mensagem. Em breve nossa equipe entrará em contato. 😊";
 
-    public MessageService(IHttpClientFactory factory, NestApiServices nestApiServices)
+    private static readonly HashSet<string> PalavrasDeOptOut = new(StringComparer.OrdinalIgnoreCase)
+        { "PARAR", "STOP", "SAIR", "CANCELAR", "DESCADASTRAR" };
+
+    public MessageService(IHttpClientFactory factory, NestApiServices nestApiServices, WhatsAppOptInService optInService)
     {
         _factory = factory;
         _nestApiServices = nestApiServices;
+        _optInService = optInService;
     }
 
     #region Funções de conexão com a API Nest
@@ -262,6 +267,14 @@ public class MessageService
     #region Função para envio de mensagem com APi Oficial do WhatsApp (Meta)
     public async Task SendMessageStatusOficialAsync(EnviaMsgDto enviaMsgDto, ClsMerchant Merchant)
     {
+        var telefoneCliente = FormataNumeroWhatsApp(enviaMsgDto.Pedido.Cliente?.Telefone ?? "");
+        var estaOptIn = await _optInService.EstaOptInAsync(Merchant.Id, telefoneCliente);
+        if (!estaOptIn)
+        {
+            Console.WriteLine($"[MessageService] {telefoneCliente} não possui opt-in para merchant {Merchant.Id} — mensagem não enviada.");
+            return;
+        }
+
         HttpClient WSMetaClient = _factory.CreateClient("ApiOficialMetaWS");
 
         string IdDoMerchantMeta = Merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
@@ -391,6 +404,15 @@ public class MessageService
                 }
 
                 await MarcarMensagemComoLidaAsync(phoneNumberId, mensagem.Id);
+
+                // Verifica se cliente enviou palavra de opt-out
+                var bodyRecebido = mensagem.Text?.Body?.Trim() ?? "";
+                if (PalavrasDeOptOut.Contains(bodyRecebido))
+                {
+                    await _optInService.RegistrarOptOutAsync(merchant.Id, mensagem.From);
+                    Console.WriteLine($"[MessageService] Opt-out registrado para {mensagem.From} via mensagem '{bodyRecebido}'.");
+                    return;
+                }
 
                 var autoReplySent = await EnviarRespostaAutomaticaAsync(phoneNumberId, mensagem.From);
 
