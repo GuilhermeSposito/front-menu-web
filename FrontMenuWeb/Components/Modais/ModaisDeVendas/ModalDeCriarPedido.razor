@@ -678,7 +678,7 @@
             }
 
             //Verifica se já existe o produto no pedido
-            if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V"))
+            if (NovoPedido.Itens.Any(x => x.Produto == produto && x.PrecoUnitario == ValorDoProduto) && !(produto.TipoDeVenda == "V") && !produto.UltilizaProdutoNaBalanca)
             {
                 var itemExistente = NovoPedido.Itens.Where(p => string.IsNullOrEmpty(p.Observacoes)).FirstOrDefault(x => x.Produto == produto);
 
