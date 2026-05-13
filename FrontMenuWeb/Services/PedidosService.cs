@@ -517,6 +517,48 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<DtoHoraVendas>> EstastisticaDeVendasPorHorario(DateTime? dataInicio = null, DateTime? dataFinal = null)
+    {
+        var parametros = new List<string>();
+        if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFinal != null) parametros.Add($"DataFinal={dataFinal:yyyy-MM-dd}");
+
+        var url = "pedidos/estatisticas/vendas-por-horario";
+        if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
+
+        var response = await _http.GetAsync(url);
+        return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoHoraVendas>>())!;
+    }
+
+    public async Task<ReturnApiRefatored<DtoHoraItens>> EstastisticaDeItensPorHorario(DateTime? dataInicio = null, DateTime? dataFinal = null, List<string>? produtoDescricoes = null)
+    {
+        var parametros = new List<string>();
+        if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFinal != null) parametros.Add($"DataFinal={dataFinal:yyyy-MM-dd}");
+        if (produtoDescricoes != null && produtoDescricoes.Any())
+            parametros.AddRange(produtoDescricoes.Select(d => $"ProdutoDescricoes={Uri.EscapeDataString(d)}"));
+
+        var url = "pedidos/estatisticas/itens-por-horario";
+        if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
+
+        var response = await _http.GetAsync(url);
+        return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoHoraItens>>())!;
+    }
+
+    public async Task<ReturnApiRefatored<DtoProdutoComHorario>> EstastisticaDeItensPorItem(DateTime? dataInicio = null, DateTime? dataFinal = null, string? descricao = null)
+    {
+        var parametros = new List<string>();
+        if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFinal != null) parametros.Add($"DataFinal={dataFinal:yyyy-MM-dd}");
+        if (!string.IsNullOrEmpty(descricao)) parametros.Add($"Descricao={Uri.EscapeDataString(descricao)}");
+
+        var url = "pedidos/estatisticas/itens-por-item";
+        if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
+
+        var response = await _http.GetAsync(url);
+        return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoProdutoComHorario>>())!;
+    }
+
 
 }
 

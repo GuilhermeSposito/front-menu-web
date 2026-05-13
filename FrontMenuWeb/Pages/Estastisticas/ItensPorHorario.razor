@@ -1,0 +1,200 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/vendas/itens-por-horario"
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Models.Produtos
+@using System.Globalization
+@inject PedidosService PedidosService
+@inject ProdutoService ProdutoService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+
+        <MudStack Class="w-100 p-3 rounded-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.h5">Estatística de Itens por Horário</MudText>
+        </MudStack>
+
+        <FiltroPeriodoRapido Class="mt-2"
+                             @bind-DataInicio="FiltroInicio"
+                             @bind-DataFim="FiltroFinal"
+                             OnFiltroAplicado="Carregar" />
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudSelect T="string"
+                       MultiSelection="true"
+                       @bind-SelectedValues="ProdutosSelecionados"
+                       @bind-SelectedValues:after="Carregar"
+                       Label="Filtrar por produtos (deixe vazio para todos)"
+                       Placeholder="Selecione um ou mais produtos..."
+                       Clearable="true"
+                       SearchBox="true"
+                       SearchBoxPlaceholder="Buscar produto..."
+                       Variant="Variant.Filled"
+                       AnchorOrigin="Origin.BottomCenter">
+                @foreach (var produto in TodosProdutos)
+                {
+                    <MudSelectItem T="string" Value="@produto.Descricao">@produto.Descricao</MudSelectItem>
+                }
+            </MudSelect>
+        </MudStack>
+
+        <MudGrid Class="mt-2 px-2">
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Total de Itens</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@TotalItens.ToString("N0")</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Valor Total</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@TotalValor.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Hora de Pico</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@HoraDePico</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-3 rounded-3 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Itens Vendidos por Hora</MudText>
+            @if (Carregando)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            <div style="height:280px; position:relative;">
+                <canvas id="chart-itens-qtd"></canvas>
+            </div>
+        </MudPaper>
+
+        <MudPaper Class="pa-3 rounded-3 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Valor Total por Hora (R$)</MudText>
+            @if (Carregando)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            <div style="height:280px; position:relative;">
+                <canvas id="chart-itens-valor"></canvas>
+            </div>
+        </MudPaper>
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudDataGrid T="DtoHoraItens"
+                         Items="@HorasComItens"
+                         Loading="Carregando"
+                         Class="rounded-3 custom-striped"
+                         Hover Dense>
+                <NoRecordsContent>
+                    <AvisoDeDadosVazios ReferenciaDados="Horários" />
+                </NoRecordsContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Hora" Title="Hora">
+                        <CellTemplate>
+                            <MudText>@($"{context.Item.Hora:D2}h")</MudText>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Quantidade" Title="Qtd. Itens" />
+                    <PropertyColumn Property="x => x.ValorTotal" Title="Valor Total">
+                        <CellTemplate><MudText>@context.Item.ValorTotal.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</MudText></CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudStack>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private DateTime? FiltroInicio { get; set; }
+    private DateTime? FiltroFinal { get; set; }
+    private bool Carregando = true;
+
+    private List<ClsProduto> TodosProdutos = new();
+    private IEnumerable<string> ProdutosSelecionados { get; set; } = Enumerable.Empty<string>();
+
+    private List<DtoHoraItens> Horas = new();
+    private List<DtoHoraItens> HorasComItens => Horas.Where(h => h.Quantidade > 0).ToList();
+
+    private double TotalItens => Horas.Sum(h => h.Quantidade);
+    private double TotalValor => Horas.Sum(h => h.ValorTotal);
+    private string HoraDePico
+    {
+        get
+        {
+            var pico = Horas.OrderByDescending(h => h.Quantidade).FirstOrDefault();
+            return pico != null && pico.Quantidade > 0 ? $"{pico.Hora:D2}h" : "--";
+        }
+    }
+
+    private static readonly string[] _labels = Enumerable.Range(0, 24).Select(h => $"{h:D2}h").ToArray();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            TodosProdutos = await ProdutoService.GetProdutosAsync();
+            await Carregar();
+        }
+    }
+
+    private async Task Carregar()
+    {
+        try
+        {
+            Carregando = true;
+            StateHasChanged();
+
+            var descricoes = ProdutosSelecionados.Any() ? ProdutosSelecionados.ToList() : null;
+            var retorno = await PedidosService.EstastisticaDeItensPorHorario(FiltroInicio, FiltroFinal, descricoes);
+
+            if (retorno.Status == "success" && retorno.Data != null)
+                Horas = retorno.Data.Lista ?? new();
+            else
+            {
+                Snackbar.Add("Erro ao carregar dados: " + string.Join(", ", retorno.Messages), Severity.Error);
+                Horas = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro: " + ex.Message, Severity.Error);
+            Horas = new();
+        }
+        finally
+        {
+            Carregando = false;
+            StateHasChanged();
+            await RenderizarGraficos();
+        }
+    }
+
+    private async Task RenderizarGraficos()
+    {
+        await Task.Delay(50);
+        try
+        {
+            var qtdData = Horas.Select(h => h.Quantidade).ToArray();
+            var valorData = Horas.Select(h => h.ValorTotal).ToArray();
+
+            await JS.InvokeVoidAsync("SophosCharts.renderBar", "chart-itens-qtd", _labels, qtdData, "Itens", "#4a86ff");
+            await JS.InvokeVoidAsync("SophosCharts.renderLine", "chart-itens-valor", _labels, valorData, "Valor (R$)", "#3dcb6c");
+        }
+        catch { }
+    }
+}

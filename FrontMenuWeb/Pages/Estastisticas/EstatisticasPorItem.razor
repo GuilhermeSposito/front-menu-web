@@ -1,0 +1,179 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/vendas/estatisticas-por-item"
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject PedidosService PedidosService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+
+        <MudStack Class="w-100 p-3 rounded-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.h5">Estatísticas por Item</MudText>
+        </MudStack>
+
+        <FiltroPeriodoRapido Class="mt-2"
+                             @bind-DataInicio="FiltroInicio"
+                             @bind-DataFim="FiltroFinal"
+                             OnFiltroAplicado="Carregar" />
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)" Row AlignItems="AlignItems.Center">
+            <MudTextField DebounceInterval="500"
+                          Value="Pesquisa"
+                          ValueChanged="OnPesquisaChanged"
+                          Clearable
+                          Class="w-50"
+                          Label="Filtrar por produto"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          AdornmentColor="Color.Primary"
+                          Variant="Variant.Filled"
+                          T="string"
+                          Immediate="true" />
+        </MudStack>
+
+        <MudGrid Class="mt-2 px-2">
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Produtos Distintos</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@Produtos.Count.ToString("N0")</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Warning" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Total de Itens Vendidos</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@Produtos.Sum(p => p.TotalVendido).ToString("N0")</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Valor Total</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@Produtos.Sum(p => p.ValorTotal).ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            @if (Carregando)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            else if (!Produtos.Any())
+            {
+                <AvisoDeDadosVazios ReferenciaDados="Produtos" />
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Quantidade Vendida por Item</MudText>
+                <div style="width:100%; overflow-x:auto;">
+                    <div style="min-width:@($"{Math.Max(Produtos.Count * 70, 400)}px"); height:320px; position:relative;">
+                        <canvas id="chart-itens-bar"></canvas>
+                    </div>
+                </div>
+            }
+        </MudStack>
+
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudDataGrid T="DtoProdutoComHorario"
+                         Items="@Produtos"
+                         Dense Hover Class="rounded-2"
+                         Loading="Carregando">
+                <NoRecordsContent>
+                    <AvisoDeDadosVazios ReferenciaDados="Produtos" />
+                </NoRecordsContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Descricao" Title="Descrição" />
+                    <PropertyColumn Property="x => x.TotalVendido" Title="Qtd. Vendida" Format="N0" />
+                    <PropertyColumn Property="x => x.ValorTotal" Title="Valor Total">
+                        <CellTemplate><MudText>@context.Item.ValorTotal.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</MudText></CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.Porcentagem" Title="Porcentagem">
+                        <CellTemplate>
+                            <MudStack Spacing="1">
+                                <MudText Typo="Typo.caption">@($"{context.Item.Porcentagem:N2}%")</MudText>
+                                <MudProgressLinear Value="@context.Item.Porcentagem" Color="Color.Primary" />
+                            </MudStack>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.HoraDePico" Title="Hora de Pico">
+                        <CellTemplate><MudChip T="string" Color="Color.Secondary" Size="Size.Small">@($"{context.Item.HoraDePico:D2}h")</MudChip></CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudStack>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private DateTime? FiltroInicio { get; set; }
+    private DateTime? FiltroFinal { get; set; }
+    private string Pesquisa { get; set; } = string.Empty;
+    private bool Carregando = true;
+
+    private List<DtoProdutoComHorario> Produtos = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await Carregar();
+    }
+
+    private async Task OnPesquisaChanged(string value)
+    {
+        Pesquisa = value;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        try
+        {
+            Carregando = true;
+            StateHasChanged();
+
+            var retorno = await PedidosService.EstastisticaDeItensPorItem(FiltroInicio, FiltroFinal, Pesquisa);
+            Produtos = retorno.Status == "success" ? (retorno.Data.Lista ?? new()) : new();
+
+            if (retorno.Status != "success")
+                Snackbar.Add("Erro: " + string.Join(", ", retorno.Messages), Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro: " + ex.Message, Severity.Error);
+            Produtos = new();
+        }
+        finally
+        {
+            Carregando = false;
+            StateHasChanged();
+            await RenderizarGrafico();
+        }
+    }
+
+    private async Task RenderizarGrafico()
+    {
+        if (!Produtos.Any()) return;
+        await Task.Delay(50);
+        try
+        {
+            var labels = Produtos.Select(p => p.Descricao).ToArray();
+            var data = Produtos.Select(p => p.TotalVendido).ToArray();
+            await JS.InvokeVoidAsync("SophosCharts.renderBar", "chart-itens-bar", labels, data, "Qtd. Vendida", "#F88113");
+        }
+        catch { }
+    }
+}

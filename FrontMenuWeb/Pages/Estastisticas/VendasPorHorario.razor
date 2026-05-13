@@ -1,0 +1,175 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/vendas/vendas-por-horario"
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Services
+@using System.Globalization
+@inject PedidosService PedidosService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+
+<MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh">
+    <MudLayout>
+
+        <MudStack Class="w-100 p-3 rounded-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.h5">Estatística de Vendas por Horário</MudText>
+        </MudStack>
+
+        <FiltroPeriodoRapido Class="mt-2"
+                             @bind-DataInicio="FiltroInicio"
+                             @bind-DataFim="FiltroFinal"
+                             OnFiltroAplicado="Carregar" />
+
+        @* Cards de resumo *@
+        <MudGrid Class="mt-2 px-2">
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Total de Pedidos</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@TotalPedidos.ToString("N0")</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Valor Total</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@TotalValor.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                    <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" Size="Size.Large" />
+                        <MudText Typo="Typo.subtitle1">Hora de Pico</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@HoraDePico</MudText>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        @* Gráfico — pedidos por hora *@
+        <MudPaper Class="pa-3 rounded-3 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Pedidos por Hora</MudText>
+            @if (Carregando)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            <div style="height:280px; position:relative;">
+                <canvas id="chart-vendas-pedidos"></canvas>
+            </div>
+        </MudPaper>
+
+        @* Gráfico — valor por hora *@
+        <MudPaper Class="pa-3 rounded-3 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Valor Total por Hora (R$)</MudText>
+            @if (Carregando)
+            {
+                <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            }
+            <div style="height:280px; position:relative;">
+                <canvas id="chart-vendas-valor"></canvas>
+            </div>
+        </MudPaper>
+
+        @* Tabela *@
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            <MudDataGrid T="DtoHoraVendas"
+                         Items="@HorasComVendas"
+                         Loading="Carregando"
+                         Class="rounded-3 custom-striped"
+                         Hover Dense>
+                <NoRecordsContent>
+                    <AvisoDeDadosVazios ReferenciaDados="Horários" />
+                </NoRecordsContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Hora" Title="Hora">
+                        <CellTemplate>
+                            <MudText>@($"{context.Item.Hora:D2}h")</MudText>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.TotalPedidos" Title="Total de Pedidos" />
+                    <PropertyColumn Property="x => x.ValorTotal" Title="Valor Total" Format="C" />
+                </Columns>
+            </MudDataGrid>
+        </MudStack>
+
+    </MudLayout>
+</MudPaper>
+
+@code {
+    private DateTime? FiltroInicio { get; set; }
+    private DateTime? FiltroFinal { get; set; }
+    private bool Carregando = true;
+
+    private List<DtoHoraVendas> Horas = new();
+    private List<DtoHoraVendas> HorasComVendas => Horas.Where(h => h.TotalPedidos > 0).ToList();
+
+    private double TotalPedidos => Horas.Sum(h => h.TotalPedidos);
+    private double TotalValor => Horas.Sum(h => h.ValorTotal);
+    private string HoraDePico
+    {
+        get
+        {
+            var pico = Horas.OrderByDescending(h => h.TotalPedidos).FirstOrDefault();
+            return pico != null && pico.TotalPedidos > 0 ? $"{pico.Hora:D2}h" : "--";
+        }
+    }
+
+    private static readonly string[] _labels = Enumerable.Range(0, 24).Select(h => $"{h:D2}h").ToArray();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        try
+        {
+            Carregando = true;
+            StateHasChanged();
+
+            var retorno = await PedidosService.EstastisticaDeVendasPorHorario(FiltroInicio, FiltroFinal);
+            if (retorno.Status == "success" && retorno.Data != null)
+            {
+                Horas = retorno.Data.Lista ?? new();
+            }
+            else
+            {
+                Snackbar.Add("Erro ao carregar dados: " + string.Join(", ", retorno.Messages), Severity.Error);
+                Horas = new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro: " + ex.Message, Severity.Error);
+            Horas = new();
+        }
+        finally
+        {
+            Carregando = false;
+            StateHasChanged();
+            await RenderizarGraficos();
+        }
+    }
+
+    private async Task RenderizarGraficos()
+    {
+        await Task.Delay(50);
+        try
+        {
+            var pedidosData = Horas.Select(h => h.TotalPedidos).ToArray();
+            var valorData = Horas.Select(h => h.ValorTotal).ToArray();
+
+            await JS.InvokeVoidAsync("SophosCharts.renderBar", "chart-vendas-pedidos", _labels, pedidosData, "Pedidos", "#F88113");
+            await JS.InvokeVoidAsync("SophosCharts.renderLine", "chart-vendas-valor", _labels, valorData, "Valor (R$)", "#3dcb6c");
+        }
+        catch { }
+    }
+}

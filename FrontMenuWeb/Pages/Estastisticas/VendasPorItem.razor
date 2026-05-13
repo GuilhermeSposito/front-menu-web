@@ -92,16 +92,15 @@
         </MudStack>
 
 
-        <MudStack Class="w-100 p-3 rounded-2 mt-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-
-            @if (_series?.Count > 0)
+        <MudStack Class="w-100 p-3 rounded-2 mt-2" Style="background-color: var(--mud-palette-surface)">
+            @if (Produtos.Any())
             {
-                <MudStack AlignItems=AlignItems.Center Justify=Justify.Center style="flex:1; width:100%">
-                    <MudChart ChartType="ChartType.Bar"
-                              ChartSeries="@_series"
-                              ChartOptions="_axisChartOptions"
-                              Height="350px" />
-                </MudStack>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Quantidade Vendida por Item</MudText>
+                <div style="width:100%; overflow-x:auto;">
+                    <div style="min-width:@($"{Math.Max(Produtos.Count * 70, 400)}px"); height:320px; position:relative;">
+                        <canvas id="chart-vendas-por-item"></canvas>
+                    </div>
+                </div>
             }
         </MudStack>
     </MudLayout>
@@ -114,11 +113,6 @@
 
     private int limit = 10;
     private int page = 1;
-
-    //Grafico de Itens mais Vendidos
-    private int _index = -1;
-    ChartOptions _axisChartOptions = new() { ShowLegend = true, };
-    private List<ChartSeries> _series = new() { };
 
     private List<DtoEstastisticaPorProduto> Produtos = new();
     private bool Carregando = true;
@@ -169,8 +163,7 @@
         try
         {
             Carregando = true;
-
-            _series.Clear();
+            StateHasChanged();
 
             QueryDeHistoricoDePedidos Dto = new()
             {
@@ -185,18 +178,6 @@
             if (retorno.Status == "success" && retorno.Data != null)
             {
                 Produtos = retorno.Data.Lista ?? new List<DtoEstastisticaPorProduto>();
-
-                List<double> dataList = new();
-                List<string> labelsList = new();
-
-                if (retorno.Data.Lista is not null)
-                {
-                    foreach (var item in retorno.Data.Lista)
-                    {
-                        _series.Add(new() { Name = item.Descricao, Data = new double[] { item.Quantidade } });
-                    }
-                }
-                StateHasChanged();
             }
             else
             {
@@ -207,10 +188,25 @@
         {
             Snackbar.Add("Erro ao carregar dados do gráfico: " + ex.Message, Severity.Error);
         }
+        finally
         {
             Carregando = false;
+            StateHasChanged();
+            await RenderizarGrafico();
         }
+    }
 
+    private async Task RenderizarGrafico()
+    {
+        if (!Produtos.Any()) return;
+        await Task.Delay(50);
+        try
+        {
+            var labels = Produtos.Select(p => p.Descricao).ToArray();
+            var data = Produtos.Select(p => p.Quantidade).ToArray();
+            await JS.InvokeVoidAsync("SophosCharts.renderBar", "chart-vendas-por-item", labels, data, "Qtd. Vendida", "#F88113");
+        }
+        catch { }
     }
     #endregion
 }

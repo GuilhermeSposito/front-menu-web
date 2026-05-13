@@ -159,6 +159,9 @@
                         <MudNavGroup Title="Estatísticas" Icon="@Icons.Material.Filled.QueryStats" Expanded="false">
                             <MudNavLink Icon="@Icons.Material.Filled.ReceiptLong" OnClick="@(async () => await HandleNavClick("/nfs-estatisticas", "AcessoEstatisticas"))">NF-e NFC-e Emitidas</MudNavLink>
                             <MudNavLink Icon="@Icons.Material.Filled.Assessment" OnClick="@(async () => await HandleNavClick("/vendas/vendas-por-item", "AcessoEstatisticas"))">Vendas Por Item</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.AccessTime" OnClick="@(async () => await HandleNavClick("/vendas/vendas-por-horario", "AcessoEstatisticas"))">Vendas por Horário</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.BarChart" OnClick="@(async () => await HandleNavClick("/vendas/itens-por-horario", "AcessoEstatisticas"))">Itens por Horário</MudNavLink>
+                            <MudNavLink Icon="@Icons.Material.Filled.Fastfood" OnClick="@(async () => await HandleNavClick("/vendas/estatisticas-por-item", "AcessoEstatisticas"))">Estatísticas por Item</MudNavLink>
                         </MudNavGroup>
 
                         <MudNavGroup Title="Históricos" Icon="@Icons.Material.Filled.PunchClock" Expanded="false">

@@ -16,3 +16,26 @@ public class DtoEstastisticaPorProduto
     [JsonPropertyName("ValorTotalDasVendas")] public double ValorTotalDasVendas { get; set; }
     [JsonPropertyName("Porcentagem")] public double Porcentagem { get; set; }
 }
+
+public class DtoHoraVendas
+{
+    [JsonPropertyName("Hora")] public int Hora { get; set; }
+    [JsonPropertyName("TotalPedidos")] public double TotalPedidos { get; set; }
+    [JsonPropertyName("ValorTotal")] public double ValorTotal { get; set; }
+}
+
+public class DtoHoraItens
+{
+    [JsonPropertyName("Hora")] public int Hora { get; set; }
+    [JsonPropertyName("Quantidade")] public double Quantidade { get; set; }
+    [JsonPropertyName("ValorTotal")] public double ValorTotal { get; set; }
+}
+
+public class DtoProdutoComHorario
+{
+    [JsonPropertyName("Descricao")] public string Descricao { get; set; } = string.Empty;
+    [JsonPropertyName("TotalVendido")] public double TotalVendido { get; set; }
+    [JsonPropertyName("ValorTotal")] public double ValorTotal { get; set; }
+    [JsonPropertyName("Porcentagem")] public double Porcentagem { get; set; }
+    [JsonPropertyName("HoraDePico")] public int HoraDePico { get; set; }
+}
