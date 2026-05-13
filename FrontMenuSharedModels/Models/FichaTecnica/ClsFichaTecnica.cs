@@ -21,6 +21,8 @@ public class ClsItemFichaTecnica
     [JsonPropertyName("ProdutoInsumo")] public ClsProdutoInsumoResumo? ProdutoInsumo { get; set; }
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
     [JsonPropertyName("UnidadeMedida")] public string UnidadeMedida { get; set; } = string.Empty;
+    [JsonPropertyName("PrecoDeCusto")] public float PrecoDeCusto { get; set; }
+    [JsonPropertyName("PercentualDePerda")] public float PercentualDePerda { get; set; }
 }
 
 public class ClsProdutoInsumoResumo
@@ -40,10 +42,12 @@ public class CreateItemFichaTecnicaRequest
     [JsonPropertyName("produtoInsumoId")] public string ProdutoInsumoId { get; set; } = string.Empty;
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
     [JsonPropertyName("UnidadeMedida")] public string UnidadeMedida { get; set; } = string.Empty;
+    [JsonPropertyName("PercentualDePerda")] public float? PercentualDePerda { get; set; }
 }
 
 public class UpdateItemFichaTecnicaRequest
 {
     [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
     [JsonPropertyName("UnidadeMedida")] public string UnidadeMedida { get; set; } = string.Empty;
+    [JsonPropertyName("PercentualDePerda")] public float? PercentualDePerda { get; set; }
 }

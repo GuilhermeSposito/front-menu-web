@@ -51,6 +51,9 @@ public class ClsProduto
 
     [JsonPropertyName("Quantidade")] public float QtdEmEstoque { get; set; }
     [JsonPropertyName("PrecoCusto")] public float PrecoCusto { get; set; }
+    [JsonPropertyName("EstoqueDesativado")] public bool EstoqueDesativado { get; set; } = false;
+    [JsonPropertyName("EnviaAvisoDeEstoqueMin")] public bool EnviaAvisoDeEstoqueMin { get; set; } = false;
+    [JsonPropertyName("EstoqueMin")] public float EstoqueMin { get; set; } = 0f;
 
 
 
