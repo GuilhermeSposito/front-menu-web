@@ -325,9 +325,15 @@
                         {
                             <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
                                       Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-                                <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="w-100">
-                                    Enviar Itens Para a @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced (F3)
-                                </MudButton>
+                                <MudStack Row="true" Spacing="1" Class="w-100">
+                                    <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaMesa" Color="Color.Primary" Class="flex-grow-1">
+                                        Enviar (F3)
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Filled" OnClick="PagarPedidoDeMesa" Color="Color.Success"
+                                               StartIcon="@Icons.Material.Filled.Payment">
+                                        Pagar Agora
+                                    </MudButton>
+                                </MudStack>
                             </MudPaper>
                         }
 
@@ -467,6 +473,28 @@
     #region Funções Auxiliares
     public async Task AbreModalParaEditarItemCompleto(ItensPedido itemAdicionadoAoCarrinho)
     {
+        var produto = itemAdicionadoAoCarrinho.Produto;
+        bool temComplementosOuTamanhos = produto is not null &&
+            ((produto.GruposDeComplementosDoProduto is not null && produto.GruposDeComplementosDoProduto.Count > 0) ||
+             (!produto.TamanhoUnico && produto.Precos.Count > 0));
+
+        if (!temComplementosOuTamanhos)
+        {
+            var inputParams = new DialogParameters { { "Valor", itemAdicionadoAoCarrinho.Quantidade } };
+            var inputOptions = new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraSmall, FullWidth = false, CloseOnEscapeKey = true };
+            var inputDialog = await DialogService.ShowAsync<InputFloatN3>("Quantidade", inputParams, inputOptions);
+            var inputResult = await inputDialog.Result;
+
+            if (!inputResult!.Canceled && inputResult.Data is float novaQtd)
+            {
+                itemAdicionadoAoCarrinho.Quantidade = novaQtd;
+                itemAdicionadoAoCarrinho.PrecoTotal = itemAdicionadoAoCarrinho.PrecoUnitario * novaQtd;
+                StateHasChanged();
+                Snackbar.Add("Quantidade atualizada com sucesso.", Severity.Success);
+            }
+            return;
+        }
+
         var parameters = new DialogParameters
             {
                { "AtualizandoItem", true},
@@ -477,7 +505,6 @@
 
         var options = new DialogOptions { BackdropClick = false, NoHeader = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true, CloseOnEscapeKey = true };
 
-        //var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItem>("Detalhes do item", parameters, options);
         var dialog = await DialogService.ShowAsync<ModalDeComplementoETamanhoDoItemVenda>("Detalhes do item", parameters, options);
         var result = await dialog.Result;
 
@@ -1234,6 +1261,20 @@
         }
 
         await ExecutarEnvioParaMesa();
+    }
+
+    private async Task PagarPedidoDeMesa()
+    {
+        if (Mesa.CodigoExterno == 0)
+        {
+            Snackbar.Add("Informe o número da mesa para continuar.", Severity.Error);
+            return;
+        }
+
+        if (Mesa.Id == 0)
+            NovoPedido.MesaComandaId = Mesa.CodigoExterno;
+
+        await PagarPedido();
     }
 
     private async Task ConfirmarNumeroMesaEEnviar()

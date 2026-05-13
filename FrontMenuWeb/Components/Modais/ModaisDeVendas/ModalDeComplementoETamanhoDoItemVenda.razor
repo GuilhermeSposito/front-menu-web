@@ -285,7 +285,8 @@
 
         Item.Descricao = Produto.Descricao;
         Item.Produto = Produto;
-        Item.Quantidade = 1;
+        if (!AtualizandoItem)
+            Item.Quantidade = 1;
 
         if (Produto.TamanhoUnico)
         {

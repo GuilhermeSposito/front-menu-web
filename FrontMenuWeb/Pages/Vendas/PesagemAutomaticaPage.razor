@@ -1,0 +1,620 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@layout CheckoutLayout
+@page "/checkout/pesagem-automatica"
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Models.Merchant
+@inject ProdutoService ProdutoService
+@inject PedidosService PedidosService
+@inject MesasServices MesasService
+@inject BalancaService BalancaService
+@inject IJSRuntime JS
+@inject AuthorizationService AuthorizationService
+@implements IDisposable
+
+<PageTitle>Pesagem Automática – Sophos</PageTitle>
+
+@* ── BARRA SUPERIOR: seleção de produto ── *@
+<div class="pesa-topbar">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+        <MudIcon Icon="@Icons.Material.Outlined.Scale" Style="color:var(--sophos-orange);" />
+        <MudText Typo="Typo.body2" Style="color:var(--fg-secondary); white-space:nowrap; font-weight:600;">
+            Produto para pesar:
+        </MudText>
+
+        <MudSelect T="ClsProduto"
+                   Value="_produtoSelecionado"
+                   ValueChanged="OnProdutoChanged"
+                   ToStringFunc="@(p => p?.Descricao ?? "— Selecione —")"
+                   Variant="Variant.Outlined"
+                   Dense="true"
+                   Margin="Margin.Dense"
+                   Style="min-width:300px; max-width:480px;"
+                   Placeholder="— Selecione um produto —">
+            @if (_produtos.Count == 0)
+            {
+                <MudSelectItem T="ClsProduto" Value="null" Disabled="true">
+                    Nenhum produto configurado para balança
+                </MudSelectItem>
+            }
+            @foreach (var p in _produtos)
+            {
+                <MudSelectItem Value="p">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight:700; min-width:48px;">@p.CodigoInterno</MudText>
+                        <MudText Typo="Typo.body2">@p.Descricao</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.caption" Style="color:#4CAF50; font-weight:600;">
+                            @(p.Precos.Count > 0 ? p.Precos.Min(x => x.Valor).ToString("C") + "/kg" : "—")
+                        </MudText>
+                    </MudStack>
+                </MudSelectItem>
+            }
+        </MudSelect>
+
+        @if (_produtoSelecionado is not null)
+        {
+            <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small"
+                     Icon="@Icons.Material.Filled.FiberManualRecord">
+                Aguardando pesagem
+            </MudChip>
+        }
+        else
+        {
+            <MudChip T="string" Color="Color.Warning" Variant="Variant.Outlined" Size="Size.Small"
+                     Icon="@Icons.Material.Outlined.Warning">
+                Selecione um produto para iniciar
+            </MudChip>
+        }
+    </MudStack>
+</div>
+
+@* ── CANVAS PRINCIPAL ── *@
+<div class="pesa-canvas">
+    <div class="pesa-watermark">Aguardando Pesagem</div>
+
+    @if (_produtoSelecionado is not null)
+    {
+        <div class="pesa-info-card">
+            <MudStack AlignItems="AlignItems.Center" Spacing="3">
+                <MudIcon Icon="@Icons.Material.Outlined.Scale" Style="font-size:48px; color:var(--sophos-orange);" />
+                <div>
+                    <MudText Typo="Typo.h6" Align="Align.Center" Style="color:var(--fg-primary); font-weight:700;">
+                        @_produtoSelecionado.Descricao
+                    </MudText>
+                    @if (_produtoSelecionado.Precos.Count > 0)
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Style="color:var(--fg-secondary);">
+                            @_produtoSelecionado.Precos.Min(x => x.Valor).ToString("C") / kg
+                        </MudText>
+                    }
+                </div>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <span class="pesa-pulse"></span>
+                    <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">
+                        Consultando balança a cada segundo...
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </div>
+    }
+    else
+    {
+        <div class="pesa-info-card pesa-info-card--idle">
+            <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Outlined.Scale" Style="font-size:64px; color:rgba(255,255,255,0.1);" />
+                <MudText Typo="Typo.body1" Align="Align.Center" Style="color:var(--fg-tertiary);">
+                    Selecione um produto na barra superior para iniciar
+                </MudText>
+            </MudStack>
+        </div>
+    }
+</div>
+
+@* ── MODAL 1: Inserir número da mesa/comanda ── *@
+@if (_mostrarModalMesa)
+{
+    <div class="pesa-overlay">
+        <div class="pesa-modal">
+            <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                <MudIcon Icon="@(_legendaMesa == "Mesa" ? Icons.Material.Outlined.TableRestaurant : Icons.Material.Outlined.CreditCard)"
+                         Style="font-size:48px; color:var(--sophos-orange);" />
+
+                <div style="text-align:center;">
+                    <MudText Typo="Typo.h6" Style="color:var(--fg-primary); font-weight:700;">
+                        Informe o número da @_legendaMesa
+                    </MudText>
+                    <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">
+                        Informe o ID ou código da @_legendaMesa
+                    </MudText>
+                </div>
+
+                <MudPaper Elevation="0" Class="pesa-peso-card" Style="width:100%;">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">Peso</MudText>
+                            <MudText Typo="Typo.h6" Style="color:var(--fg-primary); font-weight:700;">
+                                @_pesoAtual.ToString("F3") kg
+                            </MudText>
+                        </MudStack>
+                        <MudDivider Vertical="true" FlexItem="true" />
+                        <MudStack Spacing="0" AlignItems="AlignItems.End">
+                            <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">Valor</MudText>
+                            <MudText Typo="Typo.h6" Style="color:#4CAF50; font-weight:700;">
+                                @_valorAtual.ToString("C")
+                            </MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+
+                <MudTextField T="string"
+                              Value="_inputMesa"
+                              ValueChanged="OnInputMesaChanged"
+                              Label="@($"Número ou código da {_legendaMesa}")"
+                              Variant="Variant.Outlined"
+                              AutoFocus="true"
+                              OnKeyDown="OnModalKeyDown"
+                              Disabled="_enviando"
+                              Immediate="true"
+                              Style="width:100%;"
+                              InputType="InputType.Text" />
+
+                @if (!string.IsNullOrEmpty(_erroMesa))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" Style="width:100%;">@_erroMesa</MudAlert>
+                }
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="EnviarParaMesa"
+                           Disabled="@(_enviando || string.IsNullOrWhiteSpace(_inputMesa))"
+                           StartIcon="@Icons.Material.Filled.Send"
+                           FullWidth="true"
+                           Size="Size.Large">
+                    @if (_enviando)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Confirmar Pedido
+                </MudButton>
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           OnClick="CancelarPesagem"
+                           Disabled="_enviando"
+                           StartIcon="@Icons.Material.Filled.Cancel"
+                           FullWidth="true"
+                           Size="Size.Large">
+                    Cancelar Pesagem
+                </MudButton>
+
+                <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">
+                    Pressione <strong>Enter</strong> para confirmar
+                </MudText>
+            </MudStack>
+        </div>
+    </div>
+}
+
+@* ── MODAL 2: Pedido enviado ── *@
+@if (_mostrarModalSucesso)
+{
+    <div class="pesa-overlay">
+        <div class="pesa-modal pesa-modal--sucesso">
+            <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                <div class="pesa-success-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle"
+                             Style="font-size:88px; color:#4CAF50;" />
+                </div>
+                <MudText Typo="Typo.h5" Style="color:#4CAF50; font-weight:700; text-align:center;">
+                    Pedido Enviado!
+                </MudText>
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Style="color:var(--fg-secondary);">
+                        @_produtoSelecionado?.Descricao — @_pesoAtual.ToString("F3") kg
+                    </MudText>
+                    <MudText Typo="Typo.body1" Style="color:#4CAF50; font-weight:600;">
+                        @_valorAtual.ToString("C")
+                    </MudText>
+                </MudStack>
+                <MudDivider Style="width:100%;" />
+                <MudText Typo="Typo.caption" Style="color:var(--fg-tertiary);">
+                    Voltando em @_contagemRegressiva segundo@(_contagemRegressiva == 1 ? "" : "s")...
+                </MudText>
+                <MudProgressLinear Value="@((5 - _contagemRegressiva) * 20)"
+                                   Color="Color.Success"
+                                   Rounded="true"
+                                   Style="width:100%;" />
+            </MudStack>
+        </div>
+    </div>
+}
+
+<style>
+    :root {
+        --sophos-orange: #FF7A1A;
+        --fg-primary: #F5F7FA;
+        --fg-secondary: #B7C0CC;
+        --fg-tertiary: #7E8A9C;
+        --bg-canvas: #1A2538;
+        --bg-surface: #232F45;
+        --bg-canvas-deep: #131C2C;
+        --line-default: rgba(255, 255, 255, 0.08);
+    }
+
+    .pesa-topbar {
+        position: fixed;
+        top: 56px;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--line-default);
+        padding: 10px 20px;
+        min-height: 58px;
+    }
+
+    .pesa-canvas {
+        position: fixed;
+        top: 114px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-canvas);
+        overflow: hidden;
+    }
+
+    .pesa-watermark {
+        position: absolute;
+        font-size: clamp(36px, 7vw, 96px);
+        font-weight: 900;
+        color: rgba(255, 255, 255, 0.035);
+        user-select: none;
+        letter-spacing: -2px;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+
+    .pesa-info-card {
+        position: relative;
+        background: var(--bg-surface);
+        border: 1px solid var(--line-default);
+        border-radius: 20px;
+        padding: 36px 56px;
+        text-align: center;
+        min-width: 300px;
+    }
+
+    .pesa-info-card--idle {
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+    }
+
+    .pesa-pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4CAF50;
+        animation: pesa-blink 1.2s ease-in-out infinite;
+    }
+
+    @@keyframes pesa-blink {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.2; transform: scale(0.8); }
+    }
+
+    .pesa-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(6px);
+        animation: pesa-fade-in 0.15s ease-out;
+    }
+
+    @@keyframes pesa-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .pesa-modal {
+        background: var(--bg-surface);
+        border: 1px solid var(--line-default);
+        border-radius: 20px;
+        padding: 40px 48px;
+        min-width: 360px;
+        max-width: 460px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+        animation: pesa-slide-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @@keyframes pesa-slide-up {
+        from { transform: translateY(24px) scale(0.96); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .pesa-modal--sucesso {
+        border-color: rgba(76, 175, 80, 0.3);
+        background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(76, 175, 80, 0.06) 100%);
+    }
+
+    .pesa-success-icon {
+        animation: pesa-pop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @@keyframes pesa-pop {
+        0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .pesa-peso-card {
+        background: var(--bg-canvas-deep) !important;
+        border: 1px solid var(--line-default);
+        border-radius: 12px;
+        padding: 16px 20px;
+    }
+</style>
+
+@code {
+    private List<ClsProduto> _produtos = new();
+    private ClsProduto? _produtoSelecionado;
+    private List<ClsMesasEComandas> _mesasAtivas = new();
+
+    private System.Threading.PeriodicTimer? _periodicTimer;
+    private CancellationTokenSource? _cts;
+    private bool _lendo = false;
+    private IDisposable? _locationChangingRegistration;
+
+    private double _pesoAtual = 0;
+    private decimal _valorAtual = 0;
+
+    private bool _mostrarModalMesa = false;
+    private bool _mostrarModalSucesso = false;
+    private string _inputMesa = string.Empty;
+    private string _erroMesa = string.Empty;
+    private bool _enviando = false;
+    private int _contagemRegressiva = 5;
+
+    private string _legendaMesa => !string.IsNullOrWhiteSpace(AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced)
+        ? AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced
+        : "Mesa";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.UltilizaBalanca)
+                await BalancaService.ConectarAsync();
+
+            await JS.InvokeVoidAsync("interceptFunctionKeys", this);
+            _locationChangingRegistration = Navigation.RegisterLocationChangingHandler(OnLocationChanging);
+        }
+    }
+
+    private async ValueTask OnLocationChanging(LocationChangingContext context)
+    {
+        var autorizado = await AuthorizationService.ValidateSempreAsync("AcessoLancaVenda", "Sair da Pesagem Automática");
+        if (!autorizado)
+            context.PreventNavigation();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var todos = await ProdutoService.GetProdutosAsync();
+            _produtos = todos.Where(p => p.UltilizaProdutoNaBalanca).ToList();
+        }
+        catch { }
+
+        try
+        {
+            var resp = await MesasService.GetMesaPorPaginaAsync(1, 1000);
+            if (resp?.Data != null)
+                _mesasAtivas = resp.Data.ToList();
+        }
+        catch { }
+    }
+
+    private void OnProdutoChanged(ClsProduto? produto)
+    {
+        PararTimer();
+        _produtoSelecionado = produto;
+        StateHasChanged();
+
+        if (produto is not null)
+            IniciarTimer();
+    }
+
+    private void IniciarTimer()
+    {
+        _cts = new CancellationTokenSource();
+        _periodicTimer = new System.Threading.PeriodicTimer(TimeSpan.FromSeconds(1));
+        _ = RunTimerLoop(_cts.Token);
+    }
+
+    private void PararTimer()
+    {
+        _cts?.Cancel();
+        _cts = null;
+        _periodicTimer?.Dispose();
+        _periodicTimer = null;
+        _lendo = false;
+    }
+
+    private async Task RunTimerLoop(CancellationToken ct)
+    {
+        try
+        {
+            while (_periodicTimer is not null && await _periodicTimer.WaitForNextTickAsync(ct))
+                await LerPesoAsync();
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task LerPesoAsync()
+    {
+        if (_lendo || _mostrarModalMesa || _mostrarModalSucesso || _produtoSelecionado is null) return;
+
+        _lendo = true;
+        try
+        {
+            BalancaLeitura? leitura = await BalancaService.LerPesoAsync();
+            if (!leitura.Sucesso || leitura.Peso <= 0) return;
+
+            PararTimer();
+
+            var precoUnitario = _produtoSelecionado.Precos.Count > 0
+                ? (decimal)_produtoSelecionado.Precos.Min(p => p.Valor)
+                : 0m;
+
+            _pesoAtual = leitura.Peso;
+            _valorAtual = Math.Round(precoUnitario * (decimal)leitura.Peso, 2);
+            _inputMesa = string.Empty;
+            _erroMesa = string.Empty;
+            _mostrarModalMesa = true;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            _lendo = false;
+        }
+    }
+
+    private async Task CancelarPesagem()
+    {
+        if (!await AuthorizationService.ValidateSempreAsync("AcessoCancelaItensDaVenda", "Cancelar Pesagem")) return;
+
+        _mostrarModalMesa = false;
+        _pesoAtual = 0;
+        _valorAtual = 0;
+        _inputMesa = string.Empty;
+        _erroMesa = string.Empty;
+        StateHasChanged();
+
+        if (_produtoSelecionado is not null)
+            IniciarTimer();
+    }
+
+    private void OnInputMesaChanged(string value)
+    {
+        if (int.TryParse(value, out int numero))
+            _inputMesa = numero.ToString();
+        else
+            _inputMesa = value;
+    }
+
+    private async Task OnModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await EnviarParaMesa();
+    }
+
+    private async Task EnviarParaMesa()
+    {
+        if (_enviando || string.IsNullOrWhiteSpace(_inputMesa) || _produtoSelecionado is null) return;
+
+        _erroMesa = string.Empty;
+        _enviando = true;
+        StateHasChanged();
+
+        try
+        {
+            int mesaComandaId = 0;
+            string? mesaApelido = null;
+
+            if (int.TryParse(_inputMesa.Trim(), out int numero))
+            {
+                var mesaEncontrada = _mesasAtivas.FirstOrDefault(m => m.CodigoExterno == numero)
+                                  ?? _mesasAtivas.FirstOrDefault(m => m.Id == numero);
+                mesaComandaId = mesaEncontrada?.Id ?? numero;
+            }
+            else
+            {
+                mesaApelido = _inputMesa.Trim();
+            }
+
+            var precoUnitario = _produtoSelecionado.Precos.Count > 0
+                ? _produtoSelecionado.Precos.Min(p => p.Valor)
+                : 0f;
+
+            var pedido = new ClsPedido
+            {
+                TipoDePedido = "MESA",
+                MesaComandaId = mesaComandaId,
+                MesaApelido = mesaApelido,
+                CriadoPor = "SOPHOS",
+                Itens = new List<ItensPedido>
+                {
+                    new ItensPedido
+                    {
+                        Descricao = _produtoSelecionado.Descricao,
+                        Produto = _produtoSelecionado,
+                        Quantidade = (float)_pesoAtual,
+                        PrecoUnitario = precoUnitario,
+                        PrecoTotal = (float)_valorAtual
+                    }
+                }
+            };
+
+            var response = await PedidosService.CreatePedidoMesa(pedido);
+
+            if (response.Status == "success")
+            {
+                _mostrarModalMesa = false;
+                _mostrarModalSucesso = true;
+                _contagemRegressiva = 5;
+                StateHasChanged();
+                _ = IniciarContagemSucesso();
+            }
+            else
+            {
+                _erroMesa = string.Join(", ", response.Messages);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            _erroMesa = $"Erro ao enviar: {ex.Message}";
+            StateHasChanged();
+        }
+        finally
+        {
+            _enviando = false;
+        }
+    }
+
+    private async Task IniciarContagemSucesso()
+    {
+        for (int i = 5; i >= 1; i--)
+        {
+            _contagemRegressiva = i;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(1000);
+        }
+
+        _mostrarModalSucesso = false;
+        _pesoAtual = 0;
+        _valorAtual = 0;
+        _inputMesa = string.Empty;
+
+        await InvokeAsync(StateHasChanged);
+
+        if (_produtoSelecionado is not null)
+            IniciarTimer();
+    }
+
+    public void Dispose()
+    {
+        PararTimer();
+        _locationChangingRegistration?.Dispose();
+    }
+}

@@ -23,7 +23,10 @@
       "Bash(ls -la \"C:\\\\Prog\\\\projeto_menu_web\\\\api-proj-menu-web\\\\src\" | head -50)",
       "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/src/**)",
       "Bash(find \"C:\\\\Prog\\\\projeto_menu_web\\\\api-proj-menu-web\" -name \".env*\" -type f 2>/dev/null | head -5)",
-      "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/**)"
+      "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/**)",
+      "PowerShell(head -20)",
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Prog\\\\projeto_menu_web\" -Directory | ForEach-Object { $_.Name })",
+      "PowerShell(Get-ChildItem \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -File | ForEach-Object { $_.Name })"
     ]
   }
 }

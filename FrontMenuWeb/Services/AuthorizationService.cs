@@ -40,4 +40,21 @@ public class AuthorizationService
 
         return false;
     }
+
+    /// <summary>
+    /// Sempre abre o modal de autorização, independente de o usuário já ter a permissão.
+    /// </summary>
+    public async Task<bool> ValidateSempreAsync(string permissionName, string title = "Autorização de Supervisor")
+    {
+        var parameters = new DialogParameters { ["PermissionName"] = permissionName };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+
+        var dialogReferencia = await _dialogService.ShowAsync<ModalDeLoginTemporario>(title, parameters, options);
+        var retornoDialogo = await dialogReferencia.Result;
+
+        if (retornoDialogo != null && !retornoDialogo.Canceled && retornoDialogo.Data is bool autorizado)
+            return autorizado;
+
+        return false;
+    }
 }
