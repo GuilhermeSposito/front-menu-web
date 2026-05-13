@@ -108,6 +108,7 @@ public class ClsMerchant
     [JsonPropertyName("UltilizaConvenio")] public bool UltilizaConvenio { get; set; } = false;
     [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
+    [JsonPropertyName("UltilizaSenhaNaTelaDePesagemAutomatico")] public bool UltilizaSenhaNaTelaDePesagemAutomatico { get; set; } = false;
     [JsonPropertyName("EmiteNfAutomatica")] public bool EmiteNfAutomatica { get; set; } = false;
     [JsonPropertyName("CorBarrasCardapio")] public string CorBarrasCardapio { get; set; } = "#F88113";
     [JsonPropertyName("CorFundoCardapio")] public string CorFundoCardapio { get; set; } = "#192436";
