@@ -290,6 +290,44 @@
                                                              @bind-Value="Produto.TaxaDeViagem" />
                                         </MudPaper>
 
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Desativa controle de estoque? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup T="bool"
+                                                           Value="Produto.EstoqueDesativado"
+                                                           ValueChanged="@(valor => { Produto.EstoqueDesativado = valor; })">
+                                                <MudRadio Value="true" Color="Color.Warning" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Success" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        <MudPaper Elevation="0" Square="false">
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudText Class="d-flex align-items-center justify-content-center"> Aviso de estoque mínimo? </MudText>
+                                            </MudPaper>
+                                            <MudRadioGroup T="bool"
+                                                           Value="Produto.EnviaAvisoDeEstoqueMin"
+                                                           ValueChanged="@(valor => { Produto.EnviaAvisoDeEstoqueMin = valor; })">
+                                                <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                            </MudRadioGroup>
+                                        </MudPaper>
+
+                                        @if (!Produto.EstoqueDesativado)
+                                        {
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudNumericField Immediate="false"
+                                                                 Variant="Variant.Outlined"
+                                                                 Label="Estoque Mínimo"
+                                                                 Format="N3"
+                                                                 Culture="_pt"
+                                                                 T="float"
+                                                                 HideSpinButtons="true"
+                                                                 @bind-Value="Produto.EstoqueMin" />
+                                            </MudPaper>
+                                        }
+
                                         @if (Produto.ItemResgatavel)
                                         {
                                             <MudPaper Elevation="0" Class="w-25" Square="false">

@@ -1769,6 +1769,45 @@
                                                                  @onfocusout="@(async () => await OnSaveChanges(ProdutoSelecionadoParaEdicao))" />
                                             </MudPaper>
 
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Desativa controle de estoque? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.EstoqueDesativado"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.EstoqueDesativado = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Warning" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Success" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0" Square="false">
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudText Class="d-flex align-items-center justify-content-center"> Aviso de estoque mínimo? </MudText>
+                                                </MudPaper>
+                                                <MudRadioGroup Class="d-flex justify-content-center align-items-center" T="bool"
+                                                               Value="ProdutoSelecionadoParaEdicao.EnviaAvisoDeEstoqueMin"
+                                                               ValueChanged="@(async valor => { ProdutoSelecionadoParaEdicao.EnviaAvisoDeEstoqueMin = valor; await OnSaveChanges(ProdutoSelecionadoParaEdicao); })">
+                                                    <MudRadio Value="true" Color="Color.Success" Dense="true">Sim</MudRadio>
+                                                    <MudRadio Value="false" Color="Color.Error" Dense="false">Não</MudRadio>
+                                                </MudRadioGroup>
+                                            </MudPaper>
+
+                                            @if (!ProdutoSelecionadoParaEdicao.EstoqueDesativado)
+                                            {
+                                                <MudPaper Elevation="0" Square="false">
+                                                    <MudNumericField Immediate="false"
+                                                                     Variant="Variant.Outlined"
+                                                                     Label="Estoque Mínimo"
+                                                                     Format="N3"
+                                                                     Culture="_pt"
+                                                                     T="float"
+                                                                     HideSpinButtons="true"
+                                                                     @bind-Value="ProdutoSelecionadoParaEdicao.EstoqueMin"
+                                                                     @onfocusout="@(async () => await OnSaveChanges(ProdutoSelecionadoParaEdicao))" />
+                                                </MudPaper>
+                                            }
+
                                             @if (ProdutoSelecionadoParaEdicao.ItemResgatavel)
                                             {
                                                 <MudPaper Elevation="0" Class="w-25" Square="false">

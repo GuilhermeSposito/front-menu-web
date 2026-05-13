@@ -144,6 +144,38 @@
                                          UserAttributes="@_selectAll" />
                     </MudItem>
 
+                    @* Controle de estoque *@
+                    <MudItem xs="12" sm="6" Class="d-flex flex-column align-items-center">
+                        <MudText Typo="Typo.caption" Align="Align.Center">Desativa controle de estoque?</MudText>
+                        <MudRadioGroup T="bool" @bind-Value="Produto.EstoqueDesativado" Class="d-flex justify-content-center">
+                            <MudRadio Value="true" Color="Color.Warning">Sim</MudRadio>
+                            <MudRadio Value="false" Color="Color.Success">Não</MudRadio>
+                        </MudRadioGroup>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" Class="d-flex flex-column align-items-center">
+                        <MudText Typo="Typo.caption" Align="Align.Center">Aviso de estoque mínimo?</MudText>
+                        <MudRadioGroup T="bool" @bind-Value="Produto.EnviaAvisoDeEstoqueMin" Class="d-flex justify-content-center">
+                            <MudRadio Value="true" Color="Color.Success">Sim</MudRadio>
+                            <MudRadio Value="false" Color="Color.Error">Não</MudRadio>
+                        </MudRadioGroup>
+                    </MudItem>
+                    @if (!Produto.EstoqueDesativado)
+                    {
+                        <MudItem xs="12" sm="6">
+                            <MudNumericField T="float"
+                                             @bind-Value="Produto.EstoqueMin"
+                                             Label="Estoque Mínimo"
+                                             Format="N3"
+                                             Culture="_pt"
+                                             HideSpinButtons="true"
+                                             Variant="Variant.Outlined"
+                                             Adornment="Adornment.Start"
+                                             AdornmentIcon="@Icons.Material.Filled.WarningAmber"
+                                             AdornmentColor="Color.Warning"
+                                             UserAttributes="@_selectAll" />
+                        </MudItem>
+                    }
+
                     @* Preço de venda *@
                     <MudItem xs="12">
                         <MudPaper Elevation="0" Outlined="true" Class="pa-3">
@@ -753,6 +785,9 @@
 
             PrecoCusto = base_.PrecoCusto,
             QtdEmEstoque = 0,               // estoque sempre zerado para novo produto
+            EstoqueDesativado = base_.EstoqueDesativado,
+            EnviaAvisoDeEstoqueMin = base_.EnviaAvisoDeEstoqueMin,
+            EstoqueMin = base_.EstoqueMin,
 
             ImpressoraComanda1 = base_.ImpressoraComanda1 ?? "Nao",
             ImpressoraComanda2 = base_.ImpressoraComanda2 ?? "Nao",
