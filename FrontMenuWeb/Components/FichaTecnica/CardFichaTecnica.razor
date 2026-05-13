@@ -1,0 +1,209 @@
+@using FrontMenuWeb.Models.FichaTecnica
+@using FrontMenuWeb.Models.Produtos
+@inject FrontMenuWeb.Services.FichaTecnicaService FichaTecnicaService
+@inject ISnackbar Snackbar
+
+<MudCard Elevation="2" Class="mb-3">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.subtitle1" Class="fw-bold">@Titulo</MudText>
+            <MudText Typo="Typo.caption">@Subtitulo</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            @if (Ficha is not null)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               Title="Excluir ficha técnica"
+                               OnClick="HandleDeletarFicha"
+                               Disabled="deletandoFicha" />
+            }
+        </CardHeaderActions>
+    </MudCardHeader>
+
+    <MudCardContent>
+        @if (Ficha is null)
+        {
+            <MudText Typo="Typo.body2" Class="mb-3">Nenhuma ficha técnica cadastrada.</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="HandleCriarFicha" StartIcon="@Icons.Material.Filled.Add">
+                Criar Ficha Técnica
+            </MudButton>
+        }
+        else
+        {
+            @if (Ficha.Itens.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Class="mb-2">Nenhum insumo adicionado.</MudText>
+            }
+            else
+            {
+                <MudSimpleTable Dense="true" Hover="true" Class="mb-3">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Quantidade</th>
+                            <th>Unidade</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Ficha.Itens)
+                        {
+                            <tr>
+                                <td>@item.ProdutoInsumo?.Descricao</td>
+                                <td>@item.Quantidade.ToString("N3")</td>
+                                <td>@item.UnidadeMedida</td>
+                                <td>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="@(() => HandleRemoverItem(item.Id))" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+            @if (!mostrarForm)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="AbrirForm">
+                    Adicionar Insumo
+                </MudButton>
+            }
+            else
+            {
+                <MudPaper Outlined="true" Class="pa-3 mt-2">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Adicionar Insumo</MudText>
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudAutocomplete T="ClsProduto"
+                                             Label="Insumo"
+                                             @bind-Value="insumoSelecionado"
+                                             SearchFunc="BuscarInsumos"
+                                             ToStringFunc="p => p?.Descricao ?? string.Empty"
+                                             Variant="Variant.Outlined"
+                                             Dense="true"
+                                             MinCharacters="1"
+                                             ResetValueOnEmptyText="true" />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudNumericField T="float"
+                                             Label="Quantidade"
+                                             @bind-Value="novaQuantidade"
+                                             Variant="Variant.Outlined"
+                                             Format="N3"
+                                             Dense="true"
+                                             HideSpinButtons="true" />
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudSelect T="string" Label="Unidade" @bind-Value="novaUnidade" Variant="Variant.Outlined" Dense="true">
+                                @foreach (var un in unidades)
+                                {
+                                    <MudSelectItem Value="@un">@un</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" Class="d-flex gap-2">
+                            <MudButton Variant="Variant.Outlined" OnClick="@(() => mostrarForm = false)">Cancelar</MudButton>
+                            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="HandleAdicionarItem" Disabled="salvandoItem">
+                                @(salvandoItem ? "Salvando..." : "Adicionar")
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public string Subtitulo { get; set; } = string.Empty;
+    [Parameter] public ClsFichaTecnica? Ficha { get; set; }
+    [Parameter] public EventCallback OnCriarFicha { get; set; }
+    [Parameter] public EventCallback<ClsItemFichaTecnica> OnItemAdicionado { get; set; }
+    [Parameter] public EventCallback<int> OnItemRemovido { get; set; }
+    [Parameter] public EventCallback<int> OnFichaDeletada { get; set; }
+
+    private bool mostrarForm = false;
+    private bool salvandoItem = false;
+    private bool deletandoFicha = false;
+    private ClsProduto? insumoSelecionado;
+    private float novaQuantidade = 0f;
+    private string novaUnidade = "kg";
+
+    private readonly List<string> unidades = new() { "kg", "g", "un", "ml", "l", "cx" };
+
+    private async Task HandleCriarFicha()
+    {
+        await OnCriarFicha.InvokeAsync();
+    }
+
+    private async Task HandleDeletarFicha()
+    {
+        if (Ficha is null) return;
+        deletandoFicha = true;
+        var ok = await FichaTecnicaService.DeletarFicha(Ficha.Id);
+        deletandoFicha = false;
+        if (ok)
+        {
+            Snackbar.Add("Ficha técnica excluída.", Severity.Success);
+            await OnFichaDeletada.InvokeAsync(Ficha.Id);
+        }
+        else
+        {
+            Snackbar.Add("Erro ao excluir ficha técnica.", Severity.Error);
+        }
+    }
+
+    private void AbrirForm()
+    {
+        insumoSelecionado = null;
+        novaQuantidade = 0f;
+        novaUnidade = "kg";
+        mostrarForm = true;
+    }
+
+    private async Task<IEnumerable<ClsProduto>> BuscarInsumos(string filtro, CancellationToken ct)
+    {
+        var resultado = await FichaTecnicaService.BuscarInsumos(filtro);
+        return resultado;
+    }
+
+    private async Task HandleAdicionarItem()
+    {
+        if (insumoSelecionado is null || novaQuantidade <= 0 || Ficha is null) return;
+
+        salvandoItem = true;
+        var item = await FichaTecnicaService.AdicionarItem(Ficha.Id, insumoSelecionado.Id, novaQuantidade, novaUnidade);
+        salvandoItem = false;
+
+        if (item is not null)
+        {
+            mostrarForm = false;
+            Snackbar.Add("Insumo adicionado com sucesso!", Severity.Success);
+            await OnItemAdicionado.InvokeAsync(item);
+        }
+        else
+        {
+            Snackbar.Add("Erro ao adicionar insumo.", Severity.Error);
+        }
+    }
+
+    private async Task HandleRemoverItem(int itemId)
+    {
+        var ok = await FichaTecnicaService.RemoverItem(itemId);
+        if (ok)
+        {
+            Snackbar.Add("Insumo removido.", Severity.Success);
+            await OnItemRemovido.InvokeAsync(itemId);
+        }
+        else
+        {
+            Snackbar.Add("Erro ao remover insumo.", Severity.Error);
+        }
+    }
+}

@@ -47,6 +47,7 @@ builder.Services.AddScoped<IntegracoesSophosService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<HorariosMerchantService>();
+builder.Services.AddScoped<FichaTecnicaService>();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("Api"));
 
 string UrlApiIfood = builder.Configuration.GetValue<string>("UrlApiIfood") ?? "";

@@ -6,7 +6,9 @@
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.Complementos
 @using FrontMenuWeb.Components.Modais.ModaisDeProdutos.GrupoDeComplementosNosProdutos
+@using FrontMenuWeb.Components.FichaTecnica
 @using FrontMenuWeb.Models.Fiscal
+@using FrontMenuWeb.Models.FichaTecnica
 @using FrontMenuWeb.Services
 @using Microsoft.AspNetCore.Components
 @using System.Globalization;
@@ -16,6 +18,7 @@
 @inject ISnackbar Snackbar
 @inject IHttpClientFactory HttpClientFactory
 @inject ProdutoService ProdutoService
+@inject FichaTecnicaService FichaTecnicaService
 @inject AliquotaService AliquotaService
 @inject ComplementosServices ComplementosServices
 @inject AuthorizationService AuthorizationService
@@ -480,9 +483,74 @@
 
 
 
+    private bool carregandoFichasTecnicas = false;
+    private List<ClsFichaTecnica> FichasPorTamanho = new();
+    private ClsFichaTecnica? FichaGeral = null;
+
     private async Task TrocaAbaDeInfosDoProduto(int numAba = 1)
     {
         NumAba = numAba;
+        if (numAba == 4 && ProdutoSelecionadoParaEdicao is not null)
+            await CarregarFichasTecnicas(ProdutoSelecionadoParaEdicao.Id);
+    }
+
+    private async Task CarregarFichasTecnicas(string produtoId)
+    {
+        carregandoFichasTecnicas = true;
+        StateHasChanged();
+        var fichas = await FichaTecnicaService.BuscarFichasDoProduto(produtoId);
+        FichaGeral = fichas.FirstOrDefault(f => f.PrecoProduto == null);
+        FichasPorTamanho = fichas.Where(f => f.PrecoProduto != null).ToList();
+        carregandoFichasTecnicas = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleCriarFicha(string? precoProdutoId)
+    {
+        if (ProdutoSelecionadoParaEdicao is null) return;
+        var ficha = await FichaTecnicaService.CriarFicha(ProdutoSelecionadoParaEdicao.Id, precoProdutoId);
+        if (ficha is not null)
+        {
+            Snackbar.Add("Ficha técnica criada!", Severity.Success);
+            await CarregarFichasTecnicas(ProdutoSelecionadoParaEdicao.Id);
+        }
+        else
+        {
+            Snackbar.Add("Erro ao criar ficha técnica.", Severity.Error);
+        }
+    }
+
+    private void HandleItemAdicionado(ClsItemFichaTecnica item, string? precoProdutoId)
+    {
+        if (precoProdutoId is null && FichaGeral is not null)
+            FichaGeral.Itens.Add(item);
+        else
+        {
+            var ficha = FichasPorTamanho.FirstOrDefault(f => f.PrecoProduto?.Id == precoProdutoId);
+            ficha?.Itens.Add(item);
+        }
+        StateHasChanged();
+    }
+
+    private void HandleItemRemovido(int itemId, string? precoProdutoId)
+    {
+        if (precoProdutoId is null && FichaGeral is not null)
+            FichaGeral.Itens.RemoveAll(i => i.Id == itemId);
+        else
+        {
+            var ficha = FichasPorTamanho.FirstOrDefault(f => f.PrecoProduto?.Id == precoProdutoId);
+            ficha?.Itens.RemoveAll(i => i.Id == itemId);
+        }
+        StateHasChanged();
+    }
+
+    private void HandleFichaDeletada(int fichaId, string? precoProdutoId)
+    {
+        if (precoProdutoId is null)
+            FichaGeral = null;
+        else
+            FichasPorTamanho.RemoveAll(f => f.Id == fichaId);
+        StateHasChanged();
     }
 
     private async Task OnSaveChanges(ClsProduto produtoModificado)
@@ -1985,11 +2053,43 @@
                             }
                             else if (NumAba == 4)
                             {
-                                <MudGrid>
-                                    <MudItem xs="12">
-                                        <MudPaper Class="d-flex align-center justify-center mud-width-full py-8">Aba de ficha técnica</MudPaper>
-                                    </MudItem>
-                                </MudGrid>
+                                @if (carregandoFichasTecnicas)
+                                {
+                                    <MudSkeleton Height="200px" Class="mb-3" />
+                                    <MudSkeleton Height="200px" />
+                                }
+                                else
+                                {
+                                    <MudGrid>
+                                        <MudItem xs="12">
+                                            <CardFichaTecnica
+                                                Titulo="Ficha Técnica Geral"
+                                                Subtitulo="Usada quando este produto é selecionado como complemento"
+                                                Ficha="@FichaGeral"
+                                                OnCriarFicha="@(async () => await HandleCriarFicha(null))"
+                                                OnItemAdicionado="@((item) => HandleItemAdicionado(item, null))"
+                                                OnItemRemovido="@((id) => HandleItemRemovido(id, null))"
+                                                OnFichaDeletada="@((id) => HandleFichaDeletada(id, null))" />
+                                        </MudItem>
+
+                                        @foreach (var preco in ProdutoSelecionadoParaEdicao!.Precos)
+                                        {
+                                            var fichaDoTamanho = FichasPorTamanho.FirstOrDefault(f => f.PrecoProduto?.Id == preco.Id);
+                                            var precoLocal = preco;
+
+                                            <MudItem xs="12" sm="6">
+                                                <CardFichaTecnica
+                                                    Titulo="@($"Ficha Técnica — {precoLocal.DescricaoDoTamanho}")"
+                                                    Subtitulo="@($"Valor: {precoLocal.Valor:C}")"
+                                                    Ficha="@fichaDoTamanho"
+                                                    OnCriarFicha="@(async () => await HandleCriarFicha(precoLocal.Id))"
+                                                    OnItemAdicionado="@((item) => HandleItemAdicionado(item, precoLocal.Id))"
+                                                    OnItemRemovido="@((id) => HandleItemRemovido(id, precoLocal.Id))"
+                                                    OnFichaDeletada="@((id) => HandleFichaDeletada(id, precoLocal.Id))" />
+                                            </MudItem>
+                                        }
+                                    </MudGrid>
+                                }
                             }
                         </MudCardContent>
                     </MudCard>
