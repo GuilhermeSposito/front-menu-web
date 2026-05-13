@@ -480,34 +480,32 @@
                                         </MudStack>
                                     </MudItem>
 
-                                    @* CST ou CSOSN *@
+                                    @* CST *@
                                     <MudItem xs="12">
-                                        @if (AppState.MerchantLogado.CrtMerchant == 1)
-                                        {
-                                            <MudSelect @bind-Value="Produto.CSOSNSelected"
-                                                       T="CSOSN"
-                                                       ToStringFunc="g => g.Descricao"
-                                                       Label="CSOSN"
-                                                       Variant="Variant.Outlined">
-                                                @foreach (var csosn in ListaDeCSOSN)
-                                                {
-                                                    <MudSelectItem Value="@csosn">@csosn.Id - @csosn.Descricao</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        }
-                                        else
-                                        {
-                                            <MudSelect @bind-Value="Produto.CSTSelected"
-                                                       T="CST"
-                                                       ToStringFunc="g => g.Descricao"
-                                                       Label="CST"
-                                                       Variant="Variant.Outlined">
-                                                @foreach (var cst in ListaDeCSTS)
-                                                {
-                                                    <MudSelectItem Value="@cst">@cst.Id - @cst.Descricao</MudSelectItem>
-                                                }
-                                            </MudSelect>
-                                        }
+                                        <MudSelect @bind-Value="Produto.CSTSelected"
+                                                   T="CST"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="CST"
+                                                   Variant="Variant.Outlined">
+                                            @foreach (var cst in ListaDeCSTS)
+                                            {
+                                                <MudSelectItem Value="@cst">@cst.Id - @cst.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
+
+                                    @* CSOSN *@
+                                    <MudItem xs="12">
+                                        <MudSelect @bind-Value="Produto.CSOSNSelected"
+                                                   T="CSOSN"
+                                                   ToStringFunc="g => g.Descricao"
+                                                   Label="CSOSN"
+                                                   Variant="Variant.Outlined">
+                                            @foreach (var csosn in ListaDeCSOSN)
+                                            {
+                                                <MudSelectItem Value="@csosn">@csosn.Id - @csosn.Descricao</MudSelectItem>
+                                            }
+                                        </MudSelect>
                                     </MudItem>
 
                                     @* Alíquota *@
