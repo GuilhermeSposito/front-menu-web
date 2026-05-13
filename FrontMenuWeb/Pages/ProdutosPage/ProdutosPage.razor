@@ -33,7 +33,10 @@
                 <MudText Class="mb-3" Typo="Typo.body1">Lista de produtos cadastrados.</MudText>
             </div>
             <div class="d-flex">
-                <MudButton Variant="Variant.Filled" Color="Color.Info" Class="mr-2" OnClick="AbrirModalEntradaEstoque">Entrada de Estoque</MudButton>
+                @if (AppState.MerchantLogado.ControlaEstoque)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" Class="mr-2" OnClick="AbrirModalEntradaEstoque">Entrada de Estoque</MudButton>
+                }
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="carregandoProduto ? true : false" OnClick="@(async () => { await AddProduto(produtoParaReultilizar: null); })">Novo Produto</MudButton>
             </div>
         </div>
@@ -2101,14 +2104,13 @@
                                 {
                                     <MudGrid>
                                         <MudItem xs="12">
-                                            <CardFichaTecnica
-                                                Titulo="Ficha Técnica Geral"
-                                                Subtitulo="Usada quando este produto é selecionado como complemento"
-                                                Ficha="@FichaGeral"
-                                                OnCriarFicha="@(async () => await HandleCriarFicha(null))"
-                                                OnItemAdicionado="@((item) => HandleItemAdicionado(item, null))"
-                                                OnItemRemovido="@((id) => HandleItemRemovido(id, null))"
-                                                OnFichaDeletada="@((id) => HandleFichaDeletada(id, null))" />
+                                            <CardFichaTecnica Titulo="Ficha Técnica Geral"
+                                                              Subtitulo="Usada quando este produto é selecionado como complemento"
+                                                              Ficha="@FichaGeral"
+                                                              OnCriarFicha="@(async () => await HandleCriarFicha(null))"
+                                                              OnItemAdicionado="@((item) => HandleItemAdicionado(item, null))"
+                                                              OnItemRemovido="@((id) => HandleItemRemovido(id, null))"
+                                                              OnFichaDeletada="@((id) => HandleFichaDeletada(id, null))" />
                                         </MudItem>
 
                                         @foreach (var preco in ProdutoSelecionadoParaEdicao!.Precos)
@@ -2117,14 +2119,13 @@
                                             var precoLocal = preco;
 
                                             <MudItem xs="12" sm="6">
-                                                <CardFichaTecnica
-                                                    Titulo="@($"Ficha Técnica — {precoLocal.DescricaoDoTamanho}")"
-                                                    Subtitulo="@($"Valor: {precoLocal.Valor:C}")"
-                                                    Ficha="@fichaDoTamanho"
-                                                    OnCriarFicha="@(async () => await HandleCriarFicha(precoLocal.Id))"
-                                                    OnItemAdicionado="@((item) => HandleItemAdicionado(item, precoLocal.Id))"
-                                                    OnItemRemovido="@((id) => HandleItemRemovido(id, precoLocal.Id))"
-                                                    OnFichaDeletada="@((id) => HandleFichaDeletada(id, precoLocal.Id))" />
+                                                <CardFichaTecnica Titulo="@($"Ficha Técnica — {precoLocal.DescricaoDoTamanho}")"
+                                                                  Subtitulo="@($"Valor: {precoLocal.Valor:C}")"
+                                                                  Ficha="@fichaDoTamanho"
+                                                                  OnCriarFicha="@(async () => await HandleCriarFicha(precoLocal.Id))"
+                                                                  OnItemAdicionado="@((item) => HandleItemAdicionado(item, precoLocal.Id))"
+                                                                  OnItemRemovido="@((id) => HandleItemRemovido(id, precoLocal.Id))"
+                                                                  OnFichaDeletada="@((id) => HandleFichaDeletada(id, precoLocal.Id))" />
                                             </MudItem>
                                         }
                                     </MudGrid>
