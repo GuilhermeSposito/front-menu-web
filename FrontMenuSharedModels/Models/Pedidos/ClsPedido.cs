@@ -136,6 +136,7 @@ public class ClsPedido
     [JsonPropertyName("CodigoExternoMesa")] public string? CodigoExternoMesa { get; set; }
     [JsonPropertyName("ObservacaoDoPedido")] public string? ObservacaoDoPedido { get; set; } = string.Empty;
     [JsonPropertyName("IfoodID")] public string? IfoodID { get; set; }
+    [JsonPropertyName("IdIntegracao")] public string? IdIntegracao { get; set; }
     [JsonPropertyName("Imprimiu")] public bool Imprimiu { get; set; }
     [JsonPropertyName("JsonPedidoDeIntegracao")] public string? JsonPedidoDeIntegracao { get; set; }
     [JsonPropertyName("PedidoAgendado")] public bool PedidoAgendado { get; set; } = false;

@@ -225,6 +225,9 @@ public class B1DeliveryServices
 
         pedidoSophos.CriadoPor = "DELMATCH";
         pedidoSophos.JsonPedidoDeIntegracao = JsonSerializer.Serialize(pedido);
+        // Delmatch IDs são numéricos — não são UUIDs. Usar IdIntegracao (text) em vez de IfoodID (uuid)
+        pedidoSophos.IdIntegracao = pedidoSophos.IfoodID;
+        pedidoSophos.IfoodID = null;
 
         return pedidoSophos;
     }
@@ -368,24 +371,47 @@ public class B1DeliveryServices
                     break;
 
                 case "Recebido":
-                    await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(
-                        null, empresa.MerchantSophos?.Id ?? string.Empty, new ClsPedido { IfoodID = webhook.Id.ToString() });
-                    break;
+                    {
+                        var pedidoExistente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(webhook.Id.ToString());
+                        if (pedidoExistente is not null)
+                            await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(
+                                null, empresa.MerchantSophos?.Id ?? string.Empty, pedidoExistente);
+                        else
+                            _logger.LogWarning("[B1Delivery] Pedido {Id} não encontrado para atualizar status Recebido", webhook.Id);
+                        break;
+                    }
 
                 case "Despachado":
-                    await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(
-                        null, empresa.MerchantSophos?.Id, new ClsPedido { IfoodID = webhook.Id.ToString() });
-                    break;
+                    {
+                        var pedidoExistente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(webhook.Id.ToString());
+                        if (pedidoExistente is not null)
+                            await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(
+                                null, empresa.MerchantSophos?.Id, pedidoExistente);
+                        else
+                            _logger.LogWarning("[B1Delivery] Pedido {Id} não encontrado para atualizar status Despachado", webhook.Id);
+                        break;
+                    }
 
                 case "Entregue":
-                    await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(
-                        null, empresa.MerchantSophos?.Id, new ClsPedido { IfoodID = webhook.Id.ToString() });
-                    break;
+                    {
+                        var pedidoExistente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(webhook.Id.ToString());
+                        if (pedidoExistente is not null)
+                            await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(
+                                null, empresa.MerchantSophos?.Id, pedidoExistente);
+                        else
+                            _logger.LogWarning("[B1Delivery] Pedido {Id} não encontrado para atualizar status Entregue", webhook.Id);
+                        break;
+                    }
 
                 case "Cancelado":
-                    await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(
-                        new ClsPedido { IfoodID = webhook.Id.ToString() });
-                    break;
+                    {
+                        var pedidoExistente = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(webhook.Id.ToString());
+                        if (pedidoExistente is not null)
+                            await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(pedidoExistente);
+                        else
+                            _logger.LogWarning("[B1Delivery] Pedido {Id} não encontrado para atualizar status Cancelado", webhook.Id);
+                        break;
+                    }
 
                 default:
                     _logger.LogInformation("[B1Delivery] Status desconhecido '{Status}' para pedido {Id}", webhook.Status, webhook.Id);
