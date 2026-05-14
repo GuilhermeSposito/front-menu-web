@@ -34,7 +34,7 @@ public class DelmatchMerchantInfoDto
 public class DelmatchPaymentDto
 {
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-    [JsonPropertyName("code")] public int Code { get; set; }
+    [JsonPropertyName("code")] public string Code { get; set; } = string.Empty;
     [JsonPropertyName("prepaid")] public bool Prepaid { get; set; }
     [JsonPropertyName("value")] public decimal Value { get; set; }
     [JsonPropertyName("issuer")] public string Issuer { get; set; } = string.Empty;

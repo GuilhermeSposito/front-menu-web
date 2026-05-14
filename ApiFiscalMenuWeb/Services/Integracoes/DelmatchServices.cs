@@ -343,7 +343,18 @@ public class B1DeliveryServices
                     if (!ordersResponse.IsSuccessStatusCode)
                         return;
 
-                    var pedidos = await ordersResponse.Content.ReadFromJsonAsync<List<DelmatchOrderDto>>();
+                    var ordersJson = await ordersResponse.Content.ReadAsStringAsync();
+                    List<DelmatchOrderDto>? pedidos;
+                    try
+                    {
+                        pedidos = JsonSerializer.Deserialize<List<DelmatchOrderDto>>(ordersJson);
+                    }
+                    catch (JsonException jex)
+                    {
+                        _logger.LogError(jex, "[B1Delivery] Falha ao deserializar pedidos. JSON recebido: {Json}", ordersJson);
+                        return;
+                    }
+
                     var pedidoNovo = pedidos?.FirstOrDefault(p => p.Id == webhook.Id);
                     if (pedidoNovo is not null)
                         await AdicionaPedidoAoSophos(pedidoNovo, empresa);
@@ -373,6 +384,10 @@ public class B1DeliveryServices
                     _logger.LogInformation("[B1Delivery] Status desconhecido '{Status}' para pedido {Id}", webhook.Status, webhook.Id);
                     break;
             }
+        }
+        catch (JsonException jex)
+        {
+            _logger.LogError(jex, "[B1Delivery] Erro de conversão JSON ao processar webhook do pedido {Id}", webhook.Id);
         }
         catch (Exception ex)
         {
