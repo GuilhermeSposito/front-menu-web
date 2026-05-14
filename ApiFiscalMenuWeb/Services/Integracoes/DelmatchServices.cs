@@ -211,11 +211,14 @@ public class B1DeliveryServices
                 Value = (double)pag.Value,
             };
 
-            if (pag.Code == "DIN")
+            if (pag.Code == "DIN" && pag.CashChange > 0)
             {
+                // Convencao iFood: Value = total do pedido, ChangeFor = valor pago pelo cliente
+                // Assim: Troco = ChangeFor - Value (calculado em IfoodServices)
+                pagConvertido.Value = (double)pedido.TotalPrice;
                 pagConvertido.Cash = new CashMethodsIfoodDto
                 {
-                   ChangeFor = pag.CashChange
+                    ChangeFor = (double)pag.Value
                 };
             }
 
@@ -261,7 +264,7 @@ public class B1DeliveryServices
 
         if (n.Contains("CREDITO") || n.Contains("CREDIT")) return "CREDIT";
         if (n.Contains("DEBITO") || n.Contains("DEBIT") || n == "DEB") return "DEBIT";
-        if (n.Contains("DINHEIRO") || n.Contains("MONEY") || n == "DIN" || n == "CASH") return "CASH";
+        if (n.Contains("DINHEIRO") || n.Contains("MONEY") || n == "Dinheiro" || n == "CASH") return "CASH";
         if (n.Contains("PIX")) return "PIX";
         if (n.Contains("REFEI")) return "MEAL_VOUCHER";
         if (n.Contains("ALIMENT")) return "FOOD_VOUCHER";
