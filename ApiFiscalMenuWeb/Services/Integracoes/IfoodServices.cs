@@ -637,10 +637,14 @@ public class IfoodServices
             if (Metodo.Method == "CASH")
             {
                 if (Metodo.Cash.ChangeFor > 0)
+                {
                     Pagamento.ValorTotal = (float)Metodo.Cash.ChangeFor;
-
-                var Troco = Metodo.Cash.ChangeFor - Metodo.Value;
-                Pagamento.Troco = (float)Troco;
+                    Pagamento.Troco = (float)(Metodo.Cash.ChangeFor - Metodo.Value);
+                }
+                else
+                {
+                    Pagamento.Troco = 0;
+                }
             }
 
             Pagamento.formaDeRecebimentoId = Pagamento.FormaDePagamento?.Id ?? 0;
