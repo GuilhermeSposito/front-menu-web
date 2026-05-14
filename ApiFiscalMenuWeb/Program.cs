@@ -25,9 +25,12 @@ builder.Services.AddScoped<NfService>();
 builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
+builder.Services.AddScoped<B1DeliveryServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
 builder.Services.AddHostedService<IfoodPollingWorker>();
+builder.Services.AddHostedService<DelmatchPollingWorker>();
+builder.Services.AddHostedService<DelmatchTokenRenewalWorker>();
 builder.Services.AddScoped<CustomMetaWSHttpHendler>();
 builder.Services.AddSingleton<WhatsAppOptInService>();
 
@@ -86,6 +89,12 @@ builder.Services.AddHttpClient("ApiNestPublica", client =>
     client.BaseAddress = new Uri(UrlSophos);
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.Add("x-api-key", ApiKeyNest);
+});
+
+builder.Services.AddHttpClient("ApiDelmatch", client =>
+{
+    client.BaseAddress = new Uri("https://delmatchcardapio.com");
+    client.Timeout = TimeSpan.FromSeconds(15);
 });
 
 

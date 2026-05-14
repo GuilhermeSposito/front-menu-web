@@ -16,16 +16,29 @@ namespace ApiFiscalMenuWeb.Controllers;
 public class IntegracoesController : Controller
 {
     private readonly IfoodServices _ifoodService;
+    private readonly B1DeliveryServices _delmatchService;
+    private readonly NestApiServices _nestApiService;
     private readonly EmailService emailService;
     private WebhookSignature _webhookSignature;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<IntegracoesController> _logger;
 
-    public IntegracoesController(IfoodServices ifoodService, EmailService email, WebhookSignature webhookSignature, IConfiguration configuration)
+    public IntegracoesController(
+        IfoodServices ifoodService,
+        B1DeliveryServices delmatchService,
+        NestApiServices nestApiService,
+        EmailService email,
+        WebhookSignature webhookSignature,
+        IConfiguration configuration,
+        ILogger<IntegracoesController> logger)
     {
         _ifoodService = ifoodService;
+        _delmatchService = delmatchService;
+        _nestApiService = nestApiService;
         emailService = email;
         _webhookSignature = webhookSignature;
         _configuration = configuration;
+        _logger = logger;
     }
 
 
@@ -130,11 +143,12 @@ public class IntegracoesController : Controller
     }
 
     [HttpPost("endpoint-webhook-b1-delivery")]
-    public async Task<IActionResult> EndpointDeConexaoB1Delivery()
+    public IActionResult EndpointDeConexaoB1Delivery([FromBody] DelmatchWebhookDto webhook)
     {
-        using var reader = new StreamReader(HttpContext.Request.Body);
-        var body = await reader.ReadToEndAsync();
-        Console.WriteLine("Conexão delmatch: \n\n" + body + "\n\n");
+        if (webhook is null)
+            return BadRequest();
+
+        _ = _delmatchService.ProcessarWebhookAsync(webhook);
         return Accepted();
     }
     #endregion

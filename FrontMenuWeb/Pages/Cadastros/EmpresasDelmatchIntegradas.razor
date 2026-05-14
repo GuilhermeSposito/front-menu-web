@@ -1,0 +1,150 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@page "/empresas-delmatch-integradas"
+@using FrontMenuWeb.Components.Modais.ModaisDeCadastros.EmpresaDelmatch
+@using FrontMenuWeb.Models.Integracoes
+@using FrontMenuWeb.Services
+@inject EmpresaDelmatchService EmpresaDelmatchService
+@inject AuthorizationService AuthorizationService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Square="false" Elevation="0"
+          Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
+    <MudLayout>
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <MudText Typo="Typo.h4">Empresas B1 Delivery</MudText>
+                <MudText Class="mb-3" Typo="Typo.body1">Lista de empresas B1 Delivery integradas.</MudText>
+            </div>
+            <div class="d-flex">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="Carregando"
+                           OnClick="AbrirModalDeEmpresa">
+                    Nova Empresa
+                </MudButton>
+            </div>
+        </div>
+
+        <MudDataGrid T="ClsEmpresaDelmatch" @ref="dataGridRef" MultiSelection="false" SelectOnRowClick="true"
+                     Class="rounded-3 custom-striped" Loading="Carregando" Hover="true" ServerData="LoadServerData"
+                     ShowFilterIcons="false" ShowColumnOptions="false">
+            <NoRecordsContent>
+                <AvisoDeDadosVazios ReferenciaDados="B1 Delivery" />
+            </NoRecordsContent>
+            <Columns>
+                <TemplateColumn T="ClsEmpresaDelmatch" Title="Plataforma">
+                    <CellTemplate Context="context">
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small">B1 Delivery</MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsEmpresaDelmatch" Title="ID Externo">
+                    <CellTemplate Context="context">
+                        <MudText>@context.Item.IdExterno</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <PropertyColumn Sortable="false" Property="x => x.Email" Title="E-mail" />
+
+                <TemplateColumn T="ClsEmpresaDelmatch" Title="Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="Clique para ativar/desativar a integração" Color="Color.Primary">
+                            <MudSwitch T="bool" Value="@context.Item.Ativo" Color="Color.Success"
+                                       ValueChanged="@(async valor => { context.Item.Ativo = valor; await OnSaveChanges(context.Item); })" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn T="ClsEmpresaDelmatch" Title="Ações">
+                    <CellTemplate Context="context">
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert">
+                            <MudMenuItem OnClick="@(async () => await DeletarEmpresa(context.Item))"
+                                         Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Deletar" />
+                        </MudMenu>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    </MudLayout>
+</MudPaper>
+
+@code {
+    #region Propriedades
+    private bool Carregando { get; set; } = false;
+    private MudDataGrid<ClsEmpresaDelmatch> dataGridRef = default!;
+    #endregion
+
+    #region Carregamento do grid
+    private async Task<GridData<ClsEmpresaDelmatch>> LoadServerData(GridState<ClsEmpresaDelmatch> state)
+    {
+        try
+        {
+            Carregando = true;
+            var result = await EmpresaDelmatchService.GetEmpresasIntegradas();
+            return new GridData<ClsEmpresaDelmatch>
+            {
+                Items = result,
+                TotalItems = result.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar empresas: {ex.Message}", Severity.Error);
+            return new GridData<ClsEmpresaDelmatch>();
+        }
+        finally
+        {
+            Carregando = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+    #endregion
+
+    #region Abrir modal de criação
+    private async Task AbrirModalDeEmpresa()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoConfiguracoes")) return;
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseOnEscapeKey =
+true
+        };
+        var dialog = await DialogService.ShowAsync<EditarEAdicionarEmpresaDelmatch>("Nova Empresa B1 Delivery", options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await dataGridRef.ReloadServerData();
+            StateHasChanged();
+        }
+    }
+    #endregion
+
+    #region Ações
+    private void MostraMensagem<T>(ReturnApiRefatored<T> response)
+    {
+        var sucesso = response.Status == "success";
+        var mensagem = sucesso ? response.Data.Messages : response.Messages;
+        Snackbar.Add(string.Join(", ", mensagem), sucesso ? Severity.Success : Severity.Error);
+    }
+
+    private async Task OnSaveChanges(ClsEmpresaDelmatch empresa)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoConfiguracoes")) return;
+        var retorno = await EmpresaDelmatchService.UpdateEmpresa(empresa);
+        MostraMensagem(retorno);
+    }
+
+    private async Task DeletarEmpresa(ClsEmpresaDelmatch empresa)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoConfiguracoes")) return;
+        var response = await EmpresaDelmatchService.DeleteEmpresa(empresa.Id);
+        MostraMensagem(response);
+        await dataGridRef.ReloadServerData();
+    }
+    #endregion
+}

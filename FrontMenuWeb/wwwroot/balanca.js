@@ -123,33 +123,39 @@ window.balancaSerial = {
     },
 
     _extrairPeso: function (resposta) {
-        // Primeiro tenta formato com separador decimal (ex: "12.345" ou "12,345")
-        const matchDecimal = resposta.match(/(\d+[.,]\d+)/);
+        // Primeiro tenta formato com separador decimal (ex: "12.345", "-12.345" ou "12,345")
+        const matchDecimal = resposta.match(/(-?\d+[.,]\d+)/);
         if (matchDecimal) {
             return parseFloat(matchDecimal[1].replace(",", "."));
         }
 
         // Protocolo Toledo/Prix: peso entre STX (\x02) e ETX (\x03), sem separador decimal
         // Ex: "\x0203020\x03" -> "03020" -> últimos 3 dígitos são decimais -> 03.020 kg
-        const matchProtocolo = resposta.match(/\x02(\d+)\x03/);
+        const matchProtocolo = resposta.match(/\x02(-?\d+)\x03/);
         if (matchProtocolo) {
             const raw = matchProtocolo[1];
-            if (raw.length >= 4) {
-                const inteira = raw.slice(0, raw.length - 3);
-                const decimal = raw.slice(raw.length - 3);
-                return parseFloat((inteira || "0") + "." + decimal);
+            const negativo = raw.startsWith("-");
+            const digits = negativo ? raw.slice(1) : raw;
+            if (digits.length >= 4) {
+                const inteira = digits.slice(0, digits.length - 3);
+                const decimal = digits.slice(digits.length - 3);
+                const valor = parseFloat((inteira || "0") + "." + decimal);
+                return negativo ? -valor : valor;
             }
             return parseFloat(raw);
         }
 
-        // Fallback: tenta extrair qualquer sequência de dígitos
-        const matchDigitos = resposta.match(/(\d{2,})/);
+        // Fallback: tenta extrair qualquer sequência de dígitos (com possível sinal)
+        const matchDigitos = resposta.match(/(-?\d{2,})/);
         if (matchDigitos) {
             const raw = matchDigitos[1];
-            if (raw.length >= 4) {
-                const inteira = raw.slice(0, raw.length - 3);
-                const decimal = raw.slice(raw.length - 3);
-                return parseFloat((inteira || "0") + "." + decimal);
+            const negativo = raw.startsWith("-");
+            const digits = negativo ? raw.slice(1) : raw;
+            if (digits.length >= 4) {
+                const inteira = digits.slice(0, digits.length - 3);
+                const decimal = digits.slice(digits.length - 3);
+                const valor = parseFloat((inteira || "0") + "." + decimal);
+                return negativo ? -valor : valor;
             }
         }
 

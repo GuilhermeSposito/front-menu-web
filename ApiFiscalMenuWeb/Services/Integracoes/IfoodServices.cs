@@ -447,7 +447,7 @@ public class IfoodServices
     #endregion
 
     #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
-    private async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos)
+    public async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos)
     {
         var json = JsonSerializer.Serialize(PedidoIfood);
 
@@ -531,7 +531,7 @@ public class IfoodServices
                     }
                 }
 
-                if(OpcoesComSaboresParaSerExcluido.Count > 0)
+                if (OpcoesComSaboresParaSerExcluido.Count > 0)
                     item.Options = item.Options.Except(OpcoesComSaboresParaSerExcluido).ToList();
             }
             else
@@ -820,8 +820,8 @@ public class IfoodServices
         {
             if (itemIfoodDto.ExternalCode.Contains(legenda))
             {
-                var codigoLimpo = (legenda  == itemIfoodDto.ExternalCode) ? itemIfoodDto.ExternalCode : itemIfoodDto.ExternalCode.Replace(legenda, "");
-      
+                var codigoLimpo = (legenda == itemIfoodDto.ExternalCode) ? itemIfoodDto.ExternalCode : itemIfoodDto.ExternalCode.Replace(legenda, "");
+
                 string? LegendaFormatada = RetornaTamanhoDoItem(legenda);
                 return (codigoLimpo, LegendaFormatada);
             }

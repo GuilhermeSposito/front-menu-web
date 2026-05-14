@@ -144,6 +144,7 @@ public class ClsPedido
     [JsonPropertyName("ItensFechamentoIds")] public List<int>? ItensFechamentoIds { get; set; }
     [JsonPropertyName("IsConvenio")] public bool IsConvenio { get; set; } = false;
     [JsonPropertyName("ValorFaltaPagar")] public float ValorFaltaPagar { get; set; } = 0f;
+    [JsonPropertyName("AceitaMenssagemDoWhatsApp")] public bool AceitaMenssagemDoWhatsApp { get; set; } = true;
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

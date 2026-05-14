@@ -251,4 +251,55 @@ public class NestApiServices
             return false;
         }
     }
+
+    // ── Delmatch ─────────────────────────────────────────────────────────────
+
+    public async Task<List<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresaDto>> RetornaEmpresasDelmatchParaPolling()
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.GetAsync("empresas-delmatch/all-for-polling");
+
+            if (!response.IsSuccessStatusCode)
+                return new();
+
+            var result = await response.Content.ReadFromJsonAsync<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresasPollingResponseDto>();
+            return result?.Empresas ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao buscar empresas Delmatch para polling: {ex.Message}");
+            return new();
+        }
+    }
+
+    public async Task<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresaDto?> RetornaEmpresaDelmatchPeloId(int id)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.GetAsync($"empresas-delmatch/by-id/{id}");
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var result = await response.Content.ReadFromJsonAsync<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresaByIdResponseDto>();
+            return result?.Empresa;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao buscar empresa Delmatch {id}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Fire-and-forget: dispara a verificação/renovação de tokens Delmatch sem aguardar.
+    /// </summary>
+    public void SolicitaVerificacaoDeTokens()
+    {
+        var client = _factory.CreateClient("ApiNestPublica");
+        _ = client.PostAsync("empresas-delmatch/verificar-tokens", null);
+    }
 }

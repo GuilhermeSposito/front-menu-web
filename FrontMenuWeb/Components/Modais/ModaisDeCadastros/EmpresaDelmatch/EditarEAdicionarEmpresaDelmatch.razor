@@ -1,0 +1,95 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using FrontMenuWeb.Models.Integracoes
+@using FrontMenuWeb.Services
+@inject EmpresaDelmatchService EmpresaDelmatchService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Empresa.IdExterno"
+                              Label="ID Externo (ID da empresa no B1 Delivery)"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Number" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Empresa.Email"
+                              Label="E-mail de acesso ao B1 Delivery"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Email" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudTextField @bind-Value="Empresa.Senha"
+                              Label="Senha de acesso ao B1 Delivery"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password" />
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudButton Color="Color.Primary"
+                               OnClick="AdicionarEmpresa"
+                               Variant="Variant.Filled"
+                               Disabled="Salvando">
+                        @(Salvando ? "Salvando..." : "Adicionar Empresa")
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    #region Propriedades
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public ClsEmpresaDelmatch Empresa { get; set; } = new ClsEmpresaDelmatch();
+
+    private bool Salvando { get; set; } = false;
+    #endregion
+
+    #region Ações
+    private async Task AdicionarEmpresa()
+    {
+        if (Empresa.IdExterno <= 0)
+        {
+            Snackbar.Add("Informe o ID Externo da empresa.", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Empresa.Email))
+        {
+            Snackbar.Add("Informe o e-mail de acesso.", Severity.Warning);
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(Empresa.Senha))
+        {
+            Snackbar.Add("Informe a senha de acesso.", Severity.Warning);
+            return;
+        }
+
+        Salvando = true;
+        try
+        {
+            var response = await EmpresaDelmatchService.CreateEmpresa(Empresa);
+            if (response.Status == "success")
+            {
+                Snackbar.Add("Empresa B1 Delivery adicionada com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+            }
+        }
+        finally
+        {
+            Salvando = false;
+        }
+    }
+    #endregion
+}
