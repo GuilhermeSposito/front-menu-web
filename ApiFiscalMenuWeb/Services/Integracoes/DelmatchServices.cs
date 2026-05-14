@@ -344,10 +344,15 @@ public class B1DeliveryServices
                         return;
 
                     var ordersJson = await ordersResponse.Content.ReadAsStringAsync();
+                    var delmatchJsonOptions = new JsonSerializerOptions
+                    {
+                        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+                        PropertyNameCaseInsensitive = true,
+                    };
                     List<DelmatchOrderDto>? pedidos;
                     try
                     {
-                        pedidos = JsonSerializer.Deserialize<List<DelmatchOrderDto>>(ordersJson);
+                        pedidos = JsonSerializer.Deserialize<List<DelmatchOrderDto>>(ordersJson, delmatchJsonOptions);
                     }
                     catch (JsonException jex)
                     {
