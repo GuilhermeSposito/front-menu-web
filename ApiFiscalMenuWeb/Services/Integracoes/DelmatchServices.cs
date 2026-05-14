@@ -202,7 +202,7 @@ public class B1DeliveryServices
 
         // Pagamentos
         pedidoIfood.Payments = new PaymentIfoodDto();
-        foreach (var pag in pedido.Payments)
+        foreach (DelmatchPaymentDto pag in pedido.Payments)
         {
             var pagConvertido = new MethodsIfoodDto
             {
@@ -215,7 +215,7 @@ public class B1DeliveryServices
             {
                 pagConvertido.Cash = new CashMethodsIfoodDto
                 {
-                   ChangeFor = (double)(pag.Value - pedido.TotalPrice) 
+                   ChangeFor = pag.CashChange
                 };
             }
 
