@@ -113,7 +113,6 @@ public class B1DeliveryServices
         var pedidoIfood = new PedidoIfoodDto
         {
             Id = pedido.Id.ToString(),
-            DisplayId = pedido.ShortReference.ToString(),
             OrderType = pedido.Type == "DELIVERY" ? "DELIVERY" : "TAKEOUT",
             OrderTiming = pedido.ScheduleDateTime != null ? "SCHEDULED" : "IMEDIATE",
             CreatedAt = DateTime.TryParse(pedido.CreatedAt, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dtCreated) ? dtCreated : DateTime.UtcNow,
