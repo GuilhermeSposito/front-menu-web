@@ -115,8 +115,8 @@ public class B1DeliveryServices
             Id = pedido.Id.ToString(),
             DisplayId = pedido.ShortReference.ToString(),
             OrderType = pedido.Type == "DELIVERY" ? "DELIVERY" : "TAKEOUT",
-            OrderTiming = pedido.ScheduleDateTime.HasValue ? "SCHEDULED" : "INSTANT",
-            CreatedAt = pedido.CreatedAt,
+            OrderTiming = pedido.ScheduleDateTime != null ? "SCHEDULED" : "IMEDIATE",
+            CreatedAt = DateTime.TryParse(pedido.CreatedAt, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dtCreated) ? dtCreated : DateTime.UtcNow,
             ExtraInfo = string.Empty,
 
             Total = new TotalIfoodDto
@@ -152,10 +152,11 @@ public class B1DeliveryServices
         };
 
         // Agendamento
-        if (pedido.ScheduleDateTime.HasValue)
+        if (pedido.ScheduleDateTime != null &&
+            DateTime.TryParse(pedido.ScheduleDateTime, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dtSchedule))
         {
             if (pedidoIfood.OrderType == "DELIVERY")
-                pedidoIfood.Delivery.DeliveryDateTime = pedido.ScheduleDateTime.Value;
+                pedidoIfood.Delivery.DeliveryDateTime = dtSchedule;
         }
 
         // Benefits (descontos)

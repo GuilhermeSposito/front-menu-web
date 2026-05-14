@@ -7,7 +7,7 @@ public class DelmatchOrderDto
     [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("reference")] public int Reference { get; set; }
     [JsonPropertyName("shortReference")] public int ShortReference { get; set; }
-    [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
+    [JsonPropertyName("createdAt")] public string CreatedAt { get; set; } = string.Empty;
     [JsonPropertyName("type")] public string Type { get; set; } = string.Empty;
     [JsonPropertyName("merchant")] public DelmatchMerchantInfoDto Merchant { get; set; } = new();
     [JsonPropertyName("payments")] public List<DelmatchPaymentDto> Payments { get; set; } = new();
@@ -18,9 +18,9 @@ public class DelmatchOrderDto
     [JsonPropertyName("deliveryFee")] public decimal DeliveryFee { get; set; }
     [JsonPropertyName("deliveryAddress")] public DelmatchAddressDto DeliveryAddress { get; set; } = new();
     [JsonPropertyName("partner")] public DelmatchPartnerDto? Partner { get; set; }
-    [JsonPropertyName("deliveryDateTime")] public DateTime? DeliveryDateTime { get; set; }
+    [JsonPropertyName("deliveryDateTime")] public string? DeliveryDateTime { get; set; }
     [JsonPropertyName("preparationTimeInSeconds")] public int PreparationTimeInSeconds { get; set; }
-    [JsonPropertyName("scheduleDateTime")] public DateTime? ScheduleDateTime { get; set; }
+    [JsonPropertyName("scheduleDateTime")] public string? ScheduleDateTime { get; set; }
 }
 
 public class DelmatchMerchantInfoDto
