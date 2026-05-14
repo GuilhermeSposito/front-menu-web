@@ -1209,6 +1209,9 @@ public class NfService
     {
 
         var Dets = new List<Det>();
+        // Itens com PrecoTotal = 0 não têm valor fiscal e causam rejeição da SEFAZ
+        // quando recebem desconto rateado ("Valor do desconto maior que valor do produto")
+        ItensDoPedido = ItensDoPedido.Where(i => i.PrecoTotal > 0).ToList();
         int QtdItens = ItensDoPedido.Count;
 
         // Rateio em decimal com 2 casas e distribuição do resíduo no último item.
