@@ -278,7 +278,7 @@ public class NestApiServices
     {
         try
         {
-            var client = _factory.CreateClient("ApiNestPublica");
+            var client = _factory.CreateClient("ApiAutorizada");
             var response = await client.GetAsync($"empresas-delmatch/by-id/{id}");
 
             if (!response.IsSuccessStatusCode)
