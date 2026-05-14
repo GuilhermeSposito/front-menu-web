@@ -317,6 +317,11 @@ public class B1DeliveryServices
             return;
         }
 
+        if (empresa.MerchantSophos.AceitaPedidoAutDeIntegracoes)
+        { 
+            pedidoSophos.EtapaPedido = "PREPARANDO";
+        }
+
         bool adicionou = await _nestApiService.CriarPedidoSophos(empresa.MerchantSophos, pedidoSophos);
         if (!adicionou)
         {
@@ -326,7 +331,6 @@ public class B1DeliveryServices
             return;
         }
 
-        // Confirmar no Delmatch automaticamente apenas se o merchant aceita pedidos automáticos
         if (empresa.MerchantSophos.AceitaPedidoAutDeIntegracoes)
         {
             await AceitaPedidoDelmatch(pedido.Id, empresa.AccessToken);
