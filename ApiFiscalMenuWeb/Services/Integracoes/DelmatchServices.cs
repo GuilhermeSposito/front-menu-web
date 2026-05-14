@@ -334,10 +334,9 @@ public class B1DeliveryServices
 
             switch (webhook.Status)
             {
-                case "Recebido":
+                case "Aguardando aceite":
                     var delmatchClient = _factory.CreateClient("ApiDelmatch");
-                    delmatchClient.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", empresa.AccessToken);
+                    delmatchClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", empresa.AccessToken);
 
                     var ordersResponse = await delmatchClient.GetAsync("/api/orders.json");
                     if (!ordersResponse.IsSuccessStatusCode)
@@ -349,7 +348,7 @@ public class B1DeliveryServices
                         await AdicionaPedidoAoSophos(pedidoNovo, empresa);
                     break;
 
-                case "Confirmado":
+                case "Recebido":
                     await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(
                         null, empresa.MerchantSophos?.Id ?? string.Empty, new ClsPedido { IfoodID = webhook.Id.ToString() });
                     break;
