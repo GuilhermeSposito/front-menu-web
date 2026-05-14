@@ -265,7 +265,7 @@ public class NestApiServices
                 return new();
 
             var result = await response.Content.ReadFromJsonAsync<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresasPollingResponseDto>();
-            return result?.Empresas ?? new();
+            return result?.Data?.Empresas ?? new();
         }
         catch (Exception ex)
         {
@@ -285,7 +285,7 @@ public class NestApiServices
                 return null;
 
             var result = await response.Content.ReadFromJsonAsync<ApiFiscalMenuWeb.Models.Dtos.DelmatchEmpresaByIdResponseDto>();
-            return result?.Empresa;
+            return result?.Data?.Empresa;
         }
         catch (Exception ex)
         {

@@ -17,11 +17,21 @@ public class DelmatchEmpresaDto
 public class DelmatchEmpresasPollingResponseDto
 {
     [JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
+    [JsonPropertyName("data")] public DelmatchEmpresasPollingData? Data { get; set; }
+}
+
+public class DelmatchEmpresasPollingData
+{
     [JsonPropertyName("Empresas")] public List<DelmatchEmpresaDto> Empresas { get; set; } = new();
 }
 
 public class DelmatchEmpresaByIdResponseDto
 {
     [JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
+    [JsonPropertyName("data")] public DelmatchEmpresaByIdData? Data { get; set; }
+}
+
+public class DelmatchEmpresaByIdData
+{
     [JsonPropertyName("Empresa")] public DelmatchEmpresaDto? Empresa { get; set; }
 }
