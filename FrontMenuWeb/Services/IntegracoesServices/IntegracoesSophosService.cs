@@ -55,7 +55,20 @@ public class IntegracoesSophosService
         var Retorno = await _httpClient.PostAsync($"integracoes/ifood/accepted/{IdPedidoIntegrado}", null);
 
         return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido Aceito com sucesso" : "Erro ao aceitar pedido" } };
+    }
 
+    public async Task<ReturnApiRefatored<object>> AceitaPedidoDelmatch(string idIntegracao, string merchantSophosId)
+    {
+        if (string.IsNullOrEmpty(idIntegracao))
+            return new ReturnApiRefatored<object>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não foi possível encontrar o identificador do pedido Delmatch." },
+            };
+
+        var Retorno = await _httpClient.PostAsync($"integracoes/delmatch/accepted/{idIntegracao}?merchantSophosId={merchantSophosId}", null);
+
+        return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido Delmatch" } };
     }
 
 

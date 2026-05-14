@@ -106,6 +106,13 @@ public class IntegracoesController : Controller
         var Return = await _ifoodService.AceitaPedido(id);
         return Ok(Return);
     }
+
+    [HttpPost("delmatch/accepted/{idIntegracao}")]
+    public async Task<ActionResult> AceitaPedidoDelmatch([FromRoute] string idIntegracao, [FromQuery] string merchantSophosId)
+    {
+        var sucesso = await _delmatchService.AceitarPedidoManual(idIntegracao, merchantSophosId);
+        return Ok(new { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido Delmatch" } });
+    }
     #endregion
 
     #region Região de Webhooks (Pontos de extremidade)

@@ -229,6 +229,14 @@ public class B1DeliveryServices
         pedidoSophos.IdIntegracao = pedidoSophos.IfoodID;
         pedidoSophos.IfoodID = null;
 
+        // Mesmo padrão do iFood: se o merchant não aceita pedidos automaticamente,
+        // o pedido entra como NOVO/ABERTO para aceite manual no painel
+        if (!merchant.AceitaPedidoAutDeIntegracoes)
+        {
+            pedidoSophos.EtapaPedido = "NOVO";
+            pedidoSophos.StatusPedido = "ABERTO";
+        }
+
         return pedidoSophos;
     }
 
@@ -318,11 +326,50 @@ public class B1DeliveryServices
             return;
         }
 
-        // Confirmar no Delmatch apenas após salvar com sucesso e se estiver emitindo NFe
-        if (empresa.MerchantSophos.EmitindoNfeProd)
+        // Confirmar no Delmatch automaticamente apenas se o merchant aceita pedidos automáticos
+        if (empresa.MerchantSophos.AceitaPedidoAutDeIntegracoes)
         {
             await AceitaPedidoDelmatch(pedido.Id, empresa.AccessToken);
         }
+    }
+
+    /// <summary>
+    /// Aceite manual de pedido Delmatch — chamado pelo painel quando o merchant aceita um pedido NOVO.
+    /// Confirma no Delmatch e atualiza para PREPARANDO no Sophos.
+    /// </summary>
+    public async Task<bool> AceitarPedidoManual(string idIntegracao, string merchantSophosId)
+    {
+        // Buscar o pedido no Sophos pelo IdIntegracao
+        var pedidoSophos = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(idIntegracao);
+        if (pedidoSophos is null)
+        {
+            _logger.LogWarning("[B1Delivery] AceitarPedidoManual: pedido {Id} não encontrado no Sophos", idIntegracao);
+            return false;
+        }
+
+        // Buscar a empresa Delmatch pelo merchantSophosId para obter o AccessToken
+        var empresas = await _nestApiService.RetornaEmpresasDelmatchParaPolling();
+        var empresa = empresas.FirstOrDefault(e => e.MerchantSophos?.Id == merchantSophosId);
+        if (empresa is null)
+        {
+            _logger.LogWarning("[B1Delivery] AceitarPedidoManual: empresa Delmatch não encontrada para merchant {MerchantId}", merchantSophosId);
+            return false;
+        }
+
+        // Confirmar no Delmatch
+        if (!int.TryParse(idIntegracao, out var pedidoIdDelmatch))
+        {
+            _logger.LogWarning("[B1Delivery] AceitarPedidoManual: idIntegracao '{Id}' não é numérico", idIntegracao);
+            return false;
+        }
+
+        await AceitaPedidoDelmatch(pedidoIdDelmatch, empresa.AccessToken);
+
+        // Atualizar para PREPARANDO no Sophos
+        await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(
+            null, merchantSophosId, pedidoSophos);
+
+        return true;
     }
     #endregion
 

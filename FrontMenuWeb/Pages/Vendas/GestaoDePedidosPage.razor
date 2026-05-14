@@ -806,7 +806,16 @@
                 {
                     if (item.Pedido.CriadoPor != "SOPHOS" && item.Pedido.CriadoPor != "SOPHOS CARDAPIO")
                     {
-                        var response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
+                        ReturnApiRefatored<object> response;
+                        if (item.Pedido.CriadoPor == "DELMATCH")
+                        {
+                            response = await IntegracoesSophosService.AceitaPedidoDelmatch(item.Pedido.IdIntegracao ?? string.Empty, AppState.MerchantLogado.Id);
+                        }
+                        else
+                        {
+                            response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
+                        }
+
                         if (response.Status == "success")
                         {
                             bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
