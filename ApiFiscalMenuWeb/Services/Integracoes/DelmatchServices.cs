@@ -309,7 +309,9 @@ public class B1DeliveryServices
         bool adicionou = await _nestApiService.CriarPedidoSophos(empresa.MerchantSophos, pedidoSophos);
         if (!adicionou)
         {
-            _logger.LogWarning("[B1Delivery] Falha ao salvar pedido {PedidoId} no Sophos", pedido.Id);
+            _logger.LogWarning("[B1Delivery] Falha ao salvar pedido {PedidoId} no Sophos. Payload enviado: {Payload}",
+                pedido.Id,
+                JsonSerializer.Serialize(pedidoSophos));
             return;
         }
 

@@ -100,7 +100,7 @@ public class NestApiServices
         var RetornoDoCreate = await PedidoServiceNest.CreatePedidoPublicAsync(NovoPedido, Merchant, cts.Token);
         if (RetornoDoCreate.Status == "error")
         {
-            Console.WriteLine(string.Join(",", RetornoDoCreate.Messages));
+            Console.WriteLine($"[CriarPedidoSophos] Erro ao criar pedido. Merchant: {Merchant?.Id} | Mensagens: {string.Join(", ", RetornoDoCreate.Messages)} | Payload: {JsonSerializer.Serialize(NovoPedido)}");
             return false;
         }
 
