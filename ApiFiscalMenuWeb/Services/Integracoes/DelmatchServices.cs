@@ -204,12 +204,22 @@ public class B1DeliveryServices
         pedidoIfood.Payments = new PaymentIfoodDto();
         foreach (var pag in pedido.Payments)
         {
-            pedidoIfood.Payments.Methods.Add(new MethodsIfoodDto
+            var pagConvertido = new MethodsIfoodDto
             {
                 Type = pag.Prepaid ? "ONLINE" : "OFFLINE",
                 Method = MapeiaNomeParaCodeIfood(pag.Name),
                 Value = (double)pag.Value,
-            });
+            };
+
+            if (pag.Code == "DIN")
+            {
+                pagConvertido.Cash = new CashMethodsIfoodDto
+                {
+                   ChangeFor = (double)(pag.Value - pedido.TotalPrice) 
+                };
+            }
+
+            pedidoIfood.Payments.Methods.Add(pagConvertido);
         }
 
         return pedidoIfood;
