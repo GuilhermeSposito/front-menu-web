@@ -150,7 +150,7 @@ public class IntegracoesController : Controller
     }
 
     [HttpPost("endpoint-webhook-b1-delivery")]
-    public IActionResult EndpointDeConexaoB1Delivery([FromBody] DelmatchWebhookDto webhook)
+    public async Task<IActionResult> EndpointDeConexaoB1Delivery([FromBody] DelmatchWebhookDto webhook)
     {
         if (webhook is null)
             return BadRequest();

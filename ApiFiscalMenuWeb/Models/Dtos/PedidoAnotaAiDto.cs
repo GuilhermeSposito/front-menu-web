@@ -97,14 +97,19 @@ public class AnotaAiItemDto
 
 public class AnotaAiSubItemDto
 {
-    [JsonPropertyName("_id")] public string? Id { get; set; }
+    [JsonPropertyName("_id")] public string? MongoId { get; set; }
+    [JsonPropertyName("id")] public int? Id { get; set; }
+    [JsonPropertyName("id_parent")] public int? IdParent { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("quantity")] public decimal Quantity { get; set; }
-    [JsonPropertyName("totalPrice")] public decimal TotalPrice { get; set; }
-    [JsonPropertyName("unitPrice")] public decimal UnitPrice { get; set; }
-    [JsonPropertyName("new_totalPrice")] public decimal NewTotalPrice { get; set; }
-    [JsonPropertyName("new_unitPrice")] public decimal NewUnitPrice { get; set; }
+    [JsonPropertyName("internalId")] public string? InternalId { get; set; }
+    [JsonPropertyName("price")] public decimal Price { get; set; }
+    [JsonPropertyName("total")] public decimal Total { get; set; }
     [JsonPropertyName("externalCode")] public string ExternalCode { get; set; } = string.Empty;
+    [JsonPropertyName("totalPrice")] public decimal? TotalPrice { get; set; }
+    [JsonPropertyName("unitPrice")] public decimal? UnitPrice { get; set; }
+    [JsonPropertyName("new_totalPrice")] public decimal? NewTotalPrice { get; set; }
+    [JsonPropertyName("new_unitPrice")] public decimal? NewUnitPrice { get; set; }
     [JsonPropertyName("quantityFraction")] public decimal? QuantityFraction { get; set; }
     [JsonPropertyName("valueFraction")] public decimal? ValueFraction { get; set; }
 }
@@ -112,6 +117,7 @@ public class AnotaAiSubItemDto
 public class AnotaAiMerchantDto
 {
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
+    [JsonPropertyName("restaurantId")] public string? RestaurantId { get; set; }
     [JsonPropertyName("name")] public string? Name { get; set; }
     [JsonPropertyName("unit")] public string Unit { get; set; } = string.Empty;
 }
@@ -120,10 +126,10 @@ public class AnotaAiPaymentDto
 {
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("code")] public string Code { get; set; } = string.Empty;
-    [JsonPropertyName("value")] public string Value { get; set; } = string.Empty;
+    [JsonPropertyName("value")] public decimal Value { get; set; }
     [JsonPropertyName("cardSelected")] public string CardSelected { get; set; } = string.Empty;
     [JsonPropertyName("externalId")] public string ExternalId { get; set; } = string.Empty;
-    [JsonPropertyName("changeFor")] public string? ChangeFor { get; set; }
+    [JsonPropertyName("changeFor")] public decimal? ChangeFor { get; set; }
     [JsonPropertyName("prepaid")] public bool Prepaid { get; set; }
 }
 
