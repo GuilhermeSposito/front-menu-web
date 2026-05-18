@@ -158,6 +158,17 @@ public class IntegracoesController : Controller
         _ = _delmatchService.ProcessarWebhookAsync(webhook);
         return Accepted();
     }
+
+    [HttpPost("endpoint-webhook-anotaai/{IdMerchant}")]
+    public async Task<IActionResult> EndpointDeConexaoAnotaAi([FromRoute] string IdMerchant)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var body = await reader.ReadToEndAsync();
+
+        Console.WriteLine(body + IdMerchant);
+
+        return Accepted();
+    }
     #endregion
 
     [HttpGet("teste-polling")]
