@@ -345,16 +345,7 @@
 
             if (Pedido.TipoDePedido == "MESA")
             {
-                // usa valor já calculado pelo modal de itens quando disponível
-                if (Pedido.ServicoValor > 0)
-                {
-                    ValorTaxaDeServico = Pedido.ServicoValor;
-                }
-                else
-                {
-                    var percent = AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0;
-                    ValorTaxaDeServico = (float)Math.Round(ValorDosItens * (float)(percent / 100), 2);
-                }
+                ValorTaxaDeServico = Pedido.ServicoValor;
 
                 var valorCouvertUn = (float)(AppState.MerchantLogado?.ValorCouvert ?? 0);
                 if (Pedido.CouvertValor > 0 && valorCouvertUn > 0)

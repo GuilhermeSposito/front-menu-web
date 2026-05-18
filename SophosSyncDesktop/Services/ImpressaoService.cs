@@ -935,7 +935,9 @@ public class ImpressaoService
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-        var totalAExibir = aviso.TotalFinal > 0 ? aviso.TotalFinal : aviso.TotalGeral;
+        var totalAExibir = aviso.TotalFinal > 0
+            ? aviso.TotalFinal
+            : aviso.SubtotalDaMesa + aviso.TaxaDeServicoDaMesa + aviso.CouvertTotalMesa - aviso.Desconto + aviso.TaxaAdicional;
         AdicionaConteudo(Conteudo, $"TOTAL A PAGAR:   {totalAExibir.ToString("C")}", FonteTotaisNovo);
 
         if (aviso.Pagamentos?.Count > 0)

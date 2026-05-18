@@ -455,14 +455,6 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsPedido>> AvisarFechamentoParcial(int mesaId, List<int> itemIds, bool cobraTaxaServico, bool cobraCouvert, int qtdPessoas = 0)
-    {
-        var body = new { mesaId, itemIds, cobraTaxaServico, cobraCouvert, qtdPessoas };
-        var response = await _http.PostAsJsonAsync("pedidos/aviso-parcial", body);
-        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
-        return retorno!;
-    }
-
     public async Task<ReturnApiRefatored<ClsPedido>> JuntarMesas(List<int> mesasIds, int mesaFinalId)
     {
         var body = new { mesasIds, mesaFinalId };
