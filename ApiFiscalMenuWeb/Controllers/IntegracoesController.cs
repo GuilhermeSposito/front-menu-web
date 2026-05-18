@@ -160,12 +160,9 @@ public class IntegracoesController : Controller
     }
 
     [HttpPost("endpoint-webhook-anotaai/{IdMerchant}")]
-    public async Task<IActionResult> EndpointDeConexaoAnotaAi([FromRoute] string IdMerchant)
+    public async Task<IActionResult> EndpointDeConexaoAnotaAi([FromRoute] string IdMerchant, [FromBody] AnotaAiOrderInfoDto PedidoAnotaAi)
     {
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
-
-        Console.WriteLine(body + IdMerchant);
+        Console.WriteLine(PedidoAnotaAi.Id + PedidoAnotaAi.Items[0].Name);
 
         return Accepted();
     }
