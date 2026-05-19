@@ -11,6 +11,7 @@ public class AvisoContaItemDto
     [JsonPropertyName("LegTamanhoEscolhido")] public string? LegTamanhoEscolhido { get; set; }
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
     [JsonPropertyName("ECouvert")] public bool ECouvert { get; set; } = false;
+    [JsonPropertyName("NumeroMesaItem")] public int? NumeroMesaItem { get; set; }
     [JsonPropertyName("Complementos")] public List<AvisoContaComplementoDto>? Complementos { get; set; }
 }
 

@@ -270,6 +270,7 @@ public class PedidosService
                 LegTamanhoEscolhido = i.LegTamanhoEscolhido,
                 NomeCliente = i.NomeCliente,
                 ECouvert = i.ECouvert,
+                NumeroMesaItem = i.NumeroMesaItem == 0 ? null : i.NumeroMesaItem,
                 Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
                 {
                     Descricao = c.Descricao,
@@ -305,6 +306,7 @@ public class PedidosService
                 LegTamanhoEscolhido = i.LegTamanhoEscolhido,
                 NomeCliente = i.NomeCliente,
                 ECouvert = i.ECouvert,
+                NumeroMesaItem = i.NumeroMesaItem == 0 ? null : i.NumeroMesaItem,
                 Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
                 {
                     Descricao = c.Descricao,

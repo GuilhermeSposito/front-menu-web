@@ -800,13 +800,6 @@ public class ImpressaoService
     #region Definição do aviso de conta para impressão
     private static string SepPontilhado() => "- - - - - - - - - - - - - - - - - - - -";
 
-    // Alinha texto à esquerda e valor à direita em ~42 chars
-    private static string LR(string esq, string dir, int W = 40)
-    {
-        var espaco = W - esq.Length - dir.Length;
-        return espaco > 0 ? esq + new string(' ', espaco) + dir : $"{esq} {dir}";
-    }
-
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDeFechamentoDeConta(AvisoContaDto aviso)
     {
         var legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa";
@@ -819,6 +812,7 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteFechamentoDeCaixa, Alinhamentos.Centro);
 
         AdicionaConteudo(Conteudo, "VIA DE FECHAMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, $"{DateTime.Now:g}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
@@ -831,7 +825,7 @@ public class ImpressaoService
                 var nome = string.IsNullOrEmpty(comanda.Nome) ? "Sem nome" : comanda.Nome;
                 AdicionaConteudo(Conteudo, $"Cliente: {nome}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
 
-                AdicionaConteudo(Conteudo, LR("QTD  ITENS", "TOTAL"), FonteFechamentoDeCaixa);
+                AdicionaConteudoLR(Conteudo, "QTD  ITENS", "TOTAL", FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in comanda.Itens)
@@ -839,9 +833,9 @@ public class ImpressaoService
 
                 if (comanda.Totais.TaxaDeServico > 0)
                 {
-                    AdicionaConteudo(Conteudo, " ", FonteFechamentoDeCaixa);
-                    AdicionaConteudo(Conteudo,
-                        LR($"Tx. de Serviço: ({taxaPct}%)", comanda.Totais.TaxaDeServico.ToString("C")),
+                    AdicionaConteudo(Conteudo, " ", FonteTotaisFechamento);
+                    AdicionaConteudoLR(Conteudo,
+                        $"Tx. de Serviço: ({taxaPct}%)", comanda.Totais.TaxaDeServico.ToString("C"),
                         FonteFechamentoDeCaixa, eObs: true);
                 }
 
@@ -852,12 +846,12 @@ public class ImpressaoService
                     var labelCouvert = qtdCouvert > 1
                         ? $"Couvert ({qtdCouvert}x {valorUnit:C})"
                         : "Couvert";
-                    AdicionaConteudo(Conteudo,
-                        LR(labelCouvert, comanda.Totais.CouvertIndividual.ToString("C")),
-                        FonteFechamentoDeCaixa, eObs: true);
+                    AdicionaConteudoLR(Conteudo,
+                        labelCouvert, comanda.Totais.CouvertIndividual.ToString("C"),
+                        FonteTotaisFechamento, eObs: true);
                 }
 
-                AdicionaConteudo(Conteudo, LR("TOTAL:", comanda.Totais.Total.ToString("C")), FonteFechamentoDeCaixa);
+                AdicionaConteudoLR(Conteudo, "TOTAL:", comanda.Totais.Total.ToString("C"), FonteTotaisFechamento);
                 AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
             }
         }
@@ -892,12 +886,12 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "Consumo Total", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-        AdicionaConteudo(Conteudo, LR("Valor dos Itens", aviso.SubtotalDaMesa.ToString("C")), FonteFechamentoDeCaixa);
+        AdicionaConteudoLR(Conteudo, "Valor dos Itens", aviso.SubtotalDaMesa.ToString("C"), FonteTotaisFechamento);
 
         if (aviso.TaxaDeServicoDaMesa > 0)
-            AdicionaConteudo(Conteudo,
-                LR($"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C")),
-                FonteFechamentoDeCaixa);
+            AdicionaConteudoLR(Conteudo,
+                $"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C"),
+                FonteTotaisFechamento);
 
         if (aviso.CouvertTotalMesa > 0 && aviso.Couvert is not null)
         {
@@ -905,32 +899,28 @@ public class ImpressaoService
             {
                 // Detalha couvert por cliente
                 foreach (var cc in aviso.Couvert.PorCliente.Where(c => c.Valor > 0))
-                    AdicionaConteudo(Conteudo,
-                        LR($"Couvert {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C")),
-                        FonteFechamentoDeCaixa);
+                    AdicionaConteudoLR(Conteudo,
+                        $"Couvert {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C"),
+                        FonteTotaisFechamento);
 
                 if (aviso.CouvertAvulso > 0 && aviso.Couvert.Avulso > 0)
-                    AdicionaConteudo(Conteudo,
-                        LR($"Couvert Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C")),
-                        FonteFechamentoDeCaixa);
+                    AdicionaConteudoLR(Conteudo,
+                        $"Couvert Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C"),
+                        FonteTotaisFechamento);
             }
             else
             {
-                AdicionaConteudo(Conteudo,
-                    LR($"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C")),
-                    FonteFechamentoDeCaixa);
+                AdicionaConteudoLR(Conteudo,
+                    $"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C"),
+                    FonteTotaisFechamento);
             }
         }
 
         if (aviso.Desconto > 0)
-            AdicionaConteudo(Conteudo,
-                LR("Desconto", $"-{aviso.Desconto:C}"),
-                FonteFechamentoDeCaixa);
+            AdicionaConteudoLR(Conteudo, "Desconto", $"-{aviso.Desconto:C}", FonteTotaisFechamento);
 
         if (aviso.TaxaAdicional > 0)
-            AdicionaConteudo(Conteudo,
-                LR("Taxa Adicional", aviso.TaxaAdicional.ToString("C")),
-                FonteFechamentoDeCaixa);
+            AdicionaConteudoLR(Conteudo, "Taxa Adicional", aviso.TaxaAdicional.ToString("C"), FonteTotaisFechamento);
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
@@ -941,15 +931,14 @@ public class ImpressaoService
 
         if (aviso.Pagamentos?.Count > 0)
         {
-            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-            AdicionaConteudo(Conteudo, "Formas de Pagamento", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteTotaisFechamento);
+            AdicionaConteudo(Conteudo, "Formas de Pagamento", FonteTotaisFechamento, Alinhamentos.Centro);
             foreach (var pag in aviso.Pagamentos)
-                AdicionaConteudo(Conteudo, LR(pag.Descricao, pag.Valor.ToString("C")), FonteFechamentoDeCaixa);
+                AdicionaConteudoLR(Conteudo, pag.Descricao, pag.Valor.ToString("C"), FonteTotaisFechamento);
         }
 
         if (aviso.Troco > 0)
-            AdicionaConteudo(Conteudo, LR("Troco", aviso.Troco.ToString("C")), FonteFechamentoDeCaixa);
-
+            AdicionaConteudoLR(Conteudo, "Troco", aviso.Troco.ToString("C"), FonteTotaisFechamento);
         AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
@@ -960,9 +949,10 @@ public class ImpressaoService
 
     private void AdicionarLinhasDeItem(List<ClsImpressaoDefinicoes> Conteudo, AvisoContaItemDto item)
     {
-        AdicionaConteudo(Conteudo,
-            LR($"{item.Quantidade}x  {item.Descricao}", item.PrecoTotal.ToString("C")),
-            FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo,$"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
+        AdicionaConteudoLR(Conteudo,
+            $"{item.Quantidade}x {item.Descricao}", item.PrecoTotal.ToString("C"),
+            FonteItemFechamento);
 
         if (!(AppState.MerchantLogado?.NaoImprimeComplementosNoFechamento ?? false))
             if (item.Complementos?.Count > 0)
@@ -971,17 +961,17 @@ public class ImpressaoService
                     ? (item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido)
                     : null;
                 var cabecalhoComp = leg is not null ? $"{item.Descricao} - {leg}:" : $"{item.Descricao} - complementos:";
-                AdicionaConteudo(Conteudo, cabecalhoComp, FonteFechamentoDeCaixa, eObs: true);
+                AdicionaConteudo(Conteudo, cabecalhoComp, FonteItemFechamento, eObs: true);
                 if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
 
-                    AdicionaConteudo(Conteudo, item.LegTamanhoEscolhido, FonteFechamentoDeCaixa, eObs: true);
+                    AdicionaConteudo(Conteudo, item.LegTamanhoEscolhido, FonteItemFechamento, eObs: true);
                 foreach (var c in item.Complementos)
-                    AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteFechamentoDeCaixa, eObs: true);
+                    AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteItemFechamento, eObs: true);
             }
             else if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
                 var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
-                AdicionaConteudo(Conteudo, $"  {leg}", FonteFechamentoDeCaixa, eObs: true);
+                AdicionaConteudo(Conteudo, $"  {leg}", FonteItemFechamento, eObs: true);
             }
     }
     #endregion
@@ -991,17 +981,13 @@ public class ImpressaoService
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
 
-        // Helper: alinha label (22 chars) + sinal (5 chars) + valor (12 chars) = 39 chars total
-        string Ln(string label, string sinal, float valor)
-        {
-            var lbl = label.Length >= 22 ? label[..22] : label.PadRight(22, '.');
-            return $"{lbl}:({sinal}) {valor.ToString("C").PadLeft(11)}";
-        }
+        void Ln(string label, float valor) =>
+            AdicionaConteudoLR(Conteudo, label, ((decimal)valor).ToString("C"), FonteFechamentoDeCaixa);
 
         var faturamentoBruto = Fechamento.ValorTotalEmVendas;
         var totalDoCaixa = Fechamento.ValorDeAbertura + Fechamento.Suprimentos - Fechamento.Sangrias + faturamentoBruto;
         var totalRecebimentos = Fechamento.RecebimentosPorTipo?.Values.Sum() ?? 0f;
-        var labelFaltouSobrou = Fechamento.Faltou > 0 ? "FALTOU" : "SOBROU";
+        var labelFaltouSobrou = Fechamento.Faltou > 0 ? "FALTOU (=)" : "SOBROU (=)";
         var valorAbsFaltou = Math.Abs(Fechamento.Faltou);
 
         if (AppState.MerchantLogado is not null)
@@ -1013,36 +999,36 @@ public class ImpressaoService
         // OPERAÇÃO DE VENDAS
         AdicionaConteudo(Conteudo, "OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("TOTAL DAS VENDAS", "+", Fechamento.ValorTotalEmVendas), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("ACRESCIMOS", "+", Fechamento.TotalDeArescimos), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("CORTESIA/DESCONTOS", "-", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("TAXAS DE ENTREGA", "+", Fechamento.TotalTaxaEntrega), FonteFechamentoDeCaixa);
+        Ln("TOTAL DAS VENDAS (+)", Fechamento.ValorTotalEmVendas);
+        Ln("ACRESCIMOS (+)", Fechamento.TotalDeArescimos);
+        Ln("CORTESIA/DESCONTOS (-)", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos);
+        Ln("TAXAS DE ENTREGA (+)", Fechamento.TotalTaxaEntrega);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("COUVERTS", "+", Fechamento.TotalDeCouvert), FonteFechamentoDeCaixa);
+        Ln("COUVERTS (+)", Fechamento.TotalDeCouvert);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("TAXA DE SERVIÇO", "+", Fechamento.TotalDeServico), FonteFechamentoDeCaixa);
+        Ln("TAXA DE SERVIÇO (+)", Fechamento.TotalDeServico);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("FATURAMENTO BRUTO", "=", faturamentoBruto), FonteFechamentoDeCaixa);
+        Ln("FATURAMENTO BRUTO (=)", faturamentoBruto);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // MOVIMENTAÇÕES DO CAIXA
-        AdicionaConteudo(Conteudo, Ln("CAIXA INICIAL", "+", Fechamento.ValorDeAbertura), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("ENTRADAS DO CAIXA", "+", Fechamento.Suprimentos), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("SAÍDAS DO CAIXA", "-", Fechamento.Sangrias), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("TROCOS", "-", Fechamento.Trocos), FonteFechamentoDeCaixa);
+        Ln("CAIXA INICIAL (+)", Fechamento.ValorDeAbertura);
+        Ln("ENTRADAS DO CAIXA (+)", Fechamento.Suprimentos);
+        Ln("SAÍDAS DO CAIXA (-)", Fechamento.Sangrias);
+        Ln("TROCOS (-)", Fechamento.Trocos);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("TOTAL DO CAIXA", "=", totalDoCaixa), FonteFechamentoDeCaixa);
+        Ln("TOTAL DO CAIXA (=)", totalDoCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // CONTAGEM FÍSICA
         AdicionaConteudo(Conteudo, "CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("VALOR ESPERADO DIN.", "=", Fechamento.ValorEsperadoEmDinheiro), FonteFechamentoDeCaixa);
+        Ln("VALOR ESPERADO DIN. (=)", Fechamento.ValorEsperadoEmDinheiro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         if (valorAbsFaltou > 0)
         {
-            AdicionaConteudo(Conteudo, Ln(labelFaltouSobrou, "=", valorAbsFaltou), FonteFechamentoDeCaixa);
+            Ln(labelFaltouSobrou, valorAbsFaltou);
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         }
 
@@ -1051,18 +1037,16 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         foreach (var pagamento in Fechamento.RecebimentosPorTipo ?? [])
-        {
-            AdicionaConteudo(Conteudo, Ln(pagamento.Key, "+", pagamento.Value), FonteFechamentoDeCaixa);
-        }
+            Ln($"{pagamento.Key} (+)", pagamento.Value);
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, Ln("TOTAL RECEBIMENTOS", "=", totalRecebimentos), FonteFechamentoDeCaixa);
+        Ln("TOTAL RECEBIMENTOS (=)", totalRecebimentos);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // RESUMO POR TIPO
-        AdicionaConteudo(Conteudo, Ln("VENDAS À VISTA", "=", Fechamento.TotalEmDinheiro), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("VENDAS EM CARTÃO", "=", Fechamento.TotalEmCartoes), FonteFechamentoDeCaixa);
-        AdicionaConteudo(Conteudo, Ln("PGTOS ONLINE", "=", Fechamento.PagoOnline), FonteFechamentoDeCaixa);
+        Ln("VENDAS À VISTA (=)", Fechamento.TotalEmDinheiro);
+        Ln("VENDAS EM CARTÃO (=)", Fechamento.TotalEmCartoes);
+        Ln("PGTOS ONLINE (=)", Fechamento.PagoOnline);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
@@ -1161,152 +1145,127 @@ public class ImpressaoService
         try
         {
             int Y = 0;
+            float pageW = e.PageBounds.Width;
 
             foreach (var item in conteudo)
             {
-                var tamanhoFrase = e.Graphics.MeasureString(item.Texto, item.Fonte).Width;
-
-                if (tamanhoFrase < e.PageBounds.Width)
+                // Itens com texto direito fixo (resultado do AdicionaConteudoLR)
+                if (item.TextoDireita is not null)
                 {
-                    if (item.Alinhamento == Alinhamentos.Centro)
+                    float dirW = e.Graphics.MeasureString(item.TextoDireita, item.Fonte).Width;
+                    float esqMax = pageW - dirW;
+
+                    float esqTotal = e.Graphics.MeasureString(item.Texto, item.Fonte).Width;
+                    if (esqTotal <= esqMax)
                     {
-                        e.Graphics.DrawString(item.Texto, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
+                        // cabe numa linha só
+                        DesenhaTextoNaLinha(e, item, item.Texto, Y, pageW);
+                        e.Graphics.DrawString(item.TextoDireita, item.Fonte, Brushes.Black, pageW - dirW, Y);
                     }
-                    else if (!item.eObs || !DestacaObservacoes)
+                    else
                     {
-                        e.Graphics.DrawString(item.Texto, item.Fonte, Brushes.Black, 0, Y);
+                        // word-wrap da esquerda; direita fica na última linha
+                        var palavras = item.Texto.Split(' ');
+                        string linhaAtual = "";
+                        var linhas = new System.Collections.Generic.List<string>();
+
+                        foreach (var palavra in palavras)
+                        {
+                            string teste = linhaAtual + palavra + " ";
+                            if (e.Graphics.MeasureString(teste, item.Fonte).Width > esqMax && !string.IsNullOrEmpty(linhaAtual))
+                            {
+                                linhas.Add(linhaAtual);
+                                linhaAtual = palavra + " ";
+                            }
+                            else
+                            {
+                                linhaAtual = teste;
+                            }
+                        }
+                        if (!string.IsNullOrWhiteSpace(linhaAtual))
+                            linhas.Add(linhaAtual);
+
+                        for (int li = 0; li < linhas.Count; li++)
+                        {
+                            DesenhaTextoNaLinha(e, item, linhas[li], Y, pageW);
+                            if (li == linhas.Count - 1)
+                                e.Graphics.DrawString(item.TextoDireita, item.Fonte, Brushes.Black, pageW - dirW, Y);
+                            if (li < linhas.Count - 1)
+                                Y += separacao;
+                        }
+                    }
+
+                    Y += separacao;
+                    if (Y > e.MarginBounds.Height) { e.HasMorePages = true; return; }
+                    e.HasMorePages = false;
+                    continue;
+                }
+
+                float larguraTotal = e.Graphics.MeasureString(item.Texto, item.Fonte).Width;
+
+                if (larguraTotal <= pageW)
+                {
+                    DesenhaTextoNaLinha(e, item, item.Texto, Y, pageW);
+                    Y += separacao;
+                    if (Y > e.MarginBounds.Height) { e.HasMorePages = true; return; }
+                    e.HasMorePages = false;
+                    continue;
+                }
+
+                // word-wrap: escreve o máximo que cabe e só quebra quando a próxima palavra não couber
+                var palavrasSimples = item.Texto.Split(' ');
+                string linhaSimples = "";
+
+                foreach (var palavra in palavrasSimples)
+                {
+                    string teste = linhaSimples + palavra + " ";
+                    float testeW = e.Graphics.MeasureString(teste, item.Fonte).Width;
+
+                    if (testeW > pageW && !string.IsNullOrEmpty(linhaSimples))
+                    {
+                        DesenhaTextoNaLinha(e, item, linhaSimples, Y, pageW);
                         Y += separacao;
-                        continue;
+                        linhaSimples = palavra + " ";
                     }
-                    else if (item.eObs)
+                    else
                     {
-                        PointF ponto = new PointF(0, Y);
-
-                        SizeF tamanhoTexto = e.Graphics.MeasureString(item.Texto, item.Fonte);
-                        RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.PageBounds.Width, tamanhoTexto.Height));
-
-                        e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
-                        e.Graphics.DrawString(item.Texto, item.Fonte, Brushes.Black, 0, Y);
-
-                        Y += separacao;
-
-                        continue;
+                        linhaSimples = teste;
                     }
                 }
 
+                if (!string.IsNullOrWhiteSpace(linhaSimples))
+                    DesenhaTextoNaLinha(e, item, linhaSimples, Y, pageW);
 
-                var listPalavras = item.Texto.Split(" ").ToList();
-                string frase = "";
-
-                foreach (var palavra in listPalavras)
-                {
-                    var fraseAnterior = frase;
-                    frase += palavra + " ";
-
-                    tamanhoFrase = e.Graphics.MeasureString(frase, item.Fonte).Width;
-
-                    if (tamanhoFrase > e.MarginBounds.Width - 70 && fraseAnterior != "")
-                    {
-                        if (item.Alinhamento == Alinhamentos.Centro)
-                        {
-                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
-                            Y += separacao;
-                            frase = palavra + " ";
-                            continue;
-
-                        }
-                        else if (!item.eObs || !DestacaObservacoes)
-                        {
-                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, 0, Y);
-                            Y += separacao;
-                            frase = palavra + " ";
-                            continue;
-                        }
-                        else if (item.eObs)
-                        {
-                            PointF ponto = new PointF(0, Y);
-
-                            SizeF tamanhoTexto = e.Graphics.MeasureString(fraseAnterior, item.Fonte);
-                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.MarginBounds.Width, tamanhoTexto.Height));
-
-                            e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
-                            e.Graphics.DrawString(fraseAnterior, item.Fonte, Brushes.Black, 0, Y);
-
-                            Y += separacao;
-                            frase = palavra + " ";
-
-                            continue;
-                        }
-
-                    }
-
-                    if (frase != "")
-                    {
-                        if (item.Alinhamento == Alinhamentos.Centro)
-                        {
-
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
-
-                        }
-                        else if (!item.eObs || !DestacaObservacoes)
-                        {
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
-
-                        }
-                        else if (item.eObs)
-                        {
-                            PointF ponto = new PointF(0, Y);
-
-                            SizeF tamanhoTexto = e.Graphics.MeasureString(frase, item.Fonte);
-                            RectangleF retanguloTexto = new RectangleF(ponto, new SizeF(e.MarginBounds.Width, tamanhoTexto.Height));
-
-
-                            e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloTexto);
-                            e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
-
-                            //continue;
-                        }
-
-                    }
-
-                }
-
-                if (!string.IsNullOrEmpty(frase.Trim()))
-                {
-                    if (item.Alinhamento == Alinhamentos.Centro)
-                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, Centro(item.Texto, item.Fonte, e), Y);
-                    else if (!item.eObs || !DestacaObservacoes)
-                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
-                    else if (item.eObs)
-                    {
-                        PointF pontoFinal = new PointF(0, Y);
-                        SizeF tamanhoFinal = e.Graphics.MeasureString(frase, item.Fonte);
-                        RectangleF retanguloFinal = new RectangleF(pontoFinal, new SizeF(e.MarginBounds.Width, tamanhoFinal.Height));
-                        e.Graphics.FillRectangle(Brushes.LightSlateGray, retanguloFinal);
-                        e.Graphics.DrawString(frase, item.Fonte, Brushes.Black, 0, Y);
-                    }
-                }
-                frase = "";
                 Y += separacao;
 
-                if (Y > e.MarginBounds.Height)
-                {
-                    e.HasMorePages = true;
-                    return;
-                }
-                else
-                {
-                    e.HasMorePages = false;
-                }
+                if (Y > e.MarginBounds.Height) { e.HasMorePages = true; return; }
+                else e.HasMorePages = false;
             }
-
-
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message);
         }
+    }
 
+    private static void DesenhaTextoNaLinha(PrintPageEventArgs e, ClsImpressaoDefinicoes item, string texto, int Y, float pageW)
+    {
+        if (item.Alinhamento == Alinhamentos.Centro)
+        {
+            e.Graphics.DrawString(texto, item.Fonte, Brushes.Black, Centro(texto, item.Fonte, e), Y);
+        }
+        else if (!item.eObs || !DestacaObservacoes)
+        {
+            e.Graphics.DrawString(texto, item.Fonte, Brushes.Black, 0, Y);
+        }
+        else
+        {
+            PointF ponto = new PointF(0, Y);
+            SizeF tam = e.Graphics.MeasureString(texto, item.Fonte);
+            RectangleF rect = new RectangleF(ponto, new SizeF(pageW, tam.Height));
+            e.Graphics.FillRectangle(Brushes.LightSlateGray, rect);
+            e.Graphics.DrawString(texto, item.Fonte, Brushes.Black, 0, Y);
+        }
     }
 
     public static float Centro(string Texto, Font Fonte, System.Drawing.Printing.PrintPageEventArgs e)
@@ -1343,6 +1302,11 @@ public class ImpressaoService
     public static void AdicionaConteudo(List<ClsImpressaoDefinicoes> Conteudo, string conteudoTexto, Font fonte, Alinhamentos alinhamento = Alinhamentos.Esquerda, bool eObs = false)
     {
         Conteudo.Add(new ClsImpressaoDefinicoes() { Texto = conteudoTexto, Fonte = fonte, Alinhamento = alinhamento, eObs = eObs });
+    }
+
+    public static void AdicionaConteudoLR(List<ClsImpressaoDefinicoes> Conteudo, string esq, string dir, Font fonte, bool eObs = false)
+    {
+        Conteudo.Add(new ClsImpressaoDefinicoes() { Texto = esq, TextoDireita = dir, Fonte = fonte, eObs = eObs });
     }
 
     public static string AdicionarSeparadorSimples()
@@ -1467,7 +1431,6 @@ public class ImpressaoService
             FonteTotaisNovo = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTotais, FontStyle.Bold);
             FonteDetalhesDoPedido = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDetalhesPedido, FontStyle.Bold);
             FonteComplemento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplemento, FontStyle.Bold);
-            //FontQtdDescVunitVTotal = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteLegendaDosItens, FontStyle.Regular);
             FonteContaEntregaEConta = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteTempoEntregaEConta, FontStyle.Bold);
             FonteItens2 = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItem, FontStyle.Bold);
             FonteCPF = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteValorItem, FontStyle.Bold); //ta sendo o valor dos itens 
@@ -1475,8 +1438,7 @@ public class ImpressaoService
             FonteNomeDoCliente = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteNomeClienteComanda, FontStyle.Bold);
             FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Bold);
             FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Bold);
-            FonteItemFechamento = new Font("DejaVu sans mono", 8, FontStyle.Bold);
-            FonteTotaisFechamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamanhoItemNoFechamento, FontStyle.Bold);
+            FonteItemFechamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamanhoItemNoFechamento, FontStyle.Bold);
             FonteTotaisFechamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamanhoTotaisFechamento, FontStyle.Bold);
             FonteFechamentoDeCaixa = new Font("DejaVu sans mono", AppState.MerchantLogado.FonteFechamentoDeCaixa, FontStyle.Bold);
 
@@ -1498,10 +1460,10 @@ public enum Alinhamentos
 public class ClsImpressaoDefinicoes
 {
     public string Texto { get; set; }
+    public string? TextoDireita { get; set; }
     public Font Fonte { get; set; }
     public Alinhamentos Alinhamento { get; set; }
     public bool eObs { get; set; }
-
 
     public ClsImpressaoDefinicoes() { }
 }
