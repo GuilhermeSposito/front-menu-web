@@ -31,6 +31,8 @@ public class ImpressaoService
     public Font FonteComplemento { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteComplementoNaComanda { get; set; } = new Font("DejaVu sans mono", 9, FontStyle.Bold);
     public Font FonteFechamentoDeCaixa { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public Font FonteItemFechamento { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+    public Font FonteTotaisFechamento { get; set; } = new Font("DejaVu sans mono", 8, FontStyle.Bold);
     public Font FonteNomeDoCliente { get; set; } = new Font("DejaVu sans mono", 14, FontStyle.Bold);
     public Font FonteItens { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
     public Font FonteContaEntregaEConta { get; set; } = new Font("DejaVu sans mono", 12, FontStyle.Bold);
@@ -1363,15 +1365,15 @@ public class ImpressaoService
             case "Cz3":
                 return Imps.ImpressoraCz3;
             case "Cz4":
-                return Imps.ImpressoraCz3;
+                return Imps.ImpressoraCz4;
             case "Cz5":
-                return Imps.ImpressoraCz3;
+                return Imps.ImpressoraCz5;
             case "Bar":
                 return Imps.ImpressoraBar;
             case "Bar2":
-                return Imps.ImpressoraBar;
+                return Imps.ImpressoraBar2;
             case "Bar3":
-                return Imps.ImpressoraBar;
+                return Imps.ImpressoraBar3;
             case null:
                 return Imps.ImpressoraCz1;
             default:
@@ -1473,6 +1475,10 @@ public class ImpressaoService
             FonteNomeDoCliente = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteNomeClienteComanda, FontStyle.Bold);
             FonteItensComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoItemNaComanda, FontStyle.Bold);
             FonteComplementoNaComanda = new Font("DejaVu sans mono", AppState.MerchantLogado.TamFonteDescricaoComplementoNaComanda, FontStyle.Bold);
+            FonteItemFechamento = new Font("DejaVu sans mono", 8, FontStyle.Bold);
+            FonteTotaisFechamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamanhoItemNoFechamento, FontStyle.Bold);
+            FonteTotaisFechamento = new Font("DejaVu sans mono", AppState.MerchantLogado.TamanhoTotaisFechamento, FontStyle.Bold);
+            FonteFechamentoDeCaixa = new Font("DejaVu sans mono", AppState.MerchantLogado.FonteFechamentoDeCaixa, FontStyle.Bold);
 
             ValorEspacamento = AppState.MerchantLogado.EspacamentoNaImpressao;
 

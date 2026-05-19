@@ -632,7 +632,11 @@ public partial class PaginaInicial : Form
                 instancia.comboBox3.Text = Imps.ImpressoraCz1;
                 instancia.comboBox2.Text = Imps.ImpressoraCz2;
                 instancia.comboBox4.Text = Imps.ImpressoraCz3;
+                instancia.comboBoxImpsCz4.Text = Imps.ImpressoraCz4;
+                instancia.comboBoxImpsCz5.Text = Imps.ImpressoraCz5;
                 instancia.comboBox5.Text = Imps.ImpressoraBar;
+                instancia.comboBoxImpsBar2.Text = Imps.ImpressoraBar2;
+                instancia.comboBoxImpsBar3.Text = Imps.ImpressoraBar3;
                 instancia.comboBoxImpressoraDanfe.Text = Imps.ImpressoraDanfe;
             }
         }
@@ -652,7 +656,11 @@ public partial class PaginaInicial : Form
             instancia.comboBox2.Items.Add(imp);
             instancia.comboBox3.Items.Add(imp);
             instancia.comboBox4.Items.Add(imp);
+            instancia.comboBoxImpsCz4.Items.Add(imp);
+            instancia.comboBoxImpsCz5.Items.Add(imp);
             instancia.comboBox5.Items.Add(imp);
+            instancia.comboBoxImpsBar2.Items.Add(imp);
+            instancia.comboBoxImpsBar3.Items.Add(imp);
             instancia.comboBox6.Items.Add(imp);
             instancia.comboBoxImpressoraDanfe.Items.Add(imp);
         }
@@ -865,6 +873,118 @@ public partial class PaginaInicial : Form
             {
                 // Atualiza a existente
                 config.ImpressoraDanfe = valorSelecionado;
+                db.Impressoras.Update(config);
+            }
+
+            db.SaveChanges();
+        }
+    }
+
+    private void comboBoxImpsCz4_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string? valorSelecionado = comboBoxImpsCz4.SelectedItem?.ToString();
+
+        if (string.IsNullOrEmpty(valorSelecionado))
+            return;
+
+        using (AppDbContext db = new AppDbContext())
+        {
+            // Verifica se j� existe uma configura��o salva
+            var config = db.Impressoras.FirstOrDefault();
+            if (config == null)
+            {
+                // Se n�o existir, cria uma nova
+                config = new ImpressorasConfigs { ImpressoraCz4 = valorSelecionado };
+                db.Impressoras.Add(config);
+            }
+            else
+            {
+                // Atualiza a existente
+                config.ImpressoraCz4 = valorSelecionado;
+                db.Impressoras.Update(config);
+            }
+
+            db.SaveChanges();
+        }
+    }
+
+    private void comboBoxImpsCz5_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string? valorSelecionado = comboBoxImpsCz5.SelectedItem?.ToString();
+
+        if (string.IsNullOrEmpty(valorSelecionado))
+            return;
+
+        using (AppDbContext db = new AppDbContext())
+        {
+            // Verifica se j� existe uma configura��o salva
+            var config = db.Impressoras.FirstOrDefault();
+            if (config == null)
+            {
+                // Se n�o existir, cria uma nova
+                config = new ImpressorasConfigs { ImpressoraCz5 = valorSelecionado };
+                db.Impressoras.Add(config);
+            }
+            else
+            {
+                // Atualiza a existente
+                config.ImpressoraCz5 = valorSelecionado;
+                db.Impressoras.Update(config);
+            }
+
+            db.SaveChanges();
+        }
+    }
+
+    private void comboBoxImpsBar2_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string? valorSelecionado = comboBoxImpsBar2.SelectedItem?.ToString();
+
+        if (string.IsNullOrEmpty(valorSelecionado))
+            return;
+
+        using (AppDbContext db = new AppDbContext())
+        {
+            // Verifica se j� existe uma configura��o salva
+            var config = db.Impressoras.FirstOrDefault();
+            if (config == null)
+            {
+                // Se n�o existir, cria uma nova
+                config = new ImpressorasConfigs { ImpressoraBar2 = valorSelecionado };
+                db.Impressoras.Add(config);
+            }
+            else
+            {
+                // Atualiza a existente
+                config.ImpressoraBar2 = valorSelecionado;
+                db.Impressoras.Update(config);
+            }
+
+            db.SaveChanges();
+        }
+    }
+
+    private void comboBoxImpsBar3_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        string? valorSelecionado = comboBoxImpsBar3.SelectedItem?.ToString();
+
+        if (string.IsNullOrEmpty(valorSelecionado))
+            return;
+
+        using (AppDbContext db = new AppDbContext())
+        {
+            // Verifica se j� existe uma configura��o salva
+            var config = db.Impressoras.FirstOrDefault();
+            if (config == null)
+            {
+                // Se n�o existir, cria uma nova
+                config = new ImpressorasConfigs { ImpressoraBar3 = valorSelecionado };
+                db.Impressoras.Add(config);
+            }
+            else
+            {
+                // Atualiza a existente
+                config.ImpressoraBar3 = valorSelecionado;
                 db.Impressoras.Update(config);
             }
 

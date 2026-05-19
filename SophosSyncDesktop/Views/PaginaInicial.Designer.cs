@@ -39,6 +39,14 @@
             label1 = new Label();
             label2 = new Label();
             panelDeSelects = new Panel();
+            label14 = new Label();
+            comboBoxImpsBar3 = new ComboBox();
+            label13 = new Label();
+            comboBoxImpsBar2 = new ComboBox();
+            label12 = new Label();
+            comboBoxImpsCz5 = new ComboBox();
+            label11 = new Label();
+            comboBoxImpsCz4 = new ComboBox();
             label10 = new Label();
             comboBoxImpressoraDanfe = new ComboBox();
             label9 = new Label();
@@ -124,6 +132,14 @@
             // 
             resources.ApplyResources(panelDeSelects, "panelDeSelects");
             panelDeSelects.BackColor = Color.FromArgb(16, 22, 40);
+            panelDeSelects.Controls.Add(label14);
+            panelDeSelects.Controls.Add(comboBoxImpsBar3);
+            panelDeSelects.Controls.Add(label13);
+            panelDeSelects.Controls.Add(comboBoxImpsBar2);
+            panelDeSelects.Controls.Add(label12);
+            panelDeSelects.Controls.Add(comboBoxImpsCz5);
+            panelDeSelects.Controls.Add(label11);
+            panelDeSelects.Controls.Add(comboBoxImpsCz4);
             panelDeSelects.Controls.Add(label10);
             panelDeSelects.Controls.Add(comboBoxImpressoraDanfe);
             panelDeSelects.Controls.Add(label9);
@@ -140,6 +156,66 @@
             panelDeSelects.Controls.Add(comboBox2);
             panelDeSelects.Controls.Add(comboBox1);
             panelDeSelects.Name = "panelDeSelects";
+            // 
+            // label14
+            // 
+            resources.ApplyResources(label14, "label14");
+            label14.Name = "label14";
+            // 
+            // comboBoxImpsBar3
+            // 
+            resources.ApplyResources(comboBoxImpsBar3, "comboBoxImpsBar3");
+            comboBoxImpsBar3.BackColor = Color.FromArgb(25, 36, 54);
+            comboBoxImpsBar3.ForeColor = Color.White;
+            comboBoxImpsBar3.FormattingEnabled = true;
+            comboBoxImpsBar3.Items.AddRange(new object[] { resources.GetString("comboBoxImpsBar3.Items") });
+            comboBoxImpsBar3.Name = "comboBoxImpsBar3";
+            comboBoxImpsBar3.SelectedIndexChanged += comboBoxImpsBar3_SelectedIndexChanged;
+            // 
+            // label13
+            // 
+            resources.ApplyResources(label13, "label13");
+            label13.Name = "label13";
+            // 
+            // comboBoxImpsBar2
+            // 
+            resources.ApplyResources(comboBoxImpsBar2, "comboBoxImpsBar2");
+            comboBoxImpsBar2.BackColor = Color.FromArgb(25, 36, 54);
+            comboBoxImpsBar2.ForeColor = Color.White;
+            comboBoxImpsBar2.FormattingEnabled = true;
+            comboBoxImpsBar2.Items.AddRange(new object[] { resources.GetString("comboBoxImpsBar2.Items") });
+            comboBoxImpsBar2.Name = "comboBoxImpsBar2";
+            comboBoxImpsBar2.SelectedIndexChanged += comboBoxImpsBar2_SelectedIndexChanged;
+            // 
+            // label12
+            // 
+            resources.ApplyResources(label12, "label12");
+            label12.Name = "label12";
+            // 
+            // comboBoxImpsCz5
+            // 
+            resources.ApplyResources(comboBoxImpsCz5, "comboBoxImpsCz5");
+            comboBoxImpsCz5.BackColor = Color.FromArgb(25, 36, 54);
+            comboBoxImpsCz5.ForeColor = Color.White;
+            comboBoxImpsCz5.FormattingEnabled = true;
+            comboBoxImpsCz5.Items.AddRange(new object[] { resources.GetString("comboBoxImpsCz5.Items") });
+            comboBoxImpsCz5.Name = "comboBoxImpsCz5";
+            comboBoxImpsCz5.SelectedIndexChanged += comboBoxImpsCz5_SelectedIndexChanged;
+            // 
+            // label11
+            // 
+            resources.ApplyResources(label11, "label11");
+            label11.Name = "label11";
+            // 
+            // comboBoxImpsCz4
+            // 
+            resources.ApplyResources(comboBoxImpsCz4, "comboBoxImpsCz4");
+            comboBoxImpsCz4.BackColor = Color.FromArgb(25, 36, 54);
+            comboBoxImpsCz4.ForeColor = Color.White;
+            comboBoxImpsCz4.FormattingEnabled = true;
+            comboBoxImpsCz4.Items.AddRange(new object[] { resources.GetString("comboBoxImpsCz4.Items") });
+            comboBoxImpsCz4.Name = "comboBoxImpsCz4";
+            comboBoxImpsCz4.SelectedIndexChanged += comboBoxImpsCz4_SelectedIndexChanged;
             // 
             // label10
             // 
@@ -301,5 +377,13 @@
         private Label labeLogin;
         private Label label10;
         private ComboBox comboBoxImpressoraDanfe;
+        private Label label11;
+        private ComboBox comboBoxImpsCz4;
+        private Label label12;
+        private ComboBox comboBoxImpsCz5;
+        private Label label14;
+        private ComboBox comboBoxImpsBar3;
+        private Label label13;
+        private ComboBox comboBoxImpsBar2;
     }
 }

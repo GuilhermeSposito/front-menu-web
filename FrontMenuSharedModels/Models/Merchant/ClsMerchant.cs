@@ -112,6 +112,9 @@ public class ClsMerchant
     [JsonPropertyName("UltilizaSenhaNaTelaDePesagemAutomatico")] public bool UltilizaSenhaNaTelaDePesagemAutomatico { get; set; } = false;
     [JsonPropertyName("AdicionaCouvertComoItem")] public bool AdicionaCouvertComoItem { get; set; } = false;
     [JsonPropertyName("NaoImprimeComplementosNoFechamento")] public bool NaoImprimeComplementosNoFechamento { get; set; } = true;
+    [JsonPropertyName("TamanhoItemNoFechamento")] public int TamanhoItemNoFechamento { get; set; } = 8;
+    [JsonPropertyName("TamanhoTotaisFechamento")] public int TamanhoTotaisFechamento { get; set; } = 8;
+    [JsonPropertyName("FonteFechamentoDeCaixa")] public int FonteFechamentoDeCaixa { get; set; } = 8;
     [JsonPropertyName("EmiteNfAutomatica")] public bool EmiteNfAutomatica { get; set; } = false;
     [JsonPropertyName("CorBarrasCardapio")] public string CorBarrasCardapio { get; set; } = "#F88113";
     [JsonPropertyName("CorFundoCardapio")] public string CorFundoCardapio { get; set; } = "#192436";

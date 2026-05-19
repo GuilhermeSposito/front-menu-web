@@ -5820,6 +5820,117 @@
   <data name="panel1.Size" type="System.Drawing.Size, System.Drawing">
     <value>771, 73</value>
   </data>
+  <data name="panelDeSelects.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label14.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label14.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt</value>
+  </data>
+  <data name="label14.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label14.Size" type="System.Drawing.Size, System.Drawing">
+    <value>166, 25</value>
+  </data>
+  <data name="label14.Text" xml:space="preserve">
+    <value>Impressora Bar 3:</value>
+  </data>
+  <data name="comboBoxImpsBar3.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="comboBoxImpsBar3.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBoxImpsBar3.Size" type="System.Drawing.Size, System.Drawing">
+    <value>620, 37</value>
+  </data>
+  <data name="comboBoxImpsBar3.Text" xml:space="preserve">
+    <value>Sem Impressora</value>
+  </data>
+  <data name="label13.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label13.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt</value>
+  </data>
+  <data name="label13.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label13.Size" type="System.Drawing.Size, System.Drawing">
+    <value>166, 25</value>
+  </data>
+  <data name="label13.Text" xml:space="preserve">
+    <value>Impressora Bar 2:</value>
+  </data>
+  <data name="comboBoxImpsBar2.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="comboBoxImpsBar2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBoxImpsBar2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>620, 37</value>
+  </data>
+  <data name="comboBoxImpsBar2.Text" xml:space="preserve">
+    <value>Sem Impressora</value>
+  </data>
+  <data name="label12.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label12.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt</value>
+  </data>
+  <data name="label12.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label12.Size" type="System.Drawing.Size, System.Drawing">
+    <value>209, 25</value>
+  </data>
+  <data name="label12.Text" xml:space="preserve">
+    <value>Impressora Cozinha 5:</value>
+  </data>
+  <data name="comboBoxImpsCz5.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="comboBoxImpsCz5.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBoxImpsCz5.Size" type="System.Drawing.Size, System.Drawing">
+    <value>620, 37</value>
+  </data>
+  <data name="comboBoxImpsCz5.Text" xml:space="preserve">
+    <value>Sem Impressora</value>
+  </data>
+  <data name="label11.AutoSize" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="label11.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 12pt</value>
+  </data>
+  <data name="label11.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="label11.Size" type="System.Drawing.Size, System.Drawing">
+    <value>209, 25</value>
+  </data>
+  <data name="label11.Text" xml:space="preserve">
+    <value>Impressora Cozinha 4:</value>
+  </data>
+  <data name="comboBoxImpsCz4.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>Flat</value>
+  </data>
+  <data name="comboBoxImpsCz4.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBoxImpsCz4.Size" type="System.Drawing.Size, System.Drawing">
+    <value>620, 37</value>
+  </data>
+  <data name="comboBoxImpsCz4.Text" xml:space="preserve">
+    <value>Sem Impressora</value>
+  </data>
   <data name="label10.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
@@ -5830,7 +5941,7 @@
     <value>NoControl</value>
   </data>
   <data name="label10.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 507</value>
+    <value>69, 712</value>
   </data>
   <data name="label10.Size" type="System.Drawing.Size, System.Drawing">
     <value>181, 25</value>
@@ -5847,6 +5958,9 @@
   <data name="comboBoxImpressoraDanfe.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 13.8pt</value>
   </data>
+  <data name="comboBoxImpressoraDanfe.Location" type="System.Drawing.Point, System.Drawing">
+    <value>69, 740</value>
+  </data>
   <data name="comboBoxImpressoraDanfe.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
   </data>
@@ -5862,6 +5976,9 @@
   <data name="label9.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
   </data>
+  <data name="label9.Location" type="System.Drawing.Point, System.Drawing">
+    <value>69, 85</value>
+  </data>
   <data name="label9.Size" type="System.Drawing.Size, System.Drawing">
     <value>184, 25</value>
   </data>
@@ -5873,6 +5990,9 @@
   </data>
   <data name="comboBox6.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 13.8pt</value>
+  </data>
+  <data name="comboBox6.Location" type="System.Drawing.Point, System.Drawing">
+    <value>69, 113</value>
   </data>
   <data name="comboBox6.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
@@ -5890,7 +6010,7 @@
     <value>NoControl</value>
   </data>
   <data name="label8.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 589</value>
+    <value>54, 796</value>
   </data>
   <data name="label8.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 50</value>
@@ -5912,7 +6032,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>NoControl</value>
   </data>
   <data name="label7.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 422</value>
+    <value>69, 495</value>
   </data>
   <data name="label7.Size" type="System.Drawing.Size, System.Drawing">
     <value>150, 25</value>
@@ -5930,7 +6050,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>NoControl</value>
   </data>
   <data name="label6.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 340</value>
+    <value>69, 291</value>
   </data>
   <data name="label6.Size" type="System.Drawing.Size, System.Drawing">
     <value>209, 25</value>
@@ -5948,7 +6068,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>NoControl</value>
   </data>
   <data name="label5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 256</value>
+    <value>69, 223</value>
   </data>
   <data name="label5.Size" type="System.Drawing.Size, System.Drawing">
     <value>209, 25</value>
@@ -5966,7 +6086,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>NoControl</value>
   </data>
   <data name="label4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 178</value>
+    <value>69, 155</value>
   </data>
   <data name="label4.Size" type="System.Drawing.Size, System.Drawing">
     <value>209, 25</value>
@@ -5996,7 +6116,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>Microsoft Sans Serif, 13.8pt</value>
   </data>
   <data name="comboBox5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 450</value>
+    <value>69, 523</value>
   </data>
   <data name="comboBox5.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
@@ -6014,7 +6134,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>Microsoft Sans Serif, 13.8pt</value>
   </data>
   <data name="comboBox4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 368</value>
+    <value>69, 319</value>
   </data>
   <data name="comboBox4.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
@@ -6032,7 +6152,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>Microsoft Sans Serif, 13.8pt</value>
   </data>
   <data name="comboBox3.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 206</value>
+    <value>69, 183</value>
   </data>
   <data name="comboBox3.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
@@ -6050,7 +6170,7 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>Microsoft Sans Serif, 13.8pt</value>
   </data>
   <data name="comboBox2.Location" type="System.Drawing.Point, System.Drawing">
-    <value>69, 284</value>
+    <value>69, 251</value>
   </data>
   <data name="comboBox2.Size" type="System.Drawing.Size, System.Drawing">
     <value>620, 37</value>
@@ -6080,16 +6200,16 @@ Caso ocorram erros após mudanças nas configurações de impressoras, a respons
     <value>Microsoft Sans Serif, 19.800001pt</value>
   </data>
   <data name="panelDeSelects.Location" type="System.Drawing.Point, System.Drawing">
-    <value>14, 105</value>
+    <value>14, 93</value>
   </data>
   <data name="panelDeSelects.Size" type="System.Drawing.Size, System.Drawing">
-    <value>772, 650</value>
+    <value>772, 675</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>9, 18</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>798, 767</value>
+    <value>798, 778</value>
   </data>
   <data name="$this.Font" type="System.Drawing.Font, System.Drawing">
     <value>Microsoft Sans Serif, 9pt</value>
