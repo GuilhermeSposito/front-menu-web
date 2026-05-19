@@ -42,7 +42,7 @@
                             <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
                                 <MudText Typo="Typo.h6">Grupos</MudText>
                             </MudStack>
-                            <MudStack Class="w-100" Style="flex: 1 1 auto; min-height: 0; overflow-y: auto;">
+                            <MudStack Class="w-100" Style="flex: 1 1 auto; min-height: 0; overflow-y: auto; max-height: calc(100vh - 160px);">
                                 @if (CarregandoGrupo)
                                 {
                                     <MudStack Class="w-100 h-100" AlignItems="AlignItems.Center" Justify="Justify.Center">
@@ -1265,15 +1265,6 @@
 
     private async Task PagarPedidoDeMesa()
     {
-        if (Mesa.CodigoExterno == 0)
-        {
-            Snackbar.Add("Informe o número da mesa para continuar.", Severity.Error);
-            return;
-        }
-
-        if (Mesa.Id == 0)
-            NovoPedido.MesaComandaId = Mesa.CodigoExterno;
-
         await PagarPedido();
     }
 

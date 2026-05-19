@@ -5,11 +5,12 @@ namespace FrontMenuWeb.DTOS;
 public class AvisoContaItemDto
 {
     [JsonPropertyName("Descricao")] public string Descricao { get; set; } = "";
-    [JsonPropertyName("Quantidade")] public int Quantidade { get; set; }
+    [JsonPropertyName("Quantidade")] public float Quantidade { get; set; }
     [JsonPropertyName("PrecoUnitario")] public float PrecoUnitario { get; set; }
     [JsonPropertyName("PrecoTotal")] public float PrecoTotal { get; set; }
     [JsonPropertyName("LegTamanhoEscolhido")] public string? LegTamanhoEscolhido { get; set; }
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
+    [JsonPropertyName("ECouvert")] public bool ECouvert { get; set; } = false;
     [JsonPropertyName("Complementos")] public List<AvisoContaComplementoDto>? Complementos { get; set; }
 }
 

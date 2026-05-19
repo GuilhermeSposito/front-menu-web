@@ -34,7 +34,7 @@
     <DialogContent>
 
         @* ── Opções de Fechamento ── *@
-        @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0 || (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+        @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0 || (AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) || (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
         {
             <MudPaper Elevation="0" Class="px-4 py-2 mb-1"
                       Style="background-color:var(--mud-palette-background); border-bottom:1px solid var(--mud-palette-lines-default);">
@@ -50,7 +50,7 @@
                             }
                         </MudStack>
                     }
-                    @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
+                    @if (!(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) && (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
                     {
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
@@ -72,12 +72,73 @@
                         <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Small" />
                         <MudText Typo="Typo.body2">Separar por cliente</MudText>
                     </MudStack>
+                    @if (AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false)
+                    {
+                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.LocalBar"
+                                   OnClick="AbrirFormCouvert">
+                            + Couvert
+                        </MudButton>
+                    }
                     @if (TemExtras)
                     {
                         <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">
                             Total: @TotalGeral.ToString("C")
                         </MudChip>
                     }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (_exibeFormCouvert)
+        {
+            <MudPaper Elevation="2" Class="px-4 py-3 mx-2 my-1" Style="border-left: 4px solid var(--mud-palette-secondary);">
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">Adicionar Couvert</MudText>
+                <MudStack Spacing="2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+                        <MudNumericField T="int" @bind-Value="_couvertQtd" Label="Quantidade" Min="1" Step="1"
+                                         Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:130px" HideSpinButtons="false" />
+                        <MudNumericField T="decimal" @bind-Value="_couvertValorUnitario" Label="Valor Unitário"
+                                         Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:150px"
+                                         Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true" Min="0" Format="N2" />
+                        <MudTextField @bind-Value="_couvertNomeCliente" Label="Nome do cliente (opcional)"
+                                      Variant="Variant.Outlined" Margin="Margin.Dense" Style="min-width:200px"
+                                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Outlined.Person" AdornmentColor="Color.Secondary" />
+                    </MudStack>
+                    @{
+                        var nomesCouvert = PedidoMesa.Itens?
+                            .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
+                            .Select(i => i.NomeCliente!)
+                            .Distinct()
+                            .ToList() ?? new();
+                    }
+                    @if (nomesCouvert.Count > 0)
+                    {
+                        <MudStack Row="true" Spacing="1" Class="flex-wrap">
+                            @foreach (var nome in nomesCouvert)
+                            {
+                                var nomeCapturado = nome;
+                                <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined"
+                                         OnClick="@(() => { _couvertNomeCliente = nomeCapturado; StateHasChanged(); })">
+                                    @nomeCapturado
+                                </MudChip>
+                            }
+                        </MudStack>
+                    }
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton OnClick="ConfirmarCouvert" Variant="Variant.Filled" Color="Color.Primary"
+                                   Size="Size.Small" Disabled="_salvandoCouvert">
+                            @if (_salvandoCouvert)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <span>Confirmar</span>
+                            }
+                        </MudButton>
+                        <MudButton OnClick="@(() => _exibeFormCouvert = false)" Variant="Variant.Text" Size="Size.Small">Cancelar</MudButton>
+                    </MudStack>
                 </MudStack>
             </MudPaper>
         }
@@ -141,6 +202,49 @@
                             }
                         </MudStack>
                     }
+                </MudStack>
+            </MudPaper>
+        }
+
+        @if (_itemFracionando is not null)
+        {
+            <MudPaper Elevation="2" Class="px-4 py-3 mx-2 my-1" Style="border-left: 4px solid var(--mud-palette-warning);">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle2">
+                        Fracionar: <strong>@_itemFracionando.Descricao</strong> &nbsp;
+                        <MudText Typo="Typo.caption" Inline="true">(Qtd atual: @_itemFracionando.Quantidade.ToString("G6") | Unit: @_itemFracionando.PrecoUnitario.ToString("C"))</MudText>
+                    </MudText>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudText Typo="Typo.caption">Frações rápidas:</MudText>
+                        @foreach (var frac in new[] { (1, 2, "½"), (1, 3, "⅓"), (2, 3, "⅔"), (1, 4, "¼"), (3, 4, "¾"), (1, 5, "⅕"), (2, 5, "⅖"), (3, 5, "⅗"), (4, 5, "⅘") })
+                        {
+                            var num = frac.Item1; var den = frac.Item2; var label = frac.Item3;
+                            <MudChip T="string" Size="Size.Medium" Variant="Variant.Outlined" Color="Color.Warning"
+                                     OnClick="@(() => _fracionarQtd = Math.Round((decimal)_itemFracionando.Quantidade * num / den, 3))">
+                                @label
+                            </MudChip>
+                        }
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
+                        <MudNumericField T="decimal" Value="_fracionarValor" ValueChanged="OnFracionarValorChanged"
+                                         Label="Por valor (R$)" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                         Min="0.01m" Format="F2" Style="min-width:150px" />
+                        <MudNumericField T="decimal" @bind-Value="_fracionarQtd"
+                                         Label="Quantidade a separar" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                         Min="0.001m" Step="0.001m" Format="F3" Style="min-width:190px" />
+                        <MudButton OnClick="ConfirmarFracionamento" Variant="Variant.Filled" Color="Color.Warning"
+                                   Size="Size.Small" Disabled="_fracionarSalvando">
+                            @if (_fracionarSalvando)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <span>Confirmar</span>
+                            }
+                        </MudButton>
+                        <MudButton OnClick="@(() => _itemFracionando = null)" Variant="Variant.Text" Size="Size.Small">Cancelar</MudButton>
+                    </MudStack>
                 </MudStack>
             </MudPaper>
         }
@@ -236,10 +340,14 @@
                         @(context.Item.Funcionario?.Nome ?? "Admin")
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="" HeaderStyle="width:48px">
+                <TemplateColumn Title="" HeaderStyle="width:88px">
                     <CellTemplate>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                       OnClick="@(() => AbrirEdicaoItem(context.Item))" />
+                        <MudStack Row="true" Spacing="0">
+                            <MudIconButton Icon="@Icons.Material.Filled.CallSplit" Size="Size.Small" Color="Color.Warning"
+                                           OnClick="@(() => AbrirFracionamento(context.Item))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => AbrirEdicaoItem(context.Item))" />
+                        </MudStack>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
@@ -278,8 +386,11 @@
     private decimal SubTotalParaTaxa => ItensSelecionados.Count > 0
         ? ItensSelecionados.Sum(i => (decimal)i.PrecoTotal)
         : SubTotalItens;
+    private decimal SubTotalSemCouvert => ItensSelecionados.Count > 0
+        ? ItensSelecionados.Where(i => !i.ECouvert).Sum(i => (decimal)i.PrecoTotal)
+        : (PedidoMesa.Itens?.Where(i => !i.ECouvert).Sum(i => (decimal)i.PrecoTotal) ?? 0m);
     private decimal TaxaPercent => (decimal)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
-    private decimal TaxaValor => _cobraTaxa ? SubTotalParaTaxa * (TaxaPercent / 100) : 0m;
+    private decimal TaxaValor => _cobraTaxa ? SubTotalSemCouvert * (TaxaPercent / 100) : 0m;
     private decimal CouvertPorPessoa => (decimal)(AppState.MerchantLogado?.ValorCouvert ?? 0);
     private decimal CouvertValor => _cobraCouvert ? CouvertPorPessoa * _qtdPessoas : 0m;
     private decimal TotalGeral => SubTotalParaTaxa + TaxaValor + CouvertValor;
@@ -292,7 +403,7 @@
         try
         {
             _cobraTaxa = (AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0;
-            _cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0;
+            _cobraCouvert = (AppState.MerchantLogado?.ValorCouvert ?? 0) > 0 && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false);
 
             PedidosService.PedidoMesaRecebido += async pedido =>
             {
@@ -453,8 +564,109 @@
     private bool _buscandoProduto = false;
     private ClsProduto? _produtoParaComplementos = null;
 
+    // ── Fracionamento de item ──
+    private ItensPedido? _itemFracionando = null;
+    private decimal _fracionarQtd = 0m;
+    private decimal _fracionarValor = 0m;
+    private bool _fracionarSalvando = false;
+
+    private void AbrirFracionamento(ItensPedido item)
+    {
+        _itemFracionando = item;
+        _itemEditando = null;
+        _fracionarQtd = 0m;
+        _fracionarValor = 0m;
+    }
+
+    private void OnFracionarValorChanged(decimal valor)
+    {
+        _fracionarValor = valor;
+        if (_itemFracionando is not null && _itemFracionando.PrecoUnitario > 0 && valor > 0)
+            _fracionarQtd = Math.Round(valor / (decimal)_itemFracionando.PrecoUnitario, 3);
+    }
+
+    private async Task ConfirmarFracionamento()
+    {
+        if (_itemFracionando is null || _fracionarQtd <= 0) return;
+        if (_fracionarQtd >= (decimal)_itemFracionando.Quantidade)
+        {
+            Snackbar.Add("A quantidade a separar deve ser menor que a quantidade atual do item.", Severity.Warning);
+            return;
+        }
+        _fracionarSalvando = true;
+        try
+        {
+            var result = await PedidosService.FracionarItemMesa(MesaOuComanda.Id, _itemFracionando.Id, _fracionarQtd);
+            if (result?.Status == "success")
+            {
+                Snackbar.Add("Item fracionado com sucesso.", Severity.Success);
+                _itemFracionando = null;
+                _fracionarQtd = 0m;
+                _fracionarValor = 0m;
+                if (dataGridRef is not null)
+                    await dataGridRef.ReloadServerData();
+            }
+            else
+                Snackbar.Add(string.Join(", ", result?.Messages ?? new()), Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _fracionarSalvando = false;
+        }
+    }
+
+    // ── Couvert como item ──
+    private bool _exibeFormCouvert = false;
+    private int _couvertQtd = 1;
+    private decimal _couvertValorUnitario = 0;
+    private string _couvertNomeCliente = string.Empty;
+    private bool _salvandoCouvert = false;
+
+    private void AbrirFormCouvert()
+    {
+        _couvertQtd = 1;
+        _couvertValorUnitario = AppState.MerchantLogado?.ValorCouvert ?? 0;
+        _couvertNomeCliente = string.Empty;
+        _exibeFormCouvert = true;
+    }
+
+    private async Task ConfirmarCouvert()
+    {
+        if (_couvertQtd <= 0) return;
+        _salvandoCouvert = true;
+        try
+        {
+            var nomeCliente = string.IsNullOrWhiteSpace(_couvertNomeCliente) ? null : _couvertNomeCliente.Trim();
+            var result = await PedidosService.AdicionarCouvertNaMesa(MesaOuComanda.Id, _couvertQtd, nomeCliente, _couvertValorUnitario);
+            if (result?.Status == "success")
+            {
+                Snackbar.Add("Couvert adicionado!", Severity.Success);
+                _exibeFormCouvert = false;
+                if (dataGridRef is not null)
+                    await dataGridRef.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", result?.Messages ?? new()), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _salvandoCouvert = false;
+        }
+    }
+
     private void AbrirEdicaoItem(ItensPedido item)
     {
+        _itemFracionando = null;
         _itemEditando = item;
         _novaDescricao = item.Descricao ?? string.Empty;
         _novaQuantidade = item.Quantidade;
@@ -874,7 +1086,8 @@
         if (itensDoCliente.Count == 0) return;
 
         var subtotalCliente = itensDoCliente.Sum(i => (decimal)i.PrecoTotal);
-        var taxaCliente = _cobraTaxa ? subtotalCliente * (TaxaPercent / 100) : 0m;
+        var subtotalClienteSemCouvert = itensDoCliente.Where(i => !i.ECouvert).Sum(i => (decimal)i.PrecoTotal);
+        var taxaCliente = _cobraTaxa ? subtotalClienteSemCouvert * (TaxaPercent / 100) : 0m;
 
         ClsPedido NovoPedido = new ClsPedido
         {

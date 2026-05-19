@@ -110,6 +110,8 @@ public class ClsMerchant
     [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
     [JsonPropertyName("UltilizaSenhaNaTelaDePesagemAutomatico")] public bool UltilizaSenhaNaTelaDePesagemAutomatico { get; set; } = false;
+    [JsonPropertyName("AdicionaCouvertComoItem")] public bool AdicionaCouvertComoItem { get; set; } = false;
+    [JsonPropertyName("NaoImprimeComplementosNoFechamento")] public bool NaoImprimeComplementosNoFechamento { get; set; } = true;
     [JsonPropertyName("EmiteNfAutomatica")] public bool EmiteNfAutomatica { get; set; } = false;
     [JsonPropertyName("CorBarrasCardapio")] public string CorBarrasCardapio { get; set; } = "#F88113";
     [JsonPropertyName("CorFundoCardapio")] public string CorFundoCardapio { get; set; } = "#192436";

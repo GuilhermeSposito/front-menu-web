@@ -39,6 +39,13 @@ public class GarconService
         return result ?? new ReturnApiRefatored<ClsGarcon>();
     }
 
+    public async Task<ReturnApiRefatored<ClsGarcon>> ToggleAtivoGarconAsync(int id, bool ativo)
+    {
+        var response = await _http.PutAsJsonAsync($"garcons/{id}", new { ativo });
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsGarcon>>();
+        return result ?? new ReturnApiRefatored<ClsGarcon>();
+    }
+
     public async Task<ReturnApiRefatored<ClsGarcon>> DeleteGarconAsync(int id)
     {
         var response = await _http.DeleteAsync($"garcons/{id}");

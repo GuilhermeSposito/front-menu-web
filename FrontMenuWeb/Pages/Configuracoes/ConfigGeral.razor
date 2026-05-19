@@ -441,6 +441,12 @@
                         <MudItem xs="12" md="6" lg="6">
                             <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true" @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
                         </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudCheckBox Value=@Merchant.AdicionaCouvertComoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.AdicionaCouvertComoItem = x)) T=bool Color="Color.Primary">Adicionar Couvert como Item na Mesa</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudCheckBox Value=@Merchant.NaoImprimeComplementosNoFechamento ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.NaoImprimeComplementosNoFechamento = x)) T=bool Color="Color.Primary">Não Imprimir Complementos no Fechamento</MudCheckBox>
+                        </MudItem>
                     </MudGrid>
 
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />

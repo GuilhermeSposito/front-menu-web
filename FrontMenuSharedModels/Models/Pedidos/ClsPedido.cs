@@ -184,6 +184,8 @@ public class ItensPedido
     [JsonPropertyName("EItemFracionadoCriadoNoGestorSophos")] public bool EItemFracionadoCriadoNoGestorSophos { get; set; } = true;
     [JsonPropertyName("NumeroMesaItem")] public int NumeroMesaItem { get; set; } = 0;
     [JsonPropertyName("CriadoEm")] public DateTime? CriadoEm { get; set; }
+    [JsonPropertyName("DescontoNoItem")] public bool DescontoNoItem { get; set; } = false;
+    [JsonPropertyName("ECouvert")] public bool ECouvert { get; set; } = false;
 
 }
 

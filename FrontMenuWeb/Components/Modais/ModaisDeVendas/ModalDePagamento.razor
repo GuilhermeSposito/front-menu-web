@@ -52,7 +52,7 @@
                         </MudStack>
                         <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                             <MudText Typo="Typo.h5" Color="Color.Default">@ValorDoDesconto.ToString("C")</MudText>
-                            <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => ValorDoDesconto); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                            <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValoresDeDesconto(() => ValorDoDesconto); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
                         </MudStack>
                     </MudPaper>
                 </MudItem>
@@ -97,11 +97,11 @@
                             </MudStack>
                             <MudStack Class="h-100" Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                 <MudText Style="font-weight:100" Typo="Typo.h5" Color="Color.Default">@ValorTaxaDeServico.ToString("C")</MudText>
-                                <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValores(() => ValorTaxaDeServico); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
+                                <MudIconButton OnClick=@(async () => { await AbreModalDeEditarValoresDeTaxaAdicional(() => ValorTaxaDeServico); }) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Large" />
                             </MudStack>
                         </MudPaper>
                     </MudItem>
-                    @if (AppState.MerchantLogado.ValorCouvert > 0)
+                    @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0 && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false))
                     {
                         <MudItem xs="12" sm="12" lg="6" xxl="6">
                             <MudPaper Class="pa-4 ma-1 rounded-lg h-100" Style="border: 1px solid var(--mud-palette-divider);">
@@ -345,7 +345,14 @@
 
             if (Pedido.TipoDePedido == "MESA")
             {
-                ValorTaxaDeServico = Pedido.ServicoValor;
+                var taxaPercent = (float)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0);
+                if (taxaPercent > 0)
+                {
+                    var baseSemCouvert = Pedido.Itens.Where(i => !i.ECouvert).Sum(i => i.PrecoTotal);
+                    ValorTaxaDeServico = (float)Math.Round(baseSemCouvert * (taxaPercent / 100f), 2);
+                }
+                else
+                    ValorTaxaDeServico = Pedido.ServicoValor;
 
                 var valorCouvertUn = (float)(AppState.MerchantLogado?.ValorCouvert ?? 0);
                 if (Pedido.CouvertValor > 0 && valorCouvertUn > 0)
@@ -379,7 +386,8 @@
 
     private void SomaValorTotal()
     {
-        var couvert = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
+        var couvertComoItem = AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false;
+        var couvert = Pedido.TipoDePedido == "MESA" && !couvertComoItem ? ValorTotalCouvert : 0f;
         var servico = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
         ValorTotal = (float)Math.Round(
             ((ValorDosItens + TaxaAdicional + servico + couvert) - ValorDoDesconto) + TaxaDeEntrega,
@@ -389,6 +397,11 @@
 
     private async Task ImprimirFechamento()
     {
+        await EnviarAvisoFechamento();
+    }
+
+    private async Task EnviarAvisoFechamento()
+    {
         try
         {
             await PedidosService.ImprimirFechamentoPagamento(
@@ -396,9 +409,9 @@
                 itens: Pedido.Itens,
                 desconto: ValorDoDesconto,
                 taxaAdicional: TaxaAdicional,
-                taxaServico: Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f,
-                couvert: Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f,
-                qtdPessoas: Pedido.TipoDePedido == "MESA" ? QtdPessoasCouvert : 0,
+                taxaServico: ValorTaxaDeServico,
+                couvert: !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? ValorTotalCouvert : 0f,
+                qtdPessoas: !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? QtdPessoasCouvert : 0,
                 troco: ValorTroco,
                 totalFinal: ValorTotal,
                 pagamentos: Pedido.Pagamentos);
@@ -406,7 +419,7 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Erro ao imprimir fechamento: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Erro ao enviar fechamento: {ex.Message}", Severity.Error);
         }
     }
 
@@ -435,7 +448,7 @@
             Pedido.AcrescimoValor = TaxaAdicional;
             Pedido.TaxaEntregaValor = TaxaDeEntrega;
             Pedido.ServicoValor = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
-            Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
+            Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? ValorTotalCouvert : 0f;
             Pedido.ValorTotal = ValorTotal;
             Pedido.IsConvenio = true;
             Pedido.Pagamentos.Clear();
@@ -460,7 +473,7 @@
         Pedido.AcrescimoValor = TaxaAdicional;
         Pedido.TaxaEntregaValor = TaxaDeEntrega;
         Pedido.ServicoValor = Pedido.TipoDePedido == "MESA" ? ValorTaxaDeServico : 0f;
-        Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" ? ValorTotalCouvert : 0f;
+        Pedido.CouvertValor = Pedido.TipoDePedido == "MESA" && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? ValorTotalCouvert : 0f;
         Pedido.ValorTotal = ValorTotal;
 
         if (Editando)
@@ -477,6 +490,22 @@
             {
                 Snackbar.Add("Erro ao salvar valores financeiros do pedido.", Severity.Error);
                 return;
+            }
+        }
+
+        if (Pedido.TipoDePedido == "MESA")
+        {
+            if (AppState.MerchantLogado?.PerguntaImpressaoMesa == true)
+            {
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+                var dialog = await DialogService.ShowAsync<ModalDePerguntaDeImpressao>("Imprimir Fechamento?", options);
+                var result = await dialog.Result;
+                if (result is not null && !result.Canceled && result.Data is bool confirmado && confirmado)
+                    await EnviarAvisoFechamento();
+            }
+            else
+            {
+                await EnviarAvisoFechamento();
             }
         }
 
@@ -681,6 +710,72 @@
             }
         }
     }
+
+    private async Task AbreModalDeEditarValoresDeDesconto(Expression<Func<float>> propriedadeExpr)
+    {
+        var getter = propriedadeExpr.Compile();
+        float valorAtual = Pedido.Itens.Where(p=> p.DescontoNoItem).Sum(i => i.PrecoTotal);
+
+        var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Editar Valor", new DialogParameters { { "ValorAtual", valorAtual }, { "ValorTotalDoPedido", valorAtual } });
+        var result = await dialog.Result;
+
+        try { await _focoRef.FocusAsync(); } catch { }
+
+        if (!result.Canceled && result.Data is float novoValor)
+        {
+            if (propriedadeExpr.Body is MemberExpression memberExp)
+            {
+                var targetExp = memberExp.Expression;
+                var target = targetExp != null ? Expression.Lambda(targetExp).Compile().DynamicInvoke() : null;
+
+                if (memberExp.Member is PropertyInfo pi)
+                {
+                    pi.SetValue(target, novoValor);
+                }
+                else if (memberExp.Member is FieldInfo fi)
+                {
+                    fi.SetValue(target, novoValor);
+                }
+
+                SomaValorTotal();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task AbreModalDeEditarValoresDeTaxaAdicional(Expression<Func<float>> propriedadeExpr)
+    {
+        var ValorItens = Pedido.Itens.Where(x => !x.ECouvert).Sum(i => i.PrecoTotal);   
+        var ValorTaxa = ValorItens * ((float)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) / 100f);
+
+        var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Editar Valor", new DialogParameters { { "ValorAtual", ValorTaxa }, { "ValorTotalDoPedido", ValorItens } });
+        var result = await dialog.Result;
+
+        try { await _focoRef.FocusAsync(); } catch { }
+
+        if (!result.Canceled && result.Data is float novoValor)
+        {
+            if (propriedadeExpr.Body is MemberExpression memberExp)
+            {
+                var targetExp = memberExp.Expression;
+                var target = targetExp != null ? Expression.Lambda(targetExp).Compile().DynamicInvoke() : null;
+
+                if (memberExp.Member is PropertyInfo pi)
+                {
+                    pi.SetValue(target, novoValor);
+                }
+                else if (memberExp.Member is FieldInfo fi)
+                {
+                    fi.SetValue(target, novoValor);
+                }
+
+                SomaValorTotal();
+                StateHasChanged();
+            }
+        }
+    }
+
+
 
     private void UpdateQtdPessoasCouvert(int val)
     {

@@ -226,11 +226,11 @@ public class FilaDeImpressaoService : IDisposable
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         await _impressaoService.ImprimirComanda(JsonSerializer.Serialize(pedido, options), origem, EMesa: true).ConfigureAwait(false);
 
-        foreach (var item in itensParaImprimir)
+      /*  foreach (var item in itensParaImprimir)
         {
             await MarcarItemMesaComoImpressoAsync(item.Id);
             LogLocalService.LogImpressao(item.Id.ToString(), origem);
-        }
+        }*/
     }
 
     public async Task BuscarItensDeMesaNaoImpressosAsync()

@@ -36,6 +36,14 @@
                 <PropertyColumn Property="x => x.Email" Title="Email" />
                 <PropertyColumn Property="x => x.ValorVendas" Title="Vendas" Format="C" />
                 <PropertyColumn Property="x => x.ValorTaxasServico" Title="Comissão/Taxas" Format="C" />
+                <TemplateColumn T="ClsGarcon" Title="Ativo">
+                    <CellTemplate Context="context">
+                        <MudTooltip Text="@(context.Item.Ativo ? "Desativar garçom" : "Ativar garçom")">
+                            <MudSwitch T="bool" Value="context.Item.Ativo" Color="Color.Success"
+                                       ValueChanged="@(async (v) => await ToggleAtivo(context.Item, v))" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
                 <TemplateColumn T="ClsGarcon">
                     <CellTemplate Context="context">
                         <MudStack Row Spacing="2">
@@ -88,6 +96,20 @@
         var dialog = await DialogService.ShowAsync<ModalDeAdicionarOuEditarGarcon>(ecriacao ? "Novo Garçom" : "Editar Garçom", parameters, options);
         var result = await dialog.Result;
         if (result != null && !result.Canceled) await CarregarGarcons();
+    }
+
+    private async Task ToggleAtivo(ClsGarcon garcon, bool novoValor)
+    {
+        var response = await GarconService.ToggleAtivoGarconAsync(garcon.Id, novoValor);
+        if (response.Status == "success")
+        {
+            garcon.Ativo = novoValor;
+            Snackbar.Add(novoValor ? "Garçom ativado!" : "Garçom desativado!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(string.Join(", ", response.Messages), Severity.Error);
+        }
     }
 
     private async Task DeletarGarcon(ClsGarcon garcon)

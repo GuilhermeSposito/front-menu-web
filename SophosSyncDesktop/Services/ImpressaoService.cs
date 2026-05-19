@@ -355,11 +355,6 @@ public class ImpressaoService
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
         string? NomeGarcomQueEnviou = string.Empty;
 
-        if (AppState.MerchantLogado is not null)
-            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
-
-        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
-        //========================================================================================       
         AdicionaConteudo(Conteudo, $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
         //========================================================================================       
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
@@ -373,7 +368,7 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"MESA: {NumeroDaMesa}", FonteDetalhesDoPedido, Alinhamentos.Centro);
                 //========================================================================================       
                 JaImprimiuMesa = true;
-                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
             }
         }
 
@@ -382,19 +377,23 @@ public class ImpressaoService
             var PrimeiroItem = pedido.Itens.FirstOrDefault();
             if (PrimeiroItem is not null)
             {
-                AdicionaConteudo(Conteudo, $"Enviado as {PrimeiroItem.CriadoEm:t}", FonteDetalhesDoPedido, Alinhamentos.Centro);
+                AdicionaConteudo(Conteudo, $"Emitido às {PrimeiroItem.CriadoEm:t}", FonteDetalhesDoPedido);
                 //========================================================================================       
-                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
             }
         }
 
-        //------------------------------------------------------------------------------------------
-        AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $" Tam. ", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
+            string? Tamanho = null;
+            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+            {
+                Tamanho = item.LegTamanhoEscolhido;
+                if (Tamanho.Length > 10)
+                    Tamanho = Tamanho.Substring(0, 10);
+            }
+
             if (item.Produto?.Fracionado == true && AppState.MerchantLogado is not null && AppState.MerchantLogado.PulaItensFracionadosParaProximaLinha)
             {
                 var partesFracionado = item.Descricao.Split('&');
@@ -405,29 +404,29 @@ public class ImpressaoService
                         AdicionaConteudo(Conteudo, i == 0 ? $"{item.Quantidade}  {nome}" : $"   {nome}", FonteItensComanda);
                 }
 
+                var tamanhoFrac = !string.IsNullOrEmpty(Tamanho) ? $"TAM: {Tamanho}" : "";
+                AdicionaConteudo(Conteudo, tamanhoFrac, FonteLegendaDoTamanho);
             }
             else
             {
-
-                AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItensComanda);
+                var tamanhoStr = !string.IsNullOrEmpty(Tamanho) ? $"TAM: {Tamanho}" : "";
+                AdicionaConteudo(Conteudo, $"  {item.Quantidade}    {tamanhoStr}", FonteItensComanda);
+                AdicionaConteudo(Conteudo, $"{item.Descricao}", FonteItensComanda);
             }
 
             if (item.Complementos.Count > 0)
             {
-                AdicionaConteudo(Conteudo, $"\n", FonteCPF);
                 foreach (var complemento in item.Complementos)
                 {
-                    AdicionaConteudo(Conteudo, $"{complemento.Quantidade}- {complemento.Descricao} - {complemento.PrecoTotal.ToString("C")}", FonteComplementoNaComanda, eObs: true);
+                    AdicionaConteudo(Conteudo, $"  {complemento.Quantidade}- {complemento.Descricao}", FonteComplementoNaComanda, eObs: true);
                 }
             }
 
-            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
-            {
-                AdicionaConteudo(Conteudo, $"{item.LegTamanhoEscolhido}", FonteLegendaDoTamanho);
-            }
+
 
             if (!String.IsNullOrEmpty(item.Observacoes))
             {
+                AdicionaConteudo(Conteudo, $" ", FonteComplementoNaComanda, eObs: true);
                 AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplementoNaComanda, eObs: true);
             }
 
@@ -441,7 +440,7 @@ public class ImpressaoService
                     AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", FonteComplementoNaComanda, eObs: true);
 
 
-            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
             NomeGarcomQueEnviou = item.Garcon?.Nome ?? NomeGarcomQueEnviou;
             //------------------------------------------------------------------------------------------
@@ -811,9 +810,7 @@ public class ImpressaoService
         var legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa";
         List<ClsImpressaoDefinicoes> Conteudo = new();
 
-        int taxaPct = aviso.SubtotalDaMesa > 0
-            ? (int)Math.Round((double)aviso.TaxaDeServicoDaMesa / aviso.SubtotalDaMesa * 100)
-            : 0;
+        decimal taxaPct = AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0;
 
         // ── Cabeçalho ─────────────────────────────────────────────────────────
         if (AppState.MerchantLogado is not null)
@@ -965,24 +962,25 @@ public class ImpressaoService
             LR($"{item.Quantidade}x  {item.Descricao}", item.PrecoTotal.ToString("C")),
             FonteFechamentoDeCaixa);
 
-        if (item.Complementos?.Count > 0)
-        {
-            var leg = !string.IsNullOrEmpty(item.LegTamanhoEscolhido)
-                ? (item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido)
-                : null;
-            var cabecalhoComp = leg is not null ? $"{item.Descricao} - {leg}:" : $"{item.Descricao} - complementos:";
-            AdicionaConteudo(Conteudo, cabecalhoComp, FonteFechamentoDeCaixa, eObs: true);
-            if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+        if (!(AppState.MerchantLogado?.NaoImprimeComplementosNoFechamento ?? false))
+            if (item.Complementos?.Count > 0)
+            {
+                var leg = !string.IsNullOrEmpty(item.LegTamanhoEscolhido)
+                    ? (item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido)
+                    : null;
+                var cabecalhoComp = leg is not null ? $"{item.Descricao} - {leg}:" : $"{item.Descricao} - complementos:";
+                AdicionaConteudo(Conteudo, cabecalhoComp, FonteFechamentoDeCaixa, eObs: true);
+                if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
 
-                AdicionaConteudo(Conteudo, item.LegTamanhoEscolhido, FonteFechamentoDeCaixa, eObs: true);
-            foreach (var c in item.Complementos)
-                AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteFechamentoDeCaixa, eObs: true);
-        }
-        else if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
-        {
-            var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
-            AdicionaConteudo(Conteudo, $"  {leg}", FonteFechamentoDeCaixa, eObs: true);
-        }
+                    AdicionaConteudo(Conteudo, item.LegTamanhoEscolhido, FonteFechamentoDeCaixa, eObs: true);
+                foreach (var c in item.Complementos)
+                    AdicionaConteudo(Conteudo, $"  - {c.Quantidade}x  {c.Descricao}", FonteFechamentoDeCaixa, eObs: true);
+            }
+            else if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
+            {
+                var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
+                AdicionaConteudo(Conteudo, $"  {leg}", FonteFechamentoDeCaixa, eObs: true);
+            }
     }
     #endregion
 

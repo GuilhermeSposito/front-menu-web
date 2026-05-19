@@ -264,11 +264,12 @@ public class PedidosService
             Itens = itens.Select(i => new AvisoContaItemDto
             {
                 Descricao = i.Descricao,
-                Quantidade = (int)i.Quantidade,
+                Quantidade = i.Quantidade,
                 PrecoUnitario = i.PrecoUnitario,
                 PrecoTotal = i.PrecoTotal,
                 LegTamanhoEscolhido = i.LegTamanhoEscolhido,
                 NomeCliente = i.NomeCliente,
+                ECouvert = i.ECouvert,
                 Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
                 {
                     Descricao = c.Descricao,
@@ -298,11 +299,12 @@ public class PedidosService
             Itens = itens.Select(i => new AvisoContaItemDto
             {
                 Descricao = i.Descricao,
-                Quantidade = (int)i.Quantidade,
+                Quantidade = i.Quantidade,
                 PrecoUnitario = i.PrecoUnitario,
                 PrecoTotal = i.PrecoTotal,
                 LegTamanhoEscolhido = i.LegTamanhoEscolhido,
                 NomeCliente = i.NomeCliente,
+                ECouvert = i.ECouvert,
                 Complementos = i.Complementos.Select(c => new AvisoContaComplementoDto
                 {
                     Descricao = c.Descricao,
@@ -312,6 +314,27 @@ public class PedidosService
             }).ToList()
         };
         await _http.PostAsJsonAsync("pedidos/avisar-conta", payload);
+    }
+
+    public async Task<ReturnApiRefatored<ItensPedido>> FracionarItemMesa(int mesaId, int itemId, decimal quantidadeASeparar)
+    {
+        var payload = new FracionarItemMesaRequestDto { ItemId = itemId, QuantidadeASeparar = quantidadeASeparar };
+        var response = await _http.PostAsJsonAsync($"pedidos/mesas/{mesaId}/itens/fracionar", payload);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ItensPedido>>();
+        return retorno!;
+    }
+
+    public async Task<ReturnApiRefatored<ItensPedido>> AdicionarCouvertNaMesa(int mesaId, int qtdPessoas, string? nomeCliente, decimal? valorUnitario)
+    {
+        var payload = new AdicionarCouvertRequestDto
+        {
+            QtdPessoas = qtdPessoas,
+            NomeCliente = nomeCliente,
+            ValorUnitario = valorUnitario
+        };
+        var response = await _http.PostAsJsonAsync($"pedidos/mesas/{mesaId}/couvert", payload);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ItensPedido>>();
+        return retorno!;
     }
 
     public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesa(ClsPedido Pedido)

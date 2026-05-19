@@ -12,5 +12,6 @@ public class ClsGarcon
     [JsonPropertyName("nome_usuario")] public string NomeUsuario { get; set; } = string.Empty;
     [JsonPropertyName("valor_vendas")] public decimal ValorVendas { get; set; } = 0;
     [JsonPropertyName("valor_taxas_servico")] public decimal ValorTaxasServico { get; set; } = 0;
+    [JsonPropertyName("ativo")] public bool Ativo { get; set; } = true;
     [JsonPropertyName("merchantId")] public string MerchantId { get; set; } = string.Empty;
 }
