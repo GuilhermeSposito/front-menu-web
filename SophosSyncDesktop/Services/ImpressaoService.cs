@@ -1362,7 +1362,15 @@ public class ImpressaoService
                 return Imps.ImpressoraCz2;
             case "Cz3":
                 return Imps.ImpressoraCz3;
+            case "Cz4":
+                return Imps.ImpressoraCz3;
+            case "Cz5":
+                return Imps.ImpressoraCz3;
             case "Bar":
+                return Imps.ImpressoraBar;
+            case "Bar2":
+                return Imps.ImpressoraBar;
+            case "Bar3":
                 return Imps.ImpressoraBar;
             case null:
                 return Imps.ImpressoraCz1;

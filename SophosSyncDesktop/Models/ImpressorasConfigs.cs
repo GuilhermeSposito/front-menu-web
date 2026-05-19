@@ -16,7 +16,11 @@ public class ImpressorasConfigs
     [Column("impressora_Cz1")] public string ImpressoraCz1 { get; set; } = "Sem Impressora";
     [Column("impressora_Cz2")] public string ImpressoraCz2 { get; set; } = "Sem Impressora";
     [Column("impressora_Cz3")] public string ImpressoraCz3 { get; set; } = "Sem Impressora";
+    [Column("impressora_Cz4")] public string ImpressoraCz4 { get; set; } = "Sem Impressora";
+    [Column("impressora_Cz5")] public string ImpressoraCz5 { get; set; } = "Sem Impressora";
     [Column("impressora_Bar")] public string ImpressoraBar { get; set; } = "Sem Impressora";
+    [Column("impressora_Bar2")] public string ImpressoraBar2 { get; set; } = "Sem Impressora";
+    [Column("impressora_Bar3")] public string ImpressoraBar3 { get; set; } = "Sem Impressora";
     [Column("impressora_Danfe")] public string ImpressoraDanfe { get; set; } = "Sem Impressora";
     [Column("caminho_salvamento_json")] public string CaminhoSalvamentoDoJson { get; set; } = "Downloads";
     [Column("caminho_salvamento_nfe")] public string CaminhoSalvamentoDasNfe { get; set; } = @$"C:\ArqNfe\Autorizadas\";
