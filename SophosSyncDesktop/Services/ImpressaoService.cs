@@ -103,7 +103,7 @@ public class ImpressaoService
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
-                               .Where(i=> i.Descricao != "Couvert")
+                               .Where(i=> !i.ECouvert)
                                .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
                                 {
                                          new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
@@ -804,6 +804,7 @@ public class ImpressaoService
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDeFechamentoDeConta(AvisoContaDto aviso)
     {
         var legenda = AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa";
+        var legendaCouvert = AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert";
         List<ClsImpressaoDefinicoes> Conteudo = new();
 
         decimal taxaPct = AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0;
@@ -845,8 +846,8 @@ public class ImpressaoService
                     var qtdCouvert = aviso.Couvert?.PorCliente?.FirstOrDefault(c => c.Nome == comanda.Nome)?.Qtd ?? 1;
                     var valorUnit = aviso.Couvert?.ValorPorPessoa ?? 0;
                     var labelCouvert = qtdCouvert > 1
-                        ? $"Couvert ({qtdCouvert}x {valorUnit:C})"
-                        : "Couvert";
+                        ? $"{legendaCouvert} ({qtdCouvert}x {valorUnit:C})"
+                        : legendaCouvert;
                     AdicionaConteudoLR(Conteudo,
                         labelCouvert, comanda.Totais.CouvertIndividual.ToString("C"),
                         FonteTotaisFechamento, eObs: true);
@@ -901,18 +902,18 @@ public class ImpressaoService
                 // Detalha couvert por cliente
                 foreach (var cc in aviso.Couvert.PorCliente.Where(c => c.Valor > 0))
                     AdicionaConteudoLR(Conteudo,
-                        $"Couvert {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C"),
+                        $"{legendaCouvert} {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C"),
                         FonteTotaisFechamento);
 
                 if (aviso.CouvertAvulso > 0 && aviso.Couvert.Avulso > 0)
                     AdicionaConteudoLR(Conteudo,
-                        $"Couvert Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C"),
+                        $"{legendaCouvert} Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C"),
                         FonteTotaisFechamento);
             }
             else
             {
                 AdicionaConteudoLR(Conteudo,
-                    $"Couvert ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C"),
+                    $"{legendaCouvert} ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C"),
                     FonteTotaisFechamento);
             }
         }
@@ -983,6 +984,7 @@ public class ImpressaoService
     private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoFechamentoParaImpressao(ClsFechamentoDeCaixa Fechamento)
     {
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+        var legendaCouvertFechamento = AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert";
 
         void Ln(string label, float valor) =>
             AdicionaConteudoLR(Conteudo, label, ((decimal)valor).ToString("C"), FonteFechamentoDeCaixa);
@@ -1007,7 +1009,7 @@ public class ImpressaoService
         Ln("CORTESIA/DESCONTOS (-)", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos);
         Ln("TAXAS DE ENTREGA (+)", Fechamento.TotalTaxaEntrega);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        Ln("COUVERTS (+)", Fechamento.TotalDeCouvert);
+        Ln($"{legendaCouvertFechamento.ToUpper()}S (+)", Fechamento.TotalDeCouvert);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         Ln("TAXA DE SERVIÇO (+)", Fechamento.TotalDeServico);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);

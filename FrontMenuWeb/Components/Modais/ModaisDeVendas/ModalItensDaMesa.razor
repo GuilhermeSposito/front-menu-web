@@ -54,7 +54,7 @@
                     {
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
-                            <MudText Typo="Typo.body2">Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
+                            <MudText Typo="Typo.body2">@AppState.MerchantLogado!.LegendaCouvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
                             @if (_cobraCouvert)
                             {
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
@@ -77,7 +77,7 @@
                         <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.LocalBar"
                                    OnClick="AbrirFormCouvert">
-                            + Couvert
+                            + @AppState.MerchantLogado?.LegendaCouvert
                         </MudButton>
                     }
                     @if (TemExtras)
@@ -93,7 +93,7 @@
         @if (_exibeFormCouvert)
         {
             <MudPaper Elevation="2" Class="px-4 py-3 mx-2 my-1" Style="border-left: 4px solid var(--mud-palette-secondary);">
-                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">Adicionar Couvert</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Primary" Class="mb-2">Adicionar @AppState.MerchantLogado?.LegendaCouvert</MudText>
                 <MudStack Spacing="2">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Wrap="Wrap.Wrap">
                         <MudNumericField T="int" @bind-Value="_couvertQtd" Label="Quantidade" Min="1" Step="1"
@@ -644,7 +644,7 @@
             var result = await PedidosService.AdicionarCouvertNaMesa(MesaOuComanda.Id, _couvertQtd, nomeCliente, _couvertValorUnitario);
             if (result?.Status == "success")
             {
-                Snackbar.Add("Couvert adicionado!", Severity.Success);
+                Snackbar.Add($"{AppState.MerchantLogado?.LegendaCouvert} adicionado!", Severity.Success);
                 _exibeFormCouvert = false;
                 if (dataGridRef is not null)
                     await dataGridRef.ReloadServerData();

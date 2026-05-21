@@ -127,7 +127,7 @@
                             }
                             @if (CouvertValor > 0)
                             {
-                                <MudText Typo="Typo.caption" Style="color:#a78bfa;">+ Couvert (@_qtdPessoas×): @CouvertValor.ToString("C")</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#a78bfa;">+ @(AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert") (@_qtdPessoas×): @CouvertValor.ToString("C")</MudText>
                             }
                         }
                     </MudStack>
@@ -150,7 +150,7 @@
                             @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
                             {
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                    <MudText Typo="Typo.body2">Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
+                                    <MudText Typo="Typo.body2">@AppState.MerchantLogado!.LegendaCouvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
                                     <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
                                 </MudStack>
                             }

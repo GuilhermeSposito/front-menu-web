@@ -451,7 +451,14 @@
                             <MudNumericField Variant="Variant.Outlined" Label="Valor do Couvert" @bind-Value=@Merchant.ValorCouvert Adornment="Adornment.Start" AdornmentText="R$" HideSpinButtons="true" @onfocusout=SalvarInfosLojaAsync Min=0 T="decimal?" Format="N2" />
                         </MudItem>
                         <MudItem xs="12" md="6" lg="6">
-                            <MudCheckBox Value=@Merchant.AdicionaCouvertComoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.AdicionaCouvertComoItem = x)) T=bool Color="Color.Primary">Adicionar Couvert como Item na Mesa</MudCheckBox>
+                            <MudSelect T="LegendaCouvert" Label="Legenda do Couvert" @bind-Value="Merchant.LegendaCouvert" @bind-Value:after="SalvarInfosLojaAsync" Variant="Variant.Outlined">
+                                <MudSelectItem Value="LegendaCouvert.Couvert">Couvert</MudSelectItem>
+                                <MudSelectItem Value="LegendaCouvert.Entrada">Entrada</MudSelectItem>
+                                <MudSelectItem Value="LegendaCouvert.Ingresso">Ingresso</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudCheckBox Value=@Merchant.AdicionaCouvertComoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.AdicionaCouvertComoItem = x)) T=bool Color="Color.Primary">Adicionar @Merchant.LegendaCouvert como Item na Mesa</MudCheckBox>
                         </MudItem>
                         <MudItem xs="12" md="6" lg="6">
                             <MudCheckBox Value=@Merchant.NaoImprimeComplementosNoFechamento ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.NaoImprimeComplementosNoFechamento = x)) T=bool Color="Color.Primary">Não Imprimir Complementos no Fechamento</MudCheckBox>

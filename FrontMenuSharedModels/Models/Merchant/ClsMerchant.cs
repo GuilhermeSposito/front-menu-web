@@ -111,6 +111,7 @@ public class ClsMerchant
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
     [JsonPropertyName("UltilizaSenhaNaTelaDePesagemAutomatico")] public bool UltilizaSenhaNaTelaDePesagemAutomatico { get; set; } = false;
     [JsonPropertyName("AdicionaCouvertComoItem")] public bool AdicionaCouvertComoItem { get; set; } = false;
+    [JsonPropertyName("LegendaCouvert")] public LegendaCouvert LegendaCouvert { get; set; } = LegendaCouvert.Couvert;
     [JsonPropertyName("NaoImprimeComplementosNoFechamento")] public bool NaoImprimeComplementosNoFechamento { get; set; } = true;
     [JsonPropertyName("TamanhoItemNoFechamento")] public int TamanhoItemNoFechamento { get; set; } = 8;
     [JsonPropertyName("TamanhoTotaisFechamento")] public int TamanhoTotaisFechamento { get; set; } = 8;
@@ -135,6 +136,14 @@ public enum CobrancaItemFracionado
     MAIOR,
     MEDIA,
     METADE
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum LegendaCouvert
+{
+    Couvert,
+    Entrada,
+    Ingresso
 }
 
 

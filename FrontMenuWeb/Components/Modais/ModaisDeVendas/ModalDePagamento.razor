@@ -106,7 +106,7 @@
                         <MudItem xs="12" sm="12" lg="6" xxl="6">
                             <MudPaper Class="pa-4 ma-1 rounded-lg h-100" Style="border: 1px solid var(--mud-palette-divider);">
                                 <MudStack Row=true Justify="Justify.SpaceBetween">
-                                    <MudText Typo="Typo.h6" Style="font-weight: 600;">Couvert Artistico (@AppState.MerchantLogado.ValorCouvert?.ToString("C") un):</MudText>
+                                    <MudText Typo="Typo.h6" Style="font-weight: 600;">@AppState.MerchantLogado.LegendaCouvert (@AppState.MerchantLogado.ValorCouvert?.ToString("C") un):</MudText>
                                 </MudStack>
                                 <MudStack Row=true Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                                     <MudNumericField T="int" Value="QtdPessoasCouvert" ValueChanged="UpdateQtdPessoasCouvert" Label="Pessoas" Variant="Variant.Outlined" Min="0" Class="W-25" Margin="Margin.Dense" HideSpinButtons="true" />

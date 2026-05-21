@@ -173,7 +173,7 @@
                                 @if (caixa.ValorTotalDeCouvert > 0)
                                 {
                                     <MudStack Class="p-2 w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                        <MudText Typo="Typo.subtitle2">Couvert (+): </MudText>
+                                        <MudText Typo="Typo.subtitle2">@(AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert") (+): </MudText>
                                         <MudText Typo="Typo.subtitle2">@caixa.ValorTotalDeCouvert.ToString("C")</MudText>
                                     </MudStack>
                                     <MudDivider Light=true Class="w-100" />

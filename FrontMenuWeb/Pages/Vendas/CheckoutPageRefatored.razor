@@ -212,7 +212,7 @@
                     @if (CouvertValor > 0)
                     {
                         <div class="totals__line totals__line--couvert">
-                            <span>Couvert · @_qtdPessoas pessoa@(_qtdPessoas > 1 ? "s" : "")</span>
+                            <span>@(AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert") · @_qtdPessoas pessoa@(_qtdPessoas > 1 ? "s" : "")</span>
                             <span>+ @CouvertValor.ToString("C")</span>
                         </div>
                     }
@@ -240,7 +240,7 @@
                 @if ((AppState.MerchantLogado?.ValorCouvert ?? 0) > 0)
                 {
                     <div class="options__row">
-                        <span>Couvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</span>
+                        <span>@AppState.MerchantLogado!.LegendaCouvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</span>
                         <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
                     </div>
                 }

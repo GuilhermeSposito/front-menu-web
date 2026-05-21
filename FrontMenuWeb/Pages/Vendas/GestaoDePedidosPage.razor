@@ -249,7 +249,7 @@
                                                                         @if (pedido.Pedido.CouvertValor > 0)
                                                                         {
                                                                             <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                                                                                <MudText Typo="Typo.subtitle2">Couvert Artístico:</MudText>
+                                                                                <MudText Typo="Typo.subtitle2">@(AppState.MerchantLogado?.LegendaCouvert.ToString() ?? "Couvert"):</MudText>
                                                                                 <MudText Typo="Typo.subtitle2">@pedido.Pedido.CouvertValor.ToString("C")</MudText>
                                                                             </MudStack>
                                                                         }
