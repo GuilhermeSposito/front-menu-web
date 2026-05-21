@@ -576,6 +576,28 @@ public class PedidosService
         return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<DtoProdutoComHorario>>())!;
     }
 
+    public async Task<DtoEstatisticaGarcons?> EstastisticaDeGarcons(DateTime? dataInicio = null, DateTime? dataFinal = null, List<int>? garconIds = null)
+    {
+        var parametros = new List<string>();
+        if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFinal != null) parametros.Add($"DataFinal={dataFinal:yyyy-MM-dd}");
+        if (garconIds != null && garconIds.Any())
+            parametros.AddRange(garconIds.Select(id => $"GarconIds={id}"));
+
+        var url = "pedidos/estatisticas/garcons";
+        if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
+
+        var response = await _http.GetAsync(url);
+        var retorno = await response.Content.ReadFromJsonAsync<RespostaGarcons>();
+        return retorno?.Data;
+    }
+
+    private class RespostaGarcons
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
+        [System.Text.Json.Serialization.JsonPropertyName("data")] public DtoEstatisticaGarcons? Data { get; set; }
+    }
+
 
 }
 
