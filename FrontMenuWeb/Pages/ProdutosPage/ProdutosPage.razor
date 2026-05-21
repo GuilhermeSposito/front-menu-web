@@ -55,20 +55,18 @@
             </NoRecordsContent>
             <ToolBarContent>
 
-                <MudAutocomplete T="string"
-                                 SearchFunc="Search"
-                                 @bind-Value="StringDePesquisa"
-                                 @bind-Value:after="@(() => RecarregarProdutosAposPesquisa())"
-                                 Variant="Variant.Outlined"
-                                 Label="Produto"
-                                 Adornment="Adornment.End"
-                                 AdornmentIcon="@Icons.Material.Outlined.Search"
-                                 Placeholder="Pesquisar Produto"
-                                 MinCharacters="2"
-                                 ResetValueOnEmptyText="true"
-                                 CoerceText="true"
-                                 Dense="true"
-                                 Clearable />
+                <MudTextField T="string"
+                              @bind-Value="StringDePesquisa"
+                              Variant="Variant.Outlined"
+                              Label="Produto"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Outlined.Search"
+                              OnAdornmentClick="RecarregarProdutosAposPesquisa"
+                              Placeholder="Pesquisar Produto"
+                              Dense="true"
+                              Clearable="true"
+                              @onkeyup="@(async (e) => { if (e.Key == "Enter") await RecarregarProdutosAposPesquisa(); })"
+                              @onfocusout="@(async () => { if (string.IsNullOrEmpty(StringDePesquisa)) await RecarregarProdutosAposPesquisa(); })" />
 
 
                 <MudSelect @bind-Value="_selectedGrupo" Clearable="true" @bind-Value:after="FiltroDeGrupoAcionado" Label="Filtre Por Grupo" Placeholder="Use Filtro por Grupo" Variant="Variant.Outlined">
@@ -196,7 +194,7 @@
             </Columns>
             <PagerContent>
 
-                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 100, 200, 300, 400, 500 }) />
+                <MudDataGridPager T="ClsProduto" RowsPerPageString="Produtos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] {30, 100, 200, 300, 400, 500 }) />
 
             </PagerContent>
         </MudDataGrid>
@@ -226,6 +224,7 @@
 <MudOverlay @bind-Visible="Aviso" LockScroll="false" DarkBackground="false" AutoClose="true" />
 @code {
     List<ClsProduto>? Produtos = new();
+    private List<ClsProduto> _paginaAtual = new();
     private List<Categoria> Categorias { get; set; } = new List<Categoria>() { new Categoria { Descricao = "INSUMO", Id = 1 }, new Categoria { Descricao = "CARDÁPIO", Id = 2 }, new Categoria { Descricao = "INSUMO/CARDÁPIO", Id = 3 } };
     private MudDataGrid<ClsProduto>? dataGridRef;
     private string StringDePesquisa = string.Empty;
@@ -305,6 +304,7 @@
 
             var result = await ProdutoService.GetProdutosPorPaginaAsync(page, pageSize, StringDePesquisa, _selectedGrupo?.Id);
 
+            _paginaAtual = result.Data;
 
             return new GridData<ClsProduto>
             {
@@ -486,6 +486,7 @@
 
 
 
+
     private bool carregandoFichasTecnicas = false;
     private List<ClsFichaTecnica> FichasPorTamanho = new();
     private ClsFichaTecnica? FichaGeral = null;
@@ -569,12 +570,20 @@
             if (!response.IsSuccessStatusCode)
             {
                 Snackbar.Add($"{responseAsString}", Severity.Error);
+
+                var produtoServidor = await ProdutoService.GetProdutoAsync(produtoModificado.Id ?? "");
+                if (produtoServidor is not null)
+                    CopiarPropriedadesDoProduto(produtoServidor, produtoModificado);
             }
             else
             {
                 Snackbar.Add($"Produto {produtoModificado.Descricao} alterado com sucesso!", Severity.Success);
-            }
 
+                // Sincroniza o objeto do drawer com o item correspondente no grid
+                var itemNoGrid = _paginaAtual.FirstOrDefault(p => p.Id == produtoModificado.Id);
+                if (itemNoGrid is not null && !ReferenceEquals(itemNoGrid, produtoModificado))
+                    CopiarPropriedadesDoProduto(produtoModificado, itemNoGrid);
+            }
 
             StateHasChanged();
         }
@@ -582,7 +591,42 @@
         {
             Snackbar.Add($"Erro ao salvar alterações: {ex.Message}", Severity.Error);
         }
+    }
 
+    private static void CopiarPropriedadesDoProduto(ClsProduto origem, ClsProduto destino)
+    {
+        destino.Descricao = origem.Descricao;
+        destino.ProdutoInfos = origem.ProdutoInfos;
+        destino.CodBarras = origem.CodBarras;
+        destino.Precos = origem.Precos;
+        destino.QtdEmEstoque = origem.QtdEmEstoque;
+        destino.PrecoCusto = origem.PrecoCusto;
+        destino.Ativo = origem.Ativo;
+        destino.ImpressoraComanda1 = origem.ImpressoraComanda1;
+        destino.ImpressoraComanda2 = origem.ImpressoraComanda2;
+        destino.Grupo = origem.Grupo;
+        destino.GrupoId = origem.GrupoId;
+        destino.Categoria = origem.Categoria;
+        destino.CategoriaId = origem.CategoriaId;
+        destino.TamanhoUnico = origem.TamanhoUnico;
+        destino.Fracionado = origem.Fracionado;
+        destino.TipoDeVenda = origem.TipoDeVenda;
+        destino.ObsNaVenda = origem.ObsNaVenda;
+        destino.EstoqueDesativado = origem.EstoqueDesativado;
+        destino.EstoqueMin = origem.EstoqueMin;
+        destino.NCM = origem.NCM;
+        destino.CEST = origem.CEST;
+        destino.csosn = origem.csosn;
+        destino.CST = origem.CST;
+        destino.AliquotaId = origem.AliquotaId;
+        destino.Aliquota = origem.Aliquota;
+        destino.OrigemProduto = origem.OrigemProduto;
+        destino.TribPisCofins = origem.TribPisCofins;
+        destino.OcultaTablet = origem.OcultaTablet;
+        destino.OcultaDoGestor = origem.OcultaDoGestor;
+        destino.UltilizaProdutoNaBalanca = origem.UltilizaProdutoNaBalanca;
+        destino.UltilizaProdutoOnline = origem.UltilizaProdutoOnline;
+        destino.CardapioDoDia = origem.CardapioDoDia;
     }
 
     private async Task AdicionarNovoValor(ClsProduto prod)

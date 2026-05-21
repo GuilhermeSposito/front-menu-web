@@ -103,6 +103,7 @@ public class ImpressaoService
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
+                               .Where(i=> i.Descricao != "Couvert")
                                .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
                                 {
                                          new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
@@ -949,7 +950,9 @@ public class ImpressaoService
 
     private void AdicionarLinhasDeItem(List<ClsImpressaoDefinicoes> Conteudo, AvisoContaItemDto item)
     {
-        AdicionaConteudo(Conteudo,$"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
+        if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false && item.NumeroMesaItem.HasValue && item.NumeroMesaItem != 0)
+            AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
+
         AdicionaConteudoLR(Conteudo,
             $"{item.Quantidade}x {item.Descricao}", item.PrecoTotal.ToString("C"),
             FonteItemFechamento);
