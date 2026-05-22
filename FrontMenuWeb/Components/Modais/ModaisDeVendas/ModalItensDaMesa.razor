@@ -297,6 +297,16 @@
             </MudStack>
         </MudPaper>
 
+        @if (_fechandoMesa)
+        {
+            <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999">
+                <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="3">
+                    <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Style="color:#fff;">Fechando mesa...</MudText>
+                </MudStack>
+            </MudOverlay>
+        }
+
         @if (_emitindoNF)
         {
             <MudOverlay Visible="true" DarkBackground="true" ZIndex="9999">
@@ -372,6 +382,7 @@
     private bool Carregando { get; set; } = true;
 
     // ── NF automática ──
+    private bool _fechandoMesa = false;
     private bool _emitindoNF = false;
     private int _progressoNF = 0;
     private CancellationTokenSource? _nfProgressCts;
@@ -854,7 +865,13 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
+            _fechandoMesa = true;
+            StateHasChanged();
+
             var response = await PedidosService.FechaMesa(NovoPedido);
+
+            _fechandoMesa = false;
+            StateHasChanged();
 
             if (response.Status == "success")
             {
@@ -869,8 +886,6 @@
             {
                 Snackbar.Add($"Erro ao fechar pedido: {string.Join(",", response.Messages)}", Severity.Error);
             }
-
-            StateHasChanged();
         }
 
     }

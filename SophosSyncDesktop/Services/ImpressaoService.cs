@@ -751,7 +751,7 @@ public class ImpressaoService
                     bool ePedidoPagoOnline = pagamento.FormaDePagamento.PagamentoOnline;
                     var InfoSeSeraPago = ePedidoPagoOnline ? "PAGO ONLINE COM" : "PEDIDO SERÁ PAGO COM";
 
-                    AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pedido.ValorTotal.ToString("C")}", FonteInfosPagamento);
+                    AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pagamento.ValorTotal.ToString("C")}", FonteInfosPagamento);
                     if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
                     {
                         AdicionaConteudo(Conteudo, $"LEVAR TROCO: {pagamento.Troco.ToString("C")}", FonteInfosPagamento);
