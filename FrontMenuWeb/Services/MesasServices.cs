@@ -48,6 +48,13 @@ public class MesasServices
         return deletedMesa ?? new ReturnApiRefatored<ClsMesasEComandas>();
     }
 
+    public async Task<ReturnApiRefatored<ClsMesasEComandas>> CancelarAguardandoPagamentoAsync(int mesaId)
+    {
+        var response = await _http.PatchAsync($"mesas-comandas/{mesaId}/cancelar-aguardando-pagamento", null);
+        var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMesasEComandas>>();
+        return result ?? new ReturnApiRefatored<ClsMesasEComandas>();
+    }
+
     public async Task<ReturnApiRefatored<ClsMesasEComandas>> GetMesaPublic(string IdDoMerchant, string IdDaMEsa)
     {
         var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsMesasEComandas>>($"mesas-comandas/qr/{IdDoMerchant}/{IdDaMEsa}");

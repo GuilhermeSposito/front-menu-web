@@ -84,7 +84,10 @@
                                                              Label="@($"Conta de {clienteCapturado}")" />
                                             }
                                         }
-                                        <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
+                                        @if (mesa.AguardandoPagamento)
+                                        {
+                                            <MudMenuItem OnClick=@(async () => { await ReabrirConta(mesa.Id); }) Icon="@Icons.Material.Filled.OpenInFull" IconColor="Color.Primary" Label="Reabrir Conta" />
+                                        }
                                     </MudMenu>
                                 }
                             </MudCard>
@@ -491,6 +494,30 @@
     {
         if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
         await AbreModalDeVerItensDaMesa(MesaOuComanda);
+    }
+
+    private async Task ReabrirConta(int mesaId)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoLancaVenda")) return;
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Deseja reabrir a conta " },
+            { "ButtonText", "Reabrir Conta" },
+            { "Color", Color.Primary }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true, Position = DialogPosition.BottomLeft, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeAcessoNegado>("Reabrir Conta", parameters, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            var response = await MesasServices.CancelarAguardandoPagamentoAsync(mesaId);
+
+            var severty = response.Status == "success" ? Severity.Success : Severity.Error;
+            Snackbar.Add(string.Join(" ", response.Messages), severty);
+
+            await CarregarMesasEComandas();
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task<PedidoMesaDto>? CarregaMesaOuComanda(ClsMesasEComandas MesaOuComanda)
