@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using DANFe = Unimake.Unidanfe;
 
 namespace SophosSyncDesktop.Services;
@@ -103,7 +104,7 @@ public class ImpressaoService
                     PedidoMesaDto Pedido = JsonSerializer.Deserialize<PedidoMesaDto>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                     List<ItensPorImpressoraDto> produtosAgrupados = Pedido.Itens
-                               .Where(i=> !i.ECouvert)
+                               .Where(i => !i.ECouvert)
                                .SelectMany(i => i.Produto == null ? new[] { new { Origem = 0, Impressora = (string?)null, Item = i } } : new[]
                                 {
                                          new { Origem = 1, Impressora = i.Produto.ImpressoraComanda1, Item = i },
@@ -831,26 +832,49 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in comanda.Itens)
-                    AdicionarLinhasDeItem(Conteudo, item);
+                    if (!item.ECouvert)
+                        AdicionarLinhasDeItem(Conteudo, item);
 
                 if (comanda.Totais.TaxaDeServico > 0)
                 {
                     AdicionaConteudo(Conteudo, " ", FonteTotaisFechamento);
-                    AdicionaConteudoLR(Conteudo,
-                        $"Tx. de Serviço: ({taxaPct}%)", comanda.Totais.TaxaDeServico.ToString("C"),
-                        FonteFechamentoDeCaixa, eObs: true);
+                    AdicionaConteudoLR(Conteudo, $"Tx. de Serviço: ({taxaPct}%)", comanda.Totais.TaxaDeServico.ToString("C"), FonteFechamentoDeCaixa, eObs: true);
+                }
+
+                var couverts = comanda.Itens.Where(i => i.ECouvert).ToList();
+                if (couverts.Count > 0)
+                {
+                    if (aviso.Itens is null)
+                        aviso.Itens = new List<AvisoContaItemDto>();
+
+                    aviso.Itens?.AddRange(couverts);
+                }
+
+                comanda.Totais.CouvertIndividual += couverts.Sum(i => i.Quantidade);
+                if (couverts.Count > 0)
+                {
+                    var avisoCouvertAntes = aviso.Couvert;
+                    aviso.Couvert = new AvisoContaCouvertDto
+                    {
+                        QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 1 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
+                        ValorPorPessoa = couverts.FirstOrDefault()?.PrecoUnitario ?? 0f,
+                    };
                 }
 
                 if (comanda.Totais.CouvertIndividual > 0)
                 {
-                    var qtdCouvert = aviso.Couvert?.PorCliente?.FirstOrDefault(c => c.Nome == comanda.Nome)?.Qtd ?? 1;
+                    var qtdCouvert = aviso.Couvert?.PorCliente?.FirstOrDefault(c => c.Nome == comanda.Nome)?.Qtd ?? 0;
                     var valorUnit = aviso.Couvert?.ValorPorPessoa ?? 0;
-                    var labelCouvert = qtdCouvert > 1
-                        ? $"{legendaCouvert} ({qtdCouvert}x {valorUnit:C})"
-                        : legendaCouvert;
-                    AdicionaConteudoLR(Conteudo,
-                        labelCouvert, comanda.Totais.CouvertIndividual.ToString("C"),
-                        FonteTotaisFechamento, eObs: true);
+
+                    if (qtdCouvert == 0)
+                    {
+                        qtdCouvert = (int?)couverts.Where(i => i.NomeCliente == comanda.Nome).Sum(i => i.Quantidade) ?? 1;
+                        if (qtdCouvert > 0)
+                            comanda.Totais.CouvertIndividual = valorUnit * qtdCouvert;
+                    }
+
+                    var labelCouvert = qtdCouvert > 1 ? $"{legendaCouvert} ({qtdCouvert}x {valorUnit:C})" : legendaCouvert;
+                    AdicionaConteudoLR(Conteudo, labelCouvert, comanda.Totais.CouvertIndividual.ToString("C"), FonteTotaisFechamento, eObs: true);
                 }
 
                 AdicionaConteudoLR(Conteudo, "TOTAL:", comanda.Totais.Total.ToString("C"), FonteTotaisFechamento);
@@ -877,8 +901,20 @@ public class ImpressaoService
                     AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
                 }
 
+                var couverts = itensParaImprimir.Where(i => i.ECouvert).ToList();
+
+                var avisoCouvertAntes = aviso.Couvert;
+                aviso.Couvert = new AvisoContaCouvertDto
+                {
+                    QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 1 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
+                    ValorPorPessoa = couverts.FirstOrDefault()?.PrecoUnitario ?? aviso.Couvert?.ValorPorPessoa ?? 0,
+                };
+
+                aviso.CouvertTotalMesa += couverts.Sum(i => i.PrecoTotal);
+
                 foreach (var item in itensParaImprimir)
-                    AdicionarLinhasDeItem(Conteudo, item);
+                    if (!item.ECouvert)
+                        AdicionarLinhasDeItem(Conteudo, item);
 
                 AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
             }
@@ -888,12 +924,14 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "Consumo Total", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
+        var valorDosCouvertsEnviadoComoItem = aviso.Itens?.Where(i => i.ECouvert).Sum(i => i.PrecoTotal) ?? 0;
+        aviso.SubtotalDaMesa = aviso.SubtotalDaMesa - valorDosCouvertsEnviadoComoItem;
         AdicionaConteudoLR(Conteudo, "Valor dos Itens", aviso.SubtotalDaMesa.ToString("C"), FonteTotaisFechamento);
 
         if (aviso.TaxaDeServicoDaMesa > 0)
-            AdicionaConteudoLR(Conteudo,
-                $"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C"),
-                FonteTotaisFechamento);
+            AdicionaConteudoLR(Conteudo, $"Tx. de Serviço: ({taxaPct}%)", aviso.TaxaDeServicoDaMesa.ToString("C"), FonteTotaisFechamento);
+
+
 
         if (aviso.CouvertTotalMesa > 0 && aviso.Couvert is not null)
         {
@@ -901,20 +939,14 @@ public class ImpressaoService
             {
                 // Detalha couvert por cliente
                 foreach (var cc in aviso.Couvert.PorCliente.Where(c => c.Valor > 0))
-                    AdicionaConteudoLR(Conteudo,
-                        $"{legendaCouvert} {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C"),
-                        FonteTotaisFechamento);
+                    AdicionaConteudoLR(Conteudo, $"{legendaCouvert} {cc.Nome} ({cc.Qtd}x {aviso.Couvert.ValorPorPessoa:C})", cc.Valor.ToString("C"), FonteTotaisFechamento);
 
                 if (aviso.CouvertAvulso > 0 && aviso.Couvert.Avulso > 0)
-                    AdicionaConteudoLR(Conteudo,
-                        $"{legendaCouvert} Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C"),
-                        FonteTotaisFechamento);
+                    AdicionaConteudoLR(Conteudo, $"{legendaCouvert} Avulso ({aviso.Couvert.Avulso}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertAvulso.ToString("C"), FonteTotaisFechamento);
             }
             else
             {
-                AdicionaConteudoLR(Conteudo,
-                    $"{legendaCouvert} ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C"),
-                    FonteTotaisFechamento);
+                AdicionaConteudoLR(Conteudo, $"{legendaCouvert} ({aviso.Couvert.QtdPessoas}x {aviso.Couvert.ValorPorPessoa:C})", aviso.CouvertTotalMesa.ToString("C"), FonteTotaisFechamento);
             }
         }
 
@@ -951,7 +983,7 @@ public class ImpressaoService
 
     private void AdicionarLinhasDeItem(List<ClsImpressaoDefinicoes> Conteudo, AvisoContaItemDto item)
     {
-        if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false && item.NumeroMesaItem.HasValue && item.NumeroMesaItem != 0)
+        if ((AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false) && item.NumeroMesaItem is not null && item.NumeroMesaItem != 0)
             AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
 
         AdicionaConteudoLR(Conteudo,
