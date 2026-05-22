@@ -113,6 +113,7 @@ public class ClsMerchant
     [JsonPropertyName("AdicionaCouvertComoItem")] public bool AdicionaCouvertComoItem { get; set; } = false;
     [JsonPropertyName("LegendaCouvert")] public LegendaCouvert LegendaCouvert { get; set; } = LegendaCouvert.Couvert;
     [JsonPropertyName("NaoImprimeComplementosNoFechamento")] public bool NaoImprimeComplementosNoFechamento { get; set; } = true;
+    [JsonPropertyName("ImprimeMediaPorPessoaNoFechamentoDaMesa")] public bool ImprimeMediaPorPessoaNoFechamentoDaMesa { get; set; } = false;
     [JsonPropertyName("TamanhoItemNoFechamento")] public int TamanhoItemNoFechamento { get; set; } = 8;
     [JsonPropertyName("TamanhoTotaisFechamento")] public int TamanhoTotaisFechamento { get; set; } = 8;
     [JsonPropertyName("FonteFechamentoDeCaixa")] public int FonteFechamentoDeCaixa { get; set; } = 8;

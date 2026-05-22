@@ -975,6 +975,15 @@ public class ImpressaoService
             AdicionaConteudoLR(Conteudo, "Troco", aviso.Troco.ToString("C"), FonteTotaisFechamento);
         AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
 
+        if (AppState.MerchantLogado?.ImprimeMediaPorPessoaNoFechamentoDaMesa ?? false)
+        {
+            var mediaPorPessoa = aviso.TotalFinal > 0 ? aviso.TotalFinal / (aviso.Couvert?.QtdPessoas ?? 1) : totalAExibir / (aviso.Couvert?.QtdPessoas ?? 1);
+            AdicionaConteudoLR(Conteudo, "NRO DE PESSOAS", $"{aviso.Couvert?.QtdPessoas ?? 1}", FonteTotaisFechamento);
+            AdicionaConteudoLR(Conteudo, "MÉDIA POR PESSOA", mediaPorPessoa.ToString("C"), FonteTotaisFechamento);
+            AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+        }
+
+
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 

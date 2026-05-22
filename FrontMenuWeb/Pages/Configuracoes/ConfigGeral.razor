@@ -463,6 +463,9 @@
                         <MudItem xs="12" md="6" lg="6">
                             <MudCheckBox Value=@Merchant.NaoImprimeComplementosNoFechamento ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.NaoImprimeComplementosNoFechamento = x)) T=bool Color="Color.Primary">Não Imprimir Complementos no Fechamento</MudCheckBox>
                         </MudItem>
+                        <MudItem xs="12" md="6" lg="6">
+                            <MudCheckBox Value=@Merchant.ImprimeMediaPorPessoaNoFechamentoDaMesa ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeMediaPorPessoaNoFechamentoDaMesa = x)) T=bool Color="Color.Primary">Imprimir Média por Pessoa no Fechamento da Mesa</MudCheckBox>
+                        </MudItem>
                     </MudGrid>
 
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
