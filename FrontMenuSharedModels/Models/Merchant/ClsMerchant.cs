@@ -108,6 +108,7 @@ public class ClsMerchant
     [JsonPropertyName("IntegraApiOficialWS")] public bool IntegraApiOficialWS { get; set; } = false;
     [JsonPropertyName("UltilizaConvenio")] public bool UltilizaConvenio { get; set; } = false;
     [JsonPropertyName("JuntaItensNoLancamento")] public bool JuntaItensNoLancamento { get; set; } = true;
+    [JsonPropertyName("IgnoraNomeNoItemParaJuntarNoLancamento")] public bool IgnoraNomeNoItemParaJuntarNoLancamento { get; set; } = false;
     [JsonPropertyName("UltilizaRequisicaoDeMesaNoItem")] public bool UltilizaRequisicaoDeMesaNoItem { get; set; } = false;
     [JsonPropertyName("UltilizaSenhaNaTelaDePesagemAutomatico")] public bool UltilizaSenhaNaTelaDePesagemAutomatico { get; set; } = false;
     [JsonPropertyName("AdicionaCouvertComoItem")] public bool AdicionaCouvertComoItem { get; set; } = false;

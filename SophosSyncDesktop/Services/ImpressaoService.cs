@@ -856,7 +856,7 @@ public class ImpressaoService
                     var avisoCouvertAntes = aviso.Couvert;
                     aviso.Couvert = new AvisoContaCouvertDto
                     {
-                        QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 1 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
+                        QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 0 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
                         ValorPorPessoa = couverts.FirstOrDefault()?.PrecoUnitario ?? 0f,
                     };
                 }
@@ -884,8 +884,7 @@ public class ImpressaoService
         else
         {
             // Usa aviso.Itens se disponível; quando vem apenas uma comanda os itens estão nela
-            var itensParaImprimir = aviso.Itens
-                ?? aviso.Comandas?.FirstOrDefault()?.Itens;
+            var itensParaImprimir = aviso.Itens ?? aviso.Comandas?.FirstOrDefault()?.Itens;
 
             if (itensParaImprimir is not null)
             {
@@ -902,11 +901,16 @@ public class ImpressaoService
                 }
 
                 var couverts = itensParaImprimir.Where(i => i.ECouvert).ToList();
+                if (aviso.Itens is null)
+                {
+                    aviso.Itens = new List<AvisoContaItemDto>();
+                    aviso.Itens.AddRange(couverts);
+                }
 
                 var avisoCouvertAntes = aviso.Couvert;
                 aviso.Couvert = new AvisoContaCouvertDto
                 {
-                    QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 1 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
+                    QtdPessoas = avisoCouvertAntes?.QtdPessoas ?? 0 + ((int?)couverts.Sum(i => i.Quantidade) ?? 1),
                     ValorPorPessoa = couverts.FirstOrDefault()?.PrecoUnitario ?? aviso.Couvert?.ValorPorPessoa ?? 0,
                 };
 
@@ -961,7 +965,7 @@ public class ImpressaoService
         var totalAExibir = aviso.TotalFinal > 0
             ? aviso.TotalFinal
             : aviso.SubtotalDaMesa + aviso.TaxaDeServicoDaMesa + aviso.CouvertTotalMesa - aviso.Desconto + aviso.TaxaAdicional;
-        AdicionaConteudo(Conteudo, $"TOTAL A PAGAR:   {totalAExibir.ToString("C")}", FonteTotaisNovo);
+        AdicionaConteudoLR(Conteudo, $"TOTAL A PAGAR:", totalAExibir.ToString("C"), FonteTotaisNovo);
 
         if (aviso.Pagamentos?.Count > 0)
         {
