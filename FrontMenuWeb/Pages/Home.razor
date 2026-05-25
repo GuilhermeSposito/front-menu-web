@@ -29,7 +29,6 @@
         </MudAlert>
     }
 
-
     <MudGrid Class="pa-4" Spacing="3">
 
         @if (!UsuarioPermitidoAcessarDashboard)
@@ -196,10 +195,10 @@
                         </MudGrid>
 
                         @* Gráfico + Ranking *@
-                        <MudGrid Spacing="3" Class="px-3 pb-3">
-                            <MudItem xs="12" md="5">
-                                <MudPaper Class="pa-3" Elevation="0" Outlined>
-                                    <MudStack AlignItems="AlignItems.Center">
+                        <MudGrid Spacing="3" Class="px-3 pb-3" Style="align-items: stretch;">
+                            <MudItem xs="12" md="5" Style="display:flex;">
+                                <MudPaper Class="pa-3" Elevation="0" Outlined Style="height:100%; width:100%;">
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Style="height:100%;">
                                         <MudText Typo="Typo.subtitle1" Style="font-weight:600">Distribuição de Vendas (%)</MudText>
                                         @if (dataItensCaixaAtual.Length > 0)
                                         {
@@ -212,8 +211,8 @@
                                     </MudStack>
                                 </MudPaper>
                             </MudItem>
-                            <MudItem xs="12" md="7">
-                                <MudPaper Class="pa-3" Elevation="0" Outlined>
+                            <MudItem xs="12" md="7" Style="display:flex;">
+                                <MudPaper Class="pa-3" Elevation="0" Outlined Style="height:100%; width:100%;">
                                     <MudText Typo="Typo.subtitle1" Style="font-weight:600" Class="mb-2">Ranking de Itens Mais Vendidos</MudText>
                                     <MudDataGrid T="DtoItemVendidoCaixaAtual"
                                                  Items="@EstatisticasCaixaAtual.Itens"
@@ -265,6 +264,26 @@
                                 </MudPaper>
                             </MudItem>
                         </MudGrid>
+
+                        @* Grupos *@
+                        @if (EstatisticasCaixaAtual.Grupos.Count > 0)
+                        {
+                            <MudPaper Class="pa-3 mx-3 mb-3" Elevation="0" Outlined>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight:600" Class="mb-2">Vendas por Grupo</MudText>
+                                <MudDataGrid T="DtoGrupoVendidoCaixaAtual"
+                                             Items="@EstatisticasCaixaAtual.Grupos"
+                                             Dense Hover>
+                                    <Columns>
+                                        <PropertyColumn Property="x => x.Nome" Title="Grupo" />
+                                        <TemplateColumn T="DtoGrupoVendidoCaixaAtual" Title="Total Vendido">
+                                            <CellTemplate Context="c">
+                                                <MudText Color="Color.Success" Style="font-weight:600">@c.Item.ValorTotalVendido.ToString("C")</MudText>
+                                            </CellTemplate>
+                                        </TemplateColumn>
+                                    </Columns>
+                                </MudDataGrid>
+                            </MudPaper>
+                        }
                     }
                 </ChildContent>
             </MudExpansionPanel>

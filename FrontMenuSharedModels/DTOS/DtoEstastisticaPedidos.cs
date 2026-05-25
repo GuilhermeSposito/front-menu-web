@@ -49,10 +49,28 @@ public class RetornoEstatisticasCaixaAtual
 
 public class DtoEstatisticaItensCaixaAtual
 {
+    [JsonPropertyName("Produtos")] public DtoProdutosVendidosCaixaAtual Produtos { get; set; } = new();
+    [JsonPropertyName("Grupos")] public List<DtoGrupoVendidoCaixaAtual> Grupos { get; set; } = new();
+
+    // atalhos para não quebrar código existente
+    public double TotalDeItensVendidos => Produtos.TotalDeItensVendidos;
+    public double ValorTotalVendido => Produtos.ValorTotalVendido;
+    public int TotalDeProdutosDistintos => Produtos.TotalDeProdutosDistintos;
+    public List<DtoItemVendidoCaixaAtual> Itens => Produtos.Itens;
+}
+
+public class DtoProdutosVendidosCaixaAtual
+{
     [JsonPropertyName("TotalDeItensVendidos")] public double TotalDeItensVendidos { get; set; }
     [JsonPropertyName("ValorTotalVendido")] public double ValorTotalVendido { get; set; }
     [JsonPropertyName("TotalDeProdutosDistintos")] public int TotalDeProdutosDistintos { get; set; }
     [JsonPropertyName("Itens")] public List<DtoItemVendidoCaixaAtual> Itens { get; set; } = new();
+}
+
+public class DtoGrupoVendidoCaixaAtual
+{
+    [JsonPropertyName("Nome")] public string Nome { get; set; } = string.Empty;
+    [JsonPropertyName("ValorTotalVendido")] public double ValorTotalVendido { get; set; }
 }
 
 public class DtoItemVendidoCaixaAtual
