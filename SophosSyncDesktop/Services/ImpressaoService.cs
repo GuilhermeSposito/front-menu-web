@@ -1044,6 +1044,13 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         AdicionaConteudo(Conteudo, "FECHAMENTO DO CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        if (Fechamento.Caixa is not null)
+        {
+            AdicionaConteudo(Conteudo, $"{Fechamento.Caixa.DataAbertura:D}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+            string RealizadoPor = Fechamento.Caixa.FuncionarioFechamento is not null ? Fechamento.Caixa.FuncionarioFechamento.Nome : "ADMIN";
+            AdicionaConteudo(Conteudo, $"Realizado por ..: {RealizadoPor}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        }
+
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteFechamentoDeCaixa);
 
         // OPERAÇÃO DE VENDAS

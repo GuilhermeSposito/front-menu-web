@@ -6,6 +6,7 @@ namespace FrontMenuWeb.Models.Vendas;
 
 public class ClsFechamentoDeCaixa
 {
+    [JsonPropertyName("Caixa")] public Caixa? Caixa { get; set; }
     [JsonPropertyName("ValorDeAbertura")] public float ValorDeAbertura { get; set; }
     [JsonPropertyName("Faltou")] public float Faltou { get; set; }
     [JsonPropertyName("TotalTaxaEntrega")] public float TotalTaxaEntrega { get; set; }
