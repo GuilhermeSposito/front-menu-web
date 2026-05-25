@@ -3,6 +3,7 @@
 @page "/"
 @using FrontMenuWeb.Components.Uteis
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Services.Fiscal
 @inject IJSRuntime JS
@@ -116,6 +117,158 @@
 
     <CarrosselDeCaixasAbertos />
 
+    @*------------------------- Estatística de Venda de Item - Caixa Atual ----------------------------*@
+    <MudStack Class="py-2 w-100">
+        <MudExpansionPanel ExpandedChanged=@(async () => { await CarregarEstatisticasCaixaAtual();}) @bind-IsExpanded="PainelEstatisticasAberto" Style="border-radius:8px; box-shadow: var(--mud-elevation-2);">
+                <TitleContent>
+                    <MudStack Row AlignItems="AlignItems.Center" Spacing="2" Class="py-1">
+                        <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary" Size="Size.Medium" />
+                        <MudText Typo="Typo.h6" Style="font-weight:600">Estatística de Venda de Item</MudText>
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Outlined">Caixa Atual</MudChip>
+                        @if (CarregandoEstatisticasCaixa)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Color="Color.Primary" />
+                        }
+                        else if (EstatisticasCaixaAtual is not null && EstatisticasCaixaAtual.TotalDeItensVendidos > 0)
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">@EstatisticasCaixaAtual.TotalDeItensVendidos.ToString("N0") itens</MudChip>
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">@EstatisticasCaixaAtual.ValorTotalVendido.ToString("C")</MudChip>
+                        }
+                    </MudStack>
+                </TitleContent>
+                <ChildContent>
+                    @if (CarregandoEstatisticasCaixa)
+                    {
+                        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-6">
+                            <MudProgressCircular Indeterminate Color="Color.Primary" Size="Size.Large" />
+                            <MudText Typo="Typo.body1" Color="Color.Secondary">Carregando estatísticas do caixa...</MudText>
+                        </MudStack>
+                    }
+                    else if (EstatisticasCaixaAtual is null || EstatisticasCaixaAtual.TotalDeItensVendidos == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Class="ma-3">
+                            Nenhum item vendido no caixa atual.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        @* Totalizadores *@
+                        <MudGrid Spacing="3" Class="pa-3">
+                            <MudItem xs="12" sm="4">
+                                <MudCard Class="pa-3" Style="background: linear-gradient(135deg, #FF9800, #F57C00); color:white;">
+                                    <MudCardContent>
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.ShoppingBasket" Size="Size.Large" />
+                                            <MudStack Spacing="0">
+                                                <MudText Typo="Typo.subtitle2">Total de Itens Vendidos</MudText>
+                                                <MudText Typo="Typo.h5" Style="font-weight:700">@EstatisticasCaixaAtual.TotalDeItensVendidos.ToString("N0")</MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudCard Class="pa-3" Style="background: linear-gradient(135deg, #4CAF50, #2E7D32); color:white;">
+                                    <MudCardContent>
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" />
+                                            <MudStack Spacing="0">
+                                                <MudText Typo="Typo.subtitle2">Valor Total Vendido</MudText>
+                                                <MudText Typo="Typo.h5" Style="font-weight:700">@EstatisticasCaixaAtual.ValorTotalVendido.ToString("C")</MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudCard Class="pa-3" Style="background: linear-gradient(135deg, #2196F3, #1565C0); color:white;">
+                                    <MudCardContent>
+                                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Category" Size="Size.Large" />
+                                            <MudStack Spacing="0">
+                                                <MudText Typo="Typo.subtitle2">Produtos Distintos</MudText>
+                                                <MudText Typo="Typo.h5" Style="font-weight:700">@EstatisticasCaixaAtual.TotalDeProdutosDistintos</MudText>
+                                            </MudStack>
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        </MudGrid>
+
+                        @* Gráfico + Ranking *@
+                        <MudGrid Spacing="3" Class="px-3 pb-3">
+                            <MudItem xs="12" md="5">
+                                <MudPaper Class="pa-3" Elevation="0" Outlined>
+                                    <MudStack AlignItems="AlignItems.Center">
+                                        <MudText Typo="Typo.subtitle1" Style="font-weight:600">Distribuição de Vendas (%)</MudText>
+                                        @if (dataItensCaixaAtual.Length > 0)
+                                        {
+                                            <MudChart ChartType="ChartType.Pie"
+                                                      InputData="@dataItensCaixaAtual"
+                                                      @bind-SelectedIndex="IndexItensCaixa"
+                                                      InputLabels="@labelsItensCaixaAtual"
+                                                      Width="280px" Height="280px" />
+                                        }
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                            <MudItem xs="12" md="7">
+                                <MudPaper Class="pa-3" Elevation="0" Outlined>
+                                    <MudText Typo="Typo.subtitle1" Style="font-weight:600" Class="mb-2">Ranking de Itens Mais Vendidos</MudText>
+                                    <MudDataGrid T="DtoItemVendidoCaixaAtual"
+                                                 Items="@EstatisticasCaixaAtual.Itens"
+                                                 Dense Hover
+                                                 RowsPerPage="@LimitItensCaixa"
+                                                 RowsPerPageChanged="@OnLimitItensCaixaChanged" >
+                                        <Columns>
+                                            <TemplateColumn T="DtoItemVendidoCaixaAtual" Title="#" CellStyle="width:40px">
+                                                <CellTemplate Context="c">
+                                                    <MudText Style="font-weight:700" Color="@(c.Item.Ranking <= 3 ? Color.Warning : Color.Default)">
+                                                        @c.Item.Ranking
+                                                    </MudText>
+                                                </CellTemplate>
+                                            </TemplateColumn>
+                                            <PropertyColumn Property="x => x.Descricao" Title="Produto" />
+                                            <TemplateColumn T="DtoItemVendidoCaixaAtual" Title="Qtd">
+                                                <CellTemplate Context="c">
+                                                    <MudText>@c.Item.QuantidadeVendida.ToString("N0")</MudText>
+                                                </CellTemplate>
+                                            </TemplateColumn>
+                                            <TemplateColumn T="DtoItemVendidoCaixaAtual" Title="Total Vendido">
+                                                <CellTemplate Context="c">
+                                                    <MudText Color="Color.Success" Style="font-weight:600">@c.Item.ValorTotalDasVendas.ToString("C")</MudText>
+                                                </CellTemplate>
+                                            </TemplateColumn>
+                                            <TemplateColumn T="DtoItemVendidoCaixaAtual" Title="% Vendas">
+                                                <CellTemplate Context="c">
+                                                    <MudStack Spacing="1">
+                                                        <MudText Typo="Typo.caption">@c.Item.PorcentagemDasVendas.ToString("F1")%</MudText>
+                                                        <MudProgressLinear Value="@c.Item.PorcentagemDasVendas"
+                                                                           Color="Color.Primary"
+                                                                           Rounded
+                                                                           Style="min-width:70px; height:6px;" />
+                                                    </MudStack>
+                                                </CellTemplate>
+                                            </TemplateColumn>
+                                            <TemplateColumn T="DtoItemVendidoCaixaAtual" Title="Pico">
+                                                <CellTemplate Context="c">
+                                                    <MudChip T="string" Color="Color.Warning" Size="Size.Small" Icon="@Icons.Material.Filled.Schedule">
+                                                        @($"{c.Item.HorarioDeMaiorIncidencia:D2}h")
+                                                    </MudChip>
+                                                </CellTemplate>
+                                            </TemplateColumn>
+                                        </Columns>
+                                    <PagerContent>
+                                        <MudDataGridPager T="DtoItemVendidoCaixaAtual" RowsPerPageString="Itens por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 30, 100 }) />
+                                    </PagerContent>
+                                    </MudDataGrid>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                    }
+                </ChildContent>
+            </MudExpansionPanel>
+    </MudStack>
 
     @*------------------------- Parte de Graficos ----------------------------*@
     @if (!CarregandoInfosParaOGrafico)
@@ -335,6 +488,18 @@
     double[] dataFormas = { };
     string[] labelsFormasMaisRecebidas = { };
 
+    // Estatística de Itens Vendidos - Caixa Atual
+    private DtoEstatisticaItensCaixaAtual? EstatisticasCaixaAtual;
+    private bool CarregandoEstatisticasCaixa = false;
+    private bool EstatisticasCaixaCarregadas = false;
+    private int LimitItensCaixa = 9;
+    private int IndexItensCaixa = -1;
+    private double[] dataItensCaixaAtual = { };
+    private string[] labelsItensCaixaAtual = { };
+    private bool _painelEstatisticasAberto = false;
+    private bool PainelEstatisticasAberto = false;
+   
+
     #endregion
 
     #region Funções de Inicialização e Atualização da página
@@ -539,6 +704,57 @@
         {
             Snackbar.Add("Erro ao carregar dados do gráfico: " + string.Join(", ", retorno.Messages), Severity.Error);
         }
+    }
+
+    private async Task CarregarEstatisticasCaixaAtual()
+    {
+        if (EstatisticasCaixaCarregadas) return;
+        CarregandoEstatisticasCaixa = true;
+        StateHasChanged();
+
+        try
+        {
+            var retorno = await CaixaService.GetItensProdutosVendidosNoCaixaAtualAsync(limit: LimitItensCaixa);
+            if (retorno?.Status == "success" && retorno.Data is not null)
+            {
+                EstatisticasCaixaAtual = retorno.Data;
+
+                var top6 = EstatisticasCaixaAtual.Itens.Take(6).ToList();
+                var dataList = top6.Select(i => i.PorcentagemDasVendas).ToList();
+                var labelsList = top6.Select(i => i.Descricao).ToList();
+
+                var outros = EstatisticasCaixaAtual.Itens.Skip(6).Sum(i => i.PorcentagemDasVendas);
+                if (outros > 0)
+                {
+                    dataList.Add(Math.Round(outros, 2, MidpointRounding.AwayFromZero));
+                    labelsList.Add("Outros");
+                }
+
+                dataItensCaixaAtual = dataList.ToArray();
+                labelsItensCaixaAtual = labelsList.ToArray();
+                EstatisticasCaixaCarregadas = true;
+            }
+            else
+            {
+                Snackbar.Add("Erro ao carregar estatísticas do caixa.", Severity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar estatísticas do caixa: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoEstatisticasCaixa = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnLimitItensCaixaChanged(int novoLimit)
+    {
+        LimitItensCaixa = novoLimit;
+        EstatisticasCaixaCarregadas = false;
+        await CarregarEstatisticasCaixaAtual();
     }
 
     private async Task CarregarDadosGraficoDeFormasMaisRecebidas()

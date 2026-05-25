@@ -107,10 +107,10 @@
                     </MudStack>
                     @{
                         var nomesCouvert = PedidoMesa.Itens?
-                            .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
-                            .Select(i => i.NomeCliente!)
-                            .Distinct()
-                            .ToList() ?? new();
+                        .Where(i => !string.IsNullOrEmpty(i.NomeCliente))
+                        .Select(i => i.NomeCliente!)
+                        .Distinct()
+                        .ToList() ?? new();
                     }
                     @if (nomesCouvert.Count > 0)
                     {
@@ -340,6 +340,10 @@
                 <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
                 <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
                 <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
+                @if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false)
+                {
+                    <PropertyColumn Property="x => x.NumeroMesaItem" Title="Mesa"></PropertyColumn>
+                }
                 <TemplateColumn Title="Garçom">
                     <CellTemplate>
                         @(context.Item.Garcon?.Nome ?? "Admin")

@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static System.Net.WebRequestMethods;
+
 namespace FrontMenuWeb.Services;
 
 public class CaixaEPagamentosService
@@ -139,6 +140,17 @@ public class CaixaEPagamentosService
             Status = "error",
             Messages = ["Erro ao buscar caixas abertos"]
         };
+    }
+
+    public async Task<RetornoEstatisticasCaixaAtual?> GetItensProdutosVendidosNoCaixaAtualAsync(int? limit = null)
+    {
+        var url = limit.HasValue ? $"caixas/itens-vendidos?limit={limit.Value}" : "caixas/itens-vendidos";
+        var response = await _HttpClient.GetAsync(url);
+        string json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<RetornoEstatisticasCaixaAtual>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
     }
 
     public async Task<PaginatedResponse<Caixa>> GetCaixasFechadosAsync(QueryCaixasDto queryDto)
