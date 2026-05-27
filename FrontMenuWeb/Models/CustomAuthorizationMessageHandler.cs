@@ -5,8 +5,10 @@ using SocketIOClient.Transport.Http;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,6 +43,10 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
         request.Headers.Add("x-timestamp", timestamp);
         request.Headers.Add("x-hash", hash);
 
+        var storedToken = await _localStorage.GetItemAsync<string>("jwt_access_token");
+        if (!string.IsNullOrEmpty(storedToken))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", storedToken);
+
         request.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
 
         var response = await base.SendAsync(request, cancellationToken);
@@ -68,9 +74,26 @@ public class CustomAuthorizationMessageHandler : DelegatingHandler
             return response;
         }
 
-        // clonar e reenviar request original
+        // atualiza o token no localStorage após refresh
+        try
+        {
+            var refreshBody = await refreshResponse.Content.ReadFromJsonAsync<JsonElement>();
+            if (refreshBody.TryGetProperty("token", out var tokenEl))
+            {
+                var newToken = tokenEl.GetString();
+                if (!string.IsNullOrEmpty(newToken))
+                    await _localStorage.SetItemAsync("jwt_access_token", newToken);
+            }
+        }
+        catch { }
+
+        // clonar e reenviar request original com token atualizado
         var newRequest = await CloneHttpRequestMessage(request);
         newRequest.SetBrowserRequestCredentials(BrowserRequestCredentials.Include);
+
+        var refreshedToken = await _localStorage.GetItemAsync<string>("jwt_access_token");
+        if (!string.IsNullOrEmpty(refreshedToken))
+            newRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshedToken);
 
         return await base.SendAsync(newRequest, cancellationToken);
     }
