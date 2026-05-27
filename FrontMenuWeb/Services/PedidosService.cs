@@ -347,6 +347,14 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsPedido>> AdicionarItensAoPedidoBalcao(int pedidoId, List<ItensPedido> itens)
+    {
+        var body = new { Itens = itens };
+        var response = await _http.PostAsJsonAsync($"pedidos/balcao/{pedidoId}/itens", body, _jsonPascalCase);
+        var retorno = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsPedido>>();
+        return retorno!;
+    }
+
     public async Task<ReturnApiRefatored<PedidoMesaDto>> CreatePedidoMesaPublic(string MerchantID, ClsPedido Pedido)
     {
         var response = await _http.PostAsJsonAsync($"pedidos/mesa/public/{MerchantID}", Pedido);

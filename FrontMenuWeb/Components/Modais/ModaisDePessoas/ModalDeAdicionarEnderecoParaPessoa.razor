@@ -33,10 +33,10 @@
                         <MudItem xs="12" sm="8">
                             <MudAutocomplete T="AutoCompleteDeEndereco" Label="@LabelDePesquisaDeEndereco"
                                              @ref="_autoCompleteRua" MinCharacters="1" Clearable="true" Dense="true"
-                                             Variant="Variant.Outlined" SearchFunc="BuscarEndereco" Value="_ruaValue"
-                                             ValueChanged="SelecionarEndereco" ShowProgressIndicator="true"
-                                             ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
-                                             TextChanged="OnTextoEnderecoChanged" />
+                                             Variant="Variant.Outlined" SearchFunc="BuscarEndereco"
+                                             ValueChanged="AoSelecionarEndereco"
+                                             ShowProgressIndicator="true"
+                                             ToStringFunc="@(p => p?.Descricao ?? string.Empty)" />
 
                         </MudItem>
                         <MudItem xs="12" sm="4">
@@ -122,10 +122,8 @@
     public bool CarregandoRespostaDaApiDeCep { get; set; } = false;
     public bool ErroAoAdicionarEndereco { get; set; } = false;
     private MudTextField<string> TextFieldDeNumeroDoCliente = new MudTextField<string>();
-    private string? PesquisaEndereco { get; set; } = string.Empty;
     private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
     private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
-    private AutoCompleteDeEndereco? _ruaValue;
     private bool _focoInicialAplicado;
     private string LabelDePesquisaDeEndereco = "RUA";
 
@@ -154,10 +152,7 @@
         }
 
         if (Editando)
-        {
-            PesquisaEndereco = NovoEndereco.Rua ?? string.Empty;
-            LabelDePesquisaDeEndereco = PesquisaEndereco;
-        }
+            LabelDePesquisaDeEndereco = NovoEndereco.Rua ?? string.Empty;
     }
 
     /* protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -189,8 +184,7 @@
                     NovoEndereco.Bairro = endereco.Bairro!;
                     NovoEndereco.Cidade = endereco.Cidade!;
                     NovoEndereco.Estado = endereco.Uf!;
-
-                    _ruaValue = new AutoCompleteDeEndereco { Descricao = endereco.Logradouro! };
+                    LabelDePesquisaDeEndereco = endereco.Logradouro!;
 
                     if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
                         await TextFieldDeNumeroDoCliente.FocusAsync();
@@ -246,14 +240,10 @@ cancellationToken)
         return EnderecosParaSelecionar;
     }
 
-    private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
+    private async Task AoSelecionarEndereco(AutoCompleteDeEndereco? end)
     {
-        _ruaValue = end;
-
         if (end is null)
         {
-            PesquisaEndereco = string.Empty;
-
             NovoEndereco.Rua = string.Empty;
             NovoEndereco.Bairro = string.Empty;
             NovoEndereco.Cidade = string.Empty;
@@ -261,25 +251,13 @@ cancellationToken)
             return;
         }
 
-        PesquisaEndereco = end.Descricao;
-
-        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? "";
+        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? end.Descricao;
         NovoEndereco.Bairro = end.Termos?.ElementAtOrDefault(1) ?? "";
         NovoEndereco.Cidade = end.Termos?.ElementAtOrDefault(2) ?? "";
         NovoEndereco.Estado = end.Termos?.ElementAtOrDefault(3) ?? "";
+        LabelDePesquisaDeEndereco = end.Descricao;
 
         await TextFieldDeNumeroDoCliente.FocusAsync();
-    }
-
-    private Task OnTextoEnderecoChanged(string texto)
-    {
-        PesquisaEndereco = texto;
-
-        if (texto is null)
-            PesquisaEndereco = string.Empty;
-
-
-        return Task.CompletedTask;
     }
     #endregion
     private async Task Submit()

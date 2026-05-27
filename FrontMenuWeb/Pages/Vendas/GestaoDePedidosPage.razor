@@ -84,20 +84,39 @@
 
                 </MudStack>
             </MudStack>
-            @if (PedidosEmAberto.Any())
+            @if (PedidosAguardandoFinalizar.Any())
             {
                 <MudStack Class="p-3">
                     <MudStack Class="w-100 p-3 rounded-2 mt-1 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
-                        <MudText>Pedidos Abertos</MudText>
+                        <MudText>Pedidos Aguardando Conclusão</MudText>
                         <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center">
                             @{
                                 int ReferenciaDoPedido = 1;
-                                foreach (var pedido in PedidosEmAberto)
+                                foreach (var pedido in PedidosAguardandoFinalizar)
                                 {
                                     var referenciaAtual = ReferenciaDoPedido;
                                     <MudChip Value=@pedido OnClose="Closed" OnClick="@(async () => { await AbrirCriacaoDePedido(PedidoAberto: pedido); })" T="ClsPedido" Color="Color.Error" Variant="Variant.Filled" Class="m-1 p-2">Pedido @referenciaAtual</MudChip>
                                     ReferenciaDoPedido++;
                                 }
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudStack>
+            }
+
+            @if (PedidosEmAberto.Any())
+            {
+                <MudStack Class="p-3">
+                    <MudStack Class="w-100 p-3 rounded-2 mt-1 mb-2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Style="background-color: var(--mud-palette-surface)">
+                        <MudText>Pedidos Em Aberto</MudText>
+                        <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Wrap="Wrap.Wrap">
+                            @foreach (var pedido in PedidosEmAberto)
+                            {
+                                var displayId = pedido.DisplayId;
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" Class="m-1"
+                                           OnClick="@(async () => { pesquisaTexto = displayId; await BuscarPedidos(); })">
+                                    @pedido.DisplayId - @(pedido.Cliente?.Nome ?? pedido.NomeCliente ?? "Sem cliente")
+                                </MudButton>
                             }
                         </MudStack>
                     </MudStack>
@@ -149,6 +168,10 @@
                                                                     @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId  @if(pedido.Pedido.StatusPedido == "CANCELADO"){
                                                                     @(" - Cancelado")
                                                                 }
+                                                                @if (pedido.Pedido.StatusPedido == "ABERTO")
+                                                                {
+                                                                    @(" - PEDIDO ABERTO")
+                                                                }
                                                             </MudText>
                                                             @if (pedido.Pedido.TipoDePedido == "MESA")
                                                             {
@@ -159,6 +182,10 @@
                                                             @if (pedido.Pedido.Cliente is not null)
                                                             {
                                                                 <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.Cliente.Nome</MudText>
+                                                            }
+                                                            else if (!string.IsNullOrEmpty(pedido.Pedido.NomeCliente))
+                                                            {
+                                                                <MudText Color="Color.Default" Typo="Typo.caption">@pedido.Pedido.NomeCliente</MudText>
                                                             }
                                                             @if (pedido.Pedido.PedidoAgendado)
                                                             {
@@ -332,7 +359,10 @@
                                                             <MudStack Row=true>
                                                                 <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                                                                     <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
-                                                                    <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                    @if (pedido.Pedido.StatusPedido == "FECHADO")
+                                                                    {
+                                                                        <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
+                                                                    }
                                                                     @if (pedido.Pedido.TipoDePedido == "DELIVERY")
                                                                     {
                                                                         @if (EmpresasMachine is not null)
@@ -340,18 +370,21 @@
                                                                             foreach (var empresa in EmpresasMachine)
                                                                             {
                                                                                 <MudMenuItem OnClick=@(async () => { await EnviarParaEntrega(empresa, pedido.Pedido); }) Icon="@Icons.Material.Filled.LocalShipping" Label=@($"Enviar Pedido Para {empresa.Nome}") />
-
                                                                             }
                                                                         }
                                                                     }
                                                                     @if (pedido.Pedido.StatusPedido != "FECHADO")
                                                                     {
-                                                                        <MudMenuItem Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
+                                                                        <MudMenuItem OnClick="@(async () => { await FecharPedido(pedido.Pedido); })" Icon="@Icons.Material.Filled.AttachMoney" Label="Fechar Pagamento" />
+                                                                        <MudMenuItem OnClick="@(async () => { await EnviarItensParaBalcaoAberto(pedido.Pedido); })" Icon="@Icons.Material.Filled.AddBox" IconColor="Color.Success" Label="Adicionar Itens" />
                                                                     }
                                                                     @if (pedido.Pedido.StatusPedido != "CANCELADO")
                                                                     {
                                                                         <MudMenuItem OnClick="@(async () => { await EditarPedido(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pedido" />
-                                                                        <MudMenuItem OnClick="@(async () => { await EditarPedidoPagamento(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pagamento" />
+                                                                        @if (pedido.Pedido.StatusPedido == "FECHADO")
+                                                                        {
+                                                                            <MudMenuItem OnClick="@(async () => { await EditarPedidoPagamento(pedido.Pedido); })" Icon="@Icons.Material.Filled.Edit" Label="Editar Pagamento" />
+                                                                        }
                                                                         <MudMenuItem OnClick=@(async () => { await CancelarPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" Label="Cancelar" />
                                                                     }
                                                                 </MudMenu>
@@ -446,6 +479,7 @@
     private TiposDePedido FiltroPorTipoDePedido = TiposDePedido.TODOS;
 
     //Propriedade Para Manter pedidos em aberto
+    private List<ClsPedido> PedidosAguardandoFinalizar { get; set; } = new List<ClsPedido>();
     private List<ClsPedido> PedidosEmAberto { get; set; } = new List<ClsPedido>();
 
     private int PedidosPorVez = 25;
@@ -465,6 +499,7 @@
 
             await CarregaEmpresasMachine();
             await CarregarPedidos();
+            await CarregarPedidosEmAberto();
 
             await VerificaSeColocaEtapaNovoNaTela();
 
@@ -614,7 +649,7 @@
             if (PedidoAberto is not null)
             {
                 parameters.Add("NovoPedido", PedidoAberto);
-                PedidosEmAberto.Remove(PedidoAberto);
+                PedidosAguardandoFinalizar.Remove(PedidoAberto);
 
 
                 if (PedidoAberto.TipoDePedido == "DELIVERY")
@@ -645,7 +680,7 @@
             }
             else if (result.Data is ClsPedido Pedido)
             {
-                PedidosEmAberto.Add(Pedido);
+                PedidosAguardandoFinalizar.Add(Pedido);
                 StateHasChanged();
             }
 
@@ -698,7 +733,7 @@
     {
         if (chip.Value is not null)
         {
-            PedidosEmAberto.Remove(chip.Value);
+            PedidosAguardandoFinalizar.Remove(chip.Value);
             StateHasChanged();
         }
     }
@@ -745,6 +780,19 @@
             ProgressoFiscal = 100;
             Carregando = false;
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task CarregarPedidosEmAberto()
+    {
+        try
+        {
+            var retorno = await PedidosService.GetPedidosPorPaginaAsync(new QuerysDePedidos() { Page = 1, PageSize = 600, Status = StatusPedidos.ABERTO });
+            PedidosEmAberto = retorno?.Data?.ToList() ?? new List<ClsPedido>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CarregarPedidosEmAberto] {ex.Message}");
         }
     }
 
@@ -1245,6 +1293,7 @@
     private async Task OnInfoAdicionalPedidoMudou(ClsPedido Pedido)
     {
         await CarregarPedidos();
+        await CarregarPedidosEmAberto();
 
         Snackbar.Add($"Atenção ao pedido {Pedido.DisplayId} criado por {Pedido.CriadoPor}, Temos novas informações sobre ele!", Severity.Info);
         await JS.InvokeVoidAsync("playNotificationSoundPedidoIfoodstatusNovo");
@@ -1253,6 +1302,7 @@
     private async Task OnEtapaPedidoMudou(ClsPedido novoPedido)
     {
         await CarregarPedidos();
+        await CarregarPedidosEmAberto();
         await InvokeAsync(StateHasChanged);
     }
     private async Task OnPedidoRecebido(ClsPedido novoPedido)
@@ -1294,6 +1344,8 @@
                 Selector = novoPedido.EtapaPedido
             });
             await InvokeAsync(StateHasChanged);
+
+            await CarregarPedidosEmAberto();
         }
         catch (Exception ex)
         {
@@ -1335,8 +1387,8 @@
         pedido.Pagamentos = ReturnFromApi.Data?.Lista ?? pedido.Pagamentos;
         var parameters = new DialogParameters
         {
-        { "Pedido", pedido },
-        {"Editando", true}
+         { "Pedido", pedido },
+          {"Editando", true}
         };
 
         var options = new DialogOptions
@@ -1360,6 +1412,38 @@
 
     }
 
+    private async Task FecharPedido(ClsPedido pedido)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditaVenda")) return;
+
+        var parameters = new DialogParameters
+        {
+            { "Pedido", pedido },
+            {"Editando", true}
+        };
+
+        var options = new DialogOptions
+        {
+            Position = DialogPosition.Center,
+            CloseButton = false,
+            BackdropClick = false,
+            MaxWidth = MaxWidth.False,
+            FullWidth = true,
+            CloseOnEscapeKey = false
+        };
+
+        var dialog = await DialogService.ShowAsync<ModalDePagamento>
+            ("Pagamento", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await BuscarPedidos();
+            StateHasChanged();
+        }
+
+    }
+
     private async Task EditarPedido(ClsPedido pedido)
     {
         if (!await AuthorizationService.ValidateAsync("AcessoEditaVenda")) return;
@@ -1375,6 +1459,60 @@
         {
            { "NovoPedido", Pedido},
            { "Editando", true}
+        };
+
+
+        if (Pedido.TipoDePedido == "DELIVERY")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.DELIVERY;
+        }
+        else if (Pedido.TipoDePedido == "BALCÂO")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.BALCÃO;
+        }
+        else if (Pedido.TipoDePedido == "MESA")
+        {
+            parameters["TiposDePedido"] = TiposDePedido.MESA;
+        }
+
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.False, FullWidth = false, FullScreen = false, CloseOnEscapeKey = false, BackdropClick = false };
+
+        var dialog = await DialogService.ShowAsync<ModalDeCriarPedido>("Editar Pedido", parameters, options);
+        var result = await dialog.Result;
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            await CarregarPedidos();
+        }
+
+    }
+
+    private async Task EnviarItensParaBalcaoAberto(ClsPedido pedido)
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoEditaVenda")) return;
+
+        ClsPedido? Pedido = await PedidosService.GetPedidoById(pedido.Id);
+        if (Pedido is null)
+        {
+            Snackbar.Add("Erro ao obter detalhes do pedido, por favor tente novamente.", Severity.Error);
+            return;
+        }
+
+        var PedidoCopia = new ClsPedido
+        {
+            Id = Pedido.Id,
+            Cliente = Pedido.Cliente,
+            ClienteId = Pedido.ClienteId,
+            NomeCliente = Pedido.NomeCliente,
+            DisplayId = Pedido.DisplayId,
+            TipoDePedido = Pedido.TipoDePedido
+        };
+
+        var parameters = new DialogParameters
+        {
+           { "NovoPedido", PedidoCopia},
+           { "Editando", true},
+           {"EnviandoItemParaBalcaoAberto", true}
         };
 
 

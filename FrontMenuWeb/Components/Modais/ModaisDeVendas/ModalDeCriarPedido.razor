@@ -227,6 +227,10 @@
                                         <MudExpansionPanel Icon="@Icons.Material.Filled.Notes" Text="Observações do pedido">
                                             <MudStack Class="w-100 h-100">
                                                 <MudTextField @bind-Value=NovoPedido.ObservacaoDoPedido T="string" Placeholder="Adicione uma observação no pedido" />
+                                                @if (TiposDePedido == TiposDePedido.BALCAO && NovoPedido.Cliente is null)
+                                                {
+                                                    <MudTextField @bind-Value=NovoPedido.NomeCliente T="string" Placeholder="Nome do cliente sem cadastro" />
+                                                }
                                             </MudStack>
                                         </MudExpansionPanel>
                                     </MudExpansionPanels>
@@ -314,12 +318,24 @@
                         @*Botão pagar — fora do scroll, fixo na base*@
                         @if (TiposDePedido != TiposDePedido.MESA)
                         {
-                            <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
-                                      Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
-                                <MudButton Variant="Variant.Filled" OnClick="PagarPedido" Color="Color.Primary" Class="w-100">
-                                    PAGAR (F3)
-                                </MudButton>
-                            </MudPaper>
+                            if (!EnviandoItemParaBalcaoAberto)
+                            {
+                                <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                                          Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+                                    <MudButton Variant="Variant.Filled" OnClick="PagarPedido" Color="Color.Primary" Class="w-100">
+                                        PAGAR (F3)
+                                    </MudButton>
+                                </MudPaper>
+                            }
+                            else
+                            {
+                                <MudPaper Class="d-flex mb-2 flex-wrap gap-2 justify-content-center align-items-center"
+                                          Style="flex: 0 0 auto; background-color: var(--mud-palette-primary); box-shadow: 0 -2px 5px rgba(0,0,0,0.1); border-radius: 8px;">
+                                    <MudButton Variant="Variant.Filled" OnClick="EnviarItensParaBalcao" Color="Color.Primary" Class="w-100">
+                                       Enviar Itens Para o Balcão
+                                    </MudButton>
+                                </MudPaper>
+                            }
                         }
                         else
                         {
@@ -419,6 +435,7 @@
     //Lógica do pedido
     [Parameter] public ClsPedido NovoPedido { get; set; } = new();
     [Parameter] public bool Editando { get; set; } = false;
+    [Parameter] public bool EnviandoItemParaBalcaoAberto { get; set; } = false;
 
     //Lógica do AutoComplete de Pessoas
     private List<ClsPessoas> PessoasParaSelecionar { get; set; } = new List<ClsPessoas>();
@@ -769,35 +786,35 @@
     {
         try
         {
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
 
-        string? NumeroDeTelefoneValido = null;
-        string? NomeValido = null;
-        if (long.TryParse(PesquisaPessoa, out long resultNumber))
-        {
-            NumeroDeTelefoneValido = PesquisaPessoa;
-        }
-        else
-        {
-            NomeValido = PesquisaPessoa;
-        }
+            string? NumeroDeTelefoneValido = null;
+            string? NomeValido = null;
+            if (long.TryParse(PesquisaPessoa, out long resultNumber))
+            {
+                NumeroDeTelefoneValido = PesquisaPessoa;
+            }
+            else
+            {
+                NomeValido = PesquisaPessoa;
+            }
 
-        var parameters = new DialogParameters
+            var parameters = new DialogParameters
         {
             { "TelefoneEnviado", NumeroDeTelefoneValido},
             { "NomeEnviado", NomeValido},
             { "CadastroRapido", true}
         };
 
-        var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", parameters, options);
-        var result = await dialog.Result;
+            var dialog = await DialogService.ShowAsync<ModalDeAdicionarPessoa>("Cadastrar Pessoa", parameters, options);
+            var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is ClsPessoas pessoa && pessoa is not null)
-        {
-            await SelecionarPessoa(pessoa);
-            await TextFieldProd.FocusAsync();
-            StateHasChanged();
-        }
+            if (!result!.Canceled && result.Data is ClsPessoas pessoa && pessoa is not null)
+            {
+                await SelecionarPessoa(pessoa);
+                await TextFieldProd.FocusAsync();
+                StateHasChanged();
+            }
         }
         catch (Exception ex)
         {
@@ -999,6 +1016,7 @@
         {
             PessoaSelecionada = null;
             NovoPedido.Cliente = null;
+            NovoPedido.NomeCliente = null;
             PesquisaPessoa = String.Empty;
             LabelDeCliente = String.Empty;
             MostrarSugestoes = false;
@@ -1008,6 +1026,7 @@
 
         PessoaSelecionada = pessoa;
         NovoPedido.Cliente = pessoa;
+        NovoPedido.NomeCliente = pessoa.Nome;
         PesquisaPessoa = pessoa.Nome;
         LabelDeCliente = pessoa.Nome;
         MostrarSugestoes = false;
@@ -1085,7 +1104,7 @@
 
     private async Task PagarPedido()
     {
-        @if (NovoPedido.Itens.Count == 0)
+        if (NovoPedido.Itens.Count == 0)
         {
             Snackbar.Add("Adicione ao menos um item ao pedido para continuar.", Severity.Error);
             return;
@@ -1113,6 +1132,58 @@
             await Submit();
         }
 
+    }
+
+    private async Task EnviarItensParaBalcao()
+    {
+        if (NovoPedido.Itens.Count == 0)
+        {
+            Snackbar.Add("Adicione ao menos um item ao pedido para continuar.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            CarregandoEnvioDoPedido = true;
+            StateHasChanged();
+
+            var response = await PedidosService.AdicionarItensAoPedidoBalcao(NovoPedido.Id, NovoPedido.Itens);
+
+            string mensagem = string.Join(", ", response.Status == "success" ? response.Data.Messages : response.Messages);
+            Snackbar.Add(mensagem, response.Status == "success" ? Severity.Success : Severity.Error);
+
+            if (response.Status != "success") return;
+
+            if (!UsandoMobile)
+            {
+                var pedidoBase = response.Data.Objeto ?? NovoPedido;
+                var pedidoParaImprimir = new ClsPedido(pedidoBase)
+                {
+                    Itens = NovoPedido.Itens
+                };
+
+                bool imprimir = true;
+                if (AppState.MerchantLogado?.PerguntaImpressaoBalcao == true)
+                    imprimir = await PerguntaSeImprime();
+
+                if (imprimir)
+                {
+                    await JS.InvokeVoidAsync("baixarJSON", pedidoParaImprimir, $"pedido{pedidoParaImprimir.DisplayId}-SOPHOS-WEB.json");
+                    await PedidosService.UpdatePedidoImpresso(pedidoParaImprimir);
+                }
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar itens para o balcão: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoEnvioDoPedido = false;
+            StateHasChanged();
+        }
     }
 
     private async Task Submit()

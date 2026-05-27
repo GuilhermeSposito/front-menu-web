@@ -253,6 +253,12 @@
                     Imprimir Fechamento
                 </MudButton>
             }
+            @if (Pedido.TipoDePedido == "BALCÃO")
+            {
+                <MudButton Variant="Variant.Filled" OnClick="ManterBalcaoEmAberto" Color="Color.Primary">
+                    Manter Balcão Aberto
+                </MudButton>
+            }
             <MudButton Variant="Variant.Filled" OnClick="ConcluirPagamento" Color="Color.Primary">
                 @if (Editando)
                 {
@@ -512,6 +518,28 @@
         MudDialog.Close(DialogResult.Ok(true));
     }
 
+    private async Task ManterBalcaoEmAberto()
+    {
+
+        var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: você deixara o balcão em aberto, esperando por pagamento. Deseja continuar?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+        var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            Pedido.StatusPedido = "ABERTO"; 
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+
+    }
+
     private async Task CarregarFormasDeRecebimento()
     {
         List<ClsFormaDeRecebimento> formasDeRecebimento = await FormasDeRecebimentoService.GetFormasDeRecebimentoAsync();
@@ -714,7 +742,7 @@
     private async Task AbreModalDeEditarValoresDeDesconto(Expression<Func<float>> propriedadeExpr)
     {
         var getter = propriedadeExpr.Compile();
-        float valorAtual = Pedido.Itens.Where(p=> p.DescontoNoItem).Sum(i => i.PrecoTotal);
+        float valorAtual = Pedido.Itens.Where(p => p.DescontoNoItem).Sum(i => i.PrecoTotal);
 
         var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Editar Valor", new DialogParameters { { "ValorAtual", valorAtual }, { "ValorTotalDoPedido", valorAtual } });
         var result = await dialog.Result;
@@ -745,7 +773,7 @@
 
     private async Task AbreModalDeEditarValoresDeTaxaAdicional(Expression<Func<float>> propriedadeExpr)
     {
-        var ValorItens = Pedido.Itens.Where(x => !x.ECouvert).Sum(i => i.PrecoTotal);   
+        var ValorItens = Pedido.Itens.Where(x => !x.ECouvert).Sum(i => i.PrecoTotal);
         var ValorTaxa = ValorItens * ((float)(AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) / 100f);
 
         var dialog = await DialogService.ShowAsync<ModalDeEdicaoDeValor>("Editar Valor", new DialogParameters { { "ValorAtual", ValorTaxa }, { "ValorTotalDoPedido", ValorItens } });

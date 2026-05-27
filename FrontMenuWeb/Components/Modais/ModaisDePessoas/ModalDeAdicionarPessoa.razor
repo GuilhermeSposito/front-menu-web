@@ -167,7 +167,7 @@
 
                     <MudPaper Class="pa-4 mt-2"
                               style="background-color: var(--mud-palette-background); border-radius:8px">
-                        <MudAutocomplete T="ClsCidade" Label="Cidade" Value="_cidadeSelecionadaModal"
+                        <MudAutocomplete T="ClsCidade" Label="Cidade"
                                          ValueChanged="OnCidadeModalChanged" SearchFunc="SearchCidades"
                                          ToStringFunc="@(c => c?.Descricao ?? string.Empty)" Variant="Variant.Filled" Clearable
                                          ResetValueOnEmptyText="true" />
@@ -183,10 +183,9 @@
                                 <MudItem xs="12" sm="8">
                                     <MudAutocomplete T="AutoCompleteDeEndereco" Label="@LabelDePesquisaDeEndereco"
                                                      @ref="_autoCompleteRua" MinCharacters="1" Clearable="true" Dense="true"
-                                                     Variant="Variant.Outlined" SearchFunc="BuscarEndereco" Value="_ruaValue"
+                                                     Variant="Variant.Outlined" SearchFunc="BuscarEndereco"
                                                      ValueChanged="SelecionarEndereco" ShowProgressIndicator="true"
-                                                     ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
-                                                     TextChanged="OnTextoEnderecoChanged" />
+                                                     ToStringFunc="@(p => p?.Descricao ?? string.Empty)" />
 
                                 </MudItem>
                                 <MudItem xs="12" sm="8">
@@ -285,7 +284,6 @@
     private string MensagemErro = string.Empty;
     private bool CarregandoRespostaDaApi = false;
 
-    private string? PesquisaEndereco { get; set; } = string.Empty;
     [Parameter] public string? TelefoneEnviado { get; set; } = null;
     [Parameter] public bool CadastroRapido { get; set; } = false;
     [Parameter] public string? NomeEnviado { get; set; } = null;
@@ -295,7 +293,6 @@
     //Logica Auto Complete
     private string LabelDePesquisaDeEndereco = "RUA";
     private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
-    private AutoCompleteDeEndereco? _ruaValue;
     private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
@@ -446,7 +443,7 @@
                     NovoEndereco.Cidade = endereco.Cidade!;
                     NovoEndereco.Estado = endereco.Uf!;
 
-                    _ruaValue = new AutoCompleteDeEndereco { Descricao = endereco.Logradouro! };
+                    LabelDePesquisaDeEndereco = endereco.Logradouro!;
 
                     if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
                         await TextFieldDeNumeroDoCliente.FocusAsync();
@@ -677,12 +674,8 @@ cancellationToken)
 
     private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
     {
-        _ruaValue = end;
-
         if (end is null)
         {
-            PesquisaEndereco = string.Empty;
-
             NovoEndereco.Rua = string.Empty;
             NovoEndereco.Bairro = string.Empty;
             NovoEndereco.Cidade = string.Empty;
@@ -690,25 +683,13 @@ cancellationToken)
             return;
         }
 
-        PesquisaEndereco = end.Descricao;
-
-        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? "";
+        NovoEndereco.Rua = end.Termos?.ElementAtOrDefault(0) ?? end.Descricao;
         NovoEndereco.Bairro = end.Termos?.ElementAtOrDefault(1) ?? "";
         NovoEndereco.Cidade = end.Termos?.ElementAtOrDefault(2) ?? "";
         NovoEndereco.Estado = end.Termos?.ElementAtOrDefault(3) ?? "";
+        LabelDePesquisaDeEndereco = end.Descricao;
 
         await TextFieldDeNumeroDoCliente.FocusAsync();
-    }
-
-    private Task OnTextoEnderecoChanged(string texto)
-    {
-        PesquisaEndereco = texto;
-
-        if (texto is null)
-            PesquisaEndereco = string.Empty;
-
-
-        return Task.CompletedTask;
     }
 
     private void Cancelar() => MudDialog.Cancel();

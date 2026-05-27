@@ -62,18 +62,25 @@ public class ImpressaoService
                 ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
-                //primeiro imprime pedido
-                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+                //verificar se o pedido é sophos e esta aberto
+                if ((Pedido.CriadoPor == "SOPHOS" && Pedido.StatusPedido != "ABERTO") || (Pedido.CriadoPor != "SOPHOS"))
                 {
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, ValorEspacamento);
-                }
+                    //primeiro imprime pedido
+                    if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+                    {
 
-                //imprime na impressora auxiliar se tiver
-                if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraAux))
-                {
-                    List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
-                    await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, ValorEspacamento);
+                        List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                        await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, ValorEspacamento);
+
+                    }
+
+                    //imprime na impressora auxiliar se tiver
+                    if (!string.IsNullOrEmpty(Imps.ImpressoraAux) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraAux))
+                    {
+                        List<ClsImpressaoDefinicoes> ConteudoParaImpressaoDoPedido = DefineCaracteristicasDePedidoParaImpressao(Pedido, AppQueEnviou);
+                        await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraAux, ValorEspacamento);
+
+                    }
                 }
 
 
@@ -474,13 +481,16 @@ public class ImpressaoService
 
         if (pedido.TipoDePedido != "DELIVERY")
         {
-            int seed = pedido.Id;
-            var random = new Random(seed);
+            if (AppState.MerchantLogado is not null && AppState.MerchantLogado.ImprimeSenhaBalcao)
+            {
+                int seed = pedido.Id;
+                var random = new Random(seed);
 
-            int senha = random.Next(500, 999);
+                int senha = random.Next(500, 999);
 
-            AdicionaConteudo(Conteudo, $"SENHA: {senha}", FonteLegendaDoTamanho, Alinhamentos.Centro);
-            AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+                AdicionaConteudo(Conteudo, $"SENHA: {senha}", FonteLegendaDoTamanho, Alinhamentos.Centro);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+            }
             //========================================================================================       
         }
 
