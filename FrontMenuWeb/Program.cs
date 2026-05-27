@@ -44,7 +44,9 @@ builder.Services.AddScoped<EmpresaDelmatchService>();
 builder.Services.AddScoped<PedidosService>();
 builder.Services.AddScoped<MachineService>();
 builder.Services.AddScoped<RoteirizacaoService>();
+builder.Services.AddScoped<LogsDeAcoesDosUsuariosService>();
 builder.Services.AddScoped<IntegracoesSophosService>();
+builder.Services.AddScoped<BalancaService>();
 builder.Services.AddScoped<ILogoutService, LogoutService>();
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<HorariosMerchantService>();
@@ -146,6 +148,7 @@ ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EntregasService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EmpresaIfoodService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<EmpresaDelmatchService>());
 ConfigureSophosApiWebClient(builder.Services.AddHttpClient<CidadesService>());
+ConfigureSophosApiWebClient(builder.Services.AddHttpClient<LogsDeAcoesDosUsuariosService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<NfService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<MessageWhatsAppService>());
 ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<IntegracoesSophosService>());
@@ -153,7 +156,6 @@ ConfigureApiFiscalSophosClient(builder.Services.AddHttpClient<IntegracoesSophosS
 builder.Services.AddMudServices();
 builder.Services.AddMudExtensions();
 
-builder.Services.AddScoped<BalancaService>();
 builder.Services.AddScoped<IErrorBoundaryLogger, GlobalErrorHandler>();
 
 var culture = new CultureInfo("pt-BR");

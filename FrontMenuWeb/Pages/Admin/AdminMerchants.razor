@@ -1,9 +1,11 @@
 @page "/admin/merchants"
 @using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Logs
 @using FrontMenuWeb.Models
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Components.Modais.ModaisDeAdmin
 @inject MerchantServices MerchantService
+@inject LogsDeAcoesDosUsuariosService LogsService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @layout AdminLayout
@@ -18,24 +20,16 @@
             <MudText Typo="Typo.body2">@allMerchants.Count merchant(s) cadastrado(s)</MudText>
         </MudStack>
 
-        <MudChip T="string"
-                 Color="Color.Primary"
-                 Variant="Variant.Filled"
-                 Icon="@Icons.Material.Filled.Store">
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Store">
             Total: @allMerchants.Count
         </MudChip>
     </MudStack>
 
     <!-- Barra de Busca -->
     <MudPaper Elevation="0" Class="pa-4 mb-6 rounded-xl" Style="background: var(--mud-palette-surface);">
-        <MudTextField @bind-Value="searchTerm"
-                      Placeholder="Pesquisar por nome fantasia, razão social ou email..."
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Variant="Variant.Outlined"
-                      IconSize="Size.Medium"
-                      Clearable="true"
-                      FullWidth="true" />
+        <MudTextField @bind-Value="searchTerm" Placeholder="Pesquisar por nome fantasia, razão social ou email..."
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Variant="Variant.Outlined"
+                      IconSize="Size.Medium" Clearable="true" FullWidth="true" />
     </MudPaper>
 
     <!-- Conteúdo -->
@@ -72,7 +66,7 @@
                                  Style="transition: transform 0.2s, box-shadow 0.2s; position: relative;">
 
                             <!-- Overlay clicável -->
-                            <div @onclick="@(() => OpenUpdateStatusModal(merchant))" 
+                            <div @onclick="@(() => OpenUpdateStatusModal(merchant))"
                                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; cursor: pointer;">
                             </div>
 
@@ -81,23 +75,24 @@
                                  style="background: linear-gradient(135deg, rgba(248,129,19,0.08) 0%, rgba(248,129,19,0.03) 100%);">
                                 @if (!string.IsNullOrEmpty(merchant.ImagemLogo))
                                 {
-                                    <MudAvatar Style="width: 90px; height: 90px; border: 3px solid rgba(248,129,19,0.3); overflow: hidden; padding: 0;">
-                                        <img src="@merchant.ImagemLogo" alt="@merchant.NomeFantasia" style="width: 100%; height: 100%; object-fit: cover;" />
+                                    <MudAvatar
+                                        Style="width: 90px; height: 90px; border: 3px solid rgba(248,129,19,0.3); overflow: hidden; padding: 0;">
+                                        <img src="@merchant.ImagemLogo" alt="@merchant.NomeFantasia"
+                                             style="width: 100%; height: 100%; object-fit: cover;" />
                                     </MudAvatar>
                                 }
                                 else
                                 {
-                                    <MudAvatar Style="width: 90px; height: 90px; font-size: 2.2rem; font-weight: 700; background: linear-gradient(135deg, #F88113 0%, #FF9800 100%); color: white;">
-                                        @(string.IsNullOrEmpty(merchant.NomeFantasia) ? "?" : merchant.NomeFantasia[0].ToString().ToUpper())
+                                    <MudAvatar
+                                        Style="width: 90px; height: 90px; font-size: 2.2rem; font-weight: 700; background: linear-gradient(135deg, #F88113 0%, #FF9800 100%); color: white;">
+                                        @(string.IsNullOrEmpty(merchant.NomeFantasia) ? "?" :
+                        merchant.NomeFantasia[0].ToString().ToUpper())
                                     </MudAvatar>
                                 }
 
                                 <!-- Status Badge sobre o avatar -->
-                                <MudChip T="string"
-                                         Color="@(merchant.Ativo ? Color.Success : Color.Error)"
-                                         Variant="Variant.Filled"
-                                         Size="Size.Small"
-                                         Style="margin-top: 10px; font-weight: 600; font-size: 0.7rem;">
+                                <MudChip T="string" Color="@(merchant.Ativo ? Color.Success : Color.Error)" Variant="Variant.Filled"
+                                         Size="Size.Small" Style="margin-top: 10px; font-weight: 600; font-size: 0.7rem;">
                                     @(merchant.Ativo ? "● Ativo" : "● Inativo")
                                 </MudChip>
                             </div>
@@ -111,8 +106,7 @@
                                          Class="mb-1">
                                     @merchant.NomeFantasia
                                 </MudText>
-                                <MudText Typo="Typo.caption"
-                                         Color="Color.Secondary"
+                                <MudText Typo="Typo.caption" Color="Color.Secondary"
                                          Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;"
                                          Class="mb-3">
                                     @merchant.Email
@@ -121,9 +115,10 @@
                                 <MudStack Spacing="2">
                                     <!-- Bloqueável -->
                                     <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudIcon Icon="@(merchant.ClienteBloqueavel ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)"
-                                                 Size="Size.Small"
-                                                 Color="@(merchant.ClienteBloqueavel ? Color.Warning : Color.Default)" />
+                                        <MudIcon
+                                        Icon="@(merchant.ClienteBloqueavel ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)"
+                                        Size="Size.Small"
+                                        Color="@(merchant.ClienteBloqueavel ? Color.Warning : Color.Default)" />
                                         <MudText Typo="Typo.body2">
                                             <b>Bloqueável:</b> @(merchant.ClienteBloqueavel ? "Sim" : "Não")
                                         </MudText>
@@ -135,13 +130,13 @@
                                         var venceEm = merchant.AtivoAte;
                                         var hoje = DateTime.Today;
                                         var diasRestantes = (venceEm.Date - hoje).Days;
-                                        var corVencimento = diasRestantes < 0 ? Color.Error : (diasRestantes <= 7 ? Color.Warning : Color.Success);
-                                        var iconeVencimento = diasRestantes < 0 ? Icons.Material.Filled.EventBusy : Icons.Material.Filled.Event;
+                                        var corVencimento = diasRestantes < 0 ? Color.Error : (diasRestantes <= 7 ? Color.Warning :
+                        Color.Success);
+                                        var iconeVencimento = diasRestantes < 0 ? Icons.Material.Filled.EventBusy :
+                        Icons.Material.Filled.Event;
 
                                         <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
-                                            <MudIcon Icon="@iconeVencimento"
-                                                     Size="Size.Small"
-                                                     Color="@corVencimento" />
+                                            <MudIcon Icon="@iconeVencimento" Size="Size.Small" Color="@corVencimento" />
                                             <MudText Typo="Typo.body2" Color="@corVencimento">
                                                 <b>Vence em:</b> @venceEm.ToString("dd/MM/yyyy")
                                                 @if (diasRestantes < 0)
@@ -180,7 +175,138 @@
     }
 </style>
 
+<!-- Histórico de Logs de Ação -->
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pb-8">
+    <MudExpansionPanels Elevation="3" Class="rounded-xl">
+        <MudExpansionPanel ExpandedChanged="OnExpansionChanged">
+            <TitleContent>
+                <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">Histórico de Logs de Ação</MudText>
+                    @if (allLogs.Any())
+                    {
+                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                            @LogsFiltrados.Count() registros
+                        </MudChip>
+                    }
+                </MudStack>
+            </TitleContent>
+            <ChildContent>
+                <!-- Filtros -->
+                <MudPaper Elevation="0" Class="pa-4 mb-4 rounded-xl"
+                          Style="background: var(--mud-palette-background-grey);">
+                    <MudGrid Spacing="2">
+                        <!-- Data início -->
+                        <MudItem xs="12" sm="6" md="3" lg="2">
+                            <MudDatePicker Label="Data início" @bind-Date="filtroDataInicio" Variant="Variant.Outlined"
+                                           DateFormat="dd/MM/yyyy" Clearable="true" Class="rounded-lg" />
+                        </MudItem>
+
+                        <!-- Data fim -->
+                        <MudItem xs="12" sm="6" md="3" lg="2">
+                            <MudDatePicker Label="Data fim" @bind-Date="filtroDataFim" Variant="Variant.Outlined"
+                                           DateFormat="dd/MM/yyyy" Clearable="true" Class="rounded-lg" />
+                        </MudItem>
+
+                        <!-- Hora início -->
+                        <MudItem xs="12" sm="6" md="3" lg="2">
+                            <MudTimePicker Label="Hora início" @bind-Time="filtroHoraInicio" Variant="Variant.Outlined"
+                                           Clearable="true" Class="rounded-lg" />
+                        </MudItem>
+
+                        <!-- Hora fim -->
+                        <MudItem xs="12" sm="6" md="3" lg="2">
+                            <MudTimePicker Label="Hora fim" @bind-Time="filtroHoraFim" Variant="Variant.Outlined"
+                                           Clearable="true" Class="rounded-lg" />
+                        </MudItem>
+
+                        <!-- Select merchant -->
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <MudSelect T="string" Label="Merchant" @bind-Value="filtroMerchantId"
+                                       Variant="Variant.Outlined" Clearable="true" Class="rounded-lg">
+                                <MudSelectItem T="string" Value="@((string?)null)">Todos</MudSelectItem>
+                                @foreach (var m in allMerchants)
+                                {
+                                    <MudSelectItem T="string" Value="@m.Id">@m.NomeFantasia</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <!-- Busca por descrição -->
+                        <MudItem xs="12" sm="6" md="4" lg="2">
+                            <MudTextField @bind-Value="filtroDescricao" Label="Buscar ação" Variant="Variant.Outlined"
+                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                          Clearable="true" Class="rounded-lg" />
+                        </MudItem>
+
+                        <!-- Botão limpar filtros -->
+                        <MudItem xs="12" sm="6" md="2" lg="2" Class="d-flex align-end">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="LimparFiltrosLogs"
+                                       FullWidth="true">
+                                Limpar
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                <!-- DataGrid -->
+                @if (isLoadingLogs)
+                {
+                    <MudStack AlignItems="AlignItems.Center" Class="pa-6" Spacing="3">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        <MudText Typo="Typo.body2">Carregando logs...</MudText>
+                    </MudStack>
+                }
+                else if (errorLogs != null)
+                {
+                    <MudAlert Severity="Severity.Error" Class="rounded-xl">@errorLogs</MudAlert>
+                }
+                else
+                {
+                    <MudDataGrid T="ClsLogAcaoUsuario" Items="@LogsFiltrados" Dense="true" Striped="true" Bordered="true"
+                                 RowsPerPage="20" Filterable="false" SortMode="SortMode.Multiple" Class="rounded-xl">
+                        <Columns>
+                            <PropertyColumn Property="x => x.HorarioDaAcao" Title="Horário" Format="dd/MM/yyyy HH:mm:ss" />
+                            <TemplateColumn Title="Merchant" SortBy="x => x.Merchant?.NomeFantasia ?? string.Empty">
+                                <CellTemplate>
+                                    @(context.Item.Merchant?.NomeFantasia ?? "-")
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <PropertyColumn Property="x => x.AcaoDescricao" Title="Descrição da Ação" />
+                            <PropertyColumn Property="x => x.TipoAcao" Title="Tipo" />
+                            <PropertyColumn Property="x => x.EntidadeAfetada" Title="Entidade" />
+                            <PropertyColumn Property="x => x.IdEntidadeAfetada" Title="ID Entidade" />
+                            <TemplateColumn Title="Valor Antes">
+                                <CellTemplate>
+                                    @(context.Item.ValorQueEstava.HasValue ?
+                                context.Item.ValorQueEstava.Value.ToString("C2") : "-")
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Valor Novo">
+                                <CellTemplate>
+                                    @(context.Item.ValorNovo.HasValue ? context.Item.ValorNovo.Value.ToString("C2") : "-")
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Funcionário">
+                                <CellTemplate>
+                                    @(context.Item.Funcionario?.Nome ?? "-")
+                                </CellTemplate>
+                            </TemplateColumn>
+                            <PropertyColumn Property="x => x.IpAddress" Title="IP" />
+                        </Columns>
+                        <PagerContent>
+                            <MudDataGridPager T="ClsLogAcaoUsuario" />
+                        </PagerContent>
+                    </MudDataGrid>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+</MudContainer>
+
 @code {
+    // ── Merchants ─────────────────────────────────────────────────────────────
     private bool isLoading = true;
     private string? errorMessage;
     private List<ClsMerchant> allMerchants = new();
@@ -189,11 +315,7 @@
     private string searchTerm
     {
         get => _searchTerm;
-        set
-        {
-            _searchTerm = value;
-            StateHasChanged();
-        }
+        set { _searchTerm = value; StateHasChanged(); }
     }
 
     private IEnumerable<ClsMerchant> FilteredMerchants =>
@@ -202,8 +324,52 @@
             : allMerchants.Where(m =>
                 (m.NomeFantasia?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (m.RazaoSocial?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
-            );
+                (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    // ── Logs ──────────────────────────────────────────────────────────────────
+    private bool isLoadingLogs = false;
+    private string? errorLogs;
+    private List<ClsLogAcaoUsuario> allLogs = new();
+
+    private DateTime? filtroDataInicio;
+    private DateTime? filtroDataFim;
+    private TimeSpan? filtroHoraInicio;
+    private TimeSpan? filtroHoraFim;
+    private string? filtroMerchantId;
+    private string filtroDescricao = "";
+
+    private IEnumerable<ClsLogAcaoUsuario> LogsFiltrados => allLogs.Where(log =>
+    {
+        // Filtro de data início
+        if (filtroDataInicio.HasValue && log.HorarioDaAcao.Date < filtroDataInicio.Value.Date)
+            return false;
+
+        // Filtro de data fim
+        if (filtroDataFim.HasValue && log.HorarioDaAcao.Date > filtroDataFim.Value.Date)
+            return false;
+
+        // Filtro de hora início (compara apenas a hora dentro do dia)
+        if (filtroHoraInicio.HasValue && log.HorarioDaAcao.TimeOfDay < filtroHoraInicio.Value)
+            return false;
+
+        // Filtro de hora fim
+        if (filtroHoraFim.HasValue && log.HorarioDaAcao.TimeOfDay > filtroHoraFim.Value)
+            return false;
+
+        // Filtro por merchant
+        if (!string.IsNullOrWhiteSpace(filtroMerchantId) && log.Merchant?.Id != filtroMerchantId)
+            return false;
+
+        // Filtro por descrição da ação
+        if (!string.IsNullOrWhiteSpace(filtroDescricao) &&
+            !(log.AcaoDescricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ||
+              (log.TipoAcao?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false) ||
+              (log.EntidadeAfetada?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false) ||
+              (log.Merchant?.NomeFantasia?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false)))
+            return false;
+
+        return true;
+    });
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,7 +386,6 @@
 
             if (response.Status == "success" && response.Data != null)
             {
-                // A API retorna { data: { merchants: [...] } }
                 allMerchants = response.Data.Lista ?? new();
             }
             else
@@ -238,6 +403,49 @@
         }
     }
 
+    private async Task LoadLogs()
+    {
+        try
+        {
+            isLoadingLogs = true;
+            errorLogs = null;
+            var response = await LogsService.AdminGetAllLogsAsync();
+
+            if (response.Status == "success" && response.Data != null)
+            {
+                allLogs = response.Data.Lista ?? new();
+            }
+            else
+            {
+                errorLogs = response.Messages?.FirstOrDefault() ?? "Erro ao carregar logs.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorLogs = $"Ocorreu um erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoadingLogs = false;
+        }
+    }
+
+    private async Task OnExpansionChanged(bool isExpanded)
+    {
+        if (isExpanded && !allLogs.Any() && !isLoadingLogs)
+            await LoadLogs();
+    }
+
+    private void LimparFiltrosLogs()
+    {
+        filtroDataInicio = null;
+        filtroDataFim = null;
+        filtroHoraInicio = null;
+        filtroHoraFim = null;
+        filtroMerchantId = null;
+        filtroDescricao = "";
+    }
+
     private async Task OpenUpdateStatusModal(ClsMerchant merchant)
     {
         Console.WriteLine($"Abrindo modal para: {merchant.NomeFantasia}");
@@ -249,8 +457,6 @@
         var result = await dialog.Result;
 
         if (!result.Canceled)
-        {
             await LoadMerchants();
-        }
     }
 }

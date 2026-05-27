@@ -254,10 +254,6 @@
             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
                 <MudButton Variant="Variant.Filled" OnClick="ReimprimirPedido" Color="Color.Primary">Reimprimir Itens</MudButton>
                 <MudButton OnClick="ImprimirItensSelecionados" Disabled="@(ItensSelecionados.Count == 0)" Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
-                @if (AppState.MerchantLogado?.AvisaFechamentoDeMesa == true)
-                {
-                    <MudButton OnClick="AvisarContaDaMesa" Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">Imprimir Fechamento</MudButton>
-                }
                 <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
                 @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
                 {
