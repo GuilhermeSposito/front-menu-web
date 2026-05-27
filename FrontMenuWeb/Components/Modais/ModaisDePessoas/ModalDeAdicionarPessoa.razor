@@ -165,15 +165,11 @@
 
                     }
 
-                    <MudPaper Class="pa-4 mt-2" style="background-color: var(--mud-palette-background); border-radius:8px">
-                        <MudAutocomplete T="ClsCidade"
-                                         Label="Cidade"
-                                         Value="_cidadeSelecionadaModal"
-                                         ValueChanged="OnCidadeModalChanged"
-                                         SearchFunc="SearchCidades"
-                                         ToStringFunc="@(c => c?.Descricao ?? string.Empty)"
-                                         Variant="Variant.Filled"
-                                         Clearable
+                    <MudPaper Class="pa-4 mt-2"
+                              style="background-color: var(--mud-palette-background); border-radius:8px">
+                        <MudAutocomplete T="ClsCidade" Label="Cidade" Value="_cidadeSelecionadaModal"
+                                         ValueChanged="OnCidadeModalChanged" SearchFunc="SearchCidades"
+                                         ToStringFunc="@(c => c?.Descricao ?? string.Empty)" Variant="Variant.Filled" Clearable
                                          ResetValueOnEmptyText="true" />
                     </MudPaper>
 
@@ -187,7 +183,7 @@
                                 <MudItem xs="12" sm="8">
                                     <MudAutocomplete T="AutoCompleteDeEndereco" Label="@LabelDePesquisaDeEndereco"
                                                      @ref="_autoCompleteRua" MinCharacters="1" Clearable="true" Dense="true"
-                                                     Variant="Variant.Outlined" SearchFunc="BuscarEndereco"
+                                                     Variant="Variant.Outlined" SearchFunc="BuscarEndereco" Value="_ruaValue"
                                                      ValueChanged="SelecionarEndereco" ShowProgressIndicator="true"
                                                      ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
                                                      TextChanged="OnTextoEnderecoChanged" />
@@ -299,6 +295,7 @@
     //Logica Auto Complete
     private string LabelDePesquisaDeEndereco = "RUA";
     private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
+    private AutoCompleteDeEndereco? _ruaValue;
     private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
 
     public PatternMask phoneMask = new PatternMask("(##) #####-####")
@@ -448,6 +445,8 @@
                     NovoEndereco.Bairro = endereco.Bairro!;
                     NovoEndereco.Cidade = endereco.Cidade!;
                     NovoEndereco.Estado = endereco.Uf!;
+
+                    _ruaValue = new AutoCompleteDeEndereco { Descricao = endereco.Logradouro! };
 
                     if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
                         await TextFieldDeNumeroDoCliente.FocusAsync();
@@ -678,6 +677,8 @@ cancellationToken)
 
     private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
     {
+        _ruaValue = end;
+
         if (end is null)
         {
             PesquisaEndereco = string.Empty;

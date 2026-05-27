@@ -82,6 +82,7 @@ public class ClsPedido
         CodigoExternoMesa = pedido.CodigoExternoMesa;
         ObservacaoDoPedido = pedido.ObservacaoDoPedido;
         ExpandidoNaUI = pedido.ExpandidoNaUI;
+        NomeCliente = pedido.NomeCliente;
     }
 
     [JsonPropertyName("id")] public int Id { get; set; }
@@ -146,6 +147,7 @@ public class ClsPedido
     [JsonPropertyName("IsConvenio")] public bool IsConvenio { get; set; } = false;
     [JsonPropertyName("ValorFaltaPagar")] public float ValorFaltaPagar { get; set; } = 0f;
     [JsonPropertyName("AceitaMenssagemDoWhatsApp")] public bool AceitaMenssagemDoWhatsApp { get; set; } = true;
+    [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

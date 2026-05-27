@@ -155,6 +155,9 @@ public class IntegracoesController : Controller
         if (webhook is null)
             return BadRequest();
 
+        var json = JsonSerializer.Serialize(webhook);
+        Console.WriteLine(json);
+
         _ = _delmatchService.ProcessarWebhookAsync(webhook);
         return Accepted();
     }

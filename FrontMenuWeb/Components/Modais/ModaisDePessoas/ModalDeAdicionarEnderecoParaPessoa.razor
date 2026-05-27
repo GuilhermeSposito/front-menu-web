@@ -12,9 +12,7 @@
 
 <MudPaper Square="false" Elevation="0" Class="full-height-container">
 
-    <MudOverlay @bind-Visible="CarregandoRespostaDaApiDeCep"
-                DarkBackground
-                Class="overlay-fullscreen">
+    <MudOverlay @bind-Visible="CarregandoRespostaDaApiDeCep" DarkBackground Class="overlay-fullscreen">
         <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
     </MudOverlay>
 
@@ -33,56 +31,60 @@
                     </MudText>
                     <MudGrid>
                         <MudItem xs="12" sm="8">
-                            <MudAutocomplete T="AutoCompleteDeEndereco"
-                                             Label="@LabelDePesquisaDeEndereco"
-                                             @ref="_autoCompleteRua"
-                                             MinCharacters="1"
-                                             Clearable="true"
-                                             Dense="true"
-                                             Variant="Variant.Outlined"
-                                             SearchFunc="BuscarEndereco"
-                                             ValueChanged="SelecionarEndereco"
-                                             ShowProgressIndicator="true"
+                            <MudAutocomplete T="AutoCompleteDeEndereco" Label="@LabelDePesquisaDeEndereco"
+                                             @ref="_autoCompleteRua" MinCharacters="1" Clearable="true" Dense="true"
+                                             Variant="Variant.Outlined" SearchFunc="BuscarEndereco" Value="_ruaValue"
+                                             ValueChanged="SelecionarEndereco" ShowProgressIndicator="true"
                                              ToStringFunc="@(p => p?.Descricao ?? string.Empty)"
                                              TextChanged="OnTextoEnderecoChanged" />
 
                         </MudItem>
                         <MudItem xs="12" sm="4">
-                            <MudTextField Required Immediate=true RequiredError="O Número da casa é obrigatório" Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero" Variant="Variant.Outlined" />
+                            <MudTextField Required Immediate=true RequiredError="O Número da casa é obrigatório"
+                                          Label="Número" @ref=TextFieldDeNumeroDoCliente @bind-Value="NovoEndereco.Numero"
+                                          Variant="Variant.Outlined" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField Required Immediate=true RequiredError="O bairro da casa é obrigatório" Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
+                            <MudTextField Required Immediate=true RequiredError="O bairro da casa é obrigatório"
+                                          Label="Bairro" @bind-Value="NovoEndereco.Bairro" Variant="Variant.Outlined" />
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudTextField Required Immediate=true RequiredError="A Cidade é obrigatório" Label="Cidade" @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
+                            <MudTextField Required Immediate=true RequiredError="A Cidade é obrigatório" Label="Cidade"
+                                          @bind-Value="NovoEndereco.Cidade" Variant="Variant.Outlined" />
                         </MudItem>
 
                         <MudItem xs="12" sm="3">
-                            <MudTextField Required Immediate=true RequiredError="O Estado é obrigatório" Label="Estado" @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
+                            <MudTextField Required Immediate=true RequiredError="O Estado é obrigatório" Label="Estado"
+                                          @bind-Value="NovoEndereco.Estado" Variant="Variant.Outlined" MaxLength="2" />
                         </MudItem>
 
                         <MudItem xs="12" sm="5">
-                            <MudTextField Label="CEP" Immediate=true @bind-Value="NovoEndereco.Cep" Variant="Variant.Outlined"
-                                          Placeholder="_____-___" @onfocusout=ProcuraCep></MudTextField>
+                            <MudTextField Label="CEP" Immediate=true @bind-Value="NovoEndereco.Cep"
+                                          Variant="Variant.Outlined" Placeholder="_____-___" @onfocusout=ProcuraCep>
+                            </MudTextField>
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Complemento" Immediate=true @bind-Value="NovoEndereco.Complemento" Variant="Variant.Outlined" />
+                            <MudTextField Label="Complemento" Immediate=true @bind-Value="NovoEndereco.Complemento"
+                                          Variant="Variant.Outlined" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Referência" Immediate=true @bind-Value="NovoEndereco.Referencia" Variant="Variant.Outlined" />
+                            <MudTextField Label="Referência" Immediate=true @bind-Value="NovoEndereco.Referencia"
+                                          Variant="Variant.Outlined" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField Label="Observações" Immediate=true @bind-Value="NovoEndereco.ObsEndereco" Variant="Variant.Outlined" />
+                            <MudTextField Label="Observações" Immediate=true @bind-Value="NovoEndereco.ObsEndereco"
+                                          Variant="Variant.Outlined" />
                         </MudItem>
 
 
                         <MudItem xs="12">
-                            <MudTextField Label="Tipo Do Endereço" Immediate=true @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
+                            <MudTextField Label="Tipo Do Endereço" Immediate=true
+                                          @bind-Value="NovoEndereco.TipoEndereco" Variant="Variant.Outlined" />
                         </MudItem>
 
 
@@ -123,6 +125,7 @@
     private string? PesquisaEndereco { get; set; } = string.Empty;
     private List<AutoCompleteDeEndereco> EnderecosParaSelecionar { get; set; } = new List<AutoCompleteDeEndereco>();
     private MudAutocomplete<AutoCompleteDeEndereco>? _autoCompleteRua;
+    private AutoCompleteDeEndereco? _ruaValue;
     private bool _focoInicialAplicado;
     private string LabelDePesquisaDeEndereco = "RUA";
 
@@ -187,10 +190,11 @@
                     NovoEndereco.Cidade = endereco.Cidade!;
                     NovoEndereco.Estado = endereco.Uf!;
 
+                    _ruaValue = new AutoCompleteDeEndereco { Descricao = endereco.Logradouro! };
+
                     if (string.IsNullOrEmpty(TextFieldDeNumeroDoCliente.Text))
                         await TextFieldDeNumeroDoCliente.FocusAsync();
                 }
-
             }
         }
         catch (Exception ex)
@@ -230,7 +234,8 @@
     }
 
     private bool _semResultados;
-    private async Task<IEnumerable<AutoCompleteDeEndereco>> BuscarEndereco(string valor, CancellationToken cancellationToken)
+    private async Task<IEnumerable<AutoCompleteDeEndereco>> BuscarEndereco(string valor, CancellationToken
+cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(valor))
             return Enumerable.Empty<AutoCompleteDeEndereco>();
@@ -243,6 +248,8 @@
 
     private async Task SelecionarEndereco(AutoCompleteDeEndereco? end)
     {
+        _ruaValue = end;
+
         if (end is null)
         {
             PesquisaEndereco = string.Empty;
@@ -279,7 +286,9 @@
     {
         try
         {
-            if (!string.IsNullOrEmpty(NovoEndereco.Rua) && !string.IsNullOrEmpty(NovoEndereco.Bairro) && !string.IsNullOrEmpty(NovoEndereco.Numero) && !string.IsNullOrEmpty(NovoEndereco.Cidade) && !string.IsNullOrEmpty(NovoEndereco.Estado))
+            if (!string.IsNullOrEmpty(NovoEndereco.Rua) && !string.IsNullOrEmpty(NovoEndereco.Bairro) &&
+!string.IsNullOrEmpty(NovoEndereco.Numero) && !string.IsNullOrEmpty(NovoEndereco.Cidade) &&
+!string.IsNullOrEmpty(NovoEndereco.Estado))
             {
 
                 var response = Editando ? await PessoasService.UpdateEndereco(NovoEndereco, Pessoa.Id)
