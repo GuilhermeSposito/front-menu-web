@@ -29,7 +29,7 @@ public class MessageControllers : ControllerBase
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
 
-        await _messageService.SendMessageAsync(enviaMsgDto,TokenDaApiNest: token);
+        await _messageService.SendMessageAsync(enviaMsgDto, TokenDaApiNest: token);
         return Ok();
     }
 
@@ -41,7 +41,9 @@ public class MessageControllers : ControllerBase
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<ClsPedido> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
-        await _messageService.SendMessageMotoboyAsync(enviaMsgMotoboyDto, TokenDaApiNest: token);
+        await _messageService.SendMessageMotoboyOficialAsync(enviaMsgMotoboyDto, TokenDaApiNest: token);
         return Ok();
     }
+
+
 }

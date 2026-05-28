@@ -264,6 +264,58 @@ public class MessageService
     }
     #endregion
 
+    public async Task SendMessageMotoboyOficialAsync(EnviaMsgMotoboyDto dto, string TokenDaApiNest)
+    {
+        try
+        {
+            ClsMerchant? merchant = await GetMerchantFromNestApi(TokenDaApiNest);
+            if (merchant is null) return;
+
+            string phoneNumberId = merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
+
+            if (string.IsNullOrEmpty(dto.TelefoneMotoboy))
+            {
+                Console.WriteLine("[MessageService] Telefone do motoboy não informado.");
+                return;
+            }
+
+            var messageDto = new SendMessageDtoWS
+            {
+                To   = FormataNumeroWhatsApp(dto.TelefoneMotoboy),
+                Type = TipoMensagem.template,
+                Template = new TemplateDto
+                {
+                    Name     = TemplatesName.mensagem_motoboy_rotas,
+                    Language = new LanguageDto { Code = "pt_BR" },
+                    Components =
+                    [
+                        new ComponentDto
+                        {
+                            Type = ComponentType.body,
+                            Parameters =
+                            [
+                                new() { Type = "text", Text = dto.NomeMotoboy ?? "Motoboy" },
+                                new() { Type = "text", Text = dto.LinkGoogleMaps ?? "" },
+                            ]
+                        }
+                    ]
+                }
+            };
+
+            HttpClient wsClient = _factory.CreateClient("ApiOficialMetaWS");
+            var response = await wsClient.PostAsJsonAsync($"{phoneNumberId}/messages", messageDto);
+
+            if (response.IsSuccessStatusCode)
+                Console.WriteLine($"[MessageService] Mensagem oficial enviada ao motoboy {dto.NomeMotoboy} com sucesso!");
+            else
+                Console.WriteLine($"[MessageService] Falha ao enviar mensagem oficial ao motoboy. Status: {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MessageService] Erro ao enviar mensagem oficial ao motoboy: {ex.Message}");
+        }
+    }
+
     #region Função para envio de mensagem com APi Oficial do WhatsApp (Meta)
     public async Task SendMessageStatusOficialAsync(EnviaMsgDto enviaMsgDto, ClsMerchant Merchant)
     {

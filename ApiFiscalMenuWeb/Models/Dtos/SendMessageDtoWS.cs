@@ -27,7 +27,8 @@ public enum TipoMensagem
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TemplatesName
 {
-    status_pedido
+    status_pedido,
+    mensagem_motoboy_rotas
 }
 
 public class TemplateDto
