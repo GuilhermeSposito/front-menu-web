@@ -28,4 +28,23 @@ jobs:
                 dotnet publish -c Release -o ./publish
                 cd publish
                 pm2 restart api-fiscal
-                
+
+      - name: "Build Da aplicação - Servidor 2"
+        uses: appleboy/ssh-action@v1
+        with:
+            host: "76.13.31.149"
+            username: "root"
+            key: ${{ secrets.SERVER_SSH_KEY_2 }}
+            script: |
+                cd ..
+                cd /opt/front-menu-web/FrontMenuWeb
+                rm -rf publish
+                git pull origin main
+                dotnet restore
+                cd ..
+                cd ApiFiscalMenuWeb
+                rm -rf publish
+                dotnet publish -c Release -o ./publish
+                cd publish
+                pm2 restart api-fiscal
+

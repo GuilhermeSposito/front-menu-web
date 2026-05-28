@@ -841,6 +841,16 @@ public class ImpressaoService
                 AdicionaConteudoLR(Conteudo, "QTD  ITENS", "TOTAL", FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
+                if(AppState.MerchantLogado?.JuntaItensNoLancamento ?? false)
+                    comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert }).Select(g => new AvisoContaItemDto
+                    {
+                        Descricao = g.Key.Descricao,
+                        Quantidade = g.Sum(i => i.Quantidade),
+                        PrecoUnitario = g.FirstOrDefault()?.PrecoUnitario ?? 0,
+                        PrecoTotal = g.Sum(i => i.PrecoTotal),
+                        ECouvert = g.Key.ECouvert,
+                    }).ToList();
+
                 foreach (var item in comanda.Itens)
                     if (!item.ECouvert)
                         AdicionarLinhasDeItem(Conteudo, item);
@@ -925,6 +935,16 @@ public class ImpressaoService
                 };
 
                 aviso.CouvertTotalMesa += couverts.Sum(i => i.PrecoTotal);
+
+                if (AppState.MerchantLogado?.JuntaItensNoLancamento ?? false)
+                    itensParaImprimir = itensParaImprimir.GroupBy(i => new { i.Descricao, i.ECouvert }).Select(g => new AvisoContaItemDto
+                    {
+                        Descricao = g.Key.Descricao,
+                        Quantidade = g.Sum(i => i.Quantidade),
+                        PrecoUnitario = g.FirstOrDefault()?.PrecoUnitario ?? 0,
+                        PrecoTotal = g.Sum(i => i.PrecoTotal),
+                        ECouvert = g.Key.ECouvert,
+                    }).ToList();
 
                 foreach (var item in itensParaImprimir)
                     if (!item.ECouvert)
