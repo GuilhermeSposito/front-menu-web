@@ -271,7 +271,7 @@ public class MessageService
             ClsMerchant? merchant = await GetMerchantFromNestApi(TokenDaApiNest);
             if (merchant is null) return;
 
-            string phoneNumberId = merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
+            string phoneNumberId = "1056417574228004";//merchant.InstanceName ?? throw new BadHttpRequestException("InstanceName do Merchant não pode ser nulo.");
 
             if (string.IsNullOrEmpty(dto.TelefoneMotoboy))
             {
