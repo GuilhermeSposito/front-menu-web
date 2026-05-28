@@ -4,3 +4,4 @@ bin
 .env
 
 BackupsSophosPostgres
+FrontMenuWeb/wwwroot/appsettings*.json

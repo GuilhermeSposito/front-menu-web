@@ -1,5 +1,4 @@
-﻿using Blazored.LocalStorage;
-using FrontMenuWeb.Dtos;
+﻿using FrontMenuWeb.Dtos;
 using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Fiscal;
@@ -16,12 +15,10 @@ namespace FrontMenuWeb.Services.Fiscal;
 
 public class NfService : INfService
 {
-    private readonly ILocalStorageService _localStorage;
     public HttpClient _http { get; set; }
     public PedidosService _pedidoService { get; set; }
-    public NfService(ILocalStorageService localStorage, HttpClient http, PedidosService pedidoService)
+    public NfService(HttpClient http, PedidosService pedidoService)
     {
-        _localStorage = localStorage;
         _http = http;
         _pedidoService = pedidoService;
     }
