@@ -4,6 +4,7 @@
 @using FrontMenuWeb.Models
 @using FrontMenuWeb.Services
 @using FrontMenuWeb.Components.Modais.ModaisDeAdmin
+@using FrontMenuWeb.Models.Produtos
 @inject MerchantServices MerchantService
 @inject LogsDeAcoesDosUsuariosService LogsService
 @inject IDialogService DialogService
@@ -183,10 +184,10 @@
                 <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
                     <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" />
                     <MudText Typo="Typo.h6" Style="font-weight: 700;">Histórico de Logs de Ação</MudText>
-                    @if (allLogs.Any())
+                    @if (_totalLogs > 0)
                     {
                         <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
-                            @LogsFiltrados.Count() registros
+                            @_totalLogs registros
                         </MudChip>
                     }
                 </MudStack>
@@ -239,8 +240,13 @@
                                           Clearable="true" Class="rounded-lg" />
                         </MudItem>
 
-                        <!-- Botão limpar filtros -->
-                        <MudItem xs="12" sm="6" md="2" lg="2" Class="d-flex align-end">
+                        <!-- Botões de filtro -->
+                        <MudItem xs="12" sm="6" md="2" lg="2" Class="d-flex align-end gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.FilterAlt" OnClick="FiltrarLogs"
+                                       FullWidth="true">
+                                Filtrar
+                            </MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary"
                                        StartIcon="@Icons.Material.Filled.FilterAltOff" OnClick="LimparFiltrosLogs"
                                        FullWidth="true">
@@ -251,21 +257,12 @@
                 </MudPaper>
 
                 <!-- DataGrid -->
-                @if (isLoadingLogs)
+                @if (errorLogs != null)
                 {
-                    <MudStack AlignItems="AlignItems.Center" Class="pa-6" Spacing="3">
-                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                        <MudText Typo="Typo.body2">Carregando logs...</MudText>
-                    </MudStack>
+                    <MudAlert Severity="Severity.Error" Class="rounded-xl mb-3">@errorLogs</MudAlert>
                 }
-                else if (errorLogs != null)
-                {
-                    <MudAlert Severity="Severity.Error" Class="rounded-xl">@errorLogs</MudAlert>
-                }
-                else
-                {
-                    <MudDataGrid T="ClsLogAcaoUsuario" Items="@LogsFiltrados" Dense="true" Striped="true" Bordered="true"
-                                 RowsPerPage="20" Filterable="false" SortMode="SortMode.Multiple" Class="rounded-xl">
+                <MudDataGrid T="ClsLogAcaoUsuario" ServerData="ServerReload" @ref="_dataGrid" Dense="true" Striped="true" Bordered="true"
+                             RowsPerPage="20" Filterable="false" SortMode="SortMode.None" Class="rounded-xl">
                         <Columns>
                             <PropertyColumn Property="x => x.HorarioDaAcao" Title="Horário" Format="dd/MM/yyyy HH:mm:ss" />
                             <TemplateColumn Title="Merchant" SortBy="x => x.Merchant?.NomeFantasia ?? string.Empty">
@@ -299,7 +296,6 @@
                             <MudDataGridPager T="ClsLogAcaoUsuario" />
                         </PagerContent>
                     </MudDataGrid>
-                }
             </ChildContent>
         </MudExpansionPanel>
     </MudExpansionPanels>
@@ -327,9 +323,9 @@
                 (m.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
 
     // ── Logs ──────────────────────────────────────────────────────────────────
-    private bool isLoadingLogs = false;
+    private MudDataGrid<ClsLogAcaoUsuario>? _dataGrid;
+    private int _totalLogs = 0;
     private string? errorLogs;
-    private List<ClsLogAcaoUsuario> allLogs = new();
 
     private DateTime? filtroDataInicio;
     private DateTime? filtroDataFim;
@@ -337,39 +333,6 @@
     private TimeSpan? filtroHoraFim;
     private string? filtroMerchantId;
     private string filtroDescricao = "";
-
-    private IEnumerable<ClsLogAcaoUsuario> LogsFiltrados => allLogs.Where(log =>
-    {
-        // Filtro de data início
-        if (filtroDataInicio.HasValue && log.HorarioDaAcao.Date < filtroDataInicio.Value.Date)
-            return false;
-
-        // Filtro de data fim
-        if (filtroDataFim.HasValue && log.HorarioDaAcao.Date > filtroDataFim.Value.Date)
-            return false;
-
-        // Filtro de hora início (compara apenas a hora dentro do dia)
-        if (filtroHoraInicio.HasValue && log.HorarioDaAcao.TimeOfDay < filtroHoraInicio.Value)
-            return false;
-
-        // Filtro de hora fim
-        if (filtroHoraFim.HasValue && log.HorarioDaAcao.TimeOfDay > filtroHoraFim.Value)
-            return false;
-
-        // Filtro por merchant
-        if (!string.IsNullOrWhiteSpace(filtroMerchantId) && log.Merchant?.Id != filtroMerchantId)
-            return false;
-
-        // Filtro por descrição da ação
-        if (!string.IsNullOrWhiteSpace(filtroDescricao) &&
-            !(log.AcaoDescricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ||
-              (log.TipoAcao?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false) ||
-              (log.EntidadeAfetada?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false) ||
-              (log.Merchant?.NomeFantasia?.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase) ?? false)))
-            return false;
-
-        return true;
-    });
 
     protected override async Task OnInitializedAsync()
     {
@@ -403,40 +366,45 @@
         }
     }
 
-    private async Task LoadLogs()
+    private async Task<GridData<ClsLogAcaoUsuario>> ServerReload(GridState<ClsLogAcaoUsuario> state)
     {
+        errorLogs = null;
         try
         {
-            isLoadingLogs = true;
-            errorLogs = null;
-            var response = await LogsService.AdminGetAllLogsAsync();
+            var response = await LogsService.AdminGetAllLogsAsync(
+                page: state.Page + 1,
+                limit: state.PageSize,
+                dataInicio: filtroDataInicio,
+                horaInicio: filtroHoraInicio,
+                dataFim: filtroDataFim,
+                horaFim: filtroHoraFim,
+                merchantId: filtroMerchantId,
+                descricao: filtroDescricao
+            );
 
-            if (response.Status == "success" && response.Data != null)
+            _totalLogs = response.Total;
+            return new GridData<ClsLogAcaoUsuario>
             {
-                allLogs = response.Data.Lista ?? new();
-            }
-            else
-            {
-                errorLogs = response.Messages?.FirstOrDefault() ?? "Erro ao carregar logs.";
-            }
+                Items = response.Data,
+                TotalItems = response.Total
+            };
         }
         catch (Exception ex)
         {
             errorLogs = $"Ocorreu um erro: {ex.Message}";
-        }
-        finally
-        {
-            isLoadingLogs = false;
+            return new GridData<ClsLogAcaoUsuario> { Items = new List<ClsLogAcaoUsuario>(), TotalItems = 0 };
         }
     }
 
-    private async Task OnExpansionChanged(bool isExpanded)
+    private void OnExpansionChanged(bool isExpanded) { }
+
+    private async Task FiltrarLogs()
     {
-        if (isExpanded && !allLogs.Any() && !isLoadingLogs)
-            await LoadLogs();
+        if (_dataGrid != null)
+            await _dataGrid.ReloadServerData();
     }
 
-    private void LimparFiltrosLogs()
+    private async Task LimparFiltrosLogs()
     {
         filtroDataInicio = null;
         filtroDataFim = null;
@@ -444,6 +412,8 @@
         filtroHoraFim = null;
         filtroMerchantId = null;
         filtroDescricao = "";
+        if (_dataGrid != null)
+            await _dataGrid.ReloadServerData();
     }
 
     private async Task OpenUpdateStatusModal(ClsMerchant merchant)
