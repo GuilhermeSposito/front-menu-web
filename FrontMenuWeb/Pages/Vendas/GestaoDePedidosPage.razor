@@ -357,8 +357,8 @@
                                                     <MudCardActions>
                                                         <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                             <MudStack Row=true>
-                                                                <MudMenu Icon="@Icons.Material.Filled.Print" >
-                                                                    <MudMenu StartIcon="@Icons.Material.Filled.MoreVert" Label="Impressões">
+                                                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" >
+                                                                    <MudMenu StartIcon="@Icons.Material.Filled.Print" Label="Impressões">
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.Completo); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Completo" />
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasPedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Pedido" />
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasComandas); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Comandas" />
