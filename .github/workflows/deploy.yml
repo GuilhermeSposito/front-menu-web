@@ -22,12 +22,7 @@ jobs:
                 dotnet restore
                 dotnet build
                 dotnet publish -c Release -o publish
-                cd .. 
-                cd ApiFiscalMenuWeb
-                rm -rf publish
-                dotnet publish -c Release -o ./publish
-                cd publish
-                pm2 restart api-fiscal
+               
 
       - name: "Build Da aplicação - Servidor 2"
         uses: appleboy/ssh-action@v1
@@ -36,13 +31,14 @@ jobs:
             username: "root"
             key: ${{ secrets.SERVER_SSH_KEY_2 }}
             script: |
-                cd ..
+                export PATH=$PATH:$HOME/.dotnet
                 cd /opt/front-menu-web/FrontMenuWeb
                 rm -rf publish
                 git pull origin main
                 dotnet restore
-                cd ..
-                cd ApiFiscalMenuWeb
+                dotnet build
+                dotnet publish -c Release -o publish
+                cd /opt/front-menu-web/ApiFiscalMenuWeb
                 rm -rf publish
                 dotnet publish -c Release -o ./publish
                 cd publish
