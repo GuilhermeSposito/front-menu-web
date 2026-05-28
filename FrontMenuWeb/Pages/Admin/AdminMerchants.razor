@@ -1,4 +1,5 @@
 @page "/admin/merchants"
+@implements IDisposable
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Logs
 @using FrontMenuWeb.Models
@@ -326,6 +327,7 @@
     private MudDataGrid<ClsLogAcaoUsuario>? _dataGrid;
     private int _totalLogs = 0;
     private string? errorLogs;
+    private System.Timers.Timer? _refreshTimer;
 
     private DateTime? filtroDataInicio;
     private DateTime? filtroDataFim;
@@ -337,6 +339,31 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadMerchants();
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _refreshTimer = new System.Timers.Timer(5000);
+            _refreshTimer.Elapsed += async (_, _) =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    if (_dataGrid != null)
+                        await _dataGrid.ReloadServerData();
+                });
+            };
+            _refreshTimer.AutoReset = true;
+            _refreshTimer.Start();
+        }
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Stop();
+        _refreshTimer?.Dispose();
     }
 
     private async Task LoadMerchants()

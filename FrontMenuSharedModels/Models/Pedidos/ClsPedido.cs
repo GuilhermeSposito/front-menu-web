@@ -148,6 +148,8 @@ public class ClsPedido
     [JsonPropertyName("ValorFaltaPagar")] public float ValorFaltaPagar { get; set; } = 0f;
     [JsonPropertyName("AceitaMenssagemDoWhatsApp")] public bool AceitaMenssagemDoWhatsApp { get; set; } = true;
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
+    [JsonPropertyName("ImprimeApenasPedido")] public bool ImprimeApenasPedido { get; set; } = false;
+    [JsonPropertyName("ImprimeApenasComanda")] public bool ImprimeApenasComanda { get; set; } = false;
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

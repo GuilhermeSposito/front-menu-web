@@ -63,7 +63,7 @@ public class ImpressaoService
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                 //verificar se o pedido é sophos e esta aberto
-                if ((Pedido.CriadoPor == "SOPHOS" && Pedido.StatusPedido != "ABERTO") || (Pedido.CriadoPor != "SOPHOS"))
+                if (((Pedido.CriadoPor == "SOPHOS" && Pedido.StatusPedido != "ABERTO") || (Pedido.CriadoPor != "SOPHOS")) && !Pedido.ImprimeApenasComanda )
                 {
                     //primeiro imprime pedido
                     if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
@@ -84,7 +84,7 @@ public class ImpressaoService
                 }
 
 
-                if (AppState.MerchantLogado is not null)
+                if (AppState.MerchantLogado is not null && !Pedido.ImprimeApenasPedido)
                 {
                     await ImprimirComanda(jsonDoPedido, Pedido.CriadoPor, false);
                 }

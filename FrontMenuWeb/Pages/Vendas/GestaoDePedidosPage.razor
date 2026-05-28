@@ -357,8 +357,14 @@
                                                     <MudCardActions>
                                                         <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                             <MudStack Row=true>
-                                                                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
-                                                                    <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir" />
+                                                                <MudMenu Icon="@Icons.Material.Filled.Print" >
+                                                                    <MudMenu StartIcon="@Icons.Material.Filled.MoreVert" Label="Impressões">
+                                                                        <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.Completo); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Completo" />
+                                                                        <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasPedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Pedido" />
+                                                                        <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasComandas); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Comandas" />
+                                                                    </MudMenu>
+                                                                
+
                                                                     @if (pedido.Pedido.StatusPedido == "FECHADO")
                                                                     {
                                                                         <MudMenuItem OnClick=@(async () => { await EmiteNFCe(pedido.Pedido); }) Icon="@Icons.Material.Filled.ReceiptLong" Label="Cupom Fiscal" />
@@ -1232,7 +1238,14 @@
     #endregion
 
     #region Funções de Impressão e WebSocket
-    private async Task<bool> ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true)
+    public enum TipoDeImpressaoDEPedido
+    {
+        ApenasPedido,
+        ApenasComandas,
+        Completo
+    }
+
+    private async Task<bool> ImprimirPedido(ClsPedido pedido, bool PerguntaImpressao = true, TipoDeImpressaoDEPedido tipoDeImpressao = TipoDeImpressaoDEPedido.Completo)
     {
         bool confirmaImpressao = true;
 
@@ -1260,7 +1273,23 @@
             return false;
         }
 
-        return await JS.InvokeAsync<bool>("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+        if (tipoDeImpressao == TipoDeImpressaoDEPedido.ApenasPedido)
+        {
+            pedido.ImprimeApenasComanda = false;
+            pedido.ImprimeApenasPedido = true;
+        }
+        else if (tipoDeImpressao == TipoDeImpressaoDEPedido.ApenasComandas)
+        {
+            pedido.ImprimeApenasComanda = true;
+            pedido.ImprimeApenasPedido = false;
+        }
+
+        var Concluiu = await JS.InvokeAsync<bool>("baixarJSON", pedido, $"pedido{pedido.DisplayId}-SOPHOS-WEB.json");
+
+        pedido.ImprimeApenasComanda = false;
+        pedido.ImprimeApenasPedido = false;
+
+        return Concluiu;
     }
 
     private Task PedidoRecebidoHandler(ClsPedido pedido)
