@@ -18,7 +18,7 @@
     <DialogContent>
         <MudStack>
             <MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
-                <MudTextField T="string" Value="@enNfCeDto.CPF" ValueChanged="OnEscritaChanged" Mask="DocumentoMask" Label="CPF" Immediate="true" @ref="txtCpf" Variant="Variant.Outlined" />
+                <MudTextField T="string" Value="@enNfCeDto.CPF" ValueChanged="OnEscritaChanged" Label="@LabelDocumento" Immediate="true" @ref="txtCpf" Variant="Variant.Outlined" inputmode="InputMode.numeric" />
                 <MudTextField Label="Nome" @bind-Value=enNfCeDto.NomeCliente Variant="Variant.Outlined" />
             </MudFocusTrap>
 
@@ -102,8 +102,7 @@
 
     [Parameter] public EnNfCeDto enNfCeDto { get; set; } = new EnNfCeDto();
 
-    public PatternMask CpfMask = new PatternMask("000.000.000-00");
-    public PatternMask DocumentoMask = new PatternMask("000.000.000-00");
+    private string LabelDocumento { get; set; } = "CPF";
 
     private bool EditandoValorDoCupom { get; set; } = false;
     private ItensPedido? ItemEditavel { get; set; } = null;
@@ -237,7 +236,50 @@
 
     private void OnEscritaChanged(string value)
     {
-        enNfCeDto.CPF = value;
+        var soDigitos = Regex.Replace(value ?? "", @"\D", "");
+        if (soDigitos.Length > 14) soDigitos = soDigitos[..14];
+
+        // Usuário deletou um separador: dígitos iguais mas string ficou menor → remove o último dígito
+        var digitosAtuais = Regex.Replace(enNfCeDto.CPF ?? "", @"\D", "");
+        if (soDigitos == digitosAtuais && value.Length < (enNfCeDto.CPF ?? "").Length)
+            soDigitos = soDigitos.Length > 0 ? soDigitos[..^1] : soDigitos;
+
+        if (soDigitos.Length > 11)
+        {
+            LabelDocumento = "CNPJ";
+            enNfCeDto.CPF = FormatarCnpj(soDigitos);
+        }
+        else
+        {
+            LabelDocumento = "CPF";
+            enNfCeDto.CPF = FormatarCpf(soDigitos);
+        }
+    }
+
+    // Separador é inserido ANTES do dígito, nunca fica solto no final
+    private static string FormatarCpf(string d)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < d.Length && i < 11; i++)
+        {
+            if (i == 3 || i == 6) sb.Append('.');
+            if (i == 9) sb.Append('-');
+            sb.Append(d[i]);
+        }
+        return sb.ToString();
+    }
+
+    private static string FormatarCnpj(string d)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < d.Length && i < 14; i++)
+        {
+            if (i == 2 || i == 5) sb.Append('.');
+            if (i == 8) sb.Append('/');
+            if (i == 12) sb.Append('-');
+            sb.Append(d[i]);
+        }
+        return sb.ToString();
     }
 
     private async Task Submit()

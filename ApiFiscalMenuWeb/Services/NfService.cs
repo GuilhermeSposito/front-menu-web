@@ -9,6 +9,7 @@ using FrontMenuWeb.Models.Pessoas;
 using FrontMenuWeb.Models.Produtos;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
@@ -1104,18 +1105,30 @@ public class NfService
     {
         if (enNfCeDto.CPF is not null)
         {
-            return new Dest
+            string Documento = LimparCnpj(enNfCeDto.CPF);
+
+            var Dest = new Dest
             {
-                CPF = LimparCnpj(enNfCeDto.CPF),
                 XNome = tipoAmbiente == TipoAmbiente.Homologacao ? "NF-E EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : enNfCeDto.NomeCliente,
                 IndIEDest = IndicadorIEDestinatario.NaoContribuinte,
             };
+
+            if (Documento.Length > 11)
+            {
+                Dest.CNPJ = Documento;
+            }
+            else
+            {
+                Dest.CPF = Documento;
+            }
+
+            return Dest;
         }
         else if (Destinatario is not null)
         {
             if (!string.IsNullOrEmpty(Destinatario.Cnpj) && !string.IsNullOrEmpty(Destinatario.InscricaoEstadual))
             {
-                int codMun = Destinatario.Cidade?.NumCidade ?? enderecoMerchant?.Cidade?.NumCidade ?? 0;    
+                int codMun = Destinatario.Cidade?.NumCidade ?? enderecoMerchant?.Cidade?.NumCidade ?? 0;
                 string nomeMun = Destinatario.Cidade?.Descricao ?? enderecoMerchant?.Cidade?.Descricao ?? "Cidade não informada";
 
                 return new Dest
