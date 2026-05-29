@@ -12,6 +12,7 @@ public class AvisoContaItemDto
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
     [JsonPropertyName("ECouvert")] public bool ECouvert { get; set; } = false;
     [JsonPropertyName("NumeroMesaItem")] public int? NumeroMesaItem { get; set; }
+    [JsonIgnore] public string NumerosDeMesaJuntados = string.Empty;
     [JsonPropertyName("Complementos")] public List<AvisoContaComplementoDto>? Complementos { get; set; }
 }
 

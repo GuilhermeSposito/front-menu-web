@@ -842,12 +842,14 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 if(AppState.MerchantLogado?.JuntaItensNoLancamento ?? false)
-                    comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert }).Select(g => new AvisoContaItemDto
+                    comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert, i.NumeroMesaItem }).Select(g => new AvisoContaItemDto
                     {
                         Descricao = g.Key.Descricao,
                         Quantidade = g.Sum(i => i.Quantidade),
                         PrecoUnitario = g.FirstOrDefault()?.PrecoUnitario ?? 0,
                         PrecoTotal = g.Sum(i => i.PrecoTotal),
+                        NumeroMesaItem = g.Key.NumeroMesaItem,
+                        NumerosDeMesaJuntados = string.Join(", ", g.Select(i => i.NumeroMesaItem).Distinct()),
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
 
@@ -943,8 +945,10 @@ public class ImpressaoService
                         Quantidade = g.Sum(i => i.Quantidade),
                         PrecoUnitario = g.FirstOrDefault()?.PrecoUnitario ?? 0,
                         PrecoTotal = g.Sum(i => i.PrecoTotal),
+                        NumerosDeMesaJuntados = string.Join(", ", g.Select(i => i.NumeroMesaItem).Distinct()),
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
+
 
                 foreach (var item in itensParaImprimir)
                     if (!item.ECouvert)
@@ -1018,6 +1022,8 @@ public class ImpressaoService
         }
 
 
+
+
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
 
@@ -1026,8 +1032,8 @@ public class ImpressaoService
 
     private void AdicionarLinhasDeItem(List<ClsImpressaoDefinicoes> Conteudo, AvisoContaItemDto item)
     {
-        if ((AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false) && item.NumeroMesaItem is not null && item.NumeroMesaItem != 0)
-            AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
+        if (((AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false) && item.NumeroMesaItem is not null && item.NumeroMesaItem != 0) || !string.IsNullOrEmpty(item.NumerosDeMesaJuntados))
+            AdicionaConteudo(Conteudo, $"Mesa: {(item.NumeroMesaItem is null ? item.NumerosDeMesaJuntados : item.NumeroMesaItem)}", new Font("Dejavu Sans Mono", 8));
 
         AdicionaConteudoLR(Conteudo,
             $"{item.Quantidade}x {item.Descricao}", item.PrecoTotal.ToString("C"),

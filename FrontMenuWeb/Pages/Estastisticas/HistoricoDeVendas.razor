@@ -78,6 +78,33 @@
             </MudStack>
         </MudPaper>
 
+        <MudGrid Class="w-100 mt-4" GutterSize="3">
+            <!-- Total Pagos -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total em vendas</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@ValorTotalEmVendas.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Total Não Pagos -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Tiket Médio</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TiketMedio.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+
+        </MudGrid>
+
+
         @if (CarregandoParteFiscal)
         {
             <MudPaper Class="pa-4">
@@ -209,32 +236,7 @@
             </PagerContent>
         </MudDataGrid>
 
-        <MudGrid Class="w-100 mt-4" GutterSize="3">
-            <!-- Total Pagos -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
-                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
-                        <MudText Typo="Typo.h6" Class="opacity-90">Total em vendas</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight:600;">@ValorTotalEmVendas.ToString("C")</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-
-            <!-- Total Não Pagos -->
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
-                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
-                        <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
-                        <MudText Typo="Typo.h6" Class="opacity-90">Tiket Médio</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight:600;">@TiketMedio.ToString("C")</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-
-
-        </MudGrid>
-
+        
     </MudLayout>
 </MudPaper>
 
