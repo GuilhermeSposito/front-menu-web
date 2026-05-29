@@ -409,8 +409,15 @@ public class NfService
         var autorizacao = new Unimake.Business.DFe.Servicos.NFCe.Autorizacao(xml.Result, configuracao);
         autorizacao.Executar();
 
-        if (autorizacao.Result.ProtNFe is null)
-            throw new Exception("Erro na emissão da NFCe: Protocolo não retornado");
+        if (autorizacao.Result?.ProtNFe is null)
+        {
+            var cstat = autorizacao.Result?.CStat;
+            var xmotivo = autorizacao.Result?.XMotivo;
+            var detalhe = (cstat != null && !string.IsNullOrEmpty(xmotivo))
+                ? $"CStat {cstat}: {xmotivo}"
+                : "Resposta vazia ou sem protocolo retornado pelo SEFAZ";
+            throw new Exception($"Erro na emissão da NFCe: {detalhe}");
+        }
 
         var ReturnMessage = $"{autorizacao.Result.ProtNFe.InfProt.CStat} - {autorizacao.Result.ProtNFe.InfProt.XMotivo}";
 

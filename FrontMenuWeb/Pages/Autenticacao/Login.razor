@@ -100,26 +100,40 @@
     {
         LembrarDeMim = select;
 
-        if (LembrarDeMim)
+        try
         {
-            await LocalStorage.SetItemAsync("LembrarDeMim", "true");
-            await LocalStorage.SetItemAsync("emailSalvo", loginModel.Email ?? "");
+            if (LembrarDeMim)
+            {
+                await LocalStorage.SetItemAsync("LembrarDeMim", "true");
+                await LocalStorage.SetItemAsync("emailSalvo", loginModel.Email ?? "");
+            }
+            else
+            {
+                await LocalStorage.RemoveItemAsync("LembrarDeMim");
+                await LocalStorage.RemoveItemAsync("emailSalvo");
+            }
         }
-        else
+        catch
         {
-            await LocalStorage.RemoveItemAsync("LembrarDeMim");
-            await LocalStorage.RemoveItemAsync("emailSalvo");
+            // localStorage bloqueado — ignora
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        var lembrar = await LocalStorage.GetItemAsync<string>("LembrarDeMim");
-        if (lembrar == "true")
+        try
         {
-            LembrarDeMim = true;
-            var emailSalvo = await LocalStorage.GetItemAsync<string>("emailSalvo");
-            loginModel.Email = emailSalvo ?? "";
+            var lembrar = await LocalStorage.GetItemAsync<string>("LembrarDeMim");
+            if (lembrar == "true")
+            {
+                LembrarDeMim = true;
+                var emailSalvo = await LocalStorage.GetItemAsync<string>("emailSalvo");
+                loginModel.Email = emailSalvo ?? "";
+            }
+        }
+        catch
+        {
+            // localStorage bloqueado (modo privado, cookie policy) — ignora
         }
     }
 
