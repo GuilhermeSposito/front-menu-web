@@ -165,7 +165,7 @@
                                                             </CardHeaderAvatar>
                                                             <CardHeaderContent>
                                                                 <MudText Color="Color.Primary" Typo="Typo.body1">
-                                                                    @pedido.Pedido.CriadoPor - @pedido.Pedido.TipoDePedido - @pedido.Pedido.DisplayId  @if(pedido.Pedido.StatusPedido == "CANCELADO"){
+                                                                    @pedido.Pedido.CriadoPor - @(pedido.Pedido.TipoDePedido == "MESA" ? AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced : pedido.Pedido.TipoDePedido) - @pedido.Pedido.DisplayId  @if(pedido.Pedido.StatusPedido == "CANCELADO"){
                                                                     @(" - Cancelado")
                                                                 }
                                                                 @if (pedido.Pedido.StatusPedido == "ABERTO")
@@ -175,8 +175,8 @@
                                                             </MudText>
                                                             @if (pedido.Pedido.TipoDePedido == "MESA")
                                                             {
-                                                                <MudText Color="Color.Secondary" Typo="Typo.caption">
-                                                                    Mesa: @(!string.IsNullOrEmpty(pedido.Pedido.MesaApelido) ? pedido.Pedido.MesaApelido : pedido.Pedido.CodigoExternoMesa ?? pedido.Pedido.MesaComandaId.ToString())
+                                                                <MudText Color="Color.Primary" Typo="Typo.body1">
+                                                                    @(AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced ?? "Mesa"): @(pedido.Pedido.Mesa?.CodigoExterno) @(pedido.Pedido.Mesa?.apelido is not null ? $" - {pedido.Pedido.Mesa?.apelido}" : "")
                                                                 </MudText>
                                                             }
                                                             @if (pedido.Pedido.Cliente is not null)

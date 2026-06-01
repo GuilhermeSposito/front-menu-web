@@ -150,6 +150,7 @@ public class ClsPedido
     [JsonPropertyName("NomeCliente")] public string? NomeCliente { get; set; }
     [JsonPropertyName("ImprimeApenasPedido")] public bool ImprimeApenasPedido { get; set; } = false;
     [JsonPropertyName("ImprimeApenasComanda")] public bool ImprimeApenasComanda { get; set; } = false;
+    [JsonPropertyName("Mesa")] public ClsMesasEComandas? Mesa { get; set; }
 
     [JsonIgnore] public bool ExpandidoNaUI { get; set; } = false;
 

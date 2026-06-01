@@ -125,6 +125,7 @@ public class ClsMerchant
     [JsonPropertyName("ImagemDeFundoCardapio")] public string ImagemDeFundoCardapio { get; set; } = "LOCAL";
     [JsonPropertyName("CorEscritoCard")] public string CorEscritoCard { get; set; } = "#fff";
     [JsonPropertyName("CorEscritoHero")] public string CorEscritoHero { get; set; } = "#fff";
+    [JsonPropertyName("JuntaItensNoFechamentoDeConta")] public bool JuntaItensNoFechamentoDeConta { get; set; } = false;
 }
 
 public class AdminMerchantsResponse

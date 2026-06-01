@@ -180,6 +180,9 @@
                                 <MudCheckBox Value=@Merchant.UltilizaSenhaNaTelaDePesagemAutomatico ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.UltilizaSenhaNaTelaDePesagemAutomatico = x)) T=bool Color="Color.Primary">Utiliza Senha na Tela de Pesagem Automática</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.JuntaItensNoFechamentoDeConta ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.JuntaItensNoFechamentoDeConta = x)) T=bool Color="Color.Primary">Junta Itens Na Impressão de Conta</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
                                 <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
                                            Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
                                            T="string">

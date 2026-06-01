@@ -841,7 +841,7 @@ public class ImpressaoService
                 AdicionaConteudoLR(Conteudo, "QTD  ITENS", "TOTAL", FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-                if(AppState.MerchantLogado?.JuntaItensNoLancamento ?? false)
+                if(AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
                     comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert, i.NumeroMesaItem }).Select(g => new AvisoContaItemDto
                     {
                         Descricao = g.Key.Descricao,
@@ -938,7 +938,7 @@ public class ImpressaoService
 
                 aviso.CouvertTotalMesa += couverts.Sum(i => i.PrecoTotal);
 
-                if (AppState.MerchantLogado?.JuntaItensNoLancamento ?? false)
+                if (AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
                     itensParaImprimir = itensParaImprimir.GroupBy(i => new { i.Descricao, i.ECouvert }).Select(g => new AvisoContaItemDto
                     {
                         Descricao = g.Key.Descricao,

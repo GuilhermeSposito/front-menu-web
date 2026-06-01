@@ -42,8 +42,8 @@
                     @if ((AppState.MerchantLogado?.TaxaDeServicoPercent ?? 0) > 0)
                     {
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudSwitch @bind-Value="_cobraTaxa" Color="Color.Primary" Size="Size.Small" />
-                            <MudText Typo="Typo.body2">Taxa (@(AppState.MerchantLogado!.TaxaDeServicoPercent)%)</MudText>
+                            <MudSwitch @bind-Value="_cobraTaxa" Color="Color.Primary" Size="Size.Large" />
+                            <MudText Typo="Typo.h6">Taxa (@(AppState.MerchantLogado!.TaxaDeServicoPercent)%)</MudText>
                             @if (_cobraTaxa)
                             {
                                 <MudText Typo="Typo.caption" Style="color:var(--mud-palette-primary);">= @TaxaValor.ToString("C")</MudText>
@@ -54,13 +54,13 @@
                     {
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudSwitch @bind-Value="_cobraCouvert" Color="Color.Secondary" Size="Size.Small" />
-                            <MudText Typo="Typo.body2">@AppState.MerchantLogado!.LegendaCouvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
+                            <MudText Typo="Typo.h6">@AppState.MerchantLogado!.LegendaCouvert (@(AppState.MerchantLogado!.ValorCouvert?.ToString("C"))/pessoa)</MudText>
                             @if (_cobraCouvert)
                             {
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                                     <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" Variant="Variant.Outlined"
                                                    OnClick="@(() => _qtdPessoas = Math.Max(1, _qtdPessoas - 1))" />
-                                    <MudText Typo="Typo.body2" Style="min-width:20px; text-align:center;">@_qtdPessoas</MudText>
+                                    <MudText Typo="Typo.h6" Style="min-width:20px; text-align:center;">@_qtdPessoas</MudText>
                                     <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined"
                                                    OnClick="@(() => _qtdPessoas++)" />
                                     <MudText Typo="Typo.caption" Style="color:#a78bfa;">= @CouvertValor.ToString("C")</MudText>
@@ -69,12 +69,12 @@
                         </MudStack>
                     }
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Small" />
-                        <MudText Typo="Typo.body2">Separar por cliente</MudText>
+                        <MudSwitch @bind-Value="_separarPorCliente" Color="Color.Info" Size="Size.Large" />
+                        <MudText Typo="Typo.h6">Separar por cliente</MudText>
                     </MudStack>
                     @if (AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false)
                     {
-                        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                        <MudButton Size="Size.Large" Variant="Variant.Outlined" Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.LocalBar"
                                    OnClick="AbrirFormCouvert">
                             + @AppState.MerchantLogado?.LegendaCouvert
@@ -82,7 +82,7 @@
                     }
                     @if (TemExtras)
                     {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Filled">
+                        <MudChip T="string" Color="Color.Success" Size="Size.Large" Variant="Variant.Filled">
                             Total: @TotalGeral.ToString("C")
                         </MudChip>
                     }
@@ -212,14 +212,14 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.subtitle2">
                         Fracionar: <strong>@_itemFracionando.Descricao</strong> &nbsp;
-                        <MudText Typo="Typo.caption" Inline="true">(Qtd atual: @_itemFracionando.Quantidade.ToString("G6") | Unit: @_itemFracionando.PrecoUnitario.ToString("C"))</MudText>
+                        <MudText Typo="Typo.h6" Inline="true">(Qtd atual: @_itemFracionando.Quantidade.ToString("G6") | Unit: @_itemFracionando.PrecoUnitario.ToString("C"))</MudText>
                     </MudText>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
-                        <MudText Typo="Typo.caption">Frações rápidas:</MudText>
+                        <MudText Typo="Typo.h6">Frações rápidas:</MudText>
                         @foreach (var frac in new[] { (1, 2, "½"), (1, 3, "⅓"), (2, 3, "⅔"), (1, 4, "¼"), (3, 4, "¾"), (1, 5, "⅕"), (2, 5, "⅖"), (3, 5, "⅗"), (4, 5, "⅘") })
                         {
                             var num = frac.Item1; var den = frac.Item2; var label = frac.Item3;
-                            <MudChip T="string" Size="Size.Medium" Variant="Variant.Outlined" Color="Color.Warning"
+                            <MudChip T="string" Size="Size.Large" Variant="Variant.Outlined" Color="Color.Warning"
                                      OnClick="@(() => _fracionarQtd = Math.Round((decimal)_itemFracionando.Quantidade * num / den, 3))">
                                 @label
                             </MudChip>
@@ -324,42 +324,44 @@
                      HorizontalScrollbar="false"
                      ServerData="LoadServerData"
                      SelectedItems="ItensSelecionados"
-                     SelectedItemsChanged="ItensSelecionadosChenged">
+                     SelectedItemsChanged="ItensSelecionadosChenged"
+                     Context="context">
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Itens da mesa" />
             </NoRecordsContent>
-            <Columns>
-                <SelectColumn T="ItensPedido" />
-                <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
-                <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
-                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade"></PropertyColumn>
-                <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
-                <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
-                <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
-                @if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false)
-                {
-                    <PropertyColumn Property="x => x.NumeroMesaItem" Title="Mesa"></PropertyColumn>
-                }
-                <TemplateColumn Title="Garçom">
-                    <CellTemplate>
-                        @(context.Item.Garcon?.Nome ?? "Admin")
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="Funcionario">
-                    <CellTemplate>
-                        @(context.Item.Funcionario?.Nome ?? "Admin")
-                    </CellTemplate>
-                </TemplateColumn>
-                <TemplateColumn Title="" HeaderStyle="width:88px">
-                    <CellTemplate>
-                        <MudStack Row="true" Spacing="0">
-                            <MudIconButton Icon="@Icons.Material.Filled.CallSplit" Size="Size.Small" Color="Color.Warning"
-                                           OnClick="@(() => AbrirFracionamento(context.Item))" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                           OnClick="@(() => AbrirEdicaoItem(context.Item))" />
-                        </MudStack>
-                    </CellTemplate>
-                </TemplateColumn>
+            <Columns>       
+                    <SelectColumn T="ItensPedido" />
+                    <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
+                    <PropertyColumn Property="x => x.Quantidade" Title="Quantidade"></PropertyColumn>
+                    <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
+                    <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
+                    <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
+                    <PropertyColumn Property="x => x.CriadoEm" Title="Criado ás" Format="dd/MM/yyyy : HH:mm"></PropertyColumn>
+                    @if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false)
+                    {
+                        <PropertyColumn Property="x => x.NumeroMesaItem" Title="Mesa"></PropertyColumn>
+                    }
+                    <TemplateColumn Title="Garçom">
+                        <CellTemplate>
+                            @(context.Item.Garcon?.Nome ?? "Admin")
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Funcionario">
+                        <CellTemplate>
+                            @(context.Item.Funcionario?.Nome ?? "Admin")
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="" HeaderStyle="width:88px">
+                        <CellTemplate>
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.CallSplit" Size="Size.Small" Color="Color.Warning"
+                                               OnClick="@(() => AbrirFracionamento(context.Item))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                               OnClick="@(() => AbrirEdicaoItem(context.Item))" />
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
             </Columns>
         </MudDataGrid>
 
@@ -607,6 +609,7 @@
         _fracionarSalvando = true;
         try
         {
+            ItensSelecionados.Clear();
             var result = await PedidosService.FracionarItemMesa(MesaOuComanda.Id, _itemFracionando.Id, _fracionarQtd);
             if (result?.Status == "success")
             {
