@@ -26,7 +26,9 @@
       "Read(//c/Prog/projeto_menu_web/api-proj-menu-web/**)",
       "PowerShell(head -20)",
       "PowerShell(Get-ChildItem -Path \"c:\\\\Prog\\\\projeto_menu_web\" -Directory | ForEach-Object { $_.Name })",
-      "PowerShell(Get-ChildItem \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -File | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -File | ForEach-Object { $_.Name })",
+      "Bash(Get-ChildItem -Path \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -Recurse -Filter \"SuprimentoPage.razor\")",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

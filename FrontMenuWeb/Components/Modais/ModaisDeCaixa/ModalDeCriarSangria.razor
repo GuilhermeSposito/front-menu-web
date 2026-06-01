@@ -106,7 +106,20 @@
 
             if (resultado.Status == "success")
             {
-                MudDialog.Close(DialogResult.Ok(true));
+                ClsSangria? sangriaCriada = null;
+                if (resultado.Data.ExtraData.TryGetValue("sangria", out var sangriaEl))
+                    sangriaCriada = System.Text.Json.JsonSerializer.Deserialize<ClsSangria>(sangriaEl.GetRawText());
+
+                sangriaCriada ??= new ClsSangria
+                {
+                    Descricao = _descricao,
+                    Valor = _valor,
+                    Status = "Ativa",
+                    CriadoEm = DateTime.Now,
+                    Funcionario = AppState.MerchantLogado?.FuncionarioLogado
+                };
+
+                MudDialog.Close(DialogResult.Ok(sangriaCriada));
             }
             else
             {

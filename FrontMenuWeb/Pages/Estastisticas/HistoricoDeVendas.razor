@@ -43,7 +43,7 @@
                              @bind-DataFim="FiltroDateTimeFinal"
                              OnFiltroAplicado="AplicarFiltros" />
 
-        <MudPaper Class="mb-3 p-3 mt-3 w-100">
+        <MudPaper Class="mb-2 p-3 mt-3 w-100">
             <MudStack Class="p-2 w-100" Breakpoint="Breakpoint.Sm">
 
                 <MudStack AlignItems=AlignItems.Start Justify="Justify.FlexStart">
@@ -78,9 +78,18 @@
             </MudStack>
         </MudPaper>
 
-        <MudGrid Class="w-100 mt-1 mb-2" GutterSize="3">
-            <!-- Total Pagos -->
-            <MudItem xs="12" sm="6" md="6" xl="6" xxl="6">
+        <MudGrid Class="w-100 mt-1 mb-3" GutterSize="3">
+            <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                    <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
+                        <MudText Typo="Typo.h6" Class="opacity-90">Total em Itens</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight:600;">@ValorTotalDosItensVendidos.ToString("C")</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
                 <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
                     <MudCardContent Class="flex flex-col items-center justify-center h-36">
                         <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
@@ -90,8 +99,8 @@
                 </MudCard>
             </MudItem>
 
-            <!-- Total Não Pagos -->
-            <MudItem xs="12" sm="6" md="6" xl="6" xxl="6">
+
+            <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
                 <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
                     <MudCardContent Class="flex flex-col items-center justify-center h-36">
                         <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
@@ -165,7 +174,20 @@
                         <MudText Style="font-weight:600" Color=Color.Success>@context.Item.ValorTotal.ToString("C")</MudText>
                     </CellTemplate>
                 </TemplateColumn>
-                <PropertyColumn CellStyle="color: red;" Property="x => x.TipoDePedido" Title="Tipo"></PropertyColumn>
+                <TemplateColumn T="ClsPedido" Title="Tipo">
+                    <CellTemplate Context="context">
+                        <MudText Style="font-weight:600" Color="Color.Error">
+                            @if(context.Item.TipoDePedido == "MESA")
+                            {
+                                @AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced
+                            }
+                            else
+                            {
+                                @context.Item.TipoDePedido  
+                            }
+                        </MudText>
+                    </CellTemplate>
+                </TemplateColumn>
                 <PropertyColumn Property="x => x.StatusPedido" Title="Status"></PropertyColumn>
                 <TemplateColumn T="ClsPedido" Title="Formas de pag">
                     <CellTemplate Context="context">
@@ -231,12 +253,12 @@
             </ChildRowContent>
             <PagerContent>
 
-                <MudDataGridPager T="ClsPedido" RowsPerPageString="Pedidos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 30,100, 20, 500, 1000, 2000, 5000, 6000, 7000, 10000000 }) />
+                <MudDataGridPager T="ClsPedido" RowsPerPageString="Pedidos por página" ShowPageNumber="false" AllItemsText="Teste" PageSizeOptions=@(new int[] { 10, 20, 30, 100, 20, 500, 1000, 2000, 5000, 6000, 7000, 10000000 }) />
 
             </PagerContent>
         </MudDataGrid>
 
-        
+
     </MudLayout>
 </MudPaper>
 
@@ -257,6 +279,7 @@
 
     //Estastisticas
     private float ValorTotalEmVendas = 0.0f;
+    private float ValorTotalDosItensVendidos = 0.0f;
     private float TiketMedio = 0.0f;
 
     //lógica do filtros
@@ -275,7 +298,7 @@
             int pageSize = lancamentos.PageSize;
 
 
-            var result = await PedidosService.
+            PaginatedResponse<ClsPedido> result = await PedidosService.
                                             GetHistoricoDePedidosPorPaginaAsync(new QuerysDePedidos()
                                             {
                                                 Page = page,
@@ -287,6 +310,7 @@
 
 
             ValorTotalEmVendas = result.VendasHoje;
+            ValorTotalDosItensVendidos = result.SomaTotalDosItens;
             TiketMedio = result.TiketMedio;
 
             StateHasChanged();

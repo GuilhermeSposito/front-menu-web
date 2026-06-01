@@ -11,6 +11,7 @@
 
 @inject SangriasService SangriasService
 @inject CaixaEPagamentosService CaixaService
+@inject IJSRuntime JS
 
 <MudPaper Square="false" Elevation="0" Style="background-color: var(--mud-palette-background); min-height: 100vh; margin-top:50px">
     <MudLayout>
@@ -277,9 +278,14 @@
         var dialog = await DialogService.ShowAsync<ModalDeCriarSangria>("Nova Sangria", parameters, options);
         var result = await dialog.Result;
 
-        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        if (!result!.Canceled && result.Data is ClsSangria sangriaCriada)
         {
             Snackbar.Add("Sangria registrada com sucesso!", Severity.Success);
+
+            bool impressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? true;
+            if (!impressaoDesabilita)
+                await JS.InvokeVoidAsync("baixarJSON", sangriaCriada, $"sangria-SOPHOS-{sangriaCriada.Id}.json");
+
             await CarregarSangrias();
         }
     }

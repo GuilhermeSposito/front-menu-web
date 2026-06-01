@@ -31,6 +31,13 @@
             </MudStack>
             <MudStack Class="p-2" AlignItems="AlignItems.Center" Justify="Justify.Center" Row=true Wrap="Wrap.Wrap" Spacing="2">
                 <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                           Disabled="GerandoRelatorio"
+                           OnClick="GerarRelatorioNfs">
+                    Relatório de NFs
+                </MudButton>
+                <MudButton Variant="Variant.Filled"
                            Color="Color.Secondary"
                            StartIcon="@Icons.Material.Filled.FolderZip"
                            Disabled="CarregandoEnvioDeEMail"
@@ -202,8 +209,36 @@
                     <MudStack Row=true>
                         <MudCardContent Class="flex flex-col items-center justify-center h-36">
                             <MudIcon Icon="@Icons.Material.Filled.Summarize" Size="@Size.Medium" Class="mb-2 text-yellow-200" />
-                            <MudText Typo="Typo.h6" Class="opacity-90">Total dos Tributos</MudText>
-                            <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDeTributos.ToString("C")</MudText>
+                            <MudText Typo="Typo.h6" Class="opacity-90">Total dos Tributos (IBPT)</MudText>
+                            @if (CarregandoTotaisTributos)
+                            {
+                                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Medium" Class="mt-2" />
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalDeTributos.ToString("C")</MudText>
+                            }
+                        </MudCardContent>
+                    </MudStack>
+                </MudCard>
+            </MudItem>
+
+            <!-- Estimativa a Recolher -->
+            <MudItem xs="12" sm="12" md="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #7B1FA2, #AB47BC); color:white;">
+                    <MudStack Row=true>
+                        <MudCardContent Class="flex flex-col items-center justify-center h-36">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="@Size.Medium" Class="mb-2" />
+                            <MudText Typo="Typo.h6" Class="opacity-90">Estimativa a Recolher</MudText>
+                            @if (CarregandoTotaisTributos)
+                            {
+                                <MudProgressCircular Indeterminate="true" Color="Color.Default" Size="Size.Medium" Class="mt-2" />
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.h4" Style="font-weight:800;">@TotalEstimadoAPagar.ToString("C")</MudText>
+                                <MudText Typo="Typo.caption" Class="opacity-75">PIS + COFINS + CSLL + IRPJ</MudText>
+                            }
                         </MudCardContent>
                     </MudStack>
                 </MudCard>
@@ -230,12 +265,17 @@
     private float TotalDeNFsCanceladas = 0;
     private float TotalDeICMS = 0;
     private float TotalDeTributos = 0;
+    private float TotalEstimadoAPagar = 0;
 
     //Logica para escolher varias NFs
     private bool MultiSelecao = false;
     private HashSet<NFEmitidasDto> NfsSelecionados = new HashSet<NFEmitidasDto>();
 
     private bool CarregandoEnvioDeEMail = false;
+
+    private bool GerandoRelatorio = false;
+    private bool CarregandoTotaisTributos = false;
+    private List<NFEmitidasDto> NfsParaRelatorio = new();
     #endregion
 
     #region Função de load do Grid
@@ -253,6 +293,7 @@
             TotalEmNFsValidas = result.ValorTotalDeNfsEmitidas;
             TotalDeNFsCanceladas = result.ValorTotalDasNfsCanceladas;
 
+            _ = AtualizarTotaisDeTributos();
 
             StateHasChanged();
 
@@ -464,6 +505,125 @@
 
     #endregion
 
+    #region Relatório de NFs em PDF
+    private async Task GerarRelatorioNfs()
+    {
+        if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
+        try
+        {
+            GerandoRelatorio = true;
+            StateHasChanged();
+
+            var resultado = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, 1, 999999);
+            NfsParaRelatorio = resultado.Data;
+
+            await AtualizarTotaisDeTributos(NfsParaRelatorio);
+
+            StateHasChanged();
+
+            var dataInicio = FiltroDateTimeInicial?.ToString("dd-MM-yyyy") ?? "inicio";
+            var dataFim = FiltroDateTimeFinal?.ToString("dd-MM-yyyy") ?? "fim";
+            await JS.InvokeVoidAsync("generatePdfFromHtml", "conteudoPdfRelatorioNfs", $"RelatorioNFs_{dataInicio}_a_{dataFim}.pdf");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao gerar relatório: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            GerandoRelatorio = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AtualizarTotaisDeTributos(List<NFEmitidasDto>? nfsJaCarregadas = null)
+    {
+        try
+        {
+            CarregandoTotaisTributos = true;
+            await InvokeAsync(StateHasChanged);
+
+            List<NFEmitidasDto> todasNfs;
+            if (nfsJaCarregadas != null)
+            {
+                todasNfs = nfsJaCarregadas;
+            }
+            else
+            {
+                var resultado = await NfService.ConsultaNFeEmitidas(FiltroDateTimeInicial, FiltroDateTimeFinal, 1, 999999);
+                todasNfs = resultado.Data;
+            }
+
+            var validas = todasNfs.Where(x =>
+                x.CStat == 100 || x.CStat == 110 || x.CStat == 150 ||
+                x.CStat == 250 || x.CStat == 301 || x.CStat == 302 ||
+                x.CStat == 303 || x.CStat == 135 || x.CStat == 155).ToList();
+
+            TotalDeTributos = (float)validas.Sum(x => ExtrairTotalTributosDoXml(x.XmlDistribuicao));
+
+            decimal aliqPis    = AppState.MerchantLogado?.AliquotaPis    ?? 0;
+            decimal aliqCofins = AppState.MerchantLogado?.AliquotaCofins ?? 0;
+            decimal aliqCsll   = AppState.MerchantLogado?.AliquotaCsll   ?? 0;
+            decimal aliqIrpj   = AppState.MerchantLogado?.AliquotaIrpj   ?? 0;
+
+            double faturamento  = validas.Sum(x => x.ValorTotalDaNf);
+            double totalPis     = validas.Sum(x => (double)((decimal)x.ValorTotalDaNf * aliqPis    / 100));
+            double totalCofins  = validas.Sum(x => (double)((decimal)x.ValorTotalDaNf * aliqCofins / 100));
+            double totalCsll    = faturamento * (double)(aliqCsll / 100);
+            double totalIrpj    = faturamento * (double)(aliqIrpj / 100);
+
+            TotalEstimadoAPagar = (float)(totalPis + totalCofins + totalCsll + totalIrpj);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao calcular tributos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            CarregandoTotaisTributos = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string? ExtrairCpfCnpjDestinatarioDoXml(string? xml)
+    {
+        if (string.IsNullOrEmpty(xml)) return null;
+
+        var destMatch = System.Text.RegularExpressions.Regex.Match(xml, @"<dest>(.*?)</dest>", System.Text.RegularExpressions.RegexOptions.Singleline);
+        if (!destMatch.Success) return null;
+
+        var destContent = destMatch.Groups[1].Value;
+
+        var cnpjMatch = System.Text.RegularExpressions.Regex.Match(destContent, @"<CNPJ>(\d+)</CNPJ>");
+        if (cnpjMatch.Success) return cnpjMatch.Groups[1].Value;
+
+        var cpfMatch = System.Text.RegularExpressions.Regex.Match(destContent, @"<CPF>(\d+)</CPF>");
+        if (cpfMatch.Success) return cpfMatch.Groups[1].Value;
+
+        return null;
+    }
+
+    private double ExtrairTotalTributosDoXml(string? xml)
+    {
+        if (string.IsNullOrEmpty(xml)) return 0;
+
+        int start = xml.IndexOf("<ICMSTot>", StringComparison.Ordinal);
+        int end = xml.IndexOf("</ICMSTot>", StringComparison.Ordinal);
+        if (start < 0 || end < 0 || end <= start) return 0;
+
+        var bloco = xml.Substring(start, end - start);
+
+        var match = System.Text.RegularExpressions.Regex.Match(bloco, @"<vTotTrib>([\d.]+)</vTotTrib>");
+        if (match.Success && double.TryParse(match.Groups[1].Value,
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out double valor))
+            return valor;
+
+        return 0;
+    }
+    #endregion
+
     #region Função de envio de email para contabilidade
 
     private async Task EnviarXMLsValidosPorEmail()
@@ -655,3 +815,119 @@
     }
     #endregion
 }
+
+<!-- #region RELATORIO NFs -->
+<div id="conteudoPdfRelatorioNfs" style="font-family: Arial, sans-serif; font-size: 12px; color: #333; display:none">
+    <div class="d-flex flex-column">
+        <img src="/images/SOPHOS.png" alt="Logo SOPHOS" style="display: block; margin: 20px auto; width: 150px;" />
+        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">Relatório de NFs Emitidas</h2>
+        <p style="text-align: center; font-size: 14px; margin: 0;">@AppState.MerchantLogado.NomeFantasia</p>
+        @if (AppState.MerchantLogado.FuncionarioLogado is not null)
+        {
+            <p style="text-align: center; font-size: 14px; margin: 0;">Colaborador: @AppState.MerchantLogado.FuncionarioLogado.Nome</p>
+        }
+    </div>
+
+    <div style="text-align: center; margin-bottom: 15px;">
+        <span style="font-weight: bold;">Período:</span>
+        @FiltroDateTimeInicial?.ToString("dd/MM/yyyy") - @FiltroDateTimeFinal?.ToString("dd/MM/yyyy")
+        &nbsp;&nbsp;
+        <span style="font-weight: bold;">Emissão:</span>
+        @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+    </div>
+
+    @{
+        decimal aliqPis = AppState.MerchantLogado?.AliquotaPis ?? 0;
+        decimal aliqCofins = AppState.MerchantLogado?.AliquotaCofins ?? 0;
+        decimal aliqCsll = AppState.MerchantLogado?.AliquotaCsll ?? 0;
+        decimal aliqIrpj = AppState.MerchantLogado?.AliquotaIrpj ?? 0;
+
+        var nfsValidas = NfsParaRelatorio.Where(x =>
+            x.CStat == 100 || x.CStat == 110 || x.CStat == 150 ||
+            x.CStat == 250 || x.CStat == 301 || x.CStat == 302 ||
+            x.CStat == 303 || x.CStat == 135 || x.CStat == 155).ToList();
+        var nfsCanceladas = NfsParaRelatorio.Where(x => x.XMotivo == "NF CANCELADA").ToList();
+        var totalValidas = nfsValidas.Sum(x => x.ValorTotalDaNf);
+        var totalPis = nfsValidas.Sum(x => (double)((decimal)x.ValorTotalDaNf * aliqPis / 100));
+        var totalCofins = nfsValidas.Sum(x => (double)((decimal)x.ValorTotalDaNf * aliqCofins / 100));
+        var totalTributos = nfsValidas.Sum(x => ExtrairTotalTributosDoXml(x.XmlDistribuicao));
+        var totalCsllEstimado = (double)((decimal)totalValidas * aliqCsll / 100);
+        var totalIrpjEstimado = (double)((decimal)totalValidas * aliqIrpj / 100);
+        var totalEstimadoRecolher = totalPis + totalCofins + totalCsllEstimado + totalIrpjEstimado;
+    }
+
+    <table border="0" cellspacing="0" cellpadding="4" style="width:100%; border-collapse: collapse; font-size:11px;">
+        <thead>
+            <tr style="background-color:#34495e; color:white; text-align:center;">
+                <th>Nmr NF</th>
+                <th>Data/Hora</th>
+                <th>CPF/CNPJ</th>
+                <th>Tipo</th>
+                <th style="text-align:right;">Valor Total</th>
+                <th style="text-align:right;">PIS (@aliqPis%)</th>
+                <th style="text-align:right;">COFINS (@aliqCofins%)</th>
+                <th style="text-align:right;">Tributos IBPT (XML)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var nf in nfsValidas)
+            {
+                decimal valor = (decimal)nf.ValorTotalDaNf;
+                <tr style="border-bottom: 1px solid #ddd; text-align:center;">
+                    <td>@nf.NmrNf</td>
+                    <td>@nf.CriadoEm?.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(ExtrairCpfCnpjDestinatarioDoXml(nf.XmlDistribuicao) ?? "-")</td>
+                    <td>@(nf.NfTipo == 55 ? "NF-e (55)" : "NFC-e (65)")</td>
+                    <td style="text-align:right;">@nf.ValorTotalDaNf.ToString("C")</td>
+                    <td style="text-align:right;">@((valor * aliqPis / 100).ToString("C"))</td>
+                    <td style="text-align:right;">@((valor * aliqCofins / 100).ToString("C"))</td>
+                    <td style="text-align:right;">@ExtrairTotalTributosDoXml(nf.XmlDistribuicao).ToString("C")</td>
+                    <td>Válida</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr style="background-color:#ecf0f1; font-weight:bold; border-top: 2px solid #bdc3c7;">
+                <td colspan="4" style="text-align:right;">Total NFs Válidas:</td>
+                <td style="text-align:right; color:#27ae60;">@totalValidas.ToString("C")</td>
+                <td style="text-align:right; color:#27ae60;">@totalPis.ToString("C")</td>
+                <td style="text-align:right; color:#27ae60;">@totalCofins.ToString("C")</td>
+                <td style="text-align:right; color:#27ae60;">@totalTributos.ToString("C")</td>
+                <td></td>
+            </tr>
+            <tr style="background-color:#fff3cd; font-weight:bold;">
+                <td colspan="7" style="text-align:right; font-style:italic;">CSLL estimado sobre faturamento do período (@aliqCsll%):</td>
+                <td colspan="2" style="text-align:right; color:#856404;">@totalCsllEstimado.ToString("C")</td>
+            </tr>
+            <tr style="background-color:#fff3cd; font-weight:bold;">
+                <td colspan="7" style="text-align:right; font-style:italic;">IRPJ estimado sobre faturamento do período (@aliqIrpj%):</td>
+                <td colspan="2" style="text-align:right; color:#856404;">@totalIrpjEstimado.ToString("C")</td>
+            </tr>
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="8" style="text-align:right;">Qtd NFs Válidas:</td>
+                <td style="text-align:center; color:#27ae60;">@nfsValidas.Count</td>
+            </tr>
+            <tr style="background-color:#ecf0f1; font-weight:bold;">
+                <td colspan="8" style="text-align:right;">Qtd NFs Canceladas:</td>
+                <td style="text-align:center; color:#c0392b;">@nfsCanceladas.Count</td>
+            </tr>
+            <tr style="background-color:#e8f5e9; font-weight:bold; border-top: 2px solid #a5d6a7;">
+                <td colspan="7" style="text-align:right;">Total Tributos IBPT (vTotTrib):</td>
+                <td colspan="2" style="text-align:right; color:#2e7d32;">@totalTributos.ToString("C")</td>
+            </tr>
+            <tr style="background-color:#ede7f6; font-weight:bold;">
+                <td colspan="7" style="text-align:right;">Estimativa a Recolher (PIS + COFINS + CSLL + IRPJ):</td>
+                <td colspan="2" style="text-align:right; color:#4a148c;">@totalEstimadoRecolher.ToString("C")</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #777;">
+        <hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">
+        <p>Relatório gerado automaticamente SOPHOS - Sistema de Gestão Financeira</p>
+    </div>
+
+    <div style="page-break-after: always;"></div>
+</div>
+<!-- #endregion -->

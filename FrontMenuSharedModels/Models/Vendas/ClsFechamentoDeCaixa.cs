@@ -11,6 +11,7 @@ public class ClsFechamentoDeCaixa
     [JsonPropertyName("Faltou")] public float Faltou { get; set; }
     [JsonPropertyName("TotalTaxaEntrega")] public float TotalTaxaEntrega { get; set; }
     [JsonPropertyName("ValorTotalEmVendas")] public float ValorTotalEmVendas { get; set; }
+    [JsonPropertyName("TotalDeItensVendidos")] public float TotalDeItensVendidos { get; set; }
     [JsonPropertyName("TotalDeArescimos")] public float TotalDeArescimos { get; set; }
     [JsonPropertyName("TotalEmDescontos")] public float TotalEmDescontos { get; set; }
     [JsonPropertyName("TotalEmIncentivos")] public float TotalEmIncentivos { get; set; }

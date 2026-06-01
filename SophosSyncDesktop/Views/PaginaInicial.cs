@@ -22,6 +22,8 @@ public partial class PaginaInicial : Form
     private FileSystemWatcher watcherFechamentos;
     private FileSystemWatcher WatcherNFs;
     private FileSystemWatcher WatcherMesas;
+    private FileSystemWatcher watcherSangrias;
+    private FileSystemWatcher watcherSuprimentos;
 
     private readonly ImpressaoService _impressaoService;
     private readonly WebSocketPedidosService _webSocketService;
@@ -79,6 +81,8 @@ public partial class PaginaInicial : Form
         IniciarMonitoramentoDeFechamentoDeCaixa();
         IniciarMonitoramentoDeNfs();
         IniciarMonitoramentoFechamentoDeMotoboy();
+        IniciarMonitoramentoDeSangrias();
+        IniciarMonitoramentoDeSuprimentos();
 
     }
     protected override async void OnLoad(EventArgs e)
@@ -525,6 +529,116 @@ public partial class PaginaInicial : Form
         }
     }
 
+
+    private void IniciarMonitoramentoDeSangrias()
+    {
+        try
+        {
+            if (watcherSangrias != null)
+            {
+                watcherSangrias.EnableRaisingEvents = false;
+                watcherSangrias.Renamed -= OnWatcherRenamedSangria;
+                watcherSangrias.Dispose();
+            }
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+
+                watcherSangrias = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                watcherSangrias.Renamed += OnWatcherRenamedSangria;
+                watcherSangrias.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    private async void OnWatcherRenamedSangria(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("sangria-SOPHOS", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(100);
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                await _impressaoService.ImprimirSangria(conteudo);
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.ToString());
+            }
+        }
+    }
+
+    private void IniciarMonitoramentoDeSuprimentos()
+    {
+        try
+        {
+            if (watcherSuprimentos != null)
+            {
+                watcherSuprimentos.EnableRaisingEvents = false;
+                watcherSuprimentos.Renamed -= OnWatcherRenamedSuprimento;
+                watcherSuprimentos.Dispose();
+            }
+
+            using (AppDbContext db = new AppDbContext())
+            {
+                var config = db.Impressoras.FirstOrDefault();
+
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+                if (config?.CaminhoSalvamentoDoJson is not null && config.CaminhoSalvamentoDoJson != "Downloads")
+                    downloadsPath = config.CaminhoSalvamentoDoJson;
+
+                watcherSuprimentos = new FileSystemWatcher(downloadsPath)
+                {
+                    Filter = "*.*",
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                };
+
+                watcherSuprimentos.Renamed += OnWatcherRenamedSuprimento;
+                watcherSuprimentos.EnableRaisingEvents = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    private async void OnWatcherRenamedSuprimento(object sender, RenamedEventArgs e)
+    {
+        if (e.Name.Contains("suprimento-SOPHOS", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetExtension(e.FullPath).Equals(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            await Task.Delay(100);
+            try
+            {
+                string conteudo = File.ReadAllText(e.FullPath, Encoding.UTF8);
+                await _impressaoService.ImprimirSuprimento(conteudo);
+                File.Delete(e.FullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.Write(ex.ToString());
+            }
+        }
+    }
 
     private void IniciarMonitoramentoDeNfs()
     {

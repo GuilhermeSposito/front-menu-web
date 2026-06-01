@@ -106,7 +106,20 @@
 
             if (resultado.Status == "success")
             {
-                MudDialog.Close(DialogResult.Ok(true));
+                ClsSuprimento? suprimentoCriado = null;
+                if (resultado.Data.ExtraData.TryGetValue("suprimento", out var suprimentoEl))
+                    suprimentoCriado = System.Text.Json.JsonSerializer.Deserialize<ClsSuprimento>(suprimentoEl.GetRawText());
+
+                suprimentoCriado ??= new ClsSuprimento
+                {
+                    Descricao = _descricao,
+                    Valor = _valor,
+                    Status = "Ativa",
+                    CriadoEm = DateTime.Now,
+                    Funcionario = AppState.MerchantLogado?.FuncionarioLogado
+                };
+
+                MudDialog.Close(DialogResult.Ok(suprimentoCriado));
             }
             else
             {

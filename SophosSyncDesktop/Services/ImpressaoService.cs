@@ -1,5 +1,6 @@
 
 using FrontMenuWeb.DTOS;
+using FrontMenuWeb.Models.Caixa;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
 using FrontMenuWeb.Models.Vendas;
@@ -63,7 +64,7 @@ public class ImpressaoService
                 ClsPedido Pedido = JsonSerializer.Deserialize<ClsPedido>(jsonDoPedido) ?? throw new Exception("Erro ao desserializr pedido");
 
                 //verificar se o pedido é sophos e esta aberto
-                if (((Pedido.CriadoPor == "SOPHOS" && Pedido.StatusPedido != "ABERTO") || (Pedido.CriadoPor != "SOPHOS")) && !Pedido.ImprimeApenasComanda )
+                if (((Pedido.CriadoPor == "SOPHOS" && Pedido.StatusPedido != "ABERTO") || (Pedido.CriadoPor != "SOPHOS")) && !Pedido.ImprimeApenasComanda)
                 {
                     //primeiro imprime pedido
                     if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
@@ -324,6 +325,52 @@ public class ImpressaoService
                     await ImprimirPagina(ConteudoParaImpressaoDoPedido, Imps.ImpressoraCaixa, 14);
                 }
 
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    public async Task ImprimirSangria(string json)
+    {
+        try
+        {
+            AtualizaTamanhoDeFontesParametrizados();
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                ClsSangria sangria = JsonSerializer.Deserialize<ClsSangria>(json) ?? throw new Exception("Erro ao desserializar sangria");
+
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+                {
+                    List<ClsImpressaoDefinicoes> conteudo = DefineCaracteristicasDaSangriaParaImpressao(sangria);
+                    await ImprimirPagina(conteudo, Imps.ImpressoraCaixa, ValorEspacamento);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Write(ex.ToString());
+        }
+    }
+
+    public async Task ImprimirSuprimento(string json)
+    {
+        try
+        {
+            AtualizaTamanhoDeFontesParametrizados();
+            using (AppDbContext db = new AppDbContext())
+            {
+                ImpressorasConfigs Imps = db.Impressoras.FirstOrDefault() ?? new ImpressorasConfigs();
+                ClsSuprimento suprimento = JsonSerializer.Deserialize<ClsSuprimento>(json) ?? throw new Exception("Erro ao desserializar suprimento");
+
+                if (!string.IsNullOrEmpty(Imps.ImpressoraCaixa) && VerificaSeNaoEstaSemImpressora(Imps.ImpressoraCaixa))
+                {
+                    List<ClsImpressaoDefinicoes> conteudo = DefineCaracteristicasDoSuprimentoParaImpressao(suprimento);
+                    await ImprimirPagina(conteudo, Imps.ImpressoraCaixa, ValorEspacamento);
+                }
             }
         }
         catch (Exception ex)
@@ -841,7 +888,7 @@ public class ImpressaoService
                 AdicionaConteudoLR(Conteudo, "QTD  ITENS", "TOTAL", FonteFechamentoDeCaixa);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-                if(AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
+                if (AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
                     comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert, i.NumeroMesaItem }).Select(g => new AvisoContaItemDto
                     {
                         Descricao = g.Key.Descricao,
@@ -852,6 +899,10 @@ public class ImpressaoService
                         NumerosDeMesaJuntados = string.Join(", ", g.Select(i => i.NumeroMesaItem).Distinct()),
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
+
+                AdicionaConteudo(Conteudo, "Qtd. Descrição", new Font("DejaVu sans mono", 8, FontStyle.Bold), eObs: true);
+                AdicionaConteudo(Conteudo, "V.unit  V.total", new Font("DejaVu sans mono", 8, FontStyle.Bold), alinhamento: Alinhamentos.Direita, eObs: true);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in comanda.Itens)
                     if (!item.ECouvert)
@@ -900,7 +951,7 @@ public class ImpressaoService
                 }
 
                 AdicionaConteudoLR(Conteudo, "TOTAL:", comanda.Totais.Total.ToString("C"), FonteTotaisFechamento);
-                AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
             }
         }
         else
@@ -949,18 +1000,21 @@ public class ImpressaoService
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
 
+                AdicionaConteudo(Conteudo, "Qtd. Descrição", new Font("DejaVu sans mono", 8, FontStyle.Bold), eObs: true);
+                AdicionaConteudo(Conteudo, "V.unit  V.total", new Font("DejaVu sans mono", 8, FontStyle.Bold), alinhamento: Alinhamentos.Direita, eObs: true);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in itensParaImprimir)
                     if (!item.ECouvert)
                         AdicionarLinhasDeItem(Conteudo, item);
 
-                AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
             }
         }
 
         // ── Consumo total ─────────────────────────────────────────────────────
         AdicionaConteudo(Conteudo, "Consumo Total", FonteFechamentoDeCaixa, Alinhamentos.Centro);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
         var valorDosCouvertsEnviadoComoItem = aviso.Itens?.Where(i => i.ECouvert).Sum(i => i.PrecoTotal) ?? 0;
         aviso.SubtotalDaMesa = aviso.SubtotalDaMesa - valorDosCouvertsEnviadoComoItem;
@@ -1035,9 +1089,8 @@ public class ImpressaoService
         if (((AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false) && item.NumeroMesaItem is not null && item.NumeroMesaItem != 0) || !string.IsNullOrEmpty(item.NumerosDeMesaJuntados))
             AdicionaConteudo(Conteudo, $"Mesa: {(item.NumeroMesaItem is null ? item.NumerosDeMesaJuntados : item.NumeroMesaItem)}", new Font("Dejavu Sans Mono", 8));
 
-        AdicionaConteudoLR(Conteudo,
-            $"{item.Quantidade}x {item.Descricao}", item.PrecoTotal.ToString("C"),
-            FonteItemFechamento);
+        AdicionaConteudo(Conteudo, $"{item.Quantidade}x {item.Descricao}", FonteItemFechamento);
+        AdicionaConteudo(Conteudo, $"{item.PrecoUnitario:F2}   {item.PrecoTotal:F2}", FonteItemFechamento, Alinhamentos.Direita);
 
         if (!(AppState.MerchantLogado?.NaoImprimeComplementosNoFechamento ?? false))
             if (item.Complementos?.Count > 0)
@@ -1058,6 +1111,84 @@ public class ImpressaoService
                 var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
                 AdicionaConteudo(Conteudo, $"  {leg}", FonteItemFechamento, eObs: true);
             }
+
+        AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+
+    }
+    #endregion
+
+    #region Definição da sangria para impressão
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDaSangriaParaImpressao(ClsSangria sangria)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, "SANGRIA DE CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, $"Data: {sangria.CriadoEm:dd/MM/yyyy HH:mm}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+        if (sangria.Funcionario is not null)
+        {
+            AdicionaConteudo(Conteudo, $"Operador: {sangria.Funcionario.Nome}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
+        else
+        {
+            AdicionaConteudo(Conteudo, $"Operador: ADMIN", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
+
+        AdicionaConteudo(Conteudo, $"Descricao:", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, sangria.Descricao, FonteItemFechamento);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudoLR(Conteudo, "VALOR DA SANGRIA:", sangria.Valor.ToString("C"), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
+
+        return Conteudo;
+    }
+    #endregion
+
+    #region Definição do suprimento para impressão
+    private List<ClsImpressaoDefinicoes> DefineCaracteristicasDoSuprimentoParaImpressao(ClsSuprimento suprimento)
+    {
+        List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
+
+        if (AppState.MerchantLogado is not null)
+            AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido, Alinhamentos.Centro);
+
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, "SUPRIMENTO DE CAIXA", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, $"Data: {suprimento.CriadoEm:dd/MM/yyyy HH:mm}", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+
+        if (suprimento.Funcionario is not null)
+        {
+            AdicionaConteudo(Conteudo, $"Operador: {suprimento.Funcionario.Nome}", FonteFechamentoDeCaixa);
+            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        }
+
+        AdicionaConteudo(Conteudo, "Descricao:", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, suprimento.Descricao, FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudoLR(Conteudo, "VALOR DO SUPRIMENTO:", suprimento.Valor.ToString("C"), FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+
+        AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
+
+        return Conteudo;
     }
     #endregion
 
@@ -1084,15 +1215,17 @@ public class ImpressaoService
         {
             AdicionaConteudo(Conteudo, $"{Fechamento.Caixa.DataAbertura:D}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
             string RealizadoPor = Fechamento.Caixa.FuncionarioFechamento is not null ? Fechamento.Caixa.FuncionarioFechamento.Nome : "ADMIN";
+            AdicionaConteudo(Conteudo, $"Aberto em {Fechamento.Caixa.DataAbertura}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, $"Fechado em {Fechamento.Caixa.DataFechamento}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
             AdicionaConteudo(Conteudo, $"Realizado por ..: {RealizadoPor}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         }
 
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteFechamentoDeCaixa);
 
         // OPERAÇÃO DE VENDAS
-        AdicionaConteudo(Conteudo, "OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, "OPERAÇÃO DE VENDAS", FonteFechamentoDeCaixa, eObs: true);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        Ln("TOTAL DAS VENDAS (+)", Fechamento.ValorTotalEmVendas);
+        Ln("TOTAL DE ITENS VENDIDOS (+)", Fechamento.TotalDeItensVendidos);
         Ln("ACRESCIMOS (+)", Fechamento.TotalDeArescimos);
         Ln("CORTESIA/DESCONTOS (-)", Fechamento.TotalEmDescontos + Fechamento.TotalEmIncentivos);
         Ln("TAXAS DE ENTREGA (+)", Fechamento.TotalTaxaEntrega);
@@ -1111,11 +1244,19 @@ public class ImpressaoService
         Ln("TROCOS (-)", Fechamento.Trocos);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         Ln("TOTAL DO CAIXA (=)", totalDoCaixa);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
         // CONTAGEM FÍSICA
-        AdicionaConteudo(Conteudo, "CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa);
+        AdicionaConteudo(Conteudo, "CONTAGEM FÍSICA DO CAIXA", FonteFechamentoDeCaixa, eObs: true);
+        AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
+        Ln("DÉBITO INFORMADO. (=)", (float?)(Fechamento.Caixa?.ContagemFisicaDebito) ?? 0);
+        Ln("CRÉDITO INFORMADO. (=)", (float?)(Fechamento.Caixa?.ContagemFisicaCredito) ?? 0);
+        Ln("PIX INFORMADO. (=)", (float?)(Fechamento.Caixa?.ContagemFisicaPix) ?? 0);
+        if ((Fechamento.Caixa?.ContagemFisicaOnline ?? 0) > 0)
+            Ln("ONLINE INFORMADO. (=)", (float?)(Fechamento.Caixa?.ContagemFisicaOnline) ?? 0);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+        Ln("DINHEIRO INFORMADO. (=)", (float?)(Fechamento.Caixa?.ValorCaixaEmDinFinal) ?? 0);
+
         Ln("VALOR ESPERADO DIN. (=)", Fechamento.ValorEsperadoEmDinheiro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
@@ -1126,7 +1267,7 @@ public class ImpressaoService
         }
 
         // DISTRIBUIÇÃO POR FORMA
-        AdicionaConteudo(Conteudo, "DISTRIBUIÇÃO POR FORMA DE RECEBIMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
+        AdicionaConteudo(Conteudo, "DISTRIBUIÇÃO POR FORMA DE RECEBIMENTO", FonteFechamentoDeCaixa, eObs: true);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         foreach (var pagamento in Fechamento.RecebimentosPorTipo ?? [])
@@ -1136,11 +1277,6 @@ public class ImpressaoService
         Ln("TOTAL RECEBIMENTOS (=)", totalRecebimentos);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
-        // RESUMO POR TIPO
-        Ln("VENDAS À VISTA (=)", Fechamento.TotalEmDinheiro);
-        Ln("VENDAS EM CARTÃO (=)", Fechamento.TotalEmCartoes);
-        Ln("PGTOS ONLINE (=)", Fechamento.PagoOnline);
-        AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, "www.sophos-erp.com.br", FonteCPF, Alinhamentos.Centro);
@@ -1346,6 +1482,16 @@ public class ImpressaoService
         if (item.Alinhamento == Alinhamentos.Centro)
         {
             e.Graphics.DrawString(texto, item.Fonte, Brushes.Black, Centro(texto, item.Fonte, e), Y);
+        }
+        else if (item.Alinhamento == Alinhamentos.Direita)
+        {
+            SizeF tam = e.Graphics.MeasureString(texto, item.Fonte);
+            if (item.eObs && DestacaObservacoes)
+            {
+                RectangleF rect = new RectangleF(0, Y, pageW, tam.Height);
+                e.Graphics.FillRectangle(Brushes.LightSlateGray, rect);
+            }
+            e.Graphics.DrawString(texto, item.Fonte, Brushes.Black, pageW - tam.Width, Y);
         }
         else if (!item.eObs || !DestacaObservacoes)
         {
