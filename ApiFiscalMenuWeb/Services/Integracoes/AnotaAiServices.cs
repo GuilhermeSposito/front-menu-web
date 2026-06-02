@@ -47,15 +47,15 @@ public class AnotaAiServices
                 //Pedido agendado aceito
                 break;
             case 0:
-                retornoDaFuncaoDeAdicionarPedido =  await this.AdicionaPedido(merchant, pedido);
+                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
                 //await SetPedido(item.IdPedido);                                    //Em análise 
                 break;
             case 1:
-                retornoDaFuncaoDeAdicionarPedido =  await this.AdicionaPedido(merchant, pedido);
+                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
                 //await SetPedido(item.IdPedido);                                   //em produção 
                 break;
             case 2:
-                retornoDaFuncaoDeAdicionarPedido =  await this.AdicionaPedido(merchant, pedido);
+                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
                 //await SetPedido(item.IdPedido);
                 //await AtualizaStatusPedido(item.IdPedido, item.Check);            //pronto
                 break;
@@ -78,30 +78,32 @@ public class AnotaAiServices
     }
 
     private async Task<string> AdicionaPedido(ClsMerchant Merchant, AnotaAiOrderInfoDto PedidoAnotaAi)
-    {   
+    {
         var jsonDoPedido = JsonSerializer.Serialize(PedidoAnotaAi);
-        PedidoIfoodDto pedidoIfood = await NormalizaPedidoAnotaAiParaPedidoIfood(PedidoAnotaAi);
+        PedidoIfoodDto pedidoIfood = NormalizaPedidoAnotaAiParaPedidoIfood(PedidoAnotaAi);
         ClsPedido? PedidoSophos = await _ifoodServices.ConvertePedidoDoIfoodParaPedidoSophos(pedidoIfood, Merchant, jsonDoPedido);
         if (PedidoSophos is null)
-            throw new BadHttpRequestException("Pedido nullo");
+            return $"Falha ao adicionar o pedido {PedidoAnotaAi.Id} para o merchant {Merchant.NomeFantasia}";
 
         PedidoSophos.CriadoPor = "ANOTAAI";
         PedidoSophos.IfoodID = null;
         PedidoSophos.IdIntegracao = PedidoAnotaAi.Id;
+ 
 
         bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(Merchant, PedidoSophos);
         if (!AdicionouOPedido)
-            return $"Falha ao adicionar o pedido {PedidoSophos.Id} para o merchant {Merchant.NomeFantasia}";
+            return $"Falha ao adicionar o pedido {PedidoAnotaAi.Id} para o merchant {Merchant.NomeFantasia}";
 
         if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
         {
-          
+            PedidoSophos.EtapaPedido = "PREPARANDO";
+
         }
 
         return $"Pedido {PedidoSophos.Id} {Merchant.NomeFantasia}";
     }
 
-    public async Task<PedidoIfoodDto> NormalizaPedidoAnotaAiParaPedidoIfood(AnotaAiOrderInfoDto pedido)
+    public PedidoIfoodDto NormalizaPedidoAnotaAiParaPedidoIfood(AnotaAiOrderInfoDto pedido)
     {
         var PedidoIfood = new PedidoIfoodDto();
         PedidoIfood.Id = pedido.Id;
@@ -122,7 +124,7 @@ public class AnotaAiServices
             Phone = new PhoneIfoodDto
             {
                 Number = pedido.Customer?.Phone ?? "",
-                Localizer = pedido.Customer?.Phone ?? "",   
+                Localizer = pedido.Customer?.Phone ?? "",
             },
             DocumentNumber = pedido.Customer?.TaxPayerIdentificationNumber ?? "",
         };
@@ -192,7 +194,7 @@ public class AnotaAiServices
                 Method = RetornaTipoDePagamentoIgualDoIfood(p.Code),
                 Type = p.Prepaid ? "ONLINE" : "OFFLINE",
                 Value = (double)p.Value,
-                Cash = new CashMethodsIfoodDto 
+                Cash = new CashMethodsIfoodDto
                 {
                     ChangeFor = (double)(p.ChangeFor ?? 0)
                 }
@@ -206,25 +208,25 @@ public class AnotaAiServices
     {
         return code?.Trim().ToLowerInvariant() switch
         {
-            "money"                     => "CASH",
-            "card"                      => "CREDIT",
-            "online"                    => "DIGITAL_WALLET",
-            "online_credit"             => "CREDIT",
-            "pix"                       => "PIX",
-            "debit"                     => "DEBIT",
-            "pix-ifood"                 => "PIX",
-            "online_tuna"               => "DIGITAL_WALLET",
+            "money" => "CASH",
+            "card" => "CREDIT",
+            "online" => "DIGITAL_WALLET",
+            "online_credit" => "CREDIT",
+            "pix" => "PIX",
+            "debit" => "DEBIT",
+            "pix-ifood" => "PIX",
+            "online_tuna" => "DIGITAL_WALLET",
             "ifood-online-credit-payin" => "CREDIT",
-            "ifood-online-pix-payin"    => "PIX",
-            "tuna_nupay_credit"         => "CREDIT",
-            "tuna_nupay_debit"          => "DEBIT",
-            "tuna_wallet_credit"        => "DIGITAL_WALLET",
-            "tuna_wallet_debit"         => "DIGITAL_WALLET",
+            "ifood-online-pix-payin" => "PIX",
+            "tuna_nupay_credit" => "CREDIT",
+            "tuna_nupay_debit" => "DEBIT",
+            "tuna_wallet_credit" => "DIGITAL_WALLET",
+            "tuna_wallet_debit" => "DIGITAL_WALLET",
             "tuna_minimal_payment_link" => "DIGITAL_WALLET",
-            "ifood-pago-credit-pinpad"  => "CREDIT",
-            "ifood-pago-debit-pinpad"   => "DEBIT",
-            "ifood-pago-pix-pinpad"     => "PIX",
-            _                           => "DIGITAL_WALLET"
+            "ifood-pago-credit-pinpad" => "CREDIT",
+            "ifood-pago-debit-pinpad" => "DEBIT",
+            "ifood-pago-pix-pinpad" => "PIX",
+            _ => "DIGITAL_WALLET"
         };
     }
 
