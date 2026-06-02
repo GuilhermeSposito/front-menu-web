@@ -65,6 +65,43 @@ public class NestApiServices
 
     }
 
+    public async Task<ClsMerchant?> GetMerchantFromNestApiPublic(string IdMerchant)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiAutorizada");
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(40));
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await client.GetAsync($"merchants/details/public/{IdMerchant}", cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
+            }
+
+            var content = await response.Content.ReadAsStringAsync(cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
+
+            return merchant;
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new TimeoutException("A requisição para 'merchants/details' excedeu o tempo limite.");
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+
+    }
     private void AdicionaTokenNaRequisicao(HttpClient client, string token)
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);

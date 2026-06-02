@@ -34,7 +34,7 @@ public class AnotaAiServices
     #region Funções de SetPedido
     public async Task TrataPedidoAnotaAi(string MerchantId, AnotaAiOrderInfoDto pedido)
     {
-        ClsMerchant? merchant = await _nestApiService.GetMerchantFromNestApi(MerchantId);
+        ClsMerchant? merchant = await _nestApiService.GetMerchantFromNestApiPublic(MerchantId);
         if (merchant == null)
         {
             throw new BadHttpRequestException("Merchant não encontrado");
