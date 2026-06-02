@@ -121,7 +121,8 @@ public class AnotaAiServices
             Name = pedido.Customer?.Name ?? "",
             Phone = new PhoneIfoodDto
             {
-                Number = pedido.Customer?.Phone ?? ""
+                Number = pedido.Customer?.Phone ?? "",
+                Localizer = pedido.Customer?.Phone ?? "",   
             },
             DocumentNumber = pedido.Customer?.TaxPayerIdentificationNumber ?? "",
         };

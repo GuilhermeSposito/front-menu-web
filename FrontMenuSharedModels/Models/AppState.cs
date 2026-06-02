@@ -63,6 +63,8 @@ public class AppState
                 return "/images/ifoodImagem.png";
             case "DELMATCH":
                 return "/images/empresas_integradas/delmatchlogo.png";
+            case "ANOTAAI":
+                return "/images/empresas_integradas/ANOTAAI.png";
             default:
                 return "/images/SOPHOSLOGOLOGIN.jpg"; // Ícone padrão caso não haja correspondência
 
