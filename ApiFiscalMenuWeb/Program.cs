@@ -26,6 +26,7 @@ builder.Services.AddScoped<MessageService>();
 builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<B1DeliveryServices>();
+builder.Services.AddScoped<AnotaAiServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
 builder.Services.AddHostedService<IfoodPollingWorker>();
@@ -94,6 +95,12 @@ builder.Services.AddHttpClient("ApiNestPublica", client =>
 builder.Services.AddHttpClient("ApiDelmatch", client =>
 {
     client.BaseAddress = new Uri("https://delmatchcardapio.com");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddHttpClient("ApiAnotaAi", client =>
+{
+    client.BaseAddress = new Uri("https://api-parceiros.anota.ai/partnerauth/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 

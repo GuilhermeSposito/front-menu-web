@@ -17,6 +17,7 @@ public class IntegracoesController : Controller
 {
     private readonly IfoodServices _ifoodService;
     private readonly B1DeliveryServices _delmatchService;
+    private readonly AnotaAiServices _anotaAiService;
     private readonly NestApiServices _nestApiService;
     private readonly EmailService emailService;
     private WebhookSignature _webhookSignature;
@@ -30,10 +31,13 @@ public class IntegracoesController : Controller
         EmailService email,
         WebhookSignature webhookSignature,
         IConfiguration configuration,
-        ILogger<IntegracoesController> logger)
+        ILogger<IntegracoesController> logger,
+        AnotaAiServices anotaAiService
+        )
     {
         _ifoodService = ifoodService;
         _delmatchService = delmatchService;
+        _anotaAiService = anotaAiService;
         _nestApiService = nestApiService;
         emailService = email;
         _webhookSignature = webhookSignature;
@@ -165,8 +169,7 @@ public class IntegracoesController : Controller
     [HttpPost("endpoint-webhook-anotaai/{IdMerchant}")]
     public async Task<IActionResult> EndpointDeConexaoAnotaAi([FromRoute] string IdMerchant, [FromBody] AnotaAiOrderInfoDto PedidoAnotaAi)
     {
-        Console.WriteLine(PedidoAnotaAi.Id + PedidoAnotaAi.Items[0].Name);
-
+        _= _anotaAiService.TrataPedidoAnotaAi(IdMerchant, PedidoAnotaAi);
         return Accepted();
     }
     #endregion

@@ -236,8 +236,6 @@ public class DeliveryAddresIfoodDto
     [JsonPropertyName("state")] public string State { get; set; } = string.Empty;
     [JsonPropertyName("country")] public string Country { get; set; } = string.Empty;
     [JsonPropertyName("coordinates")] public CoordinatesIfoodDto Coordinates { get; set; } = new CoordinatesIfoodDto();
-
-
 }
 
 public class CoordinatesIfoodDto

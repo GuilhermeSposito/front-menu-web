@@ -24,8 +24,8 @@ public class AnotaAiOrderInfoDto
     [JsonPropertyName("total")] public decimal Total { get; set; }
     [JsonPropertyName("type")] public string Type { get; set; } = string.Empty;
     [JsonPropertyName("ifood_id")] public string? IfoodId { get; set; }
-    [JsonPropertyName("createdAt")] public string CreatedAt { get; set; } = string.Empty;
-    [JsonPropertyName("updatedAt")] public string UpdatedAt { get; set; } = string.Empty;
+    [JsonPropertyName("createdAt")] public DateTime CreatedAt { get; set; }
+    [JsonPropertyName("updatedAt")] public DateTime UpdatedAt { get; set; }
     [JsonPropertyName("order_automatic_accept")] public bool OrderAutomaticAccept { get; set; }
     [JsonPropertyName("additionalFees")] public List<AnotaAiAdditionalFeeDto> AdditionalFees { get; set; } = new();
     [JsonPropertyName("customer")] public AnotaAiCustomerDto Customer { get; set; } = new();
@@ -87,11 +87,11 @@ public class AnotaAiItemDto
     [JsonPropertyName("_id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("id")] public int IdAlt { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-    [JsonPropertyName("quantity")] public decimal Quantity { get; set; }
+    [JsonPropertyName("quantity")] public double Quantity { get; set; }
     [JsonPropertyName("externalId")] public string ExternalId { get; set; } = string.Empty;
     [JsonPropertyName("internalId")] public string InternalId { get; set; } = string.Empty;
-    [JsonPropertyName("price")] public decimal Price { get; set; }
-    [JsonPropertyName("total")] public decimal Total { get; set; }
+    [JsonPropertyName("price")] public double Price { get; set; }
+    [JsonPropertyName("total")] public double Total { get; set; }
     [JsonPropertyName("subItems")] public List<AnotaAiSubItemDto> SubItems { get; set; } = new();
 }
 
@@ -101,17 +101,17 @@ public class AnotaAiSubItemDto
     [JsonPropertyName("id")] public int? Id { get; set; }
     [JsonPropertyName("id_parent")] public int? IdParent { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-    [JsonPropertyName("quantity")] public decimal Quantity { get; set; }
+    [JsonPropertyName("quantity")] public double Quantity { get; set; }
     [JsonPropertyName("internalId")] public string? InternalId { get; set; }
-    [JsonPropertyName("price")] public decimal Price { get; set; }
-    [JsonPropertyName("total")] public decimal Total { get; set; }
+    [JsonPropertyName("price")] public double Price { get; set; }
+    [JsonPropertyName("total")] public double Total { get; set; }
     [JsonPropertyName("externalCode")] public string ExternalCode { get; set; } = string.Empty;
-    [JsonPropertyName("totalPrice")] public decimal? TotalPrice { get; set; }
-    [JsonPropertyName("unitPrice")] public decimal? UnitPrice { get; set; }
-    [JsonPropertyName("new_totalPrice")] public decimal? NewTotalPrice { get; set; }
-    [JsonPropertyName("new_unitPrice")] public decimal? NewUnitPrice { get; set; }
-    [JsonPropertyName("quantityFraction")] public decimal? QuantityFraction { get; set; }
-    [JsonPropertyName("valueFraction")] public decimal? ValueFraction { get; set; }
+    [JsonPropertyName("totalPrice")] public double? TotalPrice { get; set; }
+    [JsonPropertyName("unitPrice")] public double? UnitPrice { get; set; }
+    [JsonPropertyName("new_totalPrice")] public double? NewTotalPrice { get; set; }
+    [JsonPropertyName("new_unitPrice")] public double? NewUnitPrice { get; set; }
+    [JsonPropertyName("quantityFraction")] public double? QuantityFraction { get; set; }
+    [JsonPropertyName("valueFraction")] public double? ValueFraction { get; set; }
 }
 
 public class AnotaAiMerchantDto

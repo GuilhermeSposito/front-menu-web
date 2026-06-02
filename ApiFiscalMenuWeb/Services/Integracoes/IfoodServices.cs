@@ -447,10 +447,9 @@ public class IfoodServices
     #endregion
 
     #region Funções de Conversão de Pedido Ifood para Pedido do SOPHOS
-    public async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos)
+    public async Task<ClsPedido?> ConvertePedidoDoIfoodParaPedidoSophos(PedidoIfoodDto PedidoIfood, ClsMerchant MerchantSophos, string? jsonDoPedido = null)
     {
-        var json = JsonSerializer.Serialize(PedidoIfood);
-
+        var json = jsonDoPedido ?? JsonSerializer.Serialize(PedidoIfood);
         ClsPedido PedidoSophos = new ClsPedido
         {
             IfoodID = PedidoIfood.Id,
@@ -843,7 +842,7 @@ public class IfoodServices
 
         if (PagOnline)
         {
-            var FormaDePagamentoOnlineIfood = formas.FirstOrDefault(f => f.Descricao.Contains("ONLINE IFOOD", StringComparison.OrdinalIgnoreCase));
+            var FormaDePagamentoOnlineIfood = formas.FirstOrDefault(f => f.Descricao.Contains("ONLINE", StringComparison.OrdinalIgnoreCase));
             if (FormaDePagamentoOnlineIfood is not null)
                 return FormaDePagamentoOnlineIfood;
         }

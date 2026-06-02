@@ -161,14 +161,16 @@ public class B1DeliveryServices
         // Benefits (descontos)
         if (totalDesconto > 0)
         {
-            pedidoIfood.Benefits.Add(new BenefitsIfoodDto
+            pedidoIfood.Benefits = new List<BenefitsIfoodDto>
             {
-                Value = (double)totalDesconto,
-                Description = new List<SponsorShipValuesIfoodDto>
+                new BenefitsIfoodDto
                 {
-                    new SponsorShipValuesIfoodDto { Name = "DELMATCH", Value = (double)totalDesconto }
+                    Description = new List<SponsorShipValuesIfoodDto>
+                    {
+                        new SponsorShipValuesIfoodDto { Name = "DELMATCH", Value = (double)totalDesconto }
+                    }
                 }
-            });
+            };
         }
 
         // Itens
@@ -330,7 +332,7 @@ public class B1DeliveryServices
         }
 
         if (empresa.MerchantSophos.AceitaPedidoAutDeIntegracoes)
-        { 
+        {
             pedidoSophos.EtapaPedido = "PREPARANDO";
         }
 
