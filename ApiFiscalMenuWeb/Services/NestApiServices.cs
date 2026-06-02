@@ -88,9 +88,9 @@ public class NestApiServices
             if (!response.IsSuccessStatusCode)
                 return null;
 
-            var merchant = JsonSerializer.Deserialize<ClsMerchant>(content);
+            var wrapper = JsonSerializer.Deserialize<ReturnApiRefatored<ClsMerchant>>(content);
 
-            return merchant;
+            return wrapper?.Data?.Objeto;
         }
         catch (TaskCanceledException ex)
         {
