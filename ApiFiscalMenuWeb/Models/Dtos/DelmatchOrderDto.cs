@@ -14,6 +14,7 @@ public class DelmatchOrderDto
     [JsonPropertyName("customer")] public DelmatchCustomerDto Customer { get; set; } = new();
     [JsonPropertyName("items")] public List<DelmatchItemDto> Items { get; set; } = new();
     [JsonPropertyName("subTotal")] public decimal SubTotal { get; set; }
+    [JsonPropertyName("discount")] public decimal Discount { get; set; }
     [JsonPropertyName("totalPrice")] public decimal TotalPrice { get; set; }
     [JsonPropertyName("deliveryFee")] public decimal DeliveryFee { get; set; }
     [JsonPropertyName("deliveryAddress")] public DelmatchAddressDto DeliveryAddress { get; set; } = new();

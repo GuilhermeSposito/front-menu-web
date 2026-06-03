@@ -247,7 +247,7 @@
     </DialogContent>
     <DialogActions>
         <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="2" Class="w-100 px-2 pb-2">
-            @if (Pedido.TipoDePedido == "MESA" || Pedido.TipoDePedido == "BALCÃO")
+            @if (Pedido.TipoDePedido == "MESA" || (Pedido.TipoDePedido == "BALCÃO" && Editando))
             {
                 <MudButton Variant="Variant.Filled" OnClick="ImprimirFechamento" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">
                     Imprimir Fechamento

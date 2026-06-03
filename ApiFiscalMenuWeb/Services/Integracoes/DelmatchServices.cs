@@ -107,7 +107,7 @@ public class B1DeliveryServices
     public PedidoIfoodDto NormalizaDelmatchParaFormatoIfood(DelmatchOrderDto pedido)
     {
         // Calcular descontos e acréscimos totais
-        decimal totalDesconto = pedido.Items.Sum(i => i.Discount + i.SubItems.Sum(s => s.Discount));
+        decimal totalDesconto = pedido.Discount + pedido.Items.Sum(i => i.Discount + i.SubItems.Sum(s => s.Discount));
         decimal totalAcrescimo = pedido.Items.Sum(i => i.Addition + i.SubItems.Sum(s => s.Addition));
 
         var pedidoIfood = new PedidoIfoodDto
