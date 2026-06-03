@@ -1,0 +1,105 @@
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Services
+@inject MerchantServices MerchantService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AddBusiness" Class="mr-2 mb-n1" />
+            Criar Novo Estabelecimento
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4 py-2">
+            <MudTextField @bind-Value="_dto.Email" Label="E-mail" Variant="Variant.Outlined"
+                          InputType="InputType.Email" Required="true" />
+
+            <MudTextField @bind-Value="_dto.Senha" Label="Senha" Variant="Variant.Outlined"
+                          InputType="@(_showSenha ? InputType.Text : InputType.Password)"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showSenha ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                          OnAdornmentClick="@(() => _showSenha = !_showSenha)"
+                          Required="true" />
+
+            <MudTextField @bind-Value="_dto.NomeFantasia" Label="Nome Fantasia" Variant="Variant.Outlined"
+                          Required="true" />
+
+            <MudTextField @bind-Value="_dto.RazaoSocial" Label="Razão Social" Variant="Variant.Outlined"
+                          Required="true" />
+
+            <MudTextField @bind-Value="_dto.ImagemLogo" Label="URL da Logo" Variant="Variant.Outlined" />
+
+            <div class="d-flex align-center justify-space-between">
+                <MudText Typo="Typo.body1">Emitindo NF-e em Produção</MudText>
+                <MudSwitch T="bool" @bind-Value="_dto.EmitindoNfeProd"
+                           Label="@(_dto.EmitindoNfeProd ? "Sim" : "Não")"
+                           Color="Color.Success" />
+            </div>
+
+            @if (_isLoading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-2" />
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="_isLoading">
+            @if (_isLoading)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">Criando...</MudText>
+            }
+            else
+            {
+                <MudText>Criar Estabelecimento</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private CreateMerchantDto _dto = new();
+    private bool _isLoading;
+    private bool _showSenha;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_dto.Email) || string.IsNullOrWhiteSpace(_dto.Senha) ||
+            string.IsNullOrWhiteSpace(_dto.NomeFantasia) || string.IsNullOrWhiteSpace(_dto.RazaoSocial))
+        {
+            Snackbar.Add("Preencha todos os campos obrigatórios.", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _isLoading = true;
+            var response = await MerchantService.AdminCreateMerchantAsync(_dto);
+
+            if (response.Sucess)
+            {
+                Snackbar.Add("Estabelecimento criado com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Erro ao conectar com o servidor.", Severity.Error);
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

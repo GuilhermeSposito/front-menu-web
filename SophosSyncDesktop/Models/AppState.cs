@@ -40,7 +40,7 @@ public static class AppState
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", AppState.Token);
                 AddHmacHeaders(client);
 
-                var response = await client.GetAsync("https://sophos-erp.com.br/api/v1/merchants/details");
+                var response = await client.GetAsync("https://api-sophos.com.br/api/v1/merchants/details");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -87,7 +87,7 @@ public static class AppState
                 Senha = senha
             };
 
-            var response = await client.PostAsJsonAsync("https://sophos-erp.com.br/api/v1/auth/login", loginModel);
+            var response = await client.PostAsJsonAsync("https://api-sophos.com.br/api/v1/auth/login", loginModel);
             if (response != null)
             {
                 if (response.IsSuccessStatusCode)
@@ -143,7 +143,7 @@ public static class AppState
             HttpClient client = new HttpClient();
             AddHmacHeaders(client);
             var response = await client.PostAsJsonAsync(
-                "https://sophos-erp.com.br/api/v1/auth/login",
+                "https://api-sophos.com.br/api/v1/auth/login",
                 new LoginModel { Email = email, Senha = senha });
 
             if (response is null || !response.IsSuccessStatusCode)

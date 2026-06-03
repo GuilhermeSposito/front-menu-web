@@ -659,7 +659,7 @@ public class ImpressaoService
             //========================================================================================       
         }
         //========================================================================================       
-        AdicionaConteudo(Conteudo, $"Controle Interno \t Sem valor fiscal", FonteCPF);
+        AdicionaConteudoLR(Conteudo, $"Controle Interno", "Sem valor fiscal", FonteCPF);
         AdicionaConteudo(Conteudo, $"Criado em: {pedido.CriadoEm:G}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
@@ -735,7 +735,7 @@ public class ImpressaoService
 
         //------------------------------------------------------------------------------------------
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
-        AdicionaConteudo(Conteudo, $"Tam.          V.Unit.   Total.", FontQtdDescVunitVTotal);
+        AdicionaConteudoLR(Conteudo, $"Tam.", "V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
@@ -755,7 +755,7 @@ public class ImpressaoService
 
                 AdicionaConteudo(Conteudo, $"{item.Quantidade}X  {item.Descricao}", FonteItens2);
             }
-            AdicionaConteudo(Conteudo, $"                      {item.PrecoUnitario:F2}     {item.PrecoTotal:F2}", FonteCPF);
+            AdicionaConteudo(Conteudo, $"{item.PrecoUnitario:F2}    {item.PrecoTotal:F2}", FonteCPF, alinhamento: Alinhamentos.Direita);
 
             if (!string.IsNullOrEmpty(item.LegTamanhoEscolhido))
             {
@@ -889,19 +889,18 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 if (AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
-                    comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert, i.NumeroMesaItem }).Select(g => new AvisoContaItemDto
+                    comanda.Itens = comanda.Itens.GroupBy(i => new { i.Descricao, i.ECouvert }).Select(g => new AvisoContaItemDto
                     {
                         Descricao = g.Key.Descricao,
                         Quantidade = g.Sum(i => i.Quantidade),
                         PrecoUnitario = g.FirstOrDefault()?.PrecoUnitario ?? 0,
                         PrecoTotal = g.Sum(i => i.PrecoTotal),
-                        NumeroMesaItem = g.Key.NumeroMesaItem,
                         NumerosDeMesaJuntados = string.Join(", ", g.Select(i => i.NumeroMesaItem).Distinct()),
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
 
-                AdicionaConteudo(Conteudo, "Qtd. Descrição", new Font("DejaVu sans mono", 8, FontStyle.Bold), eObs: true);
-                AdicionaConteudo(Conteudo, "V.unit  V.total", new Font("DejaVu sans mono", 8, FontStyle.Bold), alinhamento: Alinhamentos.Direita, eObs: true);
+                AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
+                AdicionaConteudo(Conteudo, $"V.Unit.   Total.", FontQtdDescVunitVTotal, Alinhamentos.Direita);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in comanda.Itens)
@@ -1000,8 +999,8 @@ public class ImpressaoService
                         ECouvert = g.Key.ECouvert,
                     }).ToList();
 
-                AdicionaConteudo(Conteudo, "Qtd. Descrição", new Font("DejaVu sans mono", 8, FontStyle.Bold), eObs: true);
-                AdicionaConteudo(Conteudo, "V.unit  V.total", new Font("DejaVu sans mono", 8, FontStyle.Bold), alinhamento: Alinhamentos.Direita, eObs: true);
+                AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
+                AdicionaConteudo(Conteudo, $"V.Unit.   Total.", FontQtdDescVunitVTotal, Alinhamentos.Direita);
                 AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
                 foreach (var item in itensParaImprimir)
@@ -1111,9 +1110,6 @@ public class ImpressaoService
                 var leg = item.LegTamanhoEscolhido.Length > 30 ? item.LegTamanhoEscolhido[..30] + "..." : item.LegTamanhoEscolhido;
                 AdicionaConteudo(Conteudo, $"  {leg}", FonteItemFechamento, eObs: true);
             }
-
-        AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
-
     }
     #endregion
 

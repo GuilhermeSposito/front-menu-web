@@ -22,9 +22,16 @@
             <MudText Typo="Typo.body2">@allMerchants.Count merchant(s) cadastrado(s)</MudText>
         </MudStack>
 
-        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Store">
-            Total: @allMerchants.Count
-        </MudChip>
+        <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.AddBusiness"
+                       OnClick="OpenCreateMerchantModal">
+                Novo Estabelecimento
+            </MudButton>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Store">
+                Total: @allMerchants.Count
+            </MudChip>
+        </MudStack>
     </MudStack>
 
     <!-- Barra de Busca -->
@@ -61,7 +68,7 @@
         else
         {
             <MudGrid Spacing="4">
-                @foreach (var merchant in FilteredMerchants)
+                @foreach (var merchant in FilteredMerchants.OrderBy(x=> x.AtivoAte).ToList())
                 {
                     <MudItem xs="12" sm="6" md="4" lg="3" @key="merchant.Id">
                         <MudCard Class="merchant-card rounded-xl mud-elevation-3 h-100"
@@ -88,7 +95,7 @@
                                     <MudAvatar
                                         Style="width: 90px; height: 90px; font-size: 2.2rem; font-weight: 700; background: linear-gradient(135deg, #F88113 0%, #FF9800 100%); color: white;">
                                         @(string.IsNullOrEmpty(merchant.NomeFantasia) ? "?" :
-                        merchant.NomeFantasia[0].ToString().ToUpper())
+                                        merchant.NomeFantasia[0].ToString().ToUpper())
                                     </MudAvatar>
                                 }
 
@@ -108,7 +115,7 @@
                                          Class="mb-1">
                                     @merchant.NomeFantasia
                                 </MudText>
-                                <MudText Typo="Typo.caption" Color="Color.Secondary"
+                                <MudText Typo="Typo.caption"
                                          Style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;"
                                          Class="mb-3">
                                     @merchant.Email
@@ -133,9 +140,9 @@
                                         var hoje = DateTime.Today;
                                         var diasRestantes = (venceEm.Date - hoje).Days;
                                         var corVencimento = diasRestantes < 0 ? Color.Error : (diasRestantes <= 7 ? Color.Warning :
-                        Color.Success);
-                                        var iconeVencimento = diasRestantes < 0 ? Icons.Material.Filled.EventBusy :
-                        Icons.Material.Filled.Event;
+                                        Color.Success);
+                                                        var iconeVencimento = diasRestantes < 0 ? Icons.Material.Filled.EventBusy :
+                                        Icons.Material.Filled.Event;
 
                                         <MudStack Row AlignItems="AlignItems.Center" Spacing="1">
                                             <MudIcon Icon="@iconeVencimento" Size="Size.Small" Color="@corVencimento" />
@@ -441,6 +448,16 @@
         filtroDescricao = "";
         if (_dataGrid != null)
             await _dataGrid.ReloadServerData();
+    }
+
+    private async Task OpenCreateMerchantModal()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ModalCreateMerchant>("Novo Estabelecimento", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+            await LoadMerchants();
     }
 
     private async Task OpenUpdateStatusModal(ClsMerchant merchant)

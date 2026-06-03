@@ -787,7 +787,7 @@
                     <td>@pedidos.ValorTotal.ToString("C")</td>
                     <td style="text-align:right;">@pedidos.TipoDePedido</td>
                     <td>@pedidos.CriadoEm.ToString("dd/MM/yyyy")</td>
-                    <td>@string.Join(", ", pedidos.Pagamentos.Select(p => p.FormaDePagamento.Descricao))</td>
+                    <td>@string.Join(", ", pedidos.Pagamentos.Select(p => p.FormaDePagamento?.Descricao ?? "Outros"))</td>
                     <td style="color:@(pedidos.Pagamentos.Sum(x => x.ValorTotal) == pedidos.ValorTotal ? "#27ae60" : "#c0392b"); font-weight: bold;">
                         @(pedidos.Pagamentos.Sum(x => x.ValorTotal) == pedidos.ValorTotal ? "SIM" : "NÃO")
                     </td>

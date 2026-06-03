@@ -1,3 +1,4 @@
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Produtos;
@@ -50,6 +51,13 @@ public class MerchantServices
     {
         var response = await _HttpClient.GetFromJsonAsync<ReturnApiRefatored<ClsMerchant>>("merchants/all");
         return response ?? new ReturnApiRefatored<ClsMerchant>();
+    }
+
+    public async Task<CreateMerchantResponseDto> AdminCreateMerchantAsync(CreateMerchantDto dto)
+    {
+        var response = await _HttpClient.PostAsJsonAsync("merchants/create", dto);
+        var result = await response.Content.ReadFromJsonAsync<CreateMerchantResponseDto>();
+        return result ?? new CreateMerchantResponseDto { Sucess = false, Message = "Erro ao criar merchant" };
     }
 
     public async Task<ReturnApiRefatored<ClsMerchant>> AdminUpdateMerchantStatusAsync(string merchantId, bool ativo, DateTime ativoAte)
