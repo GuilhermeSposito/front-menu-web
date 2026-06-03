@@ -16,19 +16,40 @@
             <div class="text-center mb-2">
                 <MudText Typo="Typo.h6">@Merchant.NomeFantasia</MudText>
                 <MudText Typo="Typo.caption">ID: @Merchant.Id</MudText>
-                
+
                 <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
                     <MudText Typo="Typo.caption" Style="color: var(--mud-palette-info); font-family: monospace; font-size: 0.7rem;">
                         sophos-erp.com.br/cardapio-sophos/@Merchant.Id
                     </MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
-                                   Size="Size.Small" 
-                                   OnClick="@(() => CopyToClipboard($"https://sophos-erp.com.br/cardapio-sophos/{Merchant.Id}"))" 
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                   Size="Size.Small"
+                                   OnClick="@(() => CopyToClipboard($"https://sophos-erp.com.br/cardapio-sophos/{Merchant.Id}"))"
                                    />
                 </MudStack>
+
+                @if (!string.IsNullOrWhiteSpace(_apelidoCardapio))
+                {
+                    <MudStack Row Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1" Class="mt-1">
+                        <MudText Typo="Typo.caption" Style="color: var(--mud-palette-success); font-family: monospace; font-size: 0.7rem;">
+                            sophos-erp.com.br/cardapio-sophos/@_apelidoCardapio
+                        </MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                       Size="Size.Small"
+                                       OnClick="@(() => CopyToClipboard($"https://sophos-erp.com.br/cardapio-sophos/{_apelidoCardapio}"))" />
+                    </MudStack>
+                }
             </div>
 
             <MudDivider Class="mb-2" />
+
+            <MudTextField Label="Apelido do Cardápio"
+                          @bind-Value="_apelidoCardapio"
+                          Variant="Variant.Outlined"
+                          Placeholder="ex: sophos"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Link"
+                          HelperText="Usado na URL amigável do cardápio. Apenas letras, números e hífens."
+                          Clearable="true" />
 
             <div class="d-flex align-center justify-space-between">
                 <MudText Typo="Typo.body1">Status da Conta</MudText>
@@ -79,13 +100,14 @@
 
     private bool _ativo;
     private DateTime? _ativoAte;
+    private string? _apelidoCardapio;
     private bool _isLoading;
 
     protected override void OnInitialized()
     {
         _ativo = Merchant.Ativo;
-        // Se a data for DateTime.MinValue ou nula, definir para hoje + 30 dias como sugestão se inativo
         _ativoAte = Merchant.AtivoAte == default ? DateTime.Now.AddDays(30) : Merchant.AtivoAte;
+        _apelidoCardapio = Merchant.ApelidoCardapio;
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -114,7 +136,7 @@
         try
         {
             _isLoading = true;
-            var response = await MerchantService.AdminUpdateMerchantStatusAsync(Merchant.Id, _ativo, _ativoAte.Value);
+            var response = await MerchantService.AdminUpdateMerchantStatusAsync(Merchant.Id, _ativo, _ativoAte.Value, _apelidoCardapio);
 
             if (response.Status == "success")
             {

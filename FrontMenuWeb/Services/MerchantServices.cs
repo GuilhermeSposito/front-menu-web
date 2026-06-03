@@ -60,12 +60,13 @@ public class MerchantServices
         return result ?? new CreateMerchantResponseDto { Sucess = false, Message = "Erro ao criar merchant" };
     }
 
-    public async Task<ReturnApiRefatored<ClsMerchant>> AdminUpdateMerchantStatusAsync(string merchantId, bool ativo, DateTime ativoAte)
+    public async Task<ReturnApiRefatored<ClsMerchant>> AdminUpdateMerchantStatusAsync(string merchantId, bool ativo, DateTime ativoAte, string? apelidoCardapio = null)
     {
-        var payload = new Dictionary<string, object>
-        { 
-            { "ativo", ativo }, 
-            { "AtivoAte", ativoAte.ToString("yyyy-MM-ddTHH:mm:ssZ") } 
+        var payload = new Dictionary<string, object?>
+        {
+            { "ativo", ativo },
+            { "AtivoAte", ativoAte.ToString("yyyy-MM-ddTHH:mm:ssZ") },
+            { "ApelidoCardapio", apelidoCardapio }
         };
         var response = await _HttpClient.PatchAsJsonAsync($"merchants/admin/update-status/{merchantId}", payload);
         var result = await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsMerchant>>();
