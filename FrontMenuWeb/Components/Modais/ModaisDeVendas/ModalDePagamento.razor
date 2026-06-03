@@ -247,7 +247,7 @@
     </DialogContent>
     <DialogActions>
         <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Spacing="2" Class="w-100 px-2 pb-2">
-            @if (Pedido.TipoDePedido == "MESA")
+            @if (Pedido.TipoDePedido == "MESA" || Pedido.TipoDePedido == "BALCÃO")
             {
                 <MudButton Variant="Variant.Filled" OnClick="ImprimirFechamento" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Print">
                     Imprimir Fechamento
@@ -410,17 +410,19 @@
     {
         try
         {
+            var ehBalcao = Pedido.TipoDePedido == "BALCÃO";
             await PedidosService.ImprimirFechamentoPagamento(
-                mesaId: Pedido.MesaComandaId,
                 itens: Pedido.Itens,
                 desconto: ValorDoDesconto,
                 taxaAdicional: TaxaAdicional,
                 taxaServico: ValorTaxaDeServico,
-                couvert: !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? ValorTotalCouvert : 0f,
-                qtdPessoas: !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? QtdPessoasCouvert : 0,
+                couvert: !ehBalcao && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? ValorTotalCouvert : 0f,
+                qtdPessoas: !ehBalcao && !(AppState.MerchantLogado?.AdicionaCouvertComoItem ?? false) ? QtdPessoasCouvert : 0,
                 troco: ValorTroco,
                 totalFinal: ValorTotal,
-                pagamentos: Pedido.Pagamentos);
+                pagamentos: Pedido.Pagamentos,
+                mesaId: ehBalcao ? null : Pedido.MesaComandaId,
+                pedidoId: ehBalcao ? Pedido.Id : null);
             Snackbar.Add("Fechamento enviado para impressão.", Severity.Success);
         }
         catch (Exception ex)

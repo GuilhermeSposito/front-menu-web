@@ -61,7 +61,8 @@ public class AvisoContaPagamentoDto
 
 public class AvisarContaRequestDto
 {
-    [JsonPropertyName("MesaId")] public int MesaId { get; set; }
+    [JsonPropertyName("MesaId")] public int? MesaId { get; set; }
+    [JsonPropertyName("PedidoId")] public int? PedidoId { get; set; }
     [JsonPropertyName("Itens")] public List<AvisoContaItemDto> Itens { get; set; } = new();
     [JsonPropertyName("CobraTaxaServico")] public bool CobraTaxaServico { get; set; }
     [JsonPropertyName("CobraCouvert")] public bool CobraCouvert { get; set; }
@@ -78,6 +79,8 @@ public class AvisoContaDto
 {
     [JsonPropertyName("Mesa")] public int Mesa { get; set; }
     [JsonPropertyName("MesaId")] public int MesaId { get; set; }
+    [JsonPropertyName("PedidoId")] public int? PedidoId { get; set; }
+    [JsonPropertyName("DisplayId")] public string? DisplayId { get; set; }
     [JsonPropertyName("SepararPorCliente")] public bool SepararPorCliente { get; set; }
     [JsonPropertyName("Comandas")] public List<AvisoContaComandaDto>? Comandas { get; set; }
     [JsonPropertyName("Itens")] public List<AvisoContaItemDto>? Itens { get; set; }

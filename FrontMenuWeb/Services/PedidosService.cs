@@ -239,7 +239,6 @@ public class PedidosService
     }
 
     public async Task ImprimirFechamentoPagamento(
-        int mesaId,
         List<ItensPedido> itens,
         float desconto,
         float taxaAdicional,
@@ -248,11 +247,14 @@ public class PedidosService
         int qtdPessoas,
         float troco,
         float totalFinal,
-        List<PagamentoDoPedido> pagamentos)
+        List<PagamentoDoPedido> pagamentos,
+        int? mesaId = null,
+        int? pedidoId = null)
     {
         var payload = new AvisarContaRequestDto
         {
             MesaId = mesaId,
+            PedidoId = pedidoId,
             CobraTaxaServico = taxaServico > 0,
             CobraCouvert = couvert > 0,
             QtdPessoas = qtdPessoas > 0 ? qtdPessoas : null,
