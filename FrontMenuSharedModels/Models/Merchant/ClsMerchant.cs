@@ -126,6 +126,10 @@ public class ClsMerchant
     [JsonPropertyName("CorEscritoCard")] public string CorEscritoCard { get; set; } = "#fff";
     [JsonPropertyName("CorEscritoHero")] public string CorEscritoHero { get; set; } = "#fff";
     [JsonPropertyName("JuntaItensNoFechamentoDeConta")] public bool JuntaItensNoFechamentoDeConta { get; set; } = false;
+    [JsonPropertyName("IntegraAnotaAi")] public bool IntegraAnotaAi { get; set; } = false;
+    [JsonPropertyName("TokenAnotaAi")] public string? TokenAnotaAi { get; set; }
+    [JsonPropertyName("ImprimeComplementosComoItem")] public bool ImprimeComplementosComoItem { get; set; } = false;
+    [JsonPropertyName("ApelidoCardapio")] public string? ApelidoCardapio { get; set; }
 }
 
 public class AdminMerchantsResponse

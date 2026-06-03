@@ -874,7 +874,10 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, "VIA DE FECHAMENTO", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, $"{DateTime.Now:g}", FonteFechamentoDeCaixa, Alinhamentos.Centro);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        AdicionaConteudo(Conteudo, $"{legenda} #{aviso.Mesa}", FonteDetalhesDoPedido);
+        var identificador = aviso.PedidoId is not null
+            ? $"Balcão - Pedido #{aviso.DisplayId ?? aviso.PedidoId.ToString()}"
+            : $"{legenda} #{aviso.Mesa}";
+        AdicionaConteudo(Conteudo, identificador, FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
 
         // ── Separado por cliente ───────────────────────────────────────────────
@@ -1068,10 +1071,13 @@ public class ImpressaoService
 
         if (AppState.MerchantLogado?.ImprimeMediaPorPessoaNoFechamentoDaMesa ?? false)
         {
-            var mediaPorPessoa = aviso.TotalFinal > 0 ? aviso.TotalFinal / (aviso.Couvert?.QtdPessoas ?? 1) : totalAExibir / (aviso.Couvert?.QtdPessoas ?? 1);
-            AdicionaConteudoLR(Conteudo, "NRO DE PESSOAS", $"{aviso.Couvert?.QtdPessoas ?? 1}", FonteTotaisFechamento);
-            AdicionaConteudoLR(Conteudo, "MÉDIA POR PESSOA", mediaPorPessoa.ToString("C"), FonteTotaisFechamento);
-            AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+            if ((aviso.Couvert?.QtdPessoas ?? 0) > 0)
+            {
+                var mediaPorPessoa = aviso.TotalFinal > 0 ? aviso.TotalFinal / (aviso.Couvert?.QtdPessoas ?? 1) : totalAExibir / (aviso.Couvert?.QtdPessoas ?? 1);
+                AdicionaConteudoLR(Conteudo, "NRO DE PESSOAS", $"{aviso.Couvert?.QtdPessoas ?? 1}", FonteTotaisFechamento);
+                AdicionaConteudoLR(Conteudo, "MÉDIA POR PESSOA", mediaPorPessoa.ToString("C"), FonteTotaisFechamento);
+                AdicionaConteudo(Conteudo, SepPontilhado(), FonteSeparadoresSimples);
+            }
         }
 
 

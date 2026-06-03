@@ -183,6 +183,9 @@
                                 <MudCheckBox Value=@Merchant.JuntaItensNoFechamentoDeConta ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.JuntaItensNoFechamentoDeConta = x)) T=bool Color="Color.Primary">Junta Itens Na Impressão de Conta</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
+                                <MudCheckBox Value=@Merchant.ImprimeComplementosComoItem ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ImprimeComplementosComoItem = x)) T=bool Color="Color.Primary">Imprime Complementos Como Item</MudCheckBox>
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="3">
                                 <MudSelect FullWidth="true" Class="mud-width-full" Variant=Variant.Outlined Label="Controle de Ultilização"
                                            Value="@Merchant.LegendaNomeUltilizadoParaPlaced" ValueChanged="@(async (string v) => { Merchant.LegendaNomeUltilizadoParaPlaced = v; await SalvarInfosLojaAsync(); })"
                                            T="string">
@@ -443,6 +446,24 @@
                             </MudItem>
                         }
 
+                    </MudGrid>
+
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <MudText Typo="Typo.h5">Integrações</MudText>
+                        <MudButton OnClick=@(() => { EditandoIntegracoes = !EditandoIntegracoes; }) Color=Color.Primary Size=Size.Large EndIcon="@Icons.Material.Filled.Edit"></MudButton>
+                    </MudStack>
+                    <MudDivider DividerType="DividerType.FullWidth" Light=true />
+                    <MudGrid Class="p-2 mb-1">
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.IntegraAnotaAi ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraAnotaAi = x)) T=bool Color="Color.Primary">Integra Anota.ai</MudCheckBox>
+                        </MudItem>
+                        @if (Merchant.IntegraAnotaAi)
+                        {
+                            <MudItem xs="12" sm="12" md="12">
+                                <MudTextField Disabled=EditandoIntegracoes Label="Token Anota.ai" Variant="Variant.Outlined" @bind-Value=@Merchant.TokenAnotaAi Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" FullWidth="true" />
+                            </MudItem>
+                        }
                     </MudGrid>
 
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
@@ -773,6 +794,7 @@
     private bool EditandoInfosFiscaisBloq = true;
     private bool EditandoInfosEntregaBloq = true;
     private bool EditandoIntegracaoWhatsApp = true;
+    private bool EditandoIntegracoes = true;
     private bool EditandoItensFracionadosBloq = true;
     private bool CarregouNovoCertificado = false;
     private bool EditandoEnderecosBloq = true;
