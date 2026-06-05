@@ -52,7 +52,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await AtualizarPeriodoRapido(_activePanelIndex);
+        if (DataInicio is null && DataFim is null)
+            await AtualizarPeriodoRapido(_activePanelIndex);
     }
 
     private async Task OnDataInicioChanged(DateTime? value)

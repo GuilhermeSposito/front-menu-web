@@ -1,3 +1,4 @@
+using FrontMenuWeb.DTOS;
 using FrontMenuWeb.Models;
 using FrontMenuWeb.Models.Merchant;
 using System.Net.Http.Json;
@@ -57,5 +58,31 @@ public class GarconService
     {
         var response = await _http.GetAsync("garcons/mesas");
         return await response.Content.ReadFromJsonAsync<ReturnApiRefatored<List<ClsMesasEComandas>>>();
+    }
+
+    public async Task<DtoItensPorGarcom?> GetItensPorGarcomAsync(
+        int? garconId = null,
+        DateTime? dataInicio = null,
+        DateTime? dataFim = null,
+        string? nomeItem = null,
+        int page = 1,
+        int limit = 10)
+    {
+        var parametros = new List<string> { $"page={page}", $"limit={limit}" };
+        if (garconId.HasValue) parametros.Add($"garconId={garconId}");
+        if (dataInicio.HasValue) parametros.Add($"dataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFim.HasValue) parametros.Add($"dataFim={dataFim:yyyy-MM-dd}");
+        if (!string.IsNullOrWhiteSpace(nomeItem)) parametros.Add($"nomeItem={Uri.EscapeDataString(nomeItem)}");
+
+        var url = "garcons/itens-lancados?" + string.Join("&", parametros);
+        var response = await _http.GetAsync(url);
+        var retorno = await response.Content.ReadFromJsonAsync<RespostaItensPorGarcom>();
+        return retorno?.Data;
+    }
+
+    private class RespostaItensPorGarcom
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
+        [System.Text.Json.Serialization.JsonPropertyName("data")] public DtoItensPorGarcom? Data { get; set; }
     }
 }

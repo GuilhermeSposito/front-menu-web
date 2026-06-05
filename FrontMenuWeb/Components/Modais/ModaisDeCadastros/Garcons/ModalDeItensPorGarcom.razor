@@ -1,0 +1,256 @@
+@rendermode RenderMode.InteractiveWebAssembly
+@using FrontMenuWeb.Components.Modais.ModaisGenericos
+@using FrontMenuWeb.Components.Uteis
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using MudBlazor.Extensions
+@using System.Globalization
+@inject GarconService GarconService
+@inject ISnackbar Snackbar
+
+<MudDialog TitleClass="p-0" ContentClass="p-0"
+           Style="background-color: var(--mud-palette-background);">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween"
+                  Class="px-4 py-2"
+                  Style="background-color: var(--mud-palette-primary); color: white;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Person" />
+                <MudText Typo="Typo.h6">Itens Lançados — @NomeGarcon</MudText>
+            </MudStack>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Inherit" OnClick="Fechar" />
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="0">
+
+            @* Filtro de período + campo de produto (dentro do slot FiltroExtra) *@
+            <FiltroPeriodoRapido @bind-DataInicio="_filtroInicio"
+                                 @bind-DataFim="_filtroFim"
+                                 OnFiltroAplicado="Carregar">
+                <FiltroExtra>
+                    <MudTextField @bind-Value="_filtroNomeItem"
+                                  Label="Filtrar por produto"
+                                  Placeholder="Nome do produto..."
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Clearable="true"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Style="min-width: 220px" />
+                </FiltroExtra>
+            </FiltroPeriodoRapido>
+
+            @* Grid de itens *@
+            <MudPaper Elevation="0" Class="pa-3 mt-2" Style="background-color: var(--mud-palette-surface)">
+                <MudDataGrid T="ItensPedido"
+                             @ref="_gridRef"
+                             ServerData="LoadServerData"
+                             Loading="_carregando"
+                             Class="rounded-3 custom-striped"
+                             RowsPerPage="@_itensPorPagina"
+                             Dense Hover>
+                    <PagerContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="px-2 py-1 w-100">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.caption">Itens por página:</MudText>
+                                @foreach (var opcao in new[] { 10, 25, 50, 100 })
+                                {
+                                    var op = opcao;
+                                    <MudChip T="string"
+                                             Color="@(_itensPorPagina == op ? Color.Primary : Color.Default)"
+                                             Variant="@(_itensPorPagina == op ? Variant.Filled : Variant.Outlined)"
+                                             Size="Size.Small"
+                                             OnClick="@(() => AlterarItensPorPagina(op))">
+                                        @op
+                                    </MudChip>
+                                }
+                            </MudStack>
+                            <MudDataGridPager T="ItensPedido" />
+                        </MudStack>
+                    </PagerContent>
+                    <NoRecordsContent>
+                        <AvisoDeDadosVazios ReferenciaDados="itens lançados" />
+                    </NoRecordsContent>
+                    <Columns>
+                        <PropertyColumn Property="x => x.Id" Title="ID" />
+                        <TemplateColumn Title="Produto">
+                            <CellTemplate>
+                                <MudStack Spacing="0">
+                                    <MudText Style="font-weight: 500">@context.Item.Descricao</MudText>
+                                    @if (!string.IsNullOrEmpty(context.Item.LegTamanhoEscolhido))
+                                    {
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @context.Item.LegTamanhoEscolhido
+                                        </MudText>
+                                    }
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <PropertyColumn Property="x => x.Quantidade" Title="Qtd." Format="G6" />
+                        <TemplateColumn Title="Unit.">
+                            <CellTemplate>
+                                @context.Item.PrecoUnitario.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Total">
+                            <CellTemplate>
+                                <MudText Color="Color.Success" Style="font-weight: 600">
+                                    @context.Item.PrecoTotal.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                </MudText>
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Complementos">
+                            <CellTemplate>
+                                @if (context.Item.Complementos?.Any() == true)
+                                {
+                                    <MudStack Spacing="0">
+                                        @foreach (var comp in context.Item.Complementos)
+                                        {
+                                            <MudText Typo="Typo.caption">
+                                                + @comp.Descricao (x@(comp.Quantidade))
+                                            </MudText>
+                                        }
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">—</MudText>
+                                }
+                            </CellTemplate>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Data / Hora">
+                            <CellTemplate>
+                                @context.Item.CriadoEm?.ToString("dd/MM/yyyy HH:mm")
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudPaper>
+
+            @* Cards totalizadores *@
+            @if (_dados != null)
+            {
+                <MudGrid Class="mt-2 px-1 pb-3">
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Size="Size.Large" />
+                                <MudText Typo="Typo.subtitle2">Vendas Brutas</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Success">
+                                    @_dados.ValorTotalVendas.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Percent" Color="Color.Warning" Size="Size.Large" />
+                                <MudText Typo="Typo.subtitle2">
+                                    Taxa de Serviço (@_dados.TaxaServicoPercent.ToString("N2")%)
+                                </MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Warning">
+                                    @_dados.ValorTaxaServico.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="4">
+                        <MudPaper Class="pa-4 rounded-3" Style="background-color: var(--mud-palette-surface)">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Payments" Color="Color.Primary" Size="Size.Large" />
+                                <MudText Typo="Typo.subtitle2">Total com Taxa</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Primary">
+                                    @_dados.ValorTotalComTaxa.ToString("C", CultureInfo.GetCultureInfo("pt-BR"))
+                                </MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            }
+
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int GarconId { get; set; }
+    [Parameter] public string NomeGarcon { get; set; } = string.Empty;
+    [Parameter] public DateTime? DataInicioHerdada { get; set; }
+    [Parameter] public DateTime? DataFimHerdada { get; set; }
+
+    private DateTime? _filtroInicio;
+    private DateTime? _filtroFim;
+    private string _filtroNomeItem = string.Empty;
+
+    private MudDataGrid<ItensPedido>? _gridRef;
+    private DtoItensPorGarcom? _dados;
+    private bool _carregando = false;
+    private int _itensPorPagina = 10;
+
+    private async Task AlterarItensPorPagina(int valor)
+    {
+        if (_itensPorPagina == valor) return;
+        _itensPorPagina = valor;
+        if (_gridRef != null)
+            await _gridRef.ReloadServerData();
+    }
+
+    protected override void OnInitialized()
+    {
+        _filtroInicio = DataInicioHerdada;
+        _filtroFim = DataFimHerdada;
+    }
+
+    private void Fechar() => MudDialog.Cancel();
+
+    private async Task Carregar()
+    {
+        if (_gridRef == null) return;
+        await _gridRef.ReloadServerData();
+    }
+
+    private async Task<GridData<ItensPedido>> LoadServerData(GridState<ItensPedido> state)
+    {
+        try
+        {
+            _carregando = true;
+            StateHasChanged();
+
+            _dados = await GarconService.GetItensPorGarcomAsync(
+                garconId: GarconId,
+                dataInicio: _filtroInicio,
+                dataFim: _filtroFim,
+                nomeItem: string.IsNullOrWhiteSpace(_filtroNomeItem) ? null : _filtroNomeItem,
+                page: state.Page + 1,
+                limit: state.PageSize);
+
+            if (_dados == null)
+            {
+                Snackbar.Add("Erro ao carregar itens do garçom.", Severity.Error);
+                return new GridData<ItensPedido> { Items = new List<ItensPedido>(), TotalItems = 0 };
+            }
+
+            return new GridData<ItensPedido>
+            {
+                Items = _dados.Itens,
+                TotalItems = _dados.Total
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+            return new GridData<ItensPedido> { Items = new List<ItensPedido>(), TotalItems = 0 };
+        }
+        finally
+        {
+            _carregando = false;
+            StateHasChanged();
+        }
+    }
+}
