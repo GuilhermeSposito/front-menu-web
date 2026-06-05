@@ -50,26 +50,11 @@
                              ServerData="LoadServerData"
                              Loading="_carregando"
                              Class="rounded-3 custom-striped"
-                             RowsPerPage="@_itensPorPagina"
                              Dense Hover>
                     <PagerContent>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="px-2 py-1 w-100">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                <MudText Typo="Typo.caption">Itens por página:</MudText>
-                                @foreach (var opcao in new[] { 10, 25, 50, 100 })
-                                {
-                                    var op = opcao;
-                                    <MudChip T="string"
-                                             Color="@(_itensPorPagina == op ? Color.Primary : Color.Default)"
-                                             Variant="@(_itensPorPagina == op ? Variant.Filled : Variant.Outlined)"
-                                             Size="Size.Small"
-                                             OnClick="@(() => AlterarItensPorPagina(op))">
-                                        @op
-                                    </MudChip>
-                                }
-                            </MudStack>
-                            <MudDataGridPager T="ItensPedido" />
-                        </MudStack>
+                        <MudDataGridPager T="ItensPedido"
+                                          PageSizeOptions="@(new[] { 10, 25, 50, 100 })"
+                                          RowsPerPageString="Itens por página:" />
                     </PagerContent>
                     <NoRecordsContent>
                         <AvisoDeDadosVazios ReferenciaDados="itens lançados" />
@@ -191,15 +176,6 @@
     private MudDataGrid<ItensPedido>? _gridRef;
     private DtoItensPorGarcom? _dados;
     private bool _carregando = false;
-    private int _itensPorPagina = 10;
-
-    private async Task AlterarItensPorPagina(int valor)
-    {
-        if (_itensPorPagina == valor) return;
-        _itensPorPagina = valor;
-        if (_gridRef != null)
-            await _gridRef.ReloadServerData();
-    }
 
     protected override void OnInitialized()
     {
