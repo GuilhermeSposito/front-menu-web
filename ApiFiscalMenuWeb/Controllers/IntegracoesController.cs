@@ -126,8 +126,9 @@ public class IntegracoesController : Controller
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
+        UpdateDto.TokenNestApi = token;
         var sucesso = await _anotaAiService.FinalizarPedidoAsync(UpdateDto);
-        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error" });
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido finalizado com sucesso" : "Erro ao finalizar pedido AnotaAi" } });
     }
 
     [HttpPost("anotaai/ready")]
@@ -138,8 +139,9 @@ public class IntegracoesController : Controller
         if (string.IsNullOrEmpty(token))
             return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
 
+        UpdateDto.TokenNestApi = token;
         var sucesso = await _anotaAiService.AvisaPedidoProntoAsync(UpdateDto);
-        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error" });
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido marcado como pronto" : "Erro ao marcar pedido como pronto" } });
     }
 
     [HttpPost("delmatch/accepted/{idIntegracao}")]

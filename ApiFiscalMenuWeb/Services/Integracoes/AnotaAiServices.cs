@@ -164,15 +164,28 @@ public class AnotaAiServices
         return await AceitarPedidoAnotaAiAsync(idIntegracao, merchant.TokenAnotaAi);
     }
 
+    // Usa o token do usuário logado (endpoint protegido, retorna TokenAnotaAi) quando disponível;
+    // caso contrário, cai no endpoint público pelo MerchantId.
+    private async Task<ClsMerchant?> ObterMerchantComTokenAsync(string? tokenNest, string? merchantId)
+    {
+        if (!string.IsNullOrEmpty(tokenNest))
+            return await _nestApiService.GetMerchantFromNestApi(tokenNest);
+
+        if (!string.IsNullOrEmpty(merchantId))
+            return await _nestApiService.GetMerchantFromNestApiPublic(merchantId);
+
+        return null;
+    }
+
     public async Task<bool> FinalizarPedidoAsync(UpdatePedidosDto dto)
     {
-        if (string.IsNullOrEmpty(dto.MerchantId) || string.IsNullOrEmpty(dto.PedidoIdIntegracao))
+        if (string.IsNullOrEmpty(dto.PedidoIdIntegracao))
             return false;
 
-        var merchant = await _nestApiService.GetMerchantFromNestApiPublic(dto.MerchantId);
+        var merchant = await ObterMerchantComTokenAsync(dto.TokenNestApi, dto.MerchantId);
         if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
         {
-            _logger.LogWarning("[AnotaAi] Merchant {MerchantId} não encontrado ou sem TokenAnotaAi.", dto.MerchantId);
+            _logger.LogWarning("[AnotaAi] Merchant não encontrado ou sem TokenAnotaAi ao finalizar pedido {OrderId}.", dto.PedidoIdIntegracao);
             return false;
         }
 
@@ -201,13 +214,13 @@ public class AnotaAiServices
 
     public async Task<bool> AvisaPedidoProntoAsync(UpdatePedidosDto dto)
     {
-        if (string.IsNullOrEmpty(dto.MerchantId) || string.IsNullOrEmpty(dto.PedidoIdIntegracao))
+        if (string.IsNullOrEmpty(dto.PedidoIdIntegracao))
             return false;
 
-        var merchant = await _nestApiService.GetMerchantFromNestApiPublic(dto.MerchantId);
+        var merchant = await ObterMerchantComTokenAsync(dto.TokenNestApi, dto.MerchantId);
         if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
         {
-            _logger.LogWarning("[AnotaAi] Merchant {MerchantId} não encontrado ou sem TokenAnotaAi.", dto.MerchantId);
+            _logger.LogWarning("[AnotaAi] Merchant não encontrado ou sem TokenAnotaAi ao avisar pronto {OrderId}.", dto.PedidoIdIntegracao);
             return false;
         }
 
