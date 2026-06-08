@@ -17,7 +17,7 @@ window.socketIO = {
             }
 
             if (url == "" || url == null || !url)
-                url = "https://sophos-erp.com.br";
+                url = "https://api-sophos.com.br";
 
             const socket = io(url, {
                 path: "/socket.io/",

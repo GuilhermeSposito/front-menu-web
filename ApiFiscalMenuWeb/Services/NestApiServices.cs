@@ -238,6 +238,30 @@ public class NestApiServices
         return true;
     }
 
+    public async Task<ClsMerchant?> GetMerchantByAnotaAiTokenAsync(string token)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.GetAsync($"merchants/by-anota-ai-token/{Uri.EscapeDataString(token)}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"[NestApiServices] Merchant não encontrado para token AnotaAi. Status: {response.StatusCode}");
+                return null;
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var wrapper = JsonSerializer.Deserialize<ReturnApiRefatored<ClsMerchant>>(content);
+            return wrapper?.Data?.Objeto;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao buscar merchant por token AnotaAi: {ex.Message}");
+            return null;
+        }
+    }
+
     public async Task<MerchantByInstanceDto?> GetMerchantByInstanceNameAsync(string instanceName)
     {
         try

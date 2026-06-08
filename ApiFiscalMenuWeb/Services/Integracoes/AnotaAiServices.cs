@@ -1,9 +1,10 @@
 ﻿using ApiFiscalMenuWeb.Models.Dtos;
 using FrontMenuWeb.Models.Merchant;
 using FrontMenuWeb.Models.Pedidos;
-using MailKit.Search;
-using Microsoft.AspNetCore.Http.HttpResults;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using ApiFiscalMenuWeb.Models;
+using FrontMenuWeb.DTOS;
 
 namespace ApiFiscalMenuWeb.Services.Integracoes;
 
@@ -46,35 +47,62 @@ public class AnotaAiServices
             case -2:
                 //Pedido agendado aceito
                 break;
-            case 0:
+            case 0: //novo pedido
                 retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
-                //await SetPedido(item.IdPedido);                                    //Em análise 
                 break;
-            case 1:
-                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
-                //await SetPedido(item.IdPedido);                                   //em produção 
+            case 1: //em produção 
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
+                // retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
                 break;
-            case 2:
-                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
-                //await SetPedido(item.IdPedido);
-                //await AtualizaStatusPedido(item.IdPedido, item.Check);            //pronto
+            case 2:  //pronto
+                     // retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
                 break;
-            case 3:
-                //await AtualizaStatusPedido(item.IdPedido, item.Check);            //Finalizado
+            case 3:  //Finalizado
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
                 break;
-            case 4:
-                //await AtualizaStatusPedido(item.IdPedido, item.Check);            //Cancelado
+            case 4:   //Cancelado
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
                 break;
-            case 5:
-                //await AtualizaStatusPedido(item.IdPedido, item.Check);           //Negado
+            case 5:   //Negado
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
                 break;
-            case 6:
-                //await AtualizaStatusPedido(item.IdPedido, item.Check);           //Solicitação de cancelamento de pedido
+            case 6:   //Solicitação de cancelamento de pedido
+                await AtualizaStatusPedido(pedido.Id, merchant, pedido.Check);
                 break;
         }
 
         Console.WriteLine(retornoDaFuncaoDeAdicionarPedido);
+    }
 
+    private async Task AtualizaStatusPedido(string integracaoId, ClsMerchant merchant, int check)
+    {
+        var pedido = await _nestApiService.GetPedidoPeloIntegracaoIdAsync(integracaoId);
+        if (pedido is null)
+        {
+            _logger.LogWarning("[AnotaAi] Pedido com integracaoId {Id} não encontrado para atualizar status (check={Check})", integracaoId, check);
+            return;
+        }
+
+        switch (check)
+        {
+            case 1: // em produção — aceita o pedido
+                await _nestApiService.UpdatePedidoPreparandoNaAPiPrincipalAsync(null, merchant.Id, pedido);
+                break;
+            case 2: // pronto — despacha o pedido
+                await _nestApiService.UpdatePedidoDespachadoNaAPiPrincipalAsync(null, merchant.Id, pedido);
+                break;
+            case 3: // finalizado
+                await _nestApiService.UpdatePedidoConcluidodoNaAPiPrincipalAsync(null, merchant.Id, pedido);
+                break;
+            case 4: // cancelado
+            case 5: // negado
+                await _nestApiService.UpdatePedidoCanceladodoNaAPiPrincipalAsync(pedido);
+                break;
+            case 6: // solicitação de cancelamento
+                await _nestApiService.UpdatePedidoInfosAdicionaisOuStatusoNaAPiPrincipalAsync(merchant.Id, pedido, new UpdatePedidoInfosAdicionaisDto { InfoAdicionalOuStatus = "CANCELAMENTO_SOLICITADO" });
+                break;
+        }
     }
 
     private async Task<string> AdicionaPedido(ClsMerchant Merchant, AnotaAiOrderInfoDto PedidoAnotaAi)
@@ -88,19 +116,122 @@ public class AnotaAiServices
         PedidoSophos.CriadoPor = "ANOTAAI";
         PedidoSophos.IfoodID = null;
         PedidoSophos.IdIntegracao = PedidoAnotaAi.Id;
- 
+
 
         bool AdicionouOPedido = await _nestApiService.CriarPedidoSophos(Merchant, PedidoSophos);
         if (!AdicionouOPedido)
             return $"Falha ao adicionar o pedido {PedidoAnotaAi.Id} para o merchant {Merchant.NomeFantasia}";
 
-        if (Merchant.AceitaPedidoAutDeIntegracoes) //Aqui serve para podermos integrar com a loja do cliente mas não aceitar os pedidos pra ele, apenas visualizar 
-        {
-            PedidoSophos.EtapaPedido = "PREPARANDO";
-
-        }
+        if (Merchant.AceitaPedidoAutDeIntegracoes && !string.IsNullOrEmpty(Merchant.TokenAnotaAi))
+            await AceitarPedidoAnotaAiAsync(PedidoAnotaAi.Id, Merchant.TokenAnotaAi);
 
         return $"Pedido {PedidoSophos.Id} {Merchant.NomeFantasia}";
+    }
+
+    private async Task<bool> AceitarPedidoAnotaAiAsync(string orderId, string tokenAnotaAi)
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiAnotaAi");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenAnotaAi);
+
+            var response = await client.PostAsync($"order/accept/{orderId}", null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[AnotaAi] Falha ao aceitar pedido {OrderId}. Status: {Status}", orderId, response.StatusCode);
+                return false;
+            }
+
+            _logger.LogInformation("[AnotaAi] Pedido {OrderId} aceito com sucesso.", orderId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AnotaAi] Erro ao aceitar pedido {OrderId}", orderId);
+            return false;
+        }
+    }
+
+    public async Task<bool> AceitarPedidoManualAsync(string idIntegracao, string merchantSophosId)
+    {
+        var merchant = await _nestApiService.GetMerchantFromNestApiPublic(merchantSophosId);
+        if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
+        {
+            _logger.LogWarning("[AnotaAi] Merchant {MerchantId} não encontrado ou sem TokenAnotaAi.", merchantSophosId);
+            return false;
+        }
+        return await AceitarPedidoAnotaAiAsync(idIntegracao, merchant.TokenAnotaAi);
+    }
+
+    public async Task<bool> FinalizarPedidoAsync(UpdatePedidosDto dto)
+    {
+        if (string.IsNullOrEmpty(dto.MerchantId) || string.IsNullOrEmpty(dto.PedidoIdIntegracao))
+            return false;
+
+        var merchant = await _nestApiService.GetMerchantFromNestApiPublic(dto.MerchantId);
+        if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
+        {
+            _logger.LogWarning("[AnotaAi] Merchant {MerchantId} não encontrado ou sem TokenAnotaAi.", dto.MerchantId);
+            return false;
+        }
+
+        try
+        {
+            var client = _factory.CreateClient("ApiAnotaAi");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", merchant.TokenAnotaAi);
+
+            var response = await client.PostAsync($"order/finalize/{dto.PedidoIdIntegracao}", null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[AnotaAi] Falha ao finalizar pedido {OrderId}. Status: {Status}", dto.PedidoIdIntegracao, response.StatusCode);
+                return false;
+            }
+
+            _logger.LogInformation("[AnotaAi] Pedido {OrderId} finalizado.", dto.PedidoIdIntegracao);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AnotaAi] Erro ao finalizar pedido {OrderId}", dto.PedidoIdIntegracao);
+            return false;
+        }
+    }
+
+    public async Task<bool> AvisaPedidoProntoAsync(UpdatePedidosDto dto)
+    {
+        if (string.IsNullOrEmpty(dto.MerchantId) || string.IsNullOrEmpty(dto.PedidoIdIntegracao))
+            return false;
+
+        var merchant = await _nestApiService.GetMerchantFromNestApiPublic(dto.MerchantId);
+        if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
+        {
+            _logger.LogWarning("[AnotaAi] Merchant {MerchantId} não encontrado ou sem TokenAnotaAi.", dto.MerchantId);
+            return false;
+        }
+
+        try
+        {
+            var client = _factory.CreateClient("ApiAnotaAi");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", merchant.TokenAnotaAi);
+
+            var response = await client.PostAsync($"order/ready/{dto.PedidoIdIntegracao}", null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[AnotaAi] Falha ao avisar pedido pronto {OrderId}. Status: {Status}", dto.PedidoIdIntegracao, response.StatusCode);
+                return false;
+            }
+
+            _logger.LogInformation("[AnotaAi] Pedido {OrderId} marcado como pronto.", dto.PedidoIdIntegracao);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AnotaAi] Erro ao avisar pedido pronto {OrderId}", dto.PedidoIdIntegracao);
+            return false;
+        }
     }
 
     public PedidoIfoodDto NormalizaPedidoAnotaAiParaPedidoIfood(AnotaAiOrderInfoDto pedido)

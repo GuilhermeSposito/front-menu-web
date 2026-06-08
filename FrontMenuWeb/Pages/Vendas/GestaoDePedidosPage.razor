@@ -543,13 +543,15 @@
 
     private async Task VerificaSeColocaEtapaNovoNaTela()
     {
-        if (AppState.MerchantLogado is not null && AppState.MerchantLogado.IntegraIfood && !AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes)
+        if (AppState.MerchantLogado is null) return;
+
+        bool integraComAceiteManual = (AppState.MerchantLogado.IntegraIfood || AppState.MerchantLogado.IntegraAnotaAi)
+                                      && !AppState.MerchantLogado.AceitaPedidoAutDeIntegracoes;
+
+        if (integraComAceiteManual && !ListaDeEtapasDosPedidos.Any(x => x.NomeDaEtapa == "NOVO"))
         {
-            if (!ListaDeEtapasDosPedidos.Any(x => x.NomeDaEtapa == "NOVO"))
-            {
-                ListaDeEtapasDosPedidos.Insert(0, new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "NOVO", Selector = "NOVO" });
-                await InvokeAsync(StateHasChanged);
-            }
+            ListaDeEtapasDosPedidos.Insert(0, new ClsDeSuporteParaVizualicacaoDePedidos { NomeDaEtapa = "NOVO", Selector = "NOVO" });
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -865,6 +867,10 @@
                         {
                             response = await IntegracoesSophosService.AceitaPedidoDelmatch(item.Pedido.IdIntegracao ?? string.Empty, AppState.MerchantLogado.Id);
                         }
+                        else if (item.Pedido.CriadoPor == "ANOTAAI")
+                        {
+                            response = await IntegracoesSophosService.AceitaPedidoAnotaAi(item.Pedido.IdIntegracao ?? string.Empty, AppState.MerchantLogado.Id);
+                        }
                         else
                         {
                             response = await IntegracoesSophosService.AceitaPedido(item.Pedido.IfoodID ?? string.Empty);
@@ -893,6 +899,9 @@
                     item.Selector = "DESPACHADO";
                     var Response = await PedidosService.UpdatePedidoDespachadoEPronto(item.Pedido);
                     MostraMensagemDeUpdateDoPedido(Response);
+
+                    if (item.Pedido.CriadoPor == "ANOTAAI" && !string.IsNullOrEmpty(item.Pedido.IdIntegracao))
+                        await IntegracoesSophosService.AvisaPedidoProntoAnotaAi(item.Pedido.IdIntegracao, AppState.MerchantLogado.Id);
                 }
                 else if (item.Selector == "DESPACHADO")
                 {
@@ -900,6 +909,9 @@
                     item.UltimaEtapa = true;
                     var Response = await PedidosService.UpdatePedidoFinalizadoo(item.Pedido);
                     MostraMensagemDeUpdateDoPedido(Response);
+
+                    if (item.Pedido.CriadoPor == "ANOTAAI" && !string.IsNullOrEmpty(item.Pedido.IdIntegracao))
+                        await IntegracoesSophosService.FinalizaPedidoAnotaAi(item.Pedido.IdIntegracao, AppState.MerchantLogado.Id);
                 }
 
                 // Atualiza progresso baseado em quantos já foram processados

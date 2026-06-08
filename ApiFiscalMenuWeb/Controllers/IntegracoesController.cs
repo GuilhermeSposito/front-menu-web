@@ -111,6 +111,37 @@ public class IntegracoesController : Controller
         return Ok(Return);
     }
 
+    [HttpPost("anotaai/accepted/{idIntegracao}")]
+    public async Task<ActionResult> AceitaPedidoAnotaAi([FromRoute] string idIntegracao, [FromQuery] string merchantSophosId)
+    {
+        var sucesso = await _anotaAiService.AceitarPedidoManualAsync(idIntegracao, merchantSophosId);
+        return Ok(new { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido AnotaAi" } });
+    }
+
+    [HttpPost("anotaai/finalize")]
+    public async Task<ActionResult<ReturnApiRefatored<object>>> FinalizaPedidoAnotaAi([FromBody] UpdatePedidosDto UpdateDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        var sucesso = await _anotaAiService.FinalizarPedidoAsync(UpdateDto);
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error" });
+    }
+
+    [HttpPost("anotaai/ready")]
+    public async Task<ActionResult<ReturnApiRefatored<object>>> AvisaPedidoProntoAnotaAi([FromBody] UpdatePedidosDto UpdateDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        var sucesso = await _anotaAiService.AvisaPedidoProntoAsync(UpdateDto);
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error" });
+    }
+
     [HttpPost("delmatch/accepted/{idIntegracao}")]
     public async Task<ActionResult> AceitaPedidoDelmatch([FromRoute] string idIntegracao, [FromQuery] string merchantSophosId)
     {

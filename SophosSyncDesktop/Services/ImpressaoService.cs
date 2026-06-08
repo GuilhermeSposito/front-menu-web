@@ -1619,6 +1619,7 @@ public class ImpressaoService
                     LarguraBobina = 210,
                     Impressora = ImpressoraDanfe,
                     Logotipo = "C:\\SophosCompany\\LogoDanfe.png",
+                    
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraDanfe))
@@ -1635,7 +1636,8 @@ public class ImpressaoService
                     LarguraBobina = 75,
                     Impressora = ImpressoraCaixa,
                     Logotipo = "C:\\SophosCompany\\LogoCupom.png",
-
+                    NomeRemetente = AppState.MerchantLogado?.NomeFantasia ?? "",
+                    TextoMarcaDAgua = "NFC-e - Documento Auxiliar da Nota Fiscal de Consumidor Eletrônica",
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraCaixa))

@@ -71,5 +71,47 @@ public class IntegracoesSophosService
         return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido Delmatch" } };
     }
 
+    public async Task<ReturnApiRefatored<object>> AceitaPedidoAnotaAi(string idIntegracao, string merchantSophosId)
+    {
+        if (string.IsNullOrEmpty(idIntegracao))
+            return new ReturnApiRefatored<object>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não foi possível encontrar o identificador do pedido AnotaAi." },
+            };
+
+        var Retorno = await _httpClient.PostAsync($"integracoes/anotaai/accepted/{idIntegracao}?merchantSophosId={merchantSophosId}", null);
+
+        return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido AnotaAi" } };
+    }
+
+    public async Task<ReturnApiRefatored<object>> FinalizaPedidoAnotaAi(string idIntegracao, string merchantSophosId)
+    {
+        if (string.IsNullOrEmpty(idIntegracao))
+            return new ReturnApiRefatored<object>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não foi possível encontrar o identificador do pedido AnotaAi." },
+            };
+
+        var Retorno = await _httpClient.PostAsJsonAsync("integracoes/anotaai/finalize", new { PedidoIdIntegracao = idIntegracao, MerchantId = merchantSophosId });
+
+        return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido finalizado com sucesso" : "Erro ao finalizar pedido AnotaAi" } };
+    }
+
+    public async Task<ReturnApiRefatored<object>> AvisaPedidoProntoAnotaAi(string idIntegracao, string merchantSophosId)
+    {
+        if (string.IsNullOrEmpty(idIntegracao))
+            return new ReturnApiRefatored<object>
+            {
+                Status = "error",
+                Messages = new List<string> { "Não foi possível encontrar o identificador do pedido AnotaAi." },
+            };
+
+        var Retorno = await _httpClient.PostAsJsonAsync("integracoes/anotaai/ready", new { PedidoIdIntegracao = idIntegracao, MerchantId = merchantSophosId });
+
+        return new ReturnApiRefatored<object> { Status = Retorno.IsSuccessStatusCode ? "success" : "error", Messages = new List<string> { Retorno.IsSuccessStatusCode ? "Pedido marcado como pronto" : "Erro ao marcar pedido AnotaAi como pronto" } };
+    }
+
 
 }
