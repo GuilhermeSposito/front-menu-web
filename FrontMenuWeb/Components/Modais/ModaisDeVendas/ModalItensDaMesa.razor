@@ -252,8 +252,9 @@
         <MudPaper Elevation="0" Class="px-4 py-2 mb-1"
                   Style="background-color:var(--mud-palette-background); border-bottom:1px solid var(--mud-palette-lines-default);">
             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center">
-                <MudButton Variant="Variant.Filled" OnClick="ReimprimirPedido" Color="Color.Primary">Reimprimir Itens</MudButton>
-                <MudButton OnClick="ImprimirItensSelecionados" Disabled="@(ItensSelecionados.Count == 0)" Variant="Variant.Filled" Color="Color.Primary">Imprimir Selecionados</MudButton>
+                <MudButton Variant="Variant.Filled" OnClick="ReimprimirPedido" Color="Color.Primary">
+                    @(ItensSelecionados.Count > 0 ? "Reimprimir Itens Selecionados" : "Reimprimir Itens")
+                </MudButton>
                 <MudButton OnClick="PagarPedido" Variant="Variant.Filled" Color="Color.Primary">Fechar Conta (F3)</MudButton>
                 @if (ItensSelecionados.Count > 0 && ItensSelecionados.Count < (PedidoMesa.Itens?.Count ?? 0))
                 {
@@ -329,39 +330,39 @@
             <NoRecordsContent>
                 <AvisoDeDadosVazios ReferenciaDados="Itens da mesa" />
             </NoRecordsContent>
-            <Columns>       
-                    <SelectColumn T="ItensPedido" />
-                    <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
-                    <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
-                    <PropertyColumn Property="x => x.Quantidade" Title="Quantidade"></PropertyColumn>
-                    <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
-                    <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
-                    <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
-                    <PropertyColumn Property="x => x.CriadoEm" Title="Criado ás" Format="dd/MM/yyyy : HH:mm"></PropertyColumn>
-                    @if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false)
-                    {
-                        <PropertyColumn Property="x => x.NumeroMesaItem" Title="Mesa"></PropertyColumn>
-                    }
-                    <TemplateColumn Title="Garçom">
-                        <CellTemplate>
-                            @(context.Item.Garcon?.Nome ?? "Admin")
-                        </CellTemplate>
-                    </TemplateColumn>
-                    <TemplateColumn Title="Funcionario">
-                        <CellTemplate>
-                            @(context.Item.Funcionario?.Nome ?? "Admin")
-                        </CellTemplate>
-                    </TemplateColumn>
-                    <TemplateColumn Title="" HeaderStyle="width:88px">
-                        <CellTemplate>
-                            <MudStack Row="true" Spacing="0">
-                                <MudIconButton Icon="@Icons.Material.Filled.CallSplit" Size="Size.Small" Color="Color.Warning"
-                                               OnClick="@(() => AbrirFracionamento(context.Item))" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
-                                               OnClick="@(() => AbrirEdicaoItem(context.Item))" />
-                            </MudStack>
-                        </CellTemplate>
-                    </TemplateColumn>
+            <Columns>
+                <SelectColumn T="ItensPedido" />
+                <PropertyColumn Property="x => x.Id" Title="Id"></PropertyColumn>
+                <PropertyColumn Property="x => x.Descricao" Title="Descrição do Item"></PropertyColumn>
+                <PropertyColumn Property="x => x.Quantidade" Title="Quantidade"></PropertyColumn>
+                <PropertyColumn Property="x => x.PrecoUnitario" Format="C" Title="Valor Unit"></PropertyColumn>
+                <PropertyColumn Property="x => x.PrecoTotal" Format="C" Title="Valor Total"></PropertyColumn>
+                <PropertyColumn Property="x => x.NomeCliente" Title="Cliente"></PropertyColumn>
+                <PropertyColumn Property="x => x.CriadoEm" Title="Criado ás" Format="dd/MM/yyyy : HH:mm"></PropertyColumn>
+                @if (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false)
+                {
+                    <PropertyColumn Property="x => x.NumeroMesaItem" Title="Mesa"></PropertyColumn>
+                }
+                <TemplateColumn Title="Garçom">
+                    <CellTemplate>
+                        @(context.Item.Garcon?.Nome ?? "Admin")
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Funcionario">
+                    <CellTemplate>
+                        @(context.Item.Funcionario?.Nome ?? "Admin")
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="" HeaderStyle="width:88px">
+                    <CellTemplate>
+                        <MudStack Row="true" Spacing="0">
+                            <MudIconButton Icon="@Icons.Material.Filled.CallSplit" Size="Size.Small" Color="Color.Warning"
+                                           OnClick="@(() => AbrirFracionamento(context.Item))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => AbrirEdicaoItem(context.Item))" />
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
             </Columns>
         </MudDataGrid>
 
@@ -800,7 +801,10 @@
     #region Funções de Impressão
     private async Task ReimprimirPedido()
     {
-        await ImprimirPedido(PedidoMesa);
+        if (ItensSelecionados.Count > 0)
+            await ImprimirItensSelecionados();
+        else
+            await ImprimirPedido(PedidoMesa);
     }
 
     private async Task ImprimirItensSelecionados()
