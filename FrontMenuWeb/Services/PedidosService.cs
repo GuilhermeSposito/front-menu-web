@@ -544,6 +544,19 @@ public class PedidosService
         return retorno!;
     }
 
+    public async Task<ReturnApiRefatored<ClsTotalizadoresDePedidos>> GetTotalizadoresDeVendasAsync(DateTime? dataInicio = null, DateTime? dataFinal = null)
+    {
+        var parametros = new List<string>();
+        if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
+        if (dataFinal != null) parametros.Add($"DataFinal={dataFinal:yyyy-MM-dd}");
+
+        var url = "pedidos/estatisticas/totalizadores";
+        if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
+
+        var response = await _http.GetAsync(url);
+        return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsTotalizadoresDePedidos>>())!;
+    }
+
     public async Task<ReturnApiRefatored<DtoHoraVendas>> EstastisticaDeVendasPorHorario(DateTime? dataInicio = null, DateTime? dataFinal = null)
     {
         var parametros = new List<string>();

@@ -1,0 +1,168 @@
+@inject PedidosService PedidosService
+@inject ISnackbar Snackbar
+@using FrontMenuWeb.Services
+@using System.Globalization
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Totalizadores do Período</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_carregando)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-6">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Class="mt-2">Carregando...</MudText>
+            </MudStack>
+        }
+        else if (_totalizadores is null)
+        {
+            <MudAlert Severity="Severity.Error">Não foi possível carregar os dados.</MudAlert>
+        }
+        else
+        {
+            <MudGrid Spacing="3" Class="mt-1">
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Total de Pedidos</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalPedidos</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Valor Total em Vendas</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.ValorTotal.ToString("C")</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Total em Itens</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalItens.ToString("C")</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Ticket Médio</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TicketMedio.ToString("C")</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                @if (_totalizadores.TotalTaxaEntrega > 0)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #E65100, #FF7043); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Total Taxas de Entrega</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalTaxaEntrega.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                @if (_totalizadores.TotalDesconto > 0)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #C62828, #EF5350); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.LocalOffer" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Total em Descontos</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalDesconto.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                @if (_totalizadores.TotalAcrescimo > 0)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #6A1B9A, #AB47BC); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.AddCircle" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Total em Acréscimos</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalAcrescimo.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                @if (_totalizadores.TotalServico > 0)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #00838F, #26C6DA); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.RoomService" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Total em Serviço</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalServico.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                @if (_totalizadores.TotalIncentivos > 0)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #F57F17, #FFD54F); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Total em Incentivos</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalIncentivos.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Close())" Variant="Variant.Filled" Color="Color.Default">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public DateTime? DataInicio { get; set; }
+    [Parameter] public DateTime? DataFim { get; set; }
+
+    private ClsTotalizadoresDePedidos? _totalizadores;
+    private bool _carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await PedidosService.GetTotalizadoresDeVendasAsync(DataInicio, DataFim);
+            if (response?.Status == "success")
+                _totalizadores = response.Data.Objeto;
+            else
+                Snackbar.Add("Erro ao carregar totalizadores.", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+}

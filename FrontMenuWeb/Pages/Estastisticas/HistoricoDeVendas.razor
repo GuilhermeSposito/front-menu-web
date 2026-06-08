@@ -113,11 +113,12 @@
             @if (TotalTaxaEntrega > 0)
             {
                 <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
-                    <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #E65100, #FF7043); color:white;">
+                    <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #E65100, #FF7043); color:white; cursor:pointer;" @onclick="AbrirModalTotalizadores">
                         <MudCardContent Class="flex flex-col items-center justify-center h-36">
                             <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" Size="@Size.Medium" Class="mb-2" />
                             <MudText Typo="Typo.h6" Class="opacity-90">Total Taxas de Entrega</MudText>
                             <MudText Typo="Typo.h4" Style="font-weight:600;">@TotalTaxaEntrega.ToString("C")</MudText>
+                            <MudText Typo="Typo.caption" Class="opacity-75 mt-1">Clique para ver detalhes</MudText>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -350,6 +351,19 @@
             Carregando = false;
         }
 
+    }
+    #endregion
+
+    #region Modal de Totalizadores
+    private async Task AbrirModalTotalizadores()
+    {
+        var parameters = new DialogParameters<ModalTotalizadoresDePedidos>
+        {
+            { x => x.DataInicio, FiltroDateTimeInicial },
+            { x => x.DataFim, FiltroDateTimeFinal }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<ModalTotalizadoresDePedidos>("Totalizadores do Período", parameters, options);
     }
     #endregion
 
