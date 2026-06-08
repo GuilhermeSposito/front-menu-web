@@ -239,6 +239,7 @@ public class PaginatedResponse<T>
     [JsonPropertyName("TiketMedio")] public float TiketMedio { get; set; }
     [JsonPropertyName("VendasHoje")] public float VendasHoje { get; set; }
     [JsonPropertyName("SomaTotalDosItens")] public float SomaTotalDosItens { get; set; }
+    [JsonPropertyName("TotalTaxaEntrega")] public float TotalTaxaEntrega { get; set; }
     [JsonPropertyName("PercentualDePedidos")] public ClsPercentualDePedidos? PercentualDePedidos { get; set; }
     [JsonPropertyName("QtdDePedidos")] public ClsPercentualDePedidos? QtdDePedidos { get; set; }
 
