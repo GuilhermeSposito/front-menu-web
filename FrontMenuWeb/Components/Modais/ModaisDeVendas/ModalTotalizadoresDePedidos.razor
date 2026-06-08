@@ -150,10 +150,8 @@
     {
         try
         {
-            var response = await PedidosService.GetTotalizadoresDeVendasAsync(DataInicio, DataFim);
-            if (response?.Status == "success")
-                _totalizadores = response.Data.Objeto;
-            else
+            _totalizadores = await PedidosService.GetTotalizadoresDeVendasAsync(DataInicio, DataFim);
+            if (_totalizadores is null)
                 Snackbar.Add("Erro ao carregar totalizadores.", Severity.Error);
         }
         catch (Exception ex)

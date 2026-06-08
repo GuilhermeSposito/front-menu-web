@@ -544,7 +544,7 @@ public class PedidosService
         return retorno!;
     }
 
-    public async Task<ReturnApiRefatored<ClsTotalizadoresDePedidos>> GetTotalizadoresDeVendasAsync(DateTime? dataInicio = null, DateTime? dataFinal = null)
+    public async Task<ClsTotalizadoresDePedidos?> GetTotalizadoresDeVendasAsync(DateTime? dataInicio = null, DateTime? dataFinal = null)
     {
         var parametros = new List<string>();
         if (dataInicio != null) parametros.Add($"DataInicio={dataInicio:yyyy-MM-dd}");
@@ -554,7 +554,13 @@ public class PedidosService
         if (parametros.Count > 0) url += "?" + string.Join("&", parametros);
 
         var response = await _http.GetAsync(url);
-        return (await response.Content.ReadFromJsonAsync<ReturnApiRefatored<ClsTotalizadoresDePedidos>>())!;
+        var json = await response.Content.ReadAsStringAsync();
+
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        if (doc.RootElement.TryGetProperty("data", out var dataEl))
+            return System.Text.Json.JsonSerializer.Deserialize<ClsTotalizadoresDePedidos>(dataEl.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        return null;
     }
 
     public async Task<ReturnApiRefatored<DtoHoraVendas>> EstastisticaDeVendasPorHorario(DateTime? dataInicio = null, DateTime? dataFinal = null)
