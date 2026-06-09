@@ -57,7 +57,7 @@
                             <MudSelectItem Value="@TiposDePedido.TODOS">Todos</MudSelectItem>
                             <MudSelectItem Value=@TiposDePedido.BALCÃO>Balcão</MudSelectItem>
                             <MudSelectItem Value=@TiposDePedido.DELIVERY>Delivery</MudSelectItem>
-                            <MudSelectItem Value=@TiposDePedido.MESA>Mesa</MudSelectItem>
+                            <MudSelectItem Value=@TiposDePedido.MESA>@AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced</MudSelectItem>
                         </MudSelect>
                     </MudStack>
 
@@ -357,13 +357,13 @@
                                                     <MudCardActions>
                                                         <MudStack Class="w-100" Row=true AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                                                             <MudStack Row=true>
-                                                                <MudMenu Icon="@Icons.Material.Filled.MoreVert" >
+                                                                <MudMenu Icon="@Icons.Material.Filled.MoreVert">
                                                                     <MudMenu StartIcon="@Icons.Material.Filled.Print" Label="Impressões">
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.Completo); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Completo" />
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasPedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Pedido" />
                                                                         <MudMenuItem OnClick=@(async () => { await ImprimirPedido(pedido.Pedido, true, TipoDeImpressaoDEPedido.ApenasComandas); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Comandas" />
                                                                     </MudMenu>
-                                                                
+
 
                                                                     @if (pedido.Pedido.StatusPedido == "FECHADO")
                                                                     {

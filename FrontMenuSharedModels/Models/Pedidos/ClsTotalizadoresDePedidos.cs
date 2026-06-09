@@ -11,4 +11,7 @@ public class ClsTotalizadoresDePedidos
     [JsonPropertyName("TotalItens")] public float TotalItens { get; set; }
     [JsonPropertyName("TotalIncentivos")] public float TotalIncentivos { get; set; }
     [JsonPropertyName("TicketMedio")] public float TicketMedio { get; set; }
+    [JsonPropertyName("TotalPedidosBalcao")] public int TotalPedidosBalcao { get; set; }
+    [JsonPropertyName("TotalPedidosMesa")] public int TotalPedidosMesa { get; set; }
+    [JsonPropertyName("TotalPedidosDelivery")] public int TotalPedidosDelivery { get; set; }
 }

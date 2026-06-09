@@ -65,6 +65,36 @@
                     </MudPaper>
                 </MudItem>
 
+                <MudItem xs="12" sm="4">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #00695C, #26A69A); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.StoreMallDirectory" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Balcão</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalPedidosBalcao</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #1565C0, #42A5F5); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.TableRestaurant" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Mesa</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalPedidosMesa</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="4">
+                    <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #E65100, #FF7043); color:white;">
+                        <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.DeliveryDining" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="opacity-90">Delivery</MudText>
+                            <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.TotalPedidosDelivery</MudText>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
                 @if (_totalizadores.TotalTaxaEntrega > 0)
                 {
                     <MudItem xs="12" sm="6">

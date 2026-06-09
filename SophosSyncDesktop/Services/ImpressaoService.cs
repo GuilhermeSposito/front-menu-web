@@ -412,6 +412,7 @@ public class ImpressaoService
         bool JaImprimiuMesa = false;
         List<ClsImpressaoDefinicoes> Conteudo = new List<ClsImpressaoDefinicoes>();
         string? NomeGarcomQueEnviou = string.Empty;
+        string? NomeFuncionarioQueEnviou = string.Empty;
 
         AdicionaConteudo(Conteudo, $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced}: {pedido.IdentificacaoMesaOuComanda.ToString().PadLeft(2, '0')}", FonteDetalhesDoPedido, Alinhamentos.Centro);
         //========================================================================================       
@@ -501,6 +502,7 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
 
             NomeGarcomQueEnviou = item.Garcon?.Nome ?? NomeGarcomQueEnviou;
+            NomeFuncionarioQueEnviou = item.Funcionario?.Nome ?? NomeFuncionarioQueEnviou;
             //------------------------------------------------------------------------------------------
         }
 
@@ -508,7 +510,12 @@ public class ImpressaoService
         {
             AdicionaConteudo(Conteudo, $"Garçom: {NomeGarcomQueEnviou}", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
             AdicionaConteudo(Conteudo, $" ", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
+        }
 
+        if (!string.IsNullOrEmpty(NomeFuncionarioQueEnviou))
+        {
+            AdicionaConteudo(Conteudo, $"Enviado Por: {NomeFuncionarioQueEnviou}", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
+            AdicionaConteudo(Conteudo, $" ", FonteComplementoNaComanda, alinhamento: Alinhamentos.Centro);
         }
 
         AdicionaConteudo(Conteudo, "Sophos - WEB", FonteSophos, Alinhamentos.Centro);
@@ -665,7 +672,7 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado em: {pedido.CriadoEm:G}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        var stringControle = $"Controle: {(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}";
+        var stringControle = $"{(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}";
         if (pedido.TipoDePedido == "MESA")
             stringControle = $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa"}: {pedido.Mesa?.CodigoExterno}";
 
@@ -745,7 +752,7 @@ public class ImpressaoService
             if (AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
             {
                 pedido.Itens = pedido.Itens
-                    .GroupBy(i => new { i.ProdutoId, i.Descricao, i.ECouvert })
+                    .GroupBy(i => new { i.ProdutoId, i.Descricao, i.ECouvert, i.Funcionario })
                     .Select(g => new ItensPedido
                     {
                         ProdutoId = g.Key.ProdutoId,
@@ -755,6 +762,7 @@ public class ImpressaoService
                         PrecoUnitario = g.First().PrecoUnitario,
                         NumeroMesaItem = g.First().NumeroMesaItem,
                         Complementos = g.SelectMany(i => i.Complementos).ToList(),
+                        Funcionario = g.Key.Funcionario,
                         Observacoes = string.Join(" | ", g.Where(i => !string.IsNullOrEmpty(i.Observacoes)).Select(i => i.Observacoes))
                     })
                     .ToList();
@@ -772,7 +780,7 @@ public class ImpressaoService
             {
                 if (item.NumeroMesaItem != 0)
                 {
-                    AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8);
+                    AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8));
                 }
             }
 
@@ -813,6 +821,14 @@ public class ImpressaoService
                 AdicionaConteudo(Conteudo, $"Obs: {item.Observacoes}", FonteComplemento, eObs: true);
             }
 
+            if(pedido.TipoDePedido == "MESA")
+            {
+                if(item.Funcionario is not null && item.Funcionario.Nome == "QRCode")
+                {
+                    AdicionaConteudo(Conteudo, $"{item.Funcionario.Nome}", new Font("Dejavu Sans Mono", 8), eObs: true);
+                }
+            }
+
             AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
             //------------------------------------------------------------------------------------------
         }
@@ -821,7 +837,7 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, $"SUB TOTAL. . . .  : {pedido.ValorDosItens:F2}", FonteTotaisNovo);
         if (pedido.TaxaEntregaValor > 0)
             AdicionaConteudo(Conteudo, $"TAXA DE ENTREGA . : {pedido.TaxaEntregaValor:F2}", FonteTotaisNovo);
-        if (pedido.AcrescimoValor > 0)
+        if (pedido.AcrescimoValor + pedido.ServicoValor > 0)
             AdicionaConteudo(Conteudo, $"TAXAS ADICIONAIS  : {(pedido.AcrescimoValor + pedido.ServicoValor):F2} ", FonteTotaisNovo);
         if (pedido.DescontoValor > 0)
             AdicionaConteudo(Conteudo, $"DESCONTOS. . . .  : {pedido.DescontoValor:F2}", FonteTotaisNovo);
@@ -845,6 +861,9 @@ public class ImpressaoService
                 {
                     bool ePedidoPagoOnline = pagamento.FormaDePagamento.PagamentoOnline;
                     var InfoSeSeraPago = ePedidoPagoOnline ? "PAGO ONLINE COM" : "PEDIDO SERÁ PAGO COM";
+
+                    if (pedido.EtapaPedido == "FINALIZADO")
+                        InfoSeSeraPago = InfoSeSeraPago.Replace("SERÁ", "FOI");
 
                     AdicionaConteudo(Conteudo, $"{InfoSeSeraPago} ({pagamento.FormaDePagamento.Descricao}) -- VALOR: {pagamento.ValorTotal.ToString("C")}", FonteInfosPagamento);
                     if (pagamento.FormaDePagamento.EDinheiro && pagamento.Troco > 0)
