@@ -133,7 +133,7 @@ public class AnotaAiServices
         try
         {
             var client = _factory.CreateClient("ApiAnotaAi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenAnotaAi);
+            client.DefaultRequestHeaders.Add("Authorization", tokenAnotaAi);
 
             var response = await client.PostAsync($"order/accept/{orderId}", null);
 
@@ -192,7 +192,7 @@ public class AnotaAiServices
         try
         {
             var client = _factory.CreateClient("ApiAnotaAi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", merchant.TokenAnotaAi);
+            client.DefaultRequestHeaders.Add("Authorization", merchant.TokenAnotaAi);
 
             var response = await client.PostAsync($"order/finalize/{dto.PedidoIdIntegracao}", null);
 
@@ -227,7 +227,7 @@ public class AnotaAiServices
         try
         {
             var client = _factory.CreateClient("ApiAnotaAi");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", merchant.TokenAnotaAi);
+            client.DefaultRequestHeaders.Add("Authorization", merchant.TokenAnotaAi);
 
             var response = await client.PostAsync($"order/ready/{dto.PedidoIdIntegracao}", null);
 

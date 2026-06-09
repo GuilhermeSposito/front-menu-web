@@ -126,7 +126,7 @@ public class WebSocketPedidosService : IDisposable
                     try
                     {
                         var json = response.GetValue<JsonElement>().GetRawText();
-                        await _impressaoService.ImprimirFechamentoDeConta(json).ConfigureAwait(false);
+                        await ProcessarAvisoDeContaAsync(json).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -171,6 +171,26 @@ public class WebSocketPedidosService : IDisposable
             // Sem isso, o guard "if (_client != null) return" bloquearia futuras tentativas.
             try { _client?.Dispose(); } catch { }
             _client = null;
+        }
+    }
+
+    private async Task ProcessarAvisoDeContaAsync(string json)
+    {
+        try
+        {
+            using var db = new AppDbContext();
+            var config = db.Impressoras.FirstOrDefault();
+            if (config is null) return;
+
+            bool deveImprimir = config.ImprimirComandaMesa;
+
+            if (!deveImprimir) return;
+
+            await _impressaoService.ImprimirFechamentoDeConta(json).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WS] Erro ao processar aviso-conta: {ex.Message}");
         }
     }
 
