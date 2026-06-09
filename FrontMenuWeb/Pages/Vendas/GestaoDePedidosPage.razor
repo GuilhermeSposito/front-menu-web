@@ -1289,6 +1289,15 @@
         {
             pedido.ImprimeApenasComanda = false;
             pedido.ImprimeApenasPedido = true;
+
+            if (pedido.TipoDePedido == "BALCÃO" && pedido.StatusPedido == "ABERTO") //aqui imprime o aviso de fechamento do balcão
+            {
+                await ImprimirFechamentoDoBalcao(pedido);
+
+                pedido.ImprimeApenasComanda = false;
+                pedido.ImprimeApenasPedido = false;
+                return true;
+            }
         }
         else if (tipoDeImpressao == TipoDeImpressaoDEPedido.ApenasComandas)
         {
@@ -1302,6 +1311,30 @@
         pedido.ImprimeApenasPedido = false;
 
         return Concluiu;
+    }
+
+    private async Task ImprimirFechamentoDoBalcao(ClsPedido pedido)
+    {
+        try
+        {
+            await PedidosService.ImprimirFechamentoPagamento(
+                itens: pedido.Itens,
+                desconto: pedido.DescontoValor,
+                taxaAdicional: pedido.AcrescimoValor,
+                taxaServico: 0f,
+                couvert: 0f,
+                qtdPessoas: 0,
+                troco: 0f,
+                totalFinal: pedido.ValorTotal,
+                pagamentos: pedido.Pagamentos,
+                mesaId: null,
+                pedidoId: pedido.Id);
+            Snackbar.Add("Fechamento enviado para impressão.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao enviar fechamento: {ex.Message}", Severity.Error);
+        }
     }
 
     private Task PedidoRecebidoHandler(ClsPedido pedido)
