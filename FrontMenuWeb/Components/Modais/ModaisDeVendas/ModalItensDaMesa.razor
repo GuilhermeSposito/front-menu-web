@@ -4,8 +4,10 @@
 @using FrontMenuWeb.Components.Modais.ModaisDePessoas
 @using FrontMenuWeb.Components.Modais.ModaisGenericos
 @inject MesasServices MesasServices
+@inject AntecipacoesService AntecipacoesService
 @using FrontMenuWeb.DTOS
 @using FrontMenuWeb.Dtos
+@using FrontMenuWeb.Models.Financeiro
 @using FrontMenuWeb.Models.Merchant
 @using FrontMenuWeb.Models.Pedidos
 @using FrontMenuWeb.Models.Pessoas
@@ -26,6 +28,7 @@
         <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="p-2" Style="background-color: var(--mud-palette-primary);color:white; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);">
             <MudText Class="ms-3" Typo="Typo.h6">Itens da @AppState.MerchantLogado.LegendaNomeUltilizadoParaPlaced @MesaOuComanda.CodigoExterno</MudText>
             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudButton StartIcon="@Icons.Material.Filled.AttachMoney" Variant="Variant.Filled" Color="Color.Warning" Size="Size.Small" OnClick="AbrirModalCriarAntecipacao">Criar Antecipação</MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.AddBox" Variant="Variant.Filled" Color="Color.Success" Size="Size.Small" OnClick="AbrirModalDeAdicionarItens">Adicionar Item</MudButton>
                 <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Secondary" OnClick="Cancelar" />
             </MudStack>
@@ -456,6 +459,24 @@
         MudDialog.Cancel();
     }
 
+    private async Task AbrirModalCriarAntecipacao()
+    {
+        var parameters = new DialogParameters<ModalCriarAntecipacao>
+        {
+            { x => x.MesaId, MesaOuComanda.Id },
+            { x => x.ValorTotalItens, SubTotalItens }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseOnEscapeKey = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<ModalCriarAntecipacao>("Criar Antecipação", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+        {
+            if (dataGridRef is not null)
+                await dataGridRef.ReloadServerData();
+        }
+    }
+
     private async Task AbrirModalDeAdicionarItens()
     {
         var parameters = new DialogParameters
@@ -852,6 +873,19 @@
             ServicoValor = (float)TaxaValor,
             CouvertValor = (float)CouvertValor,
         };
+
+        if (PedidoMesa.Antecipacoes.Count > 0)
+        {
+            NovoPedido.Pagamentos = PedidoMesa.Antecipacoes.Select(a => new PagamentoDoPedido
+            {
+                Id = a.Id,
+                ValorTotal = a.ValorAntecipacao,
+                FormaDePagamento = a.FormaDeRecebimento,
+                CriadoEm = a.CriadoEm,
+                EAntecipacao = true,
+                Antecipacao = a
+            }).ToList();
+        }
 
         var parameters = new DialogParameters
          {

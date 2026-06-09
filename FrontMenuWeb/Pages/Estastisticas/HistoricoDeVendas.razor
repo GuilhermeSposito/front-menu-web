@@ -84,7 +84,7 @@
 
         <MudGrid Class="w-100 mt-1 mb-3" GutterSize="3" @onclick="AbrirModalTotalizadores">
             <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
-                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;cursor:pointer;" @onclick="AbrirModalTotalizadores">
                     <MudCardContent Class="flex flex-col items-center justify-center h-36">
                         <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
                         <MudText Typo="Typo.h6" Class="opacity-90">Total em Itens</MudText>
@@ -94,7 +94,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="4" md="4" xl="4" xxl="4" @onclick="AbrirModalTotalizadores">
-                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white;">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #1B7FDB, #4AA8F0); color:white; cursor:pointer;" @onclick="AbrirModalTotalizadores">
                     <MudCardContent Class="flex flex-col items-center justify-center h-36">
                         <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="@Size.Medium" Class="mb-2 text-green-300" />
                         <MudText Typo="Typo.h6" Class="opacity-90">Total em vendas</MudText>
@@ -104,8 +104,8 @@
             </MudItem>
 
 
-            <MudItem xs="12" sm="4" md="4" xl="4" xxl="4" @onclick="AbrirModalTotalizadores">
-                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white;">
+            <MudItem xs="12" sm="4" md="4" xl="4" xxl="4">
+                <MudCard Class="rounded-2xl shadow-lg" Style="background: linear-gradient(135deg, #409B44, #66BB6A); color:white; cursor:pointer;" @onclick="AbrirModalTotalizadores">
                     <MudCardContent Class="flex flex-col items-center justify-center h-36">
                         <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="@Size.Medium" Class="mb-2 text-red-300" />
                         <MudText Typo="Typo.h6" Class="opacity-90">Tiket Médio</MudText>
@@ -194,13 +194,13 @@
                 <TemplateColumn T="ClsPedido" Title="Tipo">
                     <CellTemplate Context="context">
                         <MudText Style="font-weight:600" Color="Color.Error">
-                            @if(context.Item.TipoDePedido == "MESA")
+                            @if (context.Item.TipoDePedido == "MESA")
                             {
                                 @AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced
                             }
                             else
                             {
-                                @context.Item.TipoDePedido  
+                                @context.Item.TipoDePedido
                             }
                         </MudText>
                     </CellTemplate>

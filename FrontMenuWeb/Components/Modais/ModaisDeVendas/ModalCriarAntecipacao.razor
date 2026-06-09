@@ -1,0 +1,175 @@
+@inject AntecipacoesService AntecipacoesService
+@inject FormasDeRecebimentoService FormasDeRecebimentoService
+@inject ISnackbar Snackbar
+@using FrontMenuWeb.Models.Financeiro
+@using FrontMenuWeb.Models.Antecipacoes
+@using FrontMenuWeb.Services
+@using FrontMenuWeb.Services.FinanceroServices
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Criar Antecipação</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_carregando)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+            </MudStack>
+        }
+        else
+        {
+            <MudStack Spacing="3" Class="mt-1">
+                <MudText Typo="Typo.caption" Color="Color.Primary">
+                    Total dos itens da mesa: <strong>@ValorTotalItens.ToString("C")</strong>
+                </MudText>
+
+                <MudNumericField T="float?"
+                                 @bind-Value="_valor"
+                                 Label="Valor da Antecipação"
+                                 Variant="Variant.Outlined"
+                                 Adornment="Adornment.Start"
+                                 AdornmentText="R$"
+                                 Format="N2"
+                                 Min="0"
+                                 Max="@((float)ValorTotalItens)"
+                                 HideSpinButtons="true"
+                                 Error="@(_valor > (float)ValorTotalItens)"
+                                 ErrorText="O valor não pode ser maior que o total dos itens." />
+
+                <MudTextField @bind-Value="_nomeCliente"
+                              Label="Nome do Cliente (opcional)"
+                              Variant="Variant.Outlined"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Outlined.Person"
+                              AdornmentColor="Color.Primary" />
+
+                <MudText Typo="Typo.subtitle2" Class="mb-0">Forma de Recebimento</MudText>
+                <MudGrid Spacing="2">
+                    @foreach (var forma in _formas)
+                    {
+                        var f = forma;
+                        <MudItem xs="6" sm="4">
+                            <MudPaper Class="pa-3 rounded-lg cursor-pointer"
+                                      Style="@(_formaSelecionadaId == f.Id
+                                                ? "border: 2px solid var(--mud-palette-primary); background: var(--mud-palette-primary-lighten);"
+                                                : "border: 2px solid transparent;")"
+                                      @onclick="@(() => _formaSelecionadaId = _formaSelecionadaId == f.Id ? null : f.Id)">
+                                <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@ObterIconeForma(f)" Color="@(_formaSelecionadaId == f.Id ? Color.Primary : Color.Default)" />
+                                    <MudText Typo="Typo.caption" Style="text-align:center;">@f.Descricao</MudText>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Confirmar"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Disabled="_salvando || _carregando">
+            @if (_salvando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+            else
+            {
+                <span>Confirmar</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int MesaId { get; set; }
+    [Parameter] public decimal ValorTotalItens { get; set; }
+
+    private List<ClsFormaDeRecebimento> _formas = new();
+    private float? _valor;
+    private string? _nomeCliente;
+    private int? _formaSelecionadaId;
+    private bool _carregando = true;
+    private bool _salvando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _formas = await FormasDeRecebimentoService.GetFormasDeRecebimentoAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar formas de recebimento: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _carregando = false;
+        }
+    }
+
+    private async Task Confirmar()
+    {
+        if (_valor is null or <= 0)
+        {
+            Snackbar.Add("Informe um valor válido para a antecipação.", Severity.Warning);
+            return;
+        }
+
+        if (_valor > (float)ValorTotalItens)
+        {
+            Snackbar.Add($"O valor da antecipação não pode ser maior que o total dos itens ({ValorTotalItens.ToString("C")}).", Severity.Warning);
+            return;
+        }
+
+        _salvando = true;
+        try
+        {
+            var dto = new CriarAntecipacaoDto
+            {
+                MesaId = MesaId,
+                ValorAntecipacao = _valor,
+                NomeClienteAntecipacao = string.IsNullOrWhiteSpace(_nomeCliente) ? null : _nomeCliente.Trim(),
+                FormaDeRecebimentoId = _formaSelecionadaId,
+                Fechado = false
+            };
+
+            var result = await AntecipacoesService.CriarAntecipacaoAsync(dto);
+
+            if (result.Status == "success")
+            {
+                Snackbar.Add("Antecipação criada com sucesso!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(string.Join(", ", result.Messages), Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _salvando = false;
+        }
+    }
+
+    private string ObterIconeForma(ClsFormaDeRecebimento forma)
+    {
+        if (forma.EPix) return Icons.Material.Filled.QrCode;
+        if (forma.EDinheiro) return Icons.Material.Filled.Money;
+        if (forma.ECredito) return Icons.Material.Filled.CreditCard;
+        if (forma.EDEbito) return Icons.Material.Filled.Payment;
+        return Icons.Material.Filled.AccountBalance;
+    }
+}

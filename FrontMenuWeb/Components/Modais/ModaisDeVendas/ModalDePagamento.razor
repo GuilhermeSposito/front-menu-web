@@ -9,6 +9,7 @@
 @inject DistanciasService DistanciaService
 @inject CaixaEPagamentosService CaixaService
 @inject PedidosService PedidosService
+@inject AntecipacoesService AntecipacoesService
 
 <MudDialog tabindex="0" Style="background-color:var(--mud-palette-background);" OnKeyDown="HandleKeyDownDialog" Class="dialog-pagamento-responsivo">
     <TitleContent>
@@ -197,6 +198,7 @@
 
                                         }
 
+
                                         <MudText Typo="Typo.body2" Class="fw-semibold">
                                             @forma.Descricao
                                         </MudText>
@@ -229,8 +231,19 @@
                             var pagamento = pagamentoRealizado;
                             <MudChip T="string" Color="Color.Primary" Size="Size.Large" CloseIcon="@Icons.Material.Filled.Close" OnClose=@(async () => { await RemovePagamentoDoPedido(pagamento); })>
                                 <ChildContent>
-                                    <MudStack Row=true Spacing="-1">
+                                    <MudStack Row=true AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="-1">
                                         <MudText>@pagamentoRealizado.FormaDePagamento?.Descricao -> @pagamentoRealizado.ValorTotal.ToString("C")</MudText>
+                                        @if (pagamentoRealizado.EAntecipacao)
+                                        {
+                                            <MudText Typo="Typo.subtitle1" Class="ms-1">(Antecipação)</MudText>
+                                            if (pagamentoRealizado.Antecipacao != null)
+                                            {
+                                                if (!string.IsNullOrEmpty(pagamentoRealizado.Antecipacao.NomeClienteAntecipacao))
+                                                {
+                                                    <MudText Typo="Typo.subtitle1" Class="ms-1">(@pagamentoRealizado.Antecipacao.NomeClienteAntecipacao)</MudText>
+                                                }
+                                            }
+                                        }
                                     </MudStack>
                                 </ChildContent>
                             </MudChip>
@@ -535,7 +548,7 @@
 
         if (!result!.Canceled && result.Data is bool sucesso && sucesso)
         {
-            Pedido.StatusPedido = "ABERTO"; 
+            Pedido.StatusPedido = "ABERTO";
 
             MudDialog.Close(DialogResult.Ok(true));
         }
@@ -839,10 +852,34 @@
             return;
         }
 
+
+        if (Pagamento.EAntecipacao && Pagamento.Antecipacao != null)
+        {
+            var parameters = new DialogParameters<ModalDeExcluir>
+                {
+                  { x => x.ContentText, "Atenção: ao excluir esta antecipação, essa ação não poderá ser desfeita. Deseja Proseguir?" },
+                    { x => x.ButtonText, "Sim" },
+                    { x => x.Color, Color.Error}
+                };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, CloseOnEscapeKey = true };
+            var dialog = await DialogService.ShowAsync<ModalDeExcluir>("Confirmar Exclusão de Antecipação", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result!.Canceled && result.Data is bool sucesso && sucesso)
+            {
+                await AntecipacoesService.DeletarAntecipacaoAsync(Pagamento.Antecipacao.Id);
+            }
+            else
+            {
+                return;
+            }
+        }
+
         if (Pagamento.Troco > 0)
             ValorTroco -= Pagamento.Troco;
 
         Pedido.Pagamentos.Remove(Pagamento);
+
     }
 
 
