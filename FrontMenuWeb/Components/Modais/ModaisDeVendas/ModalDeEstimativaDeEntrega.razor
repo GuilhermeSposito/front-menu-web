@@ -6,6 +6,7 @@
 @using FrontMenuWeb.Services
 @inject MachineService MachineService
 @inject AppState AppState
+@inject ISnackbar Snackbar
 
 <MudDialog Style="background-color: var(--mud-palette-background);">
     <TitleContent>
@@ -34,6 +35,15 @@
                                         <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">@item.Empresa.Nome</MudText>
                                     </MudStack>
                                 </CardHeaderContent>
+                                <CardHeaderActions>
+                                    <MudTooltip Text="Enviar pedido para esta empresa">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Send"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       Disabled="@(item.Carregando || item.Enviando)"
+                                                       OnClick="@(async () => await EnviarParaEmpresa(item))" />
+                                    </MudTooltip>
+                                </CardHeaderActions>
                             </MudCardHeader>
                             <MudDivider />
                             <MudCardContent>
@@ -93,6 +103,7 @@
         public EmpresaMachine Empresa { get; set; } = new();
         public EstimativaDeEntregaDto? Estimativa { get; set; }
         public bool Carregando { get; set; } = true;
+        public bool Enviando { get; set; } = false;
     }
 
     protected override async Task OnInitializedAsync()
@@ -133,6 +144,19 @@
             resultado.Carregando = false;
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task EnviarParaEmpresa(ResultadoEstimativa item)
+    {
+        item.Enviando = true;
+        await InvokeAsync(StateHasChanged);
+
+        var response = await MachineService.EnviaPedidoParaOMapa(item.Empresa, Pedido, AppState);
+        var primeiro = response.First();
+        Snackbar.Add(primeiro.Key, primeiro.Value);
+
+        item.Enviando = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void Fechar() => MudDialog.Close();
