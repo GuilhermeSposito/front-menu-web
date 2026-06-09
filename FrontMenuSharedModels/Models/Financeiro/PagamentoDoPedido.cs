@@ -1,3 +1,4 @@
+using FrontMenuWeb.Models.Antecipacoes;
 using System.Text.Json.Serialization;
 
 namespace FrontMenuWeb.Models.Financeiro;
@@ -19,4 +20,7 @@ public class PagamentoDoPedido
     [JsonPropertyName("Servico")] public float Servico { get; set; }
     [JsonPropertyName("IncentivosExternos")] public float IncentivosExternos { get; set; }
     [JsonPropertyName("Couvert")] public float Couvert { get; set; }
+
+    [JsonIgnore] public ClsAntecipacao? Antecipacao { get; set; }
+    [JsonIgnore] public bool EAntecipacao { get; set; }
 }

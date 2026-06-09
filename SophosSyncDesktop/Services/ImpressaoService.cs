@@ -1694,6 +1694,7 @@ public class ImpressaoService
                     Logotipo = "C:\\SophosCompany\\LogoCupom.png",
                     NomeRemetente = AppState.MerchantLogado?.NomeFantasia ?? "",
                     TextoMarcaDAgua = "NFC-e - Documento Auxiliar da Nota Fiscal de Consumidor Eletrônica",
+                    NomeImpressao = "NFC-e - DANFE NFC-e",
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraCaixa))
