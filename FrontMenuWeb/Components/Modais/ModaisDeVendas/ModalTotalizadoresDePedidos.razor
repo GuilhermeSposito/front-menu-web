@@ -106,6 +106,16 @@
                             </MudStack>
                         </MudPaper>
                     </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Class="pa-4 rounded-lg" Style="background: linear-gradient(135deg, #BF360C, #FF8A65); color:white;">
+                            <MudStack AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.TwoWheeler" Size="Size.Medium" />
+                                <MudText Typo="Typo.body2" Class="opacity-90">Média Taxa de Entrega</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight:700;">@_totalizadores.MediaTaxaEntregaPorPedido.ToString("C")</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
                 }
 
                 @if (_totalizadores.TotalDesconto > 0)

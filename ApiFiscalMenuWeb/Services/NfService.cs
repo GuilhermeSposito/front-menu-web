@@ -826,8 +826,8 @@ public class NfService
                                 Mod = ModeloDFe.NFCe,
                                 Serie = 1,
                                 NNF = ProxNumeroNFCe,
-                                DhEmi = DateTime.Now.AddHours(-3),
-                                DhSaiEnt = DateTime.Now.AddHours(-3),
+                                DhEmi = DateTime.Now.AddMinutes(-88),
+                                DhSaiEnt = DateTime.Now.AddMinutes(-88),
                                 TpNF = TipoOperacao.Saida,
                                 IdDest = DestinoOperacao.OperacaoInterna,
                                 CMunFG = enderecoMerchant.Cidade.NumCidade,
@@ -942,8 +942,8 @@ public class NfService
                                 Mod = ModeloDFe.NFe,
                                 Serie = 1,
                                 NNF = ProxNmrNfe,
-                                DhEmi = DateTime.Now.AddHours(-3),
-                                DhSaiEnt = DateTime.Now.AddHours(-3),
+                                DhEmi = DateTime.Now.AddMinutes(-88),
+                                DhSaiEnt = DateTime.Now.AddMinutes(-88),
                                 TpNF = TipoOperacao.Saida,
                                 IdDest = DestinoOperacao.OperacaoInterna,
                                 CMunFG = enderecoMerchant.Cidade.NumCidade,
@@ -1258,6 +1258,17 @@ public class NfService
                 CEST = "1709700",
                 csosn = "102"
             };
+
+            if (item.ECouvert)
+            {
+                item.Produto = new ClsProduto //Aqui se o produto for nullo, ele vai adicionar um produto como padrão
+                {
+                    CodigoInterno = "0001",
+                    Descricao = item.Descricao.ToUpper(),
+                    NCM = "00000000",
+                    csosn = "300"
+                };
+            }
 
             var valorTotalTrib = await _ibptServices.GetIBPTValor
                         (cnpj: CnpjMerchantAtual, ncm: item.Produto.NCM, uf: "SP", descricao: item.Produto.Descricao, item.PrecoTotal);
