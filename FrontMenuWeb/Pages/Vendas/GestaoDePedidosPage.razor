@@ -371,6 +371,7 @@
                                                                     }
                                                                     @if (pedido.Pedido.TipoDePedido == "DELIVERY")
                                                                     {
+                                                                        <MudMenuItem OnClick=@(async () => { await AbreModalDeEstimativas(pedido.Pedido); }) Icon="@Icons.Material.Filled.Calculate" Label="Ver Estimativas de Entrega" />
                                                                         @if (EmpresasMachine is not null)
                                                                         {
                                                                             foreach (var empresa in EmpresasMachine)
@@ -1648,6 +1649,23 @@
                 Snackbar.Add(primeiro.Key, primeiro.Value);
             }
         }
+    }
+
+    private async Task AbreModalDeEstimativas(ClsPedido pedido)
+    {
+        if (EmpresasMachine is null || EmpresasMachine.Count == 0)
+        {
+            Snackbar.Add("Nenhuma empresa integrada para entrega encontrada. Configure uma integração de entrega para usar esse recurso.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<ModalDeEstimativaDeEntrega>
+        {
+            { x => x.Pedido, pedido },
+            { x => x.EmpresasMachine, EmpresasMachine }
+        };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true, CloseOnEscapeKey = true };
+        await DialogService.ShowAsync<ModalDeEstimativaDeEntrega>("Estimativas de Entrega", parameters, options);
     }
 
     private async Task CarregaEmpresasMachine()

@@ -128,6 +128,21 @@ public class MachineService
         }
     }
 
+    public async Task<CriaEstimativaResponseDto?> CriaEstimativa(EmpresaMachine empresa, CriaEstimativaRequestDto request)
+    {
+        try
+        {
+            _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", empresa.TokenApiEntrega);
+            var response = await _http.PostAsJsonAsync("pedidos-machine/cria-estimativa", request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CriaEstimativaResponseDto>(responseContent);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<Dictionary<string, Severity>> EnviaVariosPedidosParaOMapa(EmpresaMachine EmpresaMachine, List<PedidoParaRota> Pedidos, AppState EstadoAtualDoApp, bool retorno = false, int minutosAdicionais = 0)
     {
         try

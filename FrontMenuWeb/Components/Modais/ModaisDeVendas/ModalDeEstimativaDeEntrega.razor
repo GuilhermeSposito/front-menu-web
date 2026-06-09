@@ -1,0 +1,139 @@
+@using FrontMenuWeb.DTOS
+@using FrontMenuWeb.Models
+@using FrontMenuWeb.Models.EntregaMachine
+@using FrontMenuWeb.Models.Merchant
+@using FrontMenuWeb.Models.Pedidos
+@using FrontMenuWeb.Services
+@inject MachineService MachineService
+@inject AppState AppState
+
+<MudDialog Style="background-color: var(--mud-palette-background);">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100 pe-2">
+            <MudText Class="ms-3" Typo="Typo.h6">Estimativas de Entrega</MudText>
+            <MudText Class="ms-3" Typo="Typo.subtitle2" Color="Color.Secondary">Pedido @Pedido.DisplayId</MudText>
+        </MudStack>
+        <MudDivider Class="w-100" Light="true" />
+    </TitleContent>
+    <DialogContent>
+        @if (_resultados.Count == 0)
+        {
+            <MudText Color="Color.Warning">Nenhuma empresa de entrega integrada encontrada.</MudText>
+        }
+        else
+        {
+            <MudGrid>
+                @foreach (var item in _resultados)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="2" Style="border: 1px solid var(--mud-palette-divider); height: 100%;">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                                        <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Color="Color.Primary" />
+                                        <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">@item.Empresa.Nome</MudText>
+                                    </MudStack>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudDivider />
+                            <MudCardContent>
+                                @if (item.Carregando)
+                                {
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="pa-2">
+                                        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                                        <MudText Typo="Typo.caption">Calculando...</MudText>
+                                    </MudStack>
+                                }
+                                else if (item.Estimativa is not null && item.Estimativa.Sucesso)
+                                {
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.h5" Color="Color.Success" Style="font-weight: 700;">
+                                            @item.Estimativa.EstimativaDoValor?.ToString("C", new System.Globalization.CultureInfo("pt-BR"))
+                                        </MudText>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Color="Color.Default" />
+                                            <MudText Typo="Typo.body2">@item.Estimativa.EstimativaMinutos min estimados</MudText>
+                                        </MudStack>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIcon Icon="@Icons.Material.Filled.Route" Size="Size.Small" Color="Color.Default" />
+                                            <MudText Typo="Typo.body2">@item.Estimativa.EstimativaPorKm?.ToString("C", new System.Globalization.CultureInfo("pt-BR"))/km</MudText>
+                                        </MudStack>
+                                    </MudStack>
+                                }
+                                else
+                                {
+                                    <MudStack AlignItems="AlignItems.Center" Spacing="1" Class="pa-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" />
+                                        <MudText Typo="Typo.body2" Color="Color.Error" Align="Align.Center">
+                                            @(item.Estimativa?.MensagemDeErro ?? "Não foi possível obter a estimativa.")
+                                        </MudText>
+                                    </MudStack>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Fechar" Variant="Variant.Outlined">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ClsPedido Pedido { get; set; } = new();
+    [Parameter] public List<EmpresaMachine> EmpresasMachine { get; set; } = new();
+
+    private List<ResultadoEstimativa> _resultados = new();
+
+    private class ResultadoEstimativa
+    {
+        public EmpresaMachine Empresa { get; set; } = new();
+        public EstimativaDeEntregaDto? Estimativa { get; set; }
+        public bool Carregando { get; set; } = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _resultados = EmpresasMachine.Select(e => new ResultadoEstimativa { Empresa = e }).ToList();
+
+        EnderecoMerchant? enderecoMerchant = AppState.MerchantLogado?.EnderecosMerchant?.FirstOrDefault();
+        if (enderecoMerchant is null) return;
+
+        var minutosAdicionais = AppState.MerchantLogado?.TempoDeEntregaEMmin ?? 30;
+        var horarioEntrega = DateTime.Now.AddMinutes(minutosAdicionais);
+
+        var pedidoEstimativa = new PedidoParaEstimativaRequestDto
+        {
+            IdDaEstimativa = string.IsNullOrEmpty(Pedido.DisplayId) ? Pedido.Id.ToString() : Pedido.DisplayId,
+            EnderecoDePartida = enderecoMerchant.EnderecoFormatado ?? $"{enderecoMerchant.Rua}, {enderecoMerchant.Numero}",
+            BairroDePartida = enderecoMerchant.Bairro,
+            CidadeDePartida = enderecoMerchant.Cidade.Descricao,
+            EstadoDePartida = enderecoMerchant.Uf,
+            EnderecoDeDestino = Pedido.Endereco?.EnderecoFormatado ?? $"{Pedido.Endereco?.Rua}, {Pedido.Endereco?.Numero}",
+            BairroDeDestino = Pedido.Endereco?.Bairro ?? string.Empty,
+            CidadeDeDestino = Pedido.Endereco?.Cidade ?? string.Empty,
+            EstadoDeDestino = Pedido.Endereco?.Estado ?? string.Empty,
+            Data = horarioEntrega.ToString("yyyy-MM-dd"),
+            Hora = horarioEntrega.ToString("HH:mm:ss"),
+            Retorno = false
+        };
+
+        var request = new CriaEstimativaRequestDto
+        {
+            PedidosQueVaoSerEstimados = new List<PedidoParaEstimativaRequestDto> { pedidoEstimativa }
+        };
+
+        foreach (var resultado in _resultados)
+        {
+            var response = await MachineService.CriaEstimativa(resultado.Empresa, request);
+            resultado.Estimativa = response?.Data?.Estimativas?.FirstOrDefault(e => e.IdDaEstimativa == pedidoEstimativa.IdDaEstimativa);
+            resultado.Carregando = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void Fechar() => MudDialog.Close();
+}

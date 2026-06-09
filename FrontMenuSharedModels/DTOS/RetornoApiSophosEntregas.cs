@@ -102,3 +102,46 @@ public class DataRetornoApiSophosEntrega
     [JsonPropertyName("MachineId")] public string? MachineId { get; set; } = string.Empty;
     [JsonPropertyName("LinkDeRastreio")] public string? LinkDeRastreio { get; set; } = string.Empty;
 }
+
+public class PedidoParaEstimativaRequestDto
+{
+    [JsonPropertyName("idDaEstimativa")] public string IdDaEstimativa { get; set; } = string.Empty;
+    [JsonPropertyName("EnderecoDePartida")] public string EnderecoDePartida { get; set; } = string.Empty;
+    [JsonPropertyName("BairroDePartida")] public string BairroDePartida { get; set; } = string.Empty;
+    [JsonPropertyName("CidadeDePartida")] public string CidadeDePartida { get; set; } = string.Empty;
+    [JsonPropertyName("EstadoDePartida")] public string EstadoDePartida { get; set; } = string.Empty;
+    [JsonPropertyName("EnderecoDeDestino")] public string EnderecoDeDestino { get; set; } = string.Empty;
+    [JsonPropertyName("BairroDeDestino")] public string BairroDeDestino { get; set; } = string.Empty;
+    [JsonPropertyName("CidadeDeDestino")] public string CidadeDeDestino { get; set; } = string.Empty;
+    [JsonPropertyName("EstadoDeDestino")] public string EstadoDeDestino { get; set; } = string.Empty;
+    [JsonPropertyName("Data")] public string Data { get; set; } = string.Empty;
+    [JsonPropertyName("Hora")] public string Hora { get; set; } = string.Empty;
+    [JsonPropertyName("Retorno")] public bool Retorno { get; set; } = false;
+}
+
+public class CriaEstimativaRequestDto
+{
+    [JsonPropertyName("PedidosQueVaoSerEstimados")] public List<PedidoParaEstimativaRequestDto> PedidosQueVaoSerEstimados { get; set; } = new();
+}
+
+public class EstimativaDeEntregaDto
+{
+    [JsonPropertyName("IdDaEstimativa")] public string IdDaEstimativa { get; set; } = string.Empty;
+    [JsonPropertyName("sucesso")] public bool Sucesso { get; set; }
+    [JsonPropertyName("EstimativaDoValor")] public decimal? EstimativaDoValor { get; set; }
+    [JsonPropertyName("EstimativaMinutos")] public int? EstimativaMinutos { get; set; }
+    [JsonPropertyName("EstimativaPorKm")] public decimal? EstimativaPorKm { get; set; }
+    [JsonPropertyName("MensagemDeErro")] public string? MensagemDeErro { get; set; }
+}
+
+public class CriaEstimativaDataDto
+{
+    [JsonPropertyName("message")] public string Message { get; set; } = string.Empty;
+    [JsonPropertyName("Estimativas")] public List<EstimativaDeEntregaDto> Estimativas { get; set; } = new();
+}
+
+public class CriaEstimativaResponseDto
+{
+    [JsonPropertyName("status")] public string Status { get; set; } = string.Empty;
+    [JsonPropertyName("data")] public CriaEstimativaDataDto? Data { get; set; }
+}
