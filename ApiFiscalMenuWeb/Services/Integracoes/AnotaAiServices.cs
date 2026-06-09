@@ -217,7 +217,7 @@ public class AnotaAiServices
         if (string.IsNullOrEmpty(dto.PedidoIdIntegracao))
             return false;
 
-        var merchant = await ObterMerchantComTokenAsync(dto.TokenNestApi, dto.MerchantId);
+        var merchant = await  ObterMerchantComTokenAsync(dto.TokenNestApi, dto.MerchantId);
         if (merchant is null || string.IsNullOrEmpty(merchant.TokenAnotaAi))
         {
             _logger.LogWarning("[AnotaAi] Merchant não encontrado ou sem TokenAnotaAi ao avisar pronto {OrderId}.", dto.PedidoIdIntegracao);

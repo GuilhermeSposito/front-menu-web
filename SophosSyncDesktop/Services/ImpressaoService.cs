@@ -640,7 +640,9 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, pedido.CriadoPor, FonteLegendaDoTamanho, Alinhamentos.Centro);
         }
 
-        AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : pedido.TipoDePedido == "CHECKOUT" ? "C A I X A" : "R E T I R A D A", FonteLegendaDoTamanho);
+        if (pedido.TipoDePedido != "MESA")
+            AdicionaConteudo(Conteudo, pedido.TipoDePedido == "DELIVERY" ? "E N T R E G A" : pedido.TipoDePedido == "CHECKOUT" ? "C A I X A" : "R E T I R A D A", FonteLegendaDoTamanho);
+
         if (AppState.MerchantLogado is not null)
             AdicionaConteudo(Conteudo, AppState.MerchantLogado.NomeFantasia, FonteDetalhesDoPedido);
 
@@ -663,7 +665,11 @@ public class ImpressaoService
         AdicionaConteudo(Conteudo, $"Criado em: {pedido.CriadoEm:G}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Pedido criado por {pedido.CriadoPor}", FonteDetalhesDoPedido);
 
-        AdicionaConteudo(Conteudo, $"Controle: {(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}", FonteDetalhesDoPedido);
+        var stringControle = $"Controle: {(pedido.TipoDePedido == "CHECKOUT" ? "CAIXA" : pedido.TipoDePedido)}";
+        if (pedido.TipoDePedido == "MESA")
+            stringControle = $"{AppState.MerchantLogado?.LegendaNomeUltilizadoParaPlaced ?? "Mesa"}: {pedido.Mesa?.CodigoExterno}";
+
+        AdicionaConteudo(Conteudo, $"Controle: {stringControle}", FonteDetalhesDoPedido);
         AdicionaConteudo(Conteudo, $"Conta Nº:   {pedido.DisplayId}", FonteContaEntregaEConta, eObs: true);
         AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         //------------------------------------------------------------------------------------------
@@ -688,14 +694,15 @@ public class ImpressaoService
             AdicionaConteudo(Conteudo, AdicionarSeparadorDuplo(), FonteSeparadoresSimples);
         }
 
-        if (AppState.MerchantLogado is null || AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
-        {
-            if (PedidoAgendado)
-                EntregarAté = pedido.HorarioDataAgendamento ?? EntregarAté;
+        if (pedido.TipoDePedido != "MESA")
+            if (AppState.MerchantLogado is null || AppState.MerchantLogado.ImprimeHorarioLimiteNoPedido)
+            {
+                if (PedidoAgendado)
+                    EntregarAté = pedido.HorarioDataAgendamento ?? EntregarAté;
 
-            AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
-            AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
-        }
+                AdicionaConteudo(Conteudo, $"Entregar Até: {EntregarAté:t}", FonteContaEntregaEConta);
+                AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
+            }
 
         if (!string.IsNullOrEmpty(pedido.ObservacaoDoPedido))
         {
@@ -704,7 +711,6 @@ public class ImpressaoService
         }
 
         //------------------------------------------------------------------------------------------
-
         if (pedido.Cliente is not null)
         {
             AdicionaConteudo(Conteudo, pedido.Cliente.Nome, FonteDetalhesDoPedido);
@@ -734,11 +740,42 @@ public class ImpressaoService
         }
 
         //------------------------------------------------------------------------------------------
+        if (pedido.TipoDePedido == "MESA")
+        {
+            if (AppState.MerchantLogado?.JuntaItensNoFechamentoDeConta ?? false)
+            {
+                pedido.Itens = pedido.Itens
+                    .GroupBy(i => new { i.ProdutoId, i.Descricao, i.ECouvert })
+                    .Select(g => new ItensPedido
+                    {
+                        ProdutoId = g.Key.ProdutoId,
+                        Descricao = g.Key.Descricao,
+                        Quantidade = g.Sum(i => i.Quantidade),
+                        PrecoTotal = g.Sum(i => i.PrecoTotal),
+                        PrecoUnitario = g.First().PrecoUnitario,
+                        NumeroMesaItem = g.First().NumeroMesaItem,
+                        Complementos = g.SelectMany(i => i.Complementos).ToList(),
+                        Observacoes = string.Join(" | ", g.Where(i => !string.IsNullOrEmpty(i.Observacoes)).Select(i => i.Observacoes))
+                    })
+                    .ToList();
+            }
+        }
+
+
+
         AdicionaConteudo(Conteudo, $"Qtdade.  Descrição Do Item.", FontQtdDescVunitVTotal);
         AdicionaConteudoLR(Conteudo, $"Tam.", "V.Unit.   Total.", FontQtdDescVunitVTotal);
         AdicionaConteudo(Conteudo, AdicionarSeparadorSimples(), FonteSeparadoresSimples);
         foreach (var item in pedido.Itens)
         {
+            if (pedido.TipoDePedido == "MESA" && (AppState.MerchantLogado?.UltilizaRequisicaoDeMesaNoItem ?? false))
+            {
+                if (item.NumeroMesaItem != 0)
+                {
+                    AdicionaConteudo(Conteudo, $"Mesa: {item.NumeroMesaItem}", new Font("Dejavu Sans Mono", 8);
+                }
+            }
+
             if (item.Produto?.Fracionado == true && AppState.MerchantLogado is not null && AppState.MerchantLogado.PulaItensFracionadosParaProximaLinha)
             {
                 var partesFracionado = item.Descricao.Split('&');
@@ -1619,7 +1656,7 @@ public class ImpressaoService
                     LarguraBobina = 210,
                     Impressora = ImpressoraDanfe,
                     Logotipo = "C:\\SophosCompany\\LogoDanfe.png",
-                    
+
                 };
 
                 if (!string.IsNullOrEmpty(ImpressoraDanfe))
