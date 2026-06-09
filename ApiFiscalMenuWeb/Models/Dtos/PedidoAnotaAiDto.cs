@@ -35,6 +35,7 @@ public class AnotaAiOrderInfoDto
     [JsonPropertyName("merchant")] public AnotaAiMerchantDto Merchant { get; set; } = new();
     [JsonPropertyName("payments")] public List<AnotaAiPaymentDto> Payments { get; set; } = new();
     [JsonPropertyName("pdv")] public AnotaAiPdvDto? Pdv { get; set; }
+    [JsonPropertyName("schedule_order")] public AnotaAiScheduleOrderDto? ScheduleOrder { get; set; }
 }
 
 public class AnotaAiAdditionalFeeDto
@@ -131,6 +132,14 @@ public class AnotaAiPaymentDto
     [JsonPropertyName("externalId")] public string ExternalId { get; set; } = string.Empty;
     [JsonPropertyName("changeFor")] public decimal? ChangeFor { get; set; }
     [JsonPropertyName("prepaid")] public bool Prepaid { get; set; }
+}
+
+public class AnotaAiScheduleOrderDto
+{
+    [JsonPropertyName("date")] public DateTime? Date { get; set; }
+    [JsonPropertyName("start")] public string? Start { get; set; }
+    [JsonPropertyName("end")] public string? End { get; set; }
+    [JsonPropertyName("timezone")] public string? Timezone { get; set; }
 }
 
 public class AnotaAiPdvDto

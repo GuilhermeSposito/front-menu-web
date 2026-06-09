@@ -45,7 +45,7 @@ public class AnotaAiServices
         switch (pedido.Check)
         {
             case -2:
-                //Pedido agendado aceito
+                retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
                 break;
             case 0: //novo pedido
                 retornoDaFuncaoDeAdicionarPedido = await this.AdicionaPedido(merchant, pedido);
@@ -253,7 +253,7 @@ public class AnotaAiServices
         PedidoIfood.Id = pedido.Id;
         PedidoIfood.DisplayId = pedido.IdAlt;
         PedidoIfood.ExtraInfo = pedido.Observation ?? String.Empty;
-        PedidoIfood.OrderTiming = "IMMEDIATE";
+        PedidoIfood.OrderTiming = pedido.ScheduleOrder != null ? "SCHEDULED" : "IMMEDIATE";
         pedido.Type = pedido.Type switch
         {
             "LOCAL" => "INDOOR",
@@ -261,6 +261,7 @@ public class AnotaAiServices
             "TAKE" => "TAKEOUT",
             _ => pedido.Type
         };
+        PedidoIfood.OrderType = pedido.Type;
         PedidoIfood.CreatedAt = pedido.CreatedAt;
         PedidoIfood.Customer = new CustomerIfoodDto
         {
@@ -344,6 +345,14 @@ public class AnotaAiServices
                 }
             }).ToList()
         };
+
+        if (pedido.ScheduleOrder?.Date != null)
+        {
+            if (pedido.Type == "DELIVERY")
+                PedidoIfood.Delivery.DeliveryDateTime = pedido.ScheduleOrder.Date.Value;
+            else if (pedido.Type == "TAKEOUT")
+                PedidoIfood.Takeout.TakeoutDateTime = pedido.ScheduleOrder.Date.Value;
+        }
 
         return PedidoIfood;
     }
