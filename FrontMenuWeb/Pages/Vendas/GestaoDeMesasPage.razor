@@ -63,16 +63,6 @@
                                         <MudText Typo="Typo.subtitle1" Class="font-weight-bold">
                                             @mesa.CodigoExterno.ToString().PadLeft(2, '0')
                                         </MudText>
-                                        @if (mesa.Ocupada && _clientesPorMesa.TryGetValue(mesa.Id, out var nomesMesa) && nomesMesa.Count > 0)
-                                        {
-                                            <MudDivider Style="opacity:0.3" />
-                                            <div style="background-color: var(--mud-palette-primary); border-radius: 6px; padding: 4px 8px;">
-                                                @foreach (var nome in nomesMesa)
-                                                {
-                                                    <MudText Typo="Typo.subtitle2" Style="color: #FFFFFF;">@nome</MudText>
-                                                }
-                                            </div>
-                                        }
                                     </MudStack>
                                 </MudCardContent>
 

@@ -409,30 +409,29 @@ public class B1DeliveryServices
                     var delmatchClient = _factory.CreateClient("ApiDelmatch");
                     delmatchClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", empresa.AccessToken);
 
-                    var ordersResponse = await delmatchClient.GetAsync("/api/orders.json");
-                    if (!ordersResponse.IsSuccessStatusCode)
+                    var orderResponse = await delmatchClient.GetAsync($"/api/orders/{webhook.Id}.json");
+                    if (!orderResponse.IsSuccessStatusCode)
                         return;
 
-                    var ordersJson = await ordersResponse.Content.ReadAsStringAsync();
+                    var orderJson = await orderResponse.Content.ReadAsStringAsync();
                     var delmatchJsonOptions = new JsonSerializerOptions
-                    {
+                    {   
                         NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
                         PropertyNameCaseInsensitive = true,
                     };
-                    List<DelmatchOrderDto>? pedidos;
+                    DelmatchOrderDto? pedido;
                     try
                     {
-                        pedidos = JsonSerializer.Deserialize<List<DelmatchOrderDto>>(ordersJson, delmatchJsonOptions);
+                        pedido = JsonSerializer.Deserialize<DelmatchOrderDto>(orderJson, delmatchJsonOptions);
                     }
                     catch (JsonException jex)
                     {
-                        _logger.LogError(jex, "[B1Delivery] Falha ao deserializar pedidos. JSON recebido: {Json}", ordersJson);
+                        _logger.LogError(jex, "[B1Delivery] Falha ao deserializar pedidos. JSON recebido: {Json}", orderJson);
                         return;
                     }
 
-                    var pedidoNovo = pedidos?.FirstOrDefault(p => p.Id == webhook.Id);
-                    if (pedidoNovo is not null)
-                        await AdicionaPedidoAoSophos(pedidoNovo, empresa);
+                    if (pedido is not null)
+                        await AdicionaPedidoAoSophos(pedido, empresa); //24806306
                     break;
 
                 case "Recebido":
