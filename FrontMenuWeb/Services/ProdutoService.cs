@@ -218,17 +218,26 @@ public class ComplementosServices
         return result;
     }
 
-
-
     //Parte de complementos
-
-
     public async Task<ClsComplemento?> GetComplemento(int IdDoComplemento)
     {
         try
         {
             var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}") ?? new ReturnApiRefatored<ClsComplemento>();
 
+            return response.Data.Objeto ?? new ClsComplemento();
+        }
+        catch (Exception ex)
+        {
+            return null;
+        }
+    }
+
+    public async Task<ClsComplemento?> GetComplementoComMerchantId(int IdDoComplemento, string merchantId)
+    {
+        try
+        {
+            var response = await _http.GetFromJsonAsync<ReturnApiRefatored<ClsComplemento>>($"complementos/{IdDoComplemento}/{merchantId}") ?? new ReturnApiRefatored<ClsComplemento>();
             return response.Data.Objeto ?? new ClsComplemento();
         }
         catch (Exception ex)

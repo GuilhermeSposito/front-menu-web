@@ -565,7 +565,7 @@ public class IfoodServices
                     continue;
                 }
 
-                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode);
+                ClsComplemento? ComplementoSophosEncontrado = await _nestApiService.RetornaComplementoEncontrado(complemento.ExternalCode, MerchantSophosId);
                 ComplementoNoItem ComplementoSophos = new ComplementoNoItem
                 {
                     Descricao = complemento.Name,

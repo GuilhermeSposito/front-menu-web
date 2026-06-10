@@ -259,7 +259,11 @@
 
                     <MudStack Class="w-100 p-3 mb-3 " Style="background-color: var(--mud-palette-surface);" Row=true AlignItems=AlignItems.Center Spacing=3 Justify="Justify.Center">
                         <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await EmiteNFCe(context.Item); })>Emitir Cupom Fiscal</MudButton>
-                        <MudButton Variant=Variant.Filled Color="Color.Primary" OnClick=@(async () => { await ImprimirPedido(context.Item); })>Reimprimir Pedido</MudButton>
+                        <MudMenu StartIcon="@Icons.Material.Filled.Print" Label="Reimprimir Pedido" Variant="Variant.Filled" Color="Color.Primary">
+                            <MudMenuItem OnClick=@(async () => { await ImprimirPedido(context.Item, TipoDeImpressaoDEPedido.Completo); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Completo" />
+                            <MudMenuItem OnClick=@(async () => { await ImprimirPedido(context.Item, TipoDeImpressaoDEPedido.ApenasPedido); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Pedido" />
+                            <MudMenuItem OnClick=@(async () => { await ImprimirPedido(context.Item, TipoDeImpressaoDEPedido.ApenasComandas); }) Icon="@Icons.Material.Filled.Print" Label="Imprimir Apenas Comandas" />
+                        </MudMenu>
                         @if (context.Item.StatusPedido != "CANCELADO")
                         {
                             <MudButton Color="Color.Error" OnClick=@(async p => { await CancelarPedido(context.Item); }) Variant="Variant.Filled">Deletar Pedido</MudButton>
@@ -705,15 +709,39 @@
     #endregion
 
     #region Função de impressão do pedido sem valor fiscal
-    private async Task ImprimirPedido(ClsPedido pedido)
+    public enum TipoDeImpressaoDEPedido
+    {
+        ApenasPedido,
+        ApenasComandas,
+        Completo
+    }
+
+    private async Task ImprimirPedido(ClsPedido pedido, TipoDeImpressaoDEPedido tipoDeImpressao = TipoDeImpressaoDEPedido.Completo)
     {
         if (!await AuthorizationService.ValidateAsync("AcessoEstatisticas")) return;
         bool ImpressaoDesabilita = await LocalStorage.GetItemAsync<bool?>("ImpressaoDesabilita") ?? false;
 
-        if (!ImpressaoDesabilita)
-            await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
-        else
+        if (ImpressaoDesabilita)
+        {
             Snackbar.Add("Impressão desabilitada nas configurações.", Severity.Warning);
+            return;
+        }
+
+        if (tipoDeImpressao == TipoDeImpressaoDEPedido.ApenasPedido)
+        {
+            pedido.ImprimeApenasComanda = false;
+            pedido.ImprimeApenasPedido = true;
+        }
+        else if (tipoDeImpressao == TipoDeImpressaoDEPedido.ApenasComandas)
+        {
+            pedido.ImprimeApenasComanda = true;
+            pedido.ImprimeApenasPedido = false;
+        }
+
+        await JS.InvokeVoidAsync("baixarJSON", pedido, $"pedido{pedido.Id}-SOPHOS-WEB.json");
+
+        pedido.ImprimeApenasComanda = false;
+        pedido.ImprimeApenasPedido = false;
     }
 
     #endregion

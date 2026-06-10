@@ -157,7 +157,7 @@ public class NestApiServices
         return prod;
     }
 
-    public async Task<ClsComplemento?> RetornaComplementoEncontrado(string? CodigoPdv)
+    public async Task<ClsComplemento?> RetornaComplementoEncontrado(string? CodigoPdv, string MerchantSophosId)
     {
         if (string.IsNullOrEmpty(CodigoPdv))
             return null;
@@ -171,7 +171,7 @@ public class NestApiServices
             return null;
         }
 
-        var complemento = await ProdutoServiceNest.GetComplemento(codigoPdvNumerico);
+        var complemento = await ProdutoServiceNest.GetComplementoComMerchantId(codigoPdvNumerico, MerchantSophosId);
         return complemento;
     }
 
