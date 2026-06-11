@@ -29,7 +29,9 @@
       "PowerShell(Get-ChildItem \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -File | ForEach-Object { $_.Name })",
       "Bash(Get-ChildItem -Path \"c:\\\\Prog\\\\projeto_menu_web\\\\front-menu-web\\\\FrontMenuWeb\" -Recurse -Filter \"SuprimentoPage.razor\")",
       "Bash(Select-Object FullName)",
-      "WebFetch(domain:anota-ai.stoplight.io)"
+      "WebFetch(domain:anota-ai.stoplight.io)",
+      "PowerShell(Set-Location LandingPage; npx vite build 2>$null; echo \"exit: $LASTEXITCODE\")",
+      "PowerShell(dotnet build ApiFiscalMenuWeb -v q --nologo)"
     ]
   }
 }

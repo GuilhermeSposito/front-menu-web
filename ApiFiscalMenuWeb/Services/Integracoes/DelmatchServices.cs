@@ -142,7 +142,7 @@ public class B1DeliveryServices
                     Neighborhood = pedido.DeliveryAddress.Neighbourhood ?? string.Empty,
                     Complement = pedido.DeliveryAddress.Complement ?? string.Empty,
                     Reference = pedido.DeliveryAddress.Reference ?? string.Empty,
-                    PostalCode = pedido.DeliveryAddress.PostalCode,
+                    PostalCode = pedido.DeliveryAddress.PostalCode ?? string.Empty,
                     City = pedido.DeliveryAddress.City,
                     State = pedido.DeliveryAddress.State,
                     FormattedAddress = pedido.DeliveryAddress.FormattedAddress,

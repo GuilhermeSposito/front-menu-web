@@ -113,6 +113,10 @@ export default function App() {
 
   const clientes = [
     { nome: "Restaurante Piassa", segmento: "Restaurante", foto: "images/empresas-nossaas/piassa.jpeg" },
+    { nome: "Oscar Lanches", segmento: "Restaurante", foto: "images/empresas-nossaas/oscarlanches.jpeg" },
+    { nome: "Seu Chico", segmento: "Restaurante", foto: "images/empresas-nossaas/seuchico.jpeg" },
+    { nome: "Sambini", segmento: "Restaurante", foto: "images/empresas-nossaas/sambini.jpeg" },
+    { nome: "Carmelia", segmento: "Restaurante", foto: "images/empresas-nossaas/carmelia.jpeg" },
     { nome: "Macarrão Piassa", segmento: "Restaurante", foto: "images/empresas-nossaas/macarraopiassa.jpeg" },
     { nome: "Pastel da Li", segmento: "Lanchonete", foto: "images/empresas-nossaas/PastelDaLi.png" },
     { nome: "Burgues on the Table", segmento: "Hamburgueria", foto: "images/empresas-nossaas/burguers-on-the-table.png" },

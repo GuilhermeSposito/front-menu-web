@@ -46,7 +46,7 @@ public class DelmatchCustomerDto
 {
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
-    [JsonPropertyName("taxPayerIdentificationNumber")] public string TaxPayerIdentificationNumber { get; set; } = string.Empty;
+    [JsonPropertyName("taxPayerIdentificationNumber")] public string? TaxPayerIdentificationNumber { get; set; }
     [JsonPropertyName("phone")] public string Phone { get; set; } = string.Empty;
     [JsonPropertyName("email")] public string Email { get; set; } = string.Empty;
 }
@@ -88,7 +88,7 @@ public class DelmatchAddressDto
     [JsonPropertyName("neighboardhood")] public string? Neighbourhood { get; set; }
     [JsonPropertyName("streetName")] public string StreetName { get; set; } = string.Empty;
     [JsonPropertyName("streetNumber")] public string StreetNumber { get; set; } = string.Empty;
-    [JsonPropertyName("postalCode")] public string PostalCode { get; set; } = string.Empty;
+    [JsonPropertyName("postalCode")] public string? PostalCode { get; set; }
     [JsonPropertyName("reference")] public string? Reference { get; set; }
     [JsonPropertyName("complement")] public string? Complement { get; set; }
 }
