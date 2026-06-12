@@ -31,7 +31,8 @@
       "Bash(Select-Object FullName)",
       "WebFetch(domain:anota-ai.stoplight.io)",
       "PowerShell(Set-Location LandingPage; npx vite build 2>$null; echo \"exit: $LASTEXITCODE\")",
-      "PowerShell(dotnet build ApiFiscalMenuWeb -v q --nologo)"
+      "PowerShell(dotnet build ApiFiscalMenuWeb -v q --nologo)",
+      "PowerShell(npx tsc --noEmit -p C:\\\\Prog\\\\projeto_menu_web\\\\api-proj-menu-web\\\\tsconfig.json)"
     ]
   }
 }
