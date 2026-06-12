@@ -27,11 +27,13 @@ builder.Services.AddScoped<NestApiServices>();
 builder.Services.AddScoped<IfoodServices>();
 builder.Services.AddScoped<B1DeliveryServices>();
 builder.Services.AddScoped<AnotaAiServices>();
+builder.Services.AddScoped<CcmServices>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<WebhookSignature>();
 builder.Services.AddHostedService<IfoodPollingWorker>();
 builder.Services.AddHostedService<DelmatchPollingWorker>();
 builder.Services.AddHostedService<DelmatchTokenRenewalWorker>();
+builder.Services.AddHostedService<CcmPollingWorker>();
 builder.Services.AddScoped<CustomMetaWSHttpHendler>();
 builder.Services.AddSingleton<WhatsAppOptInService>();
 
@@ -101,6 +103,12 @@ builder.Services.AddHttpClient("ApiDelmatch", client =>
 builder.Services.AddHttpClient("ApiAnotaAi", client =>
 {
     client.BaseAddress = new Uri("https://api-parceiros.anota.ai/partnerauth/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddHttpClient("ApiCcm", client =>
+{
+    client.BaseAddress = new Uri("https://api.ccmpedidoonline.com.br/");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 

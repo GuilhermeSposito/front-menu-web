@@ -363,4 +363,26 @@ public class NestApiServices
         var client = _factory.CreateClient("ApiNestPublica");
         _ = client.PostAsync("empresas-delmatch/verificar-tokens", null);
     }
+
+    // ── CCM ──────────────────────────────────────────────────────────────────
+
+    public async Task<List<ClsMerchant>> RetornaMerchantsComIntegracaoCcm()
+    {
+        try
+        {
+            var client = _factory.CreateClient("ApiNestPublica");
+            var response = await client.GetAsync("merchants/integracao-ccm/todos");
+
+            if (!response.IsSuccessStatusCode)
+                return new();
+
+            var merchants = await response.Content.ReadFromJsonAsync<List<ClsMerchant>>();
+            return merchants ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[NestApiServices] Erro ao buscar merchants com integração CCM: {ex.Message}");
+            return new();
+        }
+    }
 }

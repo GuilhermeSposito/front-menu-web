@@ -18,6 +18,7 @@ public class IntegracoesController : Controller
     private readonly IfoodServices _ifoodService;
     private readonly B1DeliveryServices _delmatchService;
     private readonly AnotaAiServices _anotaAiService;
+    private readonly CcmServices _ccmService;
     private readonly NestApiServices _nestApiService;
     private readonly EmailService emailService;
     private WebhookSignature _webhookSignature;
@@ -32,12 +33,14 @@ public class IntegracoesController : Controller
         WebhookSignature webhookSignature,
         IConfiguration configuration,
         ILogger<IntegracoesController> logger,
-        AnotaAiServices anotaAiService
+        AnotaAiServices anotaAiService,
+        CcmServices ccmService
         )
     {
         _ifoodService = ifoodService;
         _delmatchService = delmatchService;
         _anotaAiService = anotaAiService;
+        _ccmService = ccmService;
         _nestApiService = nestApiService;
         emailService = email;
         _webhookSignature = webhookSignature;
@@ -149,6 +152,46 @@ public class IntegracoesController : Controller
     {
         var sucesso = await _delmatchService.AceitarPedidoManual(idIntegracao, merchantSophosId);
         return Ok(new { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido Delmatch" } });
+    }
+
+    [HttpPost("ccm/accepted/{idIntegracao}")]
+    public async Task<ActionResult> AceitaPedidoCcm([FromRoute] string idIntegracao, [FromQuery] string merchantSophosId)
+    {
+        var sucesso = await _ccmService.AceitarPedidoManualAsync(idIntegracao, merchantSophosId);
+        return Ok(new { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido aceito com sucesso" : "Erro ao aceitar pedido CCM" } });
+    }
+
+    [HttpPost("ccm/refused/{idIntegracao}")]
+    public async Task<ActionResult> RecusaPedidoCcm([FromRoute] string idIntegracao, [FromQuery] string merchantSophosId)
+    {
+        var sucesso = await _ccmService.RecusarPedidoManualAsync(idIntegracao, merchantSophosId);
+        return Ok(new { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido recusado com sucesso" : "Erro ao recusar pedido CCM" } });
+    }
+
+    [HttpPost("ccm/dispatch")]
+    public async Task<ActionResult<ReturnApiRefatored<object>>> DespachaPedidoCcm([FromBody] UpdatePedidosDto UpdateDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        UpdateDto.TokenNestApi = token;
+        var sucesso = await _ccmService.DespacharPedidoAsync(UpdateDto);
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido despachado com sucesso" : "Erro ao despachar pedido CCM" } });
+    }
+
+    [HttpPost("ccm/finalize")]
+    public async Task<ActionResult<ReturnApiRefatored<object>>> FinalizaPedidoCcm([FromBody] UpdatePedidosDto UpdateDto)
+    {
+        var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+        var token = HttpContext.Request.Cookies["auth_token"] ?? authHeader.Replace("Bearer ", "");
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized(new ReturnApiRefatored<object> { Status = "error", Messages = new List<string> { "Cookie auth_token não encontrado" } });
+
+        UpdateDto.TokenNestApi = token;
+        var sucesso = await _ccmService.ConcluirPedidoAsync(UpdateDto);
+        return Ok(new ReturnApiRefatored<object> { Status = sucesso ? "success" : "error", Messages = new List<string> { sucesso ? "Pedido concluído com sucesso" : "Erro ao concluir pedido CCM" } });
     }
     #endregion
 
