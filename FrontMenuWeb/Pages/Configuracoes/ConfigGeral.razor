@@ -99,15 +99,6 @@
                     <MudStack Class="rounded-2 p-1" style="background-color: var(--mud-palette-background);" AlignItems="AlignItems.Center" Justify="Justify.Center">
                         <MudGrid Class="w-100">
                             <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.IntegraIfood ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraIfood = x)) T=bool Color="Color.Primary">Integra Ifood</MudCheckBox>
-                            </MudItem>
-                            <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.IntegraB1Delivery ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraB1Delivery = x)) T=bool Color="Color.Primary">Integra B1 Delivery</MudCheckBox>
-                            </MudItem>
-                            <MudItem xs="12" sm="6" md="3">
-                                <MudCheckBox Value=@Merchant.AceitaPedidoAutDeIntegracoes ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.AceitaPedidoAutDeIntegracoes = x)) T=bool Color="Color.Primary">Aceita Pedido Aut</MudCheckBox>
-                            </MudItem>
-                            <MudItem xs="12" sm="6" md="3">
                                 <MudCheckBox Value=@Merchant.ReplicaFechamentoParaOFinanceiro ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.ReplicaFechamentoParaOFinanceiro = x)) T=bool Color="Color.Primary">Replica Fechamento</MudCheckBox>
                             </MudItem>
                             <MudItem xs="12" sm="6" md="3">
@@ -456,12 +447,33 @@
                     <MudDivider DividerType="DividerType.FullWidth" Light=true />
                     <MudGrid Class="p-2 mb-1">
                         <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.IntegraIfood ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraIfood = x)) T=bool Color="Color.Primary">Integra Ifood</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.IntegraB1Delivery ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraB1Delivery = x)) T=bool Color="Color.Primary">Integra B1 Delivery</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.AceitaPedidoAutDeIntegracoes ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.AceitaPedidoAutDeIntegracoes = x)) T=bool Color="Color.Primary">Aceita Pedido Aut</MudCheckBox>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
                             <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.IntegraAnotaAi ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraAnotaAi = x)) T=bool Color="Color.Primary">Integra Anota.ai</MudCheckBox>
                         </MudItem>
                         @if (Merchant.IntegraAnotaAi)
                         {
                             <MudItem xs="12" sm="12" md="12">
                                 <MudTextField Disabled=EditandoIntegracoes Label="Token Anota.ai" Variant="Variant.Outlined" @bind-Value=@Merchant.TokenAnotaAi Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" FullWidth="true" />
+                            </MudItem>
+                        }
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCheckBox Disabled=EditandoIntegracoes Value=@Merchant.IntegraCcm ValueChanged=@(v => OnMudCheckBoxChangedGenerico(v, x => Merchant.IntegraCcm = x)) T=bool Color="Color.Primary">Integra CCM</MudCheckBox>
+                        </MudItem>
+                        @if (Merchant.IntegraCcm)
+                        {
+                            <MudItem xs="12" sm="8" md="9">
+                                <MudTextField Disabled=EditandoIntegracoes Label="Token CCM" Variant="Variant.Outlined" @bind-Value=@Merchant.TokenCcm Immediate=true @onfocusout=SalvarInfosLojaAsync T="string" FullWidth="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4" md="3">
+                                <MudNumericField Disabled=EditandoIntegracoes Label="Id Do Token CCM" Variant="Variant.Outlined" @bind-Value=@Merchant.IdTokenCcm HideSpinButtons="true" @onfocusout=SalvarInfosLojaAsync Min=1 T="int" />
                             </MudItem>
                         }
                     </MudGrid>

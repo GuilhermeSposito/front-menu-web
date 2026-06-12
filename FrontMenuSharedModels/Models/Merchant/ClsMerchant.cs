@@ -128,6 +128,9 @@ public class ClsMerchant
     [JsonPropertyName("JuntaItensNoFechamentoDeConta")] public bool JuntaItensNoFechamentoDeConta { get; set; } = false;
     [JsonPropertyName("IntegraAnotaAi")] public bool IntegraAnotaAi { get; set; } = false;
     [JsonPropertyName("TokenAnotaAi")] public string? TokenAnotaAi { get; set; }
+    [JsonPropertyName("IntegraCcm")] public bool IntegraCcm { get; set; } = false;
+    [JsonPropertyName("TokenCcm")] public string? TokenCcm { get; set; }
+    [JsonPropertyName("IdTokenCcm")] public int IdTokenCcm { get; set; } = 1;
     [JsonPropertyName("ImprimeComplementosComoItem")] public bool ImprimeComplementosComoItem { get; set; } = false;
     [JsonPropertyName("ApelidoCardapio")] public string? ApelidoCardapio { get; set; }
 }
